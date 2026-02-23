@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/app.dart';
+import 'package:kinder_world/router.dart';
+
+class ParentHelpScreen extends ConsumerStatefulWidget {
+  const ParentHelpScreen({super.key});
+
+  @override
+  ConsumerState<ParentHelpScreen> createState() => _ParentHelpScreenState();
+}
+
+class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
+  late final TextEditingController _searchController;
+  late Future<List<Map<String, dynamic>>> _faqFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _faqFuture = _fetchFaqs();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchFaqs() async {
+    try {
+      final response =
+          await ref.read(networkServiceProvider).get<Map<String, dynamic>>(
+                '/content/help-faq',
+              );
+      final data = response.data;
+      if (data == null) return [];
+      final list = data['items'];
+      if (list is List) {
+        return list
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final query = _searchController.text.trim();
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n?.parentHelp ?? 'Help & FAQ'),
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search FAQs...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 32),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _faqFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snapshot.data ?? [];
+                  final filtered = query.isEmpty
+                      ? items
+                      : items
+                          .where((item) {
+                            final q = query.toLowerCase();
+                            final question =
+                                item['question']?.toString().toLowerCase() ?? '';
+                            final answer =
+                                item['answer']?.toString().toLowerCase() ?? '';
+                            return question.contains(q) || answer.contains(q);
+                          })
+                          .toList();
+
+                  if (filtered.isEmpty) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.help_outline,
+                          size: 72,
+                          color: colors.onSurfaceVariant,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          query.isEmpty ? 'No FAQs yet' : 'No results found',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'We are preparing helpful articles for you.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: colors.onSurfaceVariant),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final item = filtered[index];
+                      return ExpansionTile(
+                        title: Text(item['question']?.toString() ?? ''),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(item['answer']?.toString() ?? ''),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push(Routes.parentContactUs),
+                child: const Text('Contact Us'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
