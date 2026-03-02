@@ -8,6 +8,7 @@ import 'package:kinder_world/core/providers/activity_filter_controller.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
@@ -102,7 +103,6 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     {'title': 'Behavioral Methods', 'route': 'behavioral'},
   ];
 
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -138,7 +138,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     hintText: 'Search pages...',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    fillColor:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -154,7 +155,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.only(
@@ -166,7 +168,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.wb_sunny_outlined, color: AppColors.primary, size: 24),
+                        Icon(Icons.wb_sunny_outlined,
+                            color: AppColors.primary, size: 24),
                         SizedBox(width: 12),
                         Flexible(
                           child: Text(
@@ -207,7 +210,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       return Center(
         child: Text(
           'No pages found',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style:
+              TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
     }
@@ -240,7 +244,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.08),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .shadow
+                      .withValues(alpha: 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -432,13 +439,41 @@ class EntertainingScreen extends StatelessWidget {
   const EntertainingScreen({super.key});
 
   static const List<Map<String, dynamic>> _items = [
-    {'title': 'Puppet Show', 'image': 'assets/images/ent_puppet_show.png', 'color': Colors.orange},
-    {'title': 'Interactive Stories', 'image': 'assets/images/ent_stories.png', 'color': Colors.purple},
-    {'title': 'Songs & Music', 'image': 'assets/images/ent_music.png', 'color': Colors.pink},
-    {'title': 'Funny Clips', 'image': 'assets/images/ent_clips.png', 'color': Colors.yellow},
-    {'title': 'Brain Teasers', 'image': 'assets/images/ent_teasers.png', 'color': Colors.teal},
-    {'title': 'Games', 'image': 'assets/images/ent_games.png', 'color': Colors.blue},
-    {'title': 'Cartoons', 'image': 'assets/images/ent_cartoons.png', 'color': Colors.indigo},
+    {
+      'title': 'Puppet Show',
+      'image': 'assets/images/ent_puppet_show.png',
+      'color': Colors.orange
+    },
+    {
+      'title': 'Interactive Stories',
+      'image': 'assets/images/ent_stories.png',
+      'color': Colors.purple
+    },
+    {
+      'title': 'Songs & Music',
+      'image': 'assets/images/ent_music.png',
+      'color': Colors.pink
+    },
+    {
+      'title': 'Funny Clips',
+      'image': 'assets/images/ent_clips.png',
+      'color': Colors.yellow
+    },
+    {
+      'title': 'Brain Teasers',
+      'image': 'assets/images/ent_teasers.png',
+      'color': Colors.teal
+    },
+    {
+      'title': 'Games',
+      'image': 'assets/images/ent_games.png',
+      'color': Colors.blue
+    },
+    {
+      'title': 'Cartoons',
+      'image': 'assets/images/ent_cartoons.png',
+      'color': Colors.indigo
+    },
   ];
 
   @override
@@ -467,7 +502,8 @@ class EntertainingScreen extends StatelessWidget {
               ),
               child: Row(
                 children: const [
-                  Icon(Icons.sentiment_satisfied_alt, color: AppColors.entertaining, size: 28),
+                  Icon(Icons.sentiment_satisfied_alt,
+                      color: AppColors.entertaining, size: 28),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -494,7 +530,8 @@ class EntertainingScreen extends StatelessWidget {
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  return _buildFunCard(context, item['title'], item['image'], item['color']);
+                  return _buildFunCard(
+                      context, item['title'], item['image'], item['color']);
                 },
               ),
             ),
@@ -504,13 +541,15 @@ class EntertainingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFunCard(BuildContext context, String title, String imagePath, Color color) {
+  Widget _buildFunCard(
+      BuildContext context, String title, String imagePath, Color color) {
     return InkWell(
       // MODIFIED: Navigate to Detail Screen
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => EntertainmentDetailScreen(categoryTitle: title),
+            builder: (context) =>
+                EntertainmentDetailScreen(categoryTitle: title),
           ),
         );
       },
@@ -574,29 +613,35 @@ class EntertainmentDetailScreen extends StatelessWidget {
     switch (categoryTitle) {
       case 'Games':
         return [
-          {'title': 'Puzzle Game', 'image': 'assets/images/game_puzzle.png'},
-          {'title': 'Racing Cars', 'image': 'assets/images/game_racing.png'},
-          {'title': 'Memory Match', 'image': 'assets/images/game_memory.png'},
-          {'title': 'Coloring Fun', 'image': 'assets/images/game_coloring.png'},
+          {'title': 'Puzzle Game', 'image': 'assets/images/ent_games.png'},
+          {'title': 'Racing Cars', 'image': 'assets/images/ent_clips.png'},
+          {'title': 'Memory Match', 'image': 'assets/images/ent_teasers.png'},
+          {
+            'title': 'Coloring Fun',
+            'image': 'assets/images/skill_coloring.png'
+          },
         ];
       case 'Cartoons':
         return [
-          {'title': 'Adventure Time', 'image': 'assets/images/toon_adv.png'},
-          {'title': 'Funny Animals', 'image': 'assets/images/toon_animals.png'},
-          {'title': 'Space Heroes', 'image': 'assets/images/toon_space.png'},
-          {'title': 'Magic World', 'image': 'assets/images/toon_magic.png'},
+          {
+            'title': 'Adventure Time',
+            'image': 'assets/images/ent_cartoons.png'
+          },
+          {'title': 'Funny Animals', 'image': 'assets/images/edu_animals.png'},
+          {'title': 'Space Heroes', 'image': 'assets/images/edu_science.png'},
+          {'title': 'Magic World', 'image': 'assets/images/ent_stories.png'},
         ];
       case 'Songs & Music':
         return [
-          {'title': 'ABC Song', 'image': 'assets/images/song_abc.png'},
-          {'title': 'Baby Shark', 'image': 'assets/images/song_shark.png'},
-          {'title': 'Twinkle Star', 'image': 'assets/images/song_star.png'},
+          {'title': 'ABC Song', 'image': 'assets/images/ent_music.png'},
+          {'title': 'Baby Shark', 'image': 'assets/images/skill_singing.png'},
+          {'title': 'Twinkle Star', 'image': 'assets/images/skill_music.png'},
         ];
       default:
         return [
-          {'title': 'Item 1', 'image': 'assets/images/placeholder.png'},
-          {'title': 'Item 2', 'image': 'assets/images/placeholder.png'},
-          {'title': 'Item 3', 'image': 'assets/images/placeholder.png'},
+          {'title': 'Item 1', 'image': 'assets/images/ent_puppet_show.png'},
+          {'title': 'Item 2', 'image': 'assets/images/ent_stories.png'},
+          {'title': 'Item 3', 'image': 'assets/images/ent_teasers.png'},
         ];
     }
   }
@@ -610,7 +655,8 @@ class EntertainmentDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           categoryTitle,
-          style: TextStyle(color: AppColors.entertaining, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: AppColors.entertaining, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -636,7 +682,8 @@ class EntertainmentDetailScreen extends StatelessWidget {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  return _buildContentCard(context, item['title'], item['image']);
+                  return _buildContentCard(
+                      context, item['title'], item['image']);
                 },
               ),
             ),
@@ -646,7 +693,8 @@ class EntertainmentDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContentCard(BuildContext context, String title, String imagePath) {
+  Widget _buildContentCard(
+      BuildContext context, String title, String imagePath) {
     return InkWell(
       onTap: () {
         // Open video/content player if needed
@@ -711,7 +759,10 @@ class BehavioralScreen extends StatelessWidget {
     {'title': 'Tolerance', 'image': 'assets/images/behavior_tolerance.png'},
     {'title': 'Kindness', 'image': 'assets/images/behavior_kindness.png'},
     {'title': 'Cooperation', 'image': 'assets/images/behavior_cooperation.png'},
-    {'title': 'Responsibility', 'image': 'assets/images/behavior_responsibility.png'},
+    {
+      'title': 'Responsibility',
+      'image': 'assets/images/behavior_responsibility.png'
+    },
     {'title': 'Honesty', 'image': 'assets/images/behavior_honesty.png'},
     {'title': 'Patience', 'image': 'assets/images/behavior_patience.png'},
     {'title': 'Courage', 'image': 'assets/images/behavior_courage.png'},
@@ -759,7 +810,8 @@ class BehavioralScreen extends StatelessWidget {
                 itemCount: _values.length,
                 itemBuilder: (context, index) {
                   final value = _values[index];
-                  return _buildValueCard(context, value['title'], value['image']);
+                  return _buildValueCard(
+                      context, value['title'], value['image']);
                 },
               ),
             ),
@@ -841,7 +893,10 @@ class ValueDetailsScreen extends StatelessWidget {
     {'title': 'Art Expression', 'image': 'assets/images/method_art.png'},
     {'title': 'Social Bonding', 'image': 'assets/images/method_social.png'},
     {'title': 'Self Development', 'image': 'assets/images/method_self_dev.png'},
-    {'title': 'Social Justice Focus', 'image': 'assets/images/method_justice.png'},
+    {
+      'title': 'Social Justice Focus',
+      'image': 'assets/images/method_justice.png'
+    },
   ];
 
   @override
@@ -851,7 +906,8 @@ class ValueDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           valueTitle,
-          style: TextStyle(color: AppColors.behavioral, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: AppColors.behavioral, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -877,7 +933,8 @@ class ValueDetailsScreen extends StatelessWidget {
                 itemCount: _methods.length,
                 itemBuilder: (context, index) {
                   final method = _methods[index];
-                  return _buildMethodCard(context, method['title'], method['image']);
+                  return _buildMethodCard(
+                      context, method['title'], method['image']);
                 },
               ),
             ),
@@ -887,7 +944,8 @@ class ValueDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMethodCard(BuildContext context, String title, String imagePath) {
+  Widget _buildMethodCard(
+      BuildContext context, String title, String imagePath) {
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
@@ -979,7 +1037,8 @@ class MethodContentScreen extends ConsumerWidget {
                           color: AppColors.behavioral.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.arrow_back, color: AppColors.behavioral),
+                        child:
+                            Icon(Icons.arrow_back, color: AppColors.behavioral),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -992,7 +1051,6 @@ class MethodContentScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -1001,7 +1059,8 @@ class MethodContentScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: const [
-                      Icon(Icons.lightbulb_outline, color: AppColors.behavioral, size: 24),
+                      Icon(Icons.lightbulb_outline,
+                          color: AppColors.behavioral, size: 24),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -1017,7 +1076,6 @@ class MethodContentScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 30),
-
                 Text(
                   methodTitle,
                   style: TextStyle(
@@ -1027,7 +1085,6 @@ class MethodContentScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Align(
                   alignment: Alignment.center,
                   child: Column(
@@ -1105,13 +1162,41 @@ class SkillfulScreen extends StatelessWidget {
   const SkillfulScreen({super.key});
 
   final List<Map<String, dynamic>> _skills = const [
-    {'title': 'Cooking', 'image': 'assets/images/skill_cooking.png', 'desc': 'Yummy food'},
-    {'title': 'Drawing', 'image': 'assets/images/skill_drawing.png', 'desc': 'Express art'},
-    {'title': 'Coloring', 'image': 'assets/images/skill_coloring.png', 'desc': 'Use colors'},
-    {'title': 'Music', 'image': 'assets/images/skill_music.png', 'desc': 'Play instruments'},
-    {'title': 'Singing', 'image': 'assets/images/skill_singing.png', 'desc': 'Learn songs'},
-    {'title': 'Handcrafts', 'image': 'assets/images/skill_handcrafts.png', 'desc': 'Cut & Paste'},
-    {'title': 'Sports', 'image': 'assets/images/skill_sports.png', 'desc': 'Stay fit'},
+    {
+      'title': 'Cooking',
+      'image': 'assets/images/skill_cooking.png',
+      'desc': 'Yummy food'
+    },
+    {
+      'title': 'Drawing',
+      'image': 'assets/images/skill_drawing.png',
+      'desc': 'Express art'
+    },
+    {
+      'title': 'Coloring',
+      'image': 'assets/images/skill_coloring.png',
+      'desc': 'Use colors'
+    },
+    {
+      'title': 'Music',
+      'image': 'assets/images/skill_music.png',
+      'desc': 'Play instruments'
+    },
+    {
+      'title': 'Singing',
+      'image': 'assets/images/skill_singing.png',
+      'desc': 'Learn songs'
+    },
+    {
+      'title': 'Handcrafts',
+      'image': 'assets/images/skill_handcrafts.png',
+      'desc': 'Cut & Paste'
+    },
+    {
+      'title': 'Sports',
+      'image': 'assets/images/skill_sports.png',
+      'desc': 'Stay fit'
+    },
   ];
 
   @override
@@ -1160,6 +1245,15 @@ class SkillfulScreen extends StatelessWidget {
   Widget _buildSkillCard(BuildContext context, Map<String, dynamic> skill) {
     return InkWell(
       onTap: () {
+        if (skill['title'] == 'Coloring') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ColoringGalleryScreen(),
+            ),
+          );
+          return;
+        }
+
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => SkillDetailScreen(skillTitle: skill['title']),
@@ -1230,7 +1324,8 @@ class SkillfulScreen extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Icon(Icons.arrow_forward_ios, color: AppColors.skillful, size: 18),
+              child: Icon(Icons.arrow_forward_ios,
+                  color: AppColors.skillful, size: 18),
             ),
           ],
         ),
@@ -1256,17 +1351,33 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
 
   List<Map<String, dynamic>> _getAllVideos() {
     return [
-      {'title': '${widget.skillTitle} Basics', 'level': 'Beginner', 'image': ''},
+      {
+        'title': '${widget.skillTitle} Basics',
+        'level': 'Beginner',
+        'image': ''
+      },
       {'title': '${widget.skillTitle} Fun', 'level': 'Beginner', 'image': ''},
-      {'title': 'Advanced ${widget.skillTitle}', 'level': 'Advanced', 'image': ''},
-      {'title': 'Mastering ${widget.skillTitle}', 'level': 'Intermediate', 'image': ''},
+      {
+        'title': 'Advanced ${widget.skillTitle}',
+        'level': 'Advanced',
+        'image': ''
+      },
+      {
+        'title': 'Mastering ${widget.skillTitle}',
+        'level': 'Intermediate',
+        'image': ''
+      },
     ];
   }
 
   List<Map<String, dynamic>> get _filteredVideos {
     return _getAllVideos().where((video) {
-      final matchesQuery = video['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesLevel = _selectedLevel == "All" || video['level'] == _selectedLevel;
+      final matchesQuery = video['title']
+          .toString()
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase());
+      final matchesLevel =
+          _selectedLevel == "All" || video['level'] == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
   }
@@ -1283,7 +1394,8 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.skillful),
+                    icon: const Icon(Icons.arrow_back_ios_new,
+                        color: AppColors.skillful),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 10),
@@ -1308,11 +1420,15 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5)],
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.grey.withOpacity(0.1), blurRadius: 5)
+                  ],
                 ),
                 child: TextField(
                   onChanged: (value) {
@@ -1349,12 +1465,15 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.skillful : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSelected ? AppColors.skillful : Colors.grey[300]!,
+                            color: isSelected
+                                ? AppColors.skillful
+                                : Colors.grey[300]!,
                           ),
                         ),
                         child: Text(
@@ -1375,9 +1494,9 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               child: _filteredVideos.isEmpty
                   ? Center(
                       child: Text(
-                        "No activities found.",
-                        style: TextStyle(color: Colors.grey[500]),
-                      ))
+                      "No activities found.",
+                      style: TextStyle(color: Colors.grey[500]),
+                    ))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _filteredVideos.length,
@@ -1454,7 +1573,8 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.skillful.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -1506,7 +1626,8 @@ class SkillVideoScreen extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.skillful),
+                    icon: const Icon(Icons.arrow_back_ios,
+                        color: AppColors.skillful),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
@@ -1558,7 +1679,8 @@ class SkillVideoScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(25),
                               child: Container(
                                 color: Colors.grey[200],
-                                child: Icon(Icons.play_circle_outline, size: 60, color: Colors.grey[400]),
+                                child: Icon(Icons.play_circle_outline,
+                                    size: 60, color: Colors.grey[400]),
                               ),
                             ),
                             Container(
@@ -1575,7 +1697,8 @@ class SkillVideoScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: const Icon(Icons.play_arrow, color: Colors.white, size: 40),
+                              child: const Icon(Icons.play_arrow,
+                                  color: Colors.white, size: 40),
                             ),
                           ],
                         ),
@@ -1605,7 +1728,8 @@ class SkillVideoScreen extends StatelessWidget {
                                     color: Colors.orange[100],
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.star, color: Colors.orange[700]),
+                                  child: Icon(Icons.star,
+                                      color: Colors.orange[700]),
                                 ),
                                 const SizedBox(width: 10),
                                 const Text(
@@ -1635,12 +1759,16 @@ class SkillVideoScreen extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.skillful,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 18),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
                                 ),
                                 child: const Text(
                                   "I'm Done!",
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
@@ -1665,14 +1793,46 @@ class EducationalScreen extends StatelessWidget {
   const EducationalScreen({super.key});
 
   final List<Map<String, dynamic>> _subjects = const [
-    {'title': 'English', 'image': 'assets/images/edu_english.png', 'color': Colors.blueAccent},
-    {'title': 'Arabic', 'image': 'assets/images/edu_arabic.png', 'color': Colors.green},
-    {'title': 'Geography', 'image': 'assets/images/edu_geography.png', 'color': Colors.orange},
-    {'title': 'History', 'image': 'assets/images/edu_history.png', 'color': Colors.brown},
-    {'title': 'Science', 'image': 'assets/images/edu_science.png', 'color': Colors.purple},
-    {'title': 'Math', 'image': 'assets/images/edu_math.png', 'color': Colors.red},
-    {'title': 'Animals', 'image': 'assets/images/edu_animals.png', 'color': Colors.teal},
-    {'title': 'Plants', 'image': 'assets/images/edu_plants.png', 'color': Colors.lightGreen},
+    {
+      'title': 'English',
+      'image': 'assets/images/edu_english.png',
+      'color': Colors.blueAccent
+    },
+    {
+      'title': 'Arabic',
+      'image': 'assets/images/edu_arabic.png',
+      'color': Colors.green
+    },
+    {
+      'title': 'Geography',
+      'image': 'assets/images/edu_geography.png',
+      'color': Colors.orange
+    },
+    {
+      'title': 'History',
+      'image': 'assets/images/edu_history.png',
+      'color': Colors.brown
+    },
+    {
+      'title': 'Science',
+      'image': 'assets/images/edu_science.png',
+      'color': Colors.purple
+    },
+    {
+      'title': 'Math',
+      'image': 'assets/images/edu_math.png',
+      'color': Colors.red
+    },
+    {
+      'title': 'Animals',
+      'image': 'assets/images/edu_animals.png',
+      'color': Colors.teal
+    },
+    {
+      'title': 'Plants',
+      'image': 'assets/images/edu_plants.png',
+      'color': Colors.lightGreen
+    },
   ];
 
   @override
@@ -1741,7 +1901,8 @@ class EducationalScreen extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => EducationalSubjectScreen(subjectTitle: subject['title']),
+            builder: (context) =>
+                EducationalSubjectScreen(subjectTitle: subject['title']),
           ),
         );
       },
@@ -1800,7 +1961,8 @@ class EducationalSubjectScreen extends StatefulWidget {
   const EducationalSubjectScreen({super.key, required this.subjectTitle});
 
   @override
-  State<EducationalSubjectScreen> createState() => _EducationalSubjectScreenState();
+  State<EducationalSubjectScreen> createState() =>
+      _EducationalSubjectScreenState();
 }
 
 class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
@@ -1819,8 +1981,12 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
 
   List<Map<String, dynamic>> get _filteredLessons {
     return _allLessons.where((lesson) {
-      final matchesQuery = lesson['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesLevel = _selectedLevel == "All" || lesson['level'] == _selectedLevel;
+      final matchesQuery = lesson['title']
+          .toString()
+          .toLowerCase()
+          .contains(_searchQuery.toLowerCase());
+      final matchesLevel =
+          _selectedLevel == "All" || lesson['level'] == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
   }
@@ -1837,7 +2003,8 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.educational),
+                    icon: const Icon(Icons.arrow_back_ios_new,
+                        color: AppColors.educational),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(width: 10),
@@ -1862,11 +2029,15 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
-                   boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 5)],
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.grey.withOpacity(0.1), blurRadius: 5)
+                  ],
                 ),
                 child: TextField(
                   onChanged: (value) {
@@ -1903,12 +2074,16 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.educational : Colors.white,
+                          color:
+                              isSelected ? AppColors.educational : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isSelected ? AppColors.educational : Colors.grey[300]!,
+                            color: isSelected
+                                ? AppColors.educational
+                                : Colors.grey[300]!,
                           ),
                         ),
                         child: Text(
@@ -1929,9 +2104,9 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
               child: _filteredLessons.isEmpty
                   ? Center(
                       child: Text(
-                        "No lessons found.",
-                        style: TextStyle(color: Colors.grey[500]),
-                      ))
+                      "No lessons found.",
+                      style: TextStyle(color: Colors.grey[500]),
+                    ))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _filteredLessons.length,
@@ -2010,7 +2185,8 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.educational.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -2030,7 +2206,8 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: Icon(Icons.play_circle_outline, color: AppColors.educational, size: 32),
+              child: Icon(Icons.play_circle_outline,
+                  color: AppColors.educational, size: 32),
             ),
           ],
         ),
@@ -2044,7 +2221,8 @@ class LessonDetailScreen extends StatefulWidget {
   final String lessonTitle;
   final String? lessonImage;
 
-  const LessonDetailScreen({super.key, required this.lessonTitle, this.lessonImage});
+  const LessonDetailScreen(
+      {super.key, required this.lessonTitle, this.lessonImage});
 
   @override
   State<LessonDetailScreen> createState() => _LessonDetailScreenState();
@@ -2063,7 +2241,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.educational),
+                    icon: const Icon(Icons.arrow_back_ios,
+                        color: AppColors.educational),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
@@ -2117,7 +2296,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 color: Colors.indigo[50],
                                 width: double.infinity,
                                 height: double.infinity,
-                                child: const Icon(Icons.play_circle_outline, size: 60, color: Colors.grey),
+                                child: const Icon(Icons.play_circle_outline,
+                                    size: 60, color: Colors.grey),
                               ),
                             ),
                             Container(
@@ -2127,7 +2307,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 color: Colors.white.withOpacity(0.9),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.play_arrow, color: AppColors.educational, size: 40),
+                              child: const Icon(Icons.play_arrow,
+                                  color: AppColors.educational, size: 40),
                             ),
                           ],
                         ),
@@ -2155,10 +2336,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: AppColors.educational.withOpacity(0.15),
+                                    color:
+                                        AppColors.educational.withOpacity(0.15),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.quiz, color: AppColors.educational),
+                                  child: const Icon(Icons.quiz,
+                                      color: AppColors.educational),
                                 ),
                                 const SizedBox(width: 10),
                                 const Text(
@@ -2195,13 +2378,17 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                 icon: const Icon(Icons.play_circle_fill),
                                 label: const Text(
                                   "Start Quiz",
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.educational,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
                                 ),
                               ),
                             ),
@@ -2271,7 +2458,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
               Icon(Icons.celebration, color: Colors.orange, size: 28),
@@ -2345,7 +2533,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                         color: AppColors.educational.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.star, color: AppColors.educational),
+                      child:
+                          const Icon(Icons.star, color: AppColors.educational),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -2376,7 +2565,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                 child: LinearProgressIndicator(
                   value: (_currentQuestionIndex + 1) / _quizData.length,
                   backgroundColor: Colors.orange[100],
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.educational),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.educational),
                   minHeight: 8,
                 ),
               ),
@@ -2466,8 +2656,11 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                     ),
                   ),
                   child: Text(
-                    _currentQuestionIndex < _quizData.length - 1 ? 'Next Question' : 'Finish',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    _currentQuestionIndex < _quizData.length - 1
+                        ? 'Next Question'
+                        : 'Finish',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

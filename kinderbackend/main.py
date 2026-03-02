@@ -1,9 +1,11 @@
 from typing import Optional, List
 import logging
 import logging.handlers
+import time
 from fastapi import FastAPI, Depends, HTTPException, Header
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from sqlalchemy import inspect, func
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from datetime import datetime, date
 from jose import jwt, JWTError
@@ -51,10 +53,25 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
-    ensure_user_columns()
-    ensure_child_columns()
-    ensure_parental_controls_columns()
+    run_startup_db_migrations()
+
+
+def run_startup_db_migrations():
+    _run_with_db_lock_retry(lambda: Base.metadata.create_all(bind=engine))
+    _run_with_db_lock_retry(ensure_user_columns)
+    _run_with_db_lock_retry(ensure_child_columns)
+    _run_with_db_lock_retry(ensure_parental_controls_columns)
+
+
+def _run_with_db_lock_retry(action, attempts: int = 6, delay_seconds: float = 0.35):
+    for i in range(attempts):
+        try:
+            return action()
+        except OperationalError as exc:
+            # SQLite can briefly lock during concurrent startup/import cycles.
+            if "database is locked" not in str(exc).lower() or i == attempts - 1:
+                raise
+            time.sleep(delay_seconds * (i + 1))
 
 
 def ensure_user_columns():
@@ -641,9 +658,3 @@ app.include_router(content_router)
 app.include_router(support_router)
 app.include_router(features_router)
 app.include_router(parental_controls_router)
-
-# Ensure database schema is ready even if the startup event is skipped (e.g., some tests).
-Base.metadata.create_all(bind=engine)
-ensure_user_columns()
-ensure_child_columns()
-ensure_parental_controls_columns()
