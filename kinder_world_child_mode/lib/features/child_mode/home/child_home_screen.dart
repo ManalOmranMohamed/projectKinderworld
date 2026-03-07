@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
@@ -9,11 +8,16 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAVIGATION SHELL — wraps all child tabs with the premium bottom nav bar
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ChildHomeScreen extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
-  
+
   const ChildHomeScreen({
     super.key,
     required this.navigationShell,
@@ -23,7 +27,7 @@ class ChildHomeScreen extends ConsumerStatefulWidget {
   ConsumerState<ChildHomeScreen> createState() => _ChildHomeScreenState();
 }
 
-class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen> 
+class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -33,17 +37,12 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
+    _fadeAnimation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeIn,
-    ));
-    
+      curve: Curves.easeOut,
+    );
     _controller.forward();
   }
 
@@ -56,86 +55,138 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
   void _onTap(int index) {
     widget.navigationShell.goBranch(
       index,
-      initialLocation: true,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: child,
-        );
-      },
+    return FadeTransition(
+      opacity: _fadeAnimation,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: widget.navigationShell,
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -5),
-              ),
-            ],
+        bottomNavigationBar: _ChildBottomNav(
+          currentIndex: widget.navigationShell.currentIndex,
+          onTap: _onTap,
+          colors: colors,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOTTOM NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ChildBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final ColorScheme colors;
+
+  const _ChildBottomNav({
+    required this.currentIndex,
+    required this.onTap,
+    required this.colors,
+  });
+
+  static const _items = [
+    _NavItem(icon: Icons.home_rounded, label: 'Home'),
+    _NavItem(icon: Icons.auto_stories_rounded, label: 'Learn'),
+    _NavItem(icon: Icons.sports_esports_rounded, label: 'Play'),
+    _NavItem(icon: Icons.smart_toy_rounded, label: 'AI Buddy'),
+    _NavItem(icon: Icons.face_rounded, label: 'Profile'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.home, 'Home'),
-                  _buildNavItem(1, Icons.toys, 'Explore'),
-                  _buildNavItem(2, Icons.emoji_emotions, 'Fun'),
-                  _buildNavItem(3, Icons.psychology, 'AI Buddy'),
-                  _buildNavItem(4, Icons.person, 'Profile'),
-                ],
-              ),
-            ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            children: List.generate(_items.length, (i) {
+              return _NavItemWidget(
+                item: _items[i],
+                isSelected: currentIndex == i,
+                onTap: () => onTap(i),
+                colors: colors,
+              );
+            }),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = widget.navigationShell.currentIndex == index;
-    final colors = Theme.of(context).colorScheme;
+class _NavItem {
+  final IconData icon;
+  final String label;
+  const _NavItem({required this.icon, required this.label});
+}
+
+class _NavItemWidget extends StatelessWidget {
+  final _NavItem item;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ColorScheme colors;
+
+  const _NavItemWidget({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final color = isSelected ? colors.primary : colors.onSurfaceVariant;
-    
-    return GestureDetector(
-      onTap: () => _onTap(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              isSelected ? colors.primary.withValues(alpha: 0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: AppConstants.iconSize,
-              color: color,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.symmetric(
+                horizontal: isSelected ? 14 : 8,
+                vertical: 5,
               ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colors.primary.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(item.icon, size: 22, color: color),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight:
+                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+              ),
+              child: Text(item.label),
             ),
           ],
         ),
@@ -144,7 +195,10 @@ class _ChildHomeScreenState extends ConsumerState<ChildHomeScreen>
   }
 }
 
-// Child Home Content (separate widget for the home page)
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME CONTENT — the actual home tab page
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ChildHomeContent extends ConsumerStatefulWidget {
   const ChildHomeContent({super.key});
 
@@ -158,21 +212,23 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   @override
   void initState() {
     super.initState();
-    // Load today's progress when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final childProfile = ref.read(currentChildProvider);
       if (childProfile != null) {
-        ref.read(progressControllerProvider.notifier).loadTodayProgress(childProfile.id);
+        ref
+            .read(progressControllerProvider.notifier)
+            .loadTodayProgress(childProfile.id);
       }
     });
   }
+
+  // ── loading / error states ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final sessionState = ref.watch(childSessionControllerProvider);
     final childProfile = sessionState.childProfile;
 
-    // Show loading state
     if (sessionState.isLoading) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -184,43 +240,20 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
       );
     }
 
-    // Show error state
     if (sessionState.error != null || childProfile == null) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 80,
-                  color: AppColors.error,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  sessionState.error ?? 'No active child session',
-                  style: TextStyle(
-                    fontSize: AppConstants.fontSize,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    context.go('/child/login');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                  child: const Text('Go to Login'),
-                ),
-              ],
+            child: ChildEmptyState(
+              emoji: '🔒',
+              title: sessionState.error ?? 'No active child session',
+              subtitle: 'Please sign in to continue your adventure!',
+              action: ElevatedButton(
+                onPressed: () => context.go('/child/login'),
+                child: const Text('Go to Login'),
+              ),
             ),
           ),
         ),
@@ -229,125 +262,93 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
     return CustomScrollView(
       slivers: [
-        // App Bar
+        // ── Compact header bar ──────────────────────────────────────────
         SliverAppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           floating: true,
-          title: const ChildHeader(
-            compact: true,
-            padding: EdgeInsets.zero,
-          ),
+          title: const ChildHeader(compact: true, padding: EdgeInsets.zero),
           actions: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    iconSize: 20,
-                    icon: Icon(
-                      Icons.color_lens_outlined,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ChildThemeScreen(),
-                        ),
+            Consumer(builder: (context, ref, _) {
+              final themeState = ref.watch(themeControllerProvider);
+              final isDark = themeState.mode == ThemeMode.dark;
+              return IconButton(
+                visualDensity: VisualDensity.compact,
+                iconSize: 20,
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                onPressed: () {
+                  ref.read(themeControllerProvider.notifier).setMode(
+                        isDark ? ThemeMode.light : ThemeMode.dark,
                       );
-                    },
-                  ),
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final themeState = ref.watch(themeControllerProvider);
-                      final isDark = themeState.mode == ThemeMode.dark;
-                      return IconButton(
-                        visualDensity: VisualDensity.compact,
-                        iconSize: 20,
-                        icon: Icon(
-                          isDark ? Icons.light_mode : Icons.dark_mode,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        onPressed: () {
-                          ref.read(themeControllerProvider.notifier).setMode(
-                                isDark ? ThemeMode.light : ThemeMode.dark,
-                              );
-                        },
-                      );
-                    },
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    iconSize: 20,
-                    icon: Icon(
-                      Icons.settings,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ChildSettingsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          MoodTypes.getEmoji(childProfile.currentMood ?? MoodTypes.happy),
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _getMoodLabel(childProfile.currentMood ?? MoodTypes.happy),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                },
+              );
+            }),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 20,
+              icon: Icon(
+                Icons.palette_rounded,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ChildThemeScreen()),
+                );
+              },
             ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              iconSize: 20,
+              icon: Icon(
+                Icons.settings_rounded,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const ChildSettingsScreen()),
+                );
+              },
+            ),
+            const SizedBox(width: 4),
           ],
         ),
-        
-        // Content
+
+        // ── Main scrollable content ─────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Progress Overview
-                _buildProgressOverview(childProfile),
+                const SizedBox(height: 8),
+
+                // 1. Hero greeting + XP
+                _buildHeroSection(childProfile),
                 const SizedBox(height: 24),
-                
-                // Continue Learning
+
+                // 2. Stats row
+                _buildStatsRow(childProfile),
+                const SizedBox(height: 24),
+
+                // 3. Continue Learning
                 _buildContinueLearning(),
                 const SizedBox(height: 24),
-                
-                // Daily Goal
+
+                // 4. Daily Goal
                 _buildDailyGoal(childProfile),
                 const SizedBox(height: 24),
-                
-                // My Activities History
+
+                // 5. My Activities History
                 _buildMyActivitiesHistory(),
                 const SizedBox(height: 24),
-                
-                // Activity of the Day
+
+                // 6. Activity of the Day
                 _buildActivityOfTheDay(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 48),
               ],
             ),
           ),
@@ -356,82 +357,102 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
-  String _getMoodLabel(String mood) {
-    switch (mood) {
-      case MoodTypes.happy:
-        return 'Happy';
-      case MoodTypes.sad:
-        return 'Sad';
-      case MoodTypes.excited:
-        return 'Excited';
-      case MoodTypes.tired:
-        return 'Tired';
-      case MoodTypes.angry:
-        return 'Angry';
-      case MoodTypes.calm:
-        return 'Calm';
-      default:
-        return 'Good';
-    }
-  }
+  // ── HERO SECTION ───────────────────────────────────────────────────────────
 
-  Widget _buildProgressOverview(ChildProfile child) {
-    return Container(
+  Widget _buildHeroSection(ChildProfile child) {
+    final colors = Theme.of(context).colorScheme;
+    final firstName = child.name.split(' ').first;
+    final greeting = childTimeGreeting();
+    final currentXpInLevel = child.xp % 1000;
+
+    return KinderCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      gradientColors: [
+        colors.primary,
+        colors.primary.withValues(alpha: 0.75),
+      ],
+      gradientBegin: Alignment.topLeft,
+      gradientEnd: Alignment.bottomRight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Your Progress',
-            style: TextStyle(
-              fontSize: AppConstants.fontSize,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 20),
-          
+          // Greeting row + streak badge
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildProgressItem(
-                'Level ${child.level}',
-                '${child.xpProgress}/1000 XP',
-                AppColors.xpColor,
-                Icons.star,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ChildLevelsScreen(
-                        currentLevel: child.level,
-                        coins: child.xpProgress.round(),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      greeting,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 2),
+                    Text(
+                      firstName,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _motivationalLine(child),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              _buildProgressItem(
-                '${child.streak}',
-                'Day Streak',
-                AppColors.streakColor,
-                Icons.local_fire_department,
+              ChildStreakBadge(streak: child.streak),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // XP bar
+          Row(
+            children: [
+              Text(
+                'Level ${child.level}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white70,
+                ),
               ),
-              _buildProgressItem(
-                '${child.activitiesCompleted}',
-                'Activities',
-                AppColors.success,
-                Icons.check_circle,
+              const SizedBox(width: 10),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: child.xpProgress.clamp(0.0, 1.0),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      ChildColors.xpGold,
+                    ),
+                    minHeight: 8,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '⭐ $currentXpInLevel XP',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: ChildColors.xpGold,
+                ),
               ),
             ],
           ),
@@ -440,124 +461,124 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
-  Widget _buildProgressItem(
-    String value,
-    String label,
-    Color color,
-    IconData icon, {
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
+  String _motivationalLine(ChildProfile child) {
+    if (child.streak >= 7) return '🏆 7+ day streak — you\'re on fire!';
+    if (child.streak >= 3) return '⚡ ${child.streak} days strong, keep going!';
+    if (child.activitiesCompleted >= 10) {
+      return '🎯 ${child.activitiesCompleted} activities completed — amazing!';
+    }
+    return '🚀 Ready for today\'s adventure?';
+  }
+
+  // ── STATS ROW ──────────────────────────────────────────────────────────────
+
+  Widget _buildStatsRow(ChildProfile child) {
+    final currentXpInLevel = child.xp % 1000;
+    return KinderCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Icon(
-              icon,
-              size: 30,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: AppConstants.fontSize,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
+          ChildStatBubble(
+            value: 'Lv.${child.level}',
+            label: 'Level',
+            icon: Icons.star_rounded,
+            color: ChildColors.xpGold,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ChildLevelsScreen(
+                  currentLevel: child.level,
+                  coins: currentXpInLevel,
+                ),
+              ),
             ),
           ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          ChildStatBubble(
+            value: '${child.streak}',
+            label: 'Streak',
+            icon: Icons.local_fire_department_rounded,
+            color: ChildColors.streakFire,
+          ),
+          ChildStatBubble(
+            value: '${child.activitiesCompleted}',
+            label: 'Done',
+            icon: Icons.check_circle_rounded,
+            color: ChildColors.successGreen,
           ),
         ],
       ),
     );
   }
 
+  // ── CONTINUE LEARNING ──────────────────────────────────────────────────────
+
   Widget _buildContinueLearning() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Continue Learning',
-          style: TextStyle(
-            fontSize: AppConstants.fontSize,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 16),
-        
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.educational.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.educational.withValues(alpha: 0.3)),
-          ),
+        const ChildSectionHeader(title: 'Continue Learning'),
+        const SizedBox(height: 12),
+        KinderCard(
+          onTap: () => context.go('/child/learn'),
+          gradientColors: [
+            ChildColors.learningBlue,
+            ChildColors.learningBlue.withValues(alpha: 0.75),
+          ],
+          padding: const EdgeInsets.all(18),
           child: Row(
             children: [
               Container(
-                width: 60,
-                height: 60,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.educational.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
-                  Icons.school,
+                  Icons.auto_stories_rounded,
                   size: 30,
-                  color: AppColors.educational,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(width: 16),
-              
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Start Learning',
+                    const Text(
+                      'Explore Lessons',
                       style: TextStyle(
-                        fontSize: AppConstants.fontSize,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
+                    const SizedBox(height: 3),
                     Text(
-                      'Explore new topics and activities',
+                      'New topics and activities await!',
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
                 ),
               ),
-              
-              ElevatedButton(
-                onPressed: () {
-                  context.go('/child/learn');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.educational,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Go!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
                 ),
-                child: const Text('Start'),
               ),
             ],
           ),
@@ -566,69 +587,105 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
+  // ── DAILY GOAL ─────────────────────────────────────────────────────────────
+
   Widget _buildDailyGoal(ChildProfile child) {
     return FutureBuilder<List<ProgressRecord>>(
-      future: ref.read(progressControllerProvider.notifier).loadTodayProgress(child.id),
+      future: ref
+          .read(progressControllerProvider.notifier)
+          .loadTodayProgress(child.id),
       builder: (context, snapshot) {
-        final todayActivities = snapshot.hasData ? snapshot.data!.length : 0;
-        const targetActivities = 3; // Default daily goal
-        final progress = targetActivities > 0 ? todayActivities / targetActivities : 0.0;
-        final clampedProgress = progress > 1.0 ? 1.0 : progress;
+        final done = snapshot.hasData ? snapshot.data!.length : 0;
+        const target = 3;
+        final progress = (done / target).clamp(0.0, 1.0);
+        final isComplete = done >= target;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Daily Goal',
-              style: TextStyle(
-                fontSize: AppConstants.fontSize,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+            ChildSectionHeader(
+              title: isComplete ? 'Daily Goal ✅' : 'Daily Goal',
             ),
-            const SizedBox(height: 16),
-            
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-              ),
+            const SizedBox(height: 12),
+            KinderCard(
+              gradientColors: isComplete
+                  ? [
+                      ChildColors.successGreen,
+                      ChildColors.successGreen.withValues(alpha: 0.75),
+                    ]
+                  : null,
+              padding: const EdgeInsets.all(18),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Complete $targetActivities activities',
+                        isComplete
+                            ? '🎉 Goal complete!'
+                            : 'Complete $target activities today',
                         style: TextStyle(
                           fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                          color: isComplete
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      Text(
-                        '$todayActivities/$targetActivities',
-                      style: const TextStyle(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isComplete
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : ChildColors.successGreen
+                                  .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$done/$target',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: isComplete
+                                ? Colors.white
+                                : ChildColors.successGreen,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  
+                  const SizedBox(height: 14),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
-                      value: clampedProgress,
-                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
-                      minHeight: 8,
+                      value: progress,
+                      backgroundColor: isComplete
+                          ? Colors.white.withValues(alpha: 0.25)
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isComplete
+                            ? Colors.white
+                            : ChildColors.successGreen,
+                      ),
+                      minHeight: 10,
                     ),
                   ),
+                  if (isComplete) ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      '+ 50 XP bonus earned!',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: ChildColors.xpGold,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -638,50 +695,56 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
+  // ── ACTIVITIES HISTORY ─────────────────────────────────────────────────────
+
   Widget _buildMyActivitiesHistory() {
     final axes = [
       const _AxisHistory(
         index: 0,
-        label: 'Behavior',
-        color: AppColors.behavioral,
-        icon: Icons.favorite,
+        label: 'Kindness',
+        emoji: '💖',
+        color: ChildColors.kindnessPink,
+        icon: Icons.favorite_rounded,
         items: [
-          _HistoryItem(title: 'Sharing Stars', subtitle: 'Today - 8 min', xp: 30),
-          _HistoryItem(title: 'Kind Words', subtitle: 'Yesterday - 6 min', xp: 20),
-          _HistoryItem(title: 'Helping Hands', subtitle: '2 days ago - 10 min', xp: 40),
+          _HistoryItem(title: 'Sharing Stars', subtitle: 'Today · 8 min', xp: 30),
+          _HistoryItem(title: 'Kind Words', subtitle: 'Yesterday · 6 min', xp: 20),
+          _HistoryItem(title: 'Helping Hands', subtitle: '2 days ago · 10 min', xp: 40),
         ],
       ),
       const _AxisHistory(
         index: 1,
         label: 'Learning',
-        color: AppColors.educational,
-        icon: Icons.school,
+        emoji: '📚',
+        color: ChildColors.learningBlue,
+        icon: Icons.school_rounded,
         items: [
-          _HistoryItem(title: 'Numbers Adventure', subtitle: 'Today - 12 min', xp: 45),
-          _HistoryItem(title: 'Color Quest', subtitle: 'Yesterday - 7 min', xp: 25),
-          _HistoryItem(title: 'Story Time', subtitle: '2 days ago - 9 min', xp: 35),
+          _HistoryItem(title: 'Numbers Adventure', subtitle: 'Today · 12 min', xp: 45),
+          _HistoryItem(title: 'Color Quest', subtitle: 'Yesterday · 7 min', xp: 25),
+          _HistoryItem(title: 'Story Time', subtitle: '2 days ago · 9 min', xp: 35),
         ],
       ),
       const _AxisHistory(
         index: 2,
         label: 'Skills',
-        color: AppColors.skillful,
-        icon: Icons.extension,
+        emoji: '🧩',
+        color: ChildColors.skillPurple,
+        icon: Icons.extension_rounded,
         items: [
-          _HistoryItem(title: 'Puzzle Builder', subtitle: 'Today - 5 min', xp: 18),
-          _HistoryItem(title: 'Shape Match', subtitle: 'Yesterday - 8 min', xp: 28),
-          _HistoryItem(title: 'Memory Game', subtitle: '2 days ago - 11 min', xp: 38),
+          _HistoryItem(title: 'Puzzle Builder', subtitle: 'Today · 5 min', xp: 18),
+          _HistoryItem(title: 'Shape Match', subtitle: 'Yesterday · 8 min', xp: 28),
+          _HistoryItem(title: 'Memory Game', subtitle: '2 days ago · 11 min', xp: 38),
         ],
       ),
       const _AxisHistory(
         index: 3,
         label: 'Fun',
-        color: AppColors.entertaining,
-        icon: Icons.music_note,
+        emoji: '🎵',
+        color: ChildColors.funCyan,
+        icon: Icons.music_note_rounded,
         items: [
-          _HistoryItem(title: 'Dance Party', subtitle: 'Today - 6 min', xp: 22),
-          _HistoryItem(title: 'Sing Along', subtitle: 'Yesterday - 5 min', xp: 18),
-          _HistoryItem(title: 'Magic Show', subtitle: '2 days ago - 9 min', xp: 32),
+          _HistoryItem(title: 'Dance Party', subtitle: 'Today · 6 min', xp: 22),
+          _HistoryItem(title: 'Sing Along', subtitle: 'Yesterday · 5 min', xp: 18),
+          _HistoryItem(title: 'Magic Show', subtitle: '2 days ago · 9 min', xp: 32),
         ],
       ),
     ];
@@ -691,34 +754,38 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'My Activities',
-          style: TextStyle(
-            fontSize: AppConstants.fontSize,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 16),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(axes.length, (index) {
-              final axis = axes[index];
-              final isSelected = index == _selectedAxisIndex;
-              return Padding(
-                padding: EdgeInsets.only(right: index == axes.length - 1 ? 0 : 12),
-                child: _buildAxisChip(axis, isSelected),
+        const ChildSectionHeader(title: 'My Activities'),
+        const SizedBox(height: 12),
+
+        // Category chips
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: axes.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final axis = axes[i];
+              return ChildCategoryChip(
+                label: axis.label,
+                emoji: axis.emoji,
+                color: axis.color,
+                isSelected: i == _selectedAxisIndex,
+                onTap: () => setState(() => _selectedAxisIndex = i),
               );
-            }),
+            },
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+
+        // History cards
         Column(
-          children: List.generate(selectedAxis.items.length, (index) {
-            final item = selectedAxis.items[index];
+          children: List.generate(selectedAxis.items.length, (i) {
+            final item = selectedAxis.items[i];
             return Padding(
-              padding: EdgeInsets.only(bottom: index == selectedAxis.items.length - 1 ? 0 : 12),
+              padding: EdgeInsets.only(
+                bottom: i == selectedAxis.items.length - 1 ? 0 : 10,
+              ),
               child: _buildHistoryCard(item, selectedAxis),
             );
           }),
@@ -727,77 +794,21 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
-  Widget _buildAxisChip(_AxisHistory axis, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedAxisIndex = axis.index;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? axis.color.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? axis.color : Theme.of(context).colorScheme.surfaceContainerHighest,
-            width: 1.2,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: axis.color.withValues(alpha: 0.15),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(axis.icon, size: 18, color: isSelected ? axis.color : Theme.of(context).colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Text(
-              axis.label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? axis.color : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildHistoryCard(_HistoryItem item, _AxisHistory axis) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return KinderCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: axis.color.withValues(alpha: 0.15),
+              color: axis.color.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(axis.icon, color: axis.color, size: 26),
+            child: Icon(axis.icon, color: axis.color, size: 24),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,15 +817,15 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   item.title,
                   style: TextStyle(
                     fontSize: AppConstants.fontSize,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   item.subtitle,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -822,16 +833,16 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: axis.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: axis.color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '+${item.xp} XP',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
                 color: axis.color,
               ),
             ),
@@ -841,177 +852,118 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     );
   }
 
+  // ── ACTIVITY OF THE DAY ────────────────────────────────────────────────────
+
   Widget _buildActivityOfTheDay() {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.secondary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ChildSectionHeader(title: 'Activity of the Day'),
+        const SizedBox(height: 12),
+        KinderCard(
+          onTap: () => context.go('/child/home/activity-of-day'),
+          gradientColors: [
+            const Color(0xFFFF9800),
+            const Color(0xFFFF6B35),
+          ],
+          gradientBegin: Alignment.topLeft,
+          gradientEnd: Alignment.bottomRight,
+          padding: const EdgeInsets.all(20),
+          child: Row(
             children: [
+              // Large emoji illustration
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 72,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
-                  Icons.star,
-                  color: AppColors.secondary,
-                  size: 20,
+                child: const Center(
+                  child: Text('💡', style: TextStyle(fontSize: 36)),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Explore New Activities',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Discover something amazing today!',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '⭐ +50 XP Bonus',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: ChildColors.xpGold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Activity of the Day',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+
+              // Start button
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  'Start',
                   style: TextStyle(
-                    fontSize: AppConstants.fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFFF6B35),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 360;
-              final iconSize = isNarrow ? 64.0 : 80.0;
-              final content = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Explore New Activities',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppConstants.fontSize,
-                      fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Discover something amazing!',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '+50 XP Bonus',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.xpColor,
-                    ),
-                  ),
-                ],
-              );
-
-              if (isNarrow) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: iconSize,
-                          height: iconSize,
-                          decoration: BoxDecoration(
-                            color: AppColors.secondary.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.lightbulb,
-                            size: 36,
-                            color: AppColors.secondary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: content),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.go('/child/home/activity-of-day');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.secondary,
-                          foregroundColor: colors.onSecondary,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Start Activity'),
-                      ),
-                    ),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Container(
-                    width: iconSize,
-                    height: iconSize,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.lightbulb,
-                      size: 40,
-                      color: AppColors.secondary,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(child: content),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.go('/child/home/activity-of-day');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.secondary,
-                      foregroundColor: colors.onSecondary,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Start Activity'),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA MODELS (local)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _AxisHistory {
   final int index;
   final String label;
+  final String emoji;
   final Color color;
   final IconData icon;
   final List<_HistoryItem> items;
@@ -1019,6 +971,7 @@ class _AxisHistory {
   const _AxisHistory({
     required this.index,
     required this.label,
+    required this.emoji,
     required this.color,
     required this.icon,
     required this.items,

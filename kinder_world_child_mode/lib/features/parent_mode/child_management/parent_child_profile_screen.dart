@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 
 class ParentChildProfileScreen extends StatelessWidget {
@@ -28,192 +27,276 @@ class ParentChildProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(child.name),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/parent/child-management');
+            }
+          },
+        ),
+        title: Text(
+          child.name,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.4)),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildAvatarCircle(
-                avatarId: child.avatar,
-                avatarPath: child.avatarPath,
-                size: 96,
-              ),
-              const SizedBox(height: 10),
-              PicturePasswordRow(
-                picturePassword: child.picturePassword,
-                size: 18,
-                showPlaceholders: true,
+              // ── Avatar + name header ─────────────────────────────────
+              ParentCard(
+                child: Column(
+                  children: [
+                    // Avatar with gradient ring
+                    Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                ParentColors.parentGreen,
+                                ParentColors.parentGreenLight,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(3),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: ClipOval(
+                              child: AvatarView(
+                                avatarId: child.avatar,
+                                avatarPath: _avatarAssets[child.avatar] ??
+                                    child.avatarPath,
+                                radius: 46,
+                                backgroundColor: ParentColors.parentGreen
+                                    .withValues(alpha: 0.12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Level badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                ParentColors.parentGreen,
+                                ParentColors.parentGreenLight,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: colors.surface, width: 2),
+                          ),
+                          child: Text(
+                            'Lv. ${child.level}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      child.name,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      child.age > 0
+                          ? '${l10n.yearsOld(child.age)} · ${l10n.level} ${child.level}'
+                          : '— · ${l10n.level} ${child.level}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Picture password dots
+                    PicturePasswordRow(
+                      picturePassword: child.picturePassword,
+                      size: 18,
+                      showPlaceholders: true,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
-              Text(
-                child.name,
-                style: textTheme.titleLarge?.copyWith(
-                  fontSize: AppConstants.largeFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                child.age > 0
-                    ? '${l10n.yearsOld(child.age)} - ${l10n.level} ${child.level}'
-                    : '— - ${l10n.level} ${child.level}',
-                style: textTheme.bodySmall?.copyWith(
-                  fontSize: 14,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
+
+              // ── Stats row ────────────────────────────────────────────
+              Row(
                 children: [
-                  _buildStatChip(
-                    '${child.activitiesCompleted} ${l10n.activities}',
-                    AppColors.success,
+                  Expanded(
+                    child: ParentStatCard(
+                      value: '${child.activitiesCompleted}',
+                      label: l10n.activities,
+                      icon: Icons.check_circle_rounded,
+                      color: ParentColors.parentGreenLight,
+                    ),
                   ),
-                  _buildStatChip(
-                    '${child.totalTimeSpent} ${l10n.timeSpent}',
-                    AppColors.info,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ParentStatCard(
+                      value: '${child.totalTimeSpent}m',
+                      label: l10n.timeSpent,
+                      icon: Icons.timer_rounded,
+                      color: ParentColors.infoBlue,
+                    ),
                   ),
-                  _buildStatChip(
-                    '${child.streak} ${l10n.dailyStreak}',
-                    AppColors.streakColor,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ParentStatCard(
+                      value: '${child.streak}',
+                      label: l10n.dailyStreak,
+                      icon: Icons.local_fire_department_rounded,
+                      color: ParentColors.streakOrange,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              if (child.interests.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colors.shadow.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+              const SizedBox(height: 16),
+
+              // ── XP progress ──────────────────────────────────────────
+              ParentCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ParentSectionHeader(title: 'XP Progress'),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${child.xp % 1000} XP',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: ParentColors.xpGold,
+                          ),
+                        ),
+                        Text(
+                          '${1000 - (child.xp % 1000)} to next level',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: child.xpProgress.clamp(0.0, 1.0),
+                        backgroundColor: colors.surfaceContainerHighest,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          ParentColors.xpGold,
+                        ),
+                        minHeight: 10,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // ── Interests ────────────────────────────────────────────
+              if (child.interests.isNotEmpty)
+                ParentCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        l10n.childInterests,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      ParentSectionHeader(title: l10n.childInterests),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: child.interests
-                            .map((interest) => _buildInterestChip(interest))
+                            .map((interest) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: ParentColors.parentGreen
+                                        .withValues(alpha: 0.10),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    interest,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: ParentColors.parentGreen,
+                                    ),
+                                  ),
+                                ))
                             .toList(),
                       ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 24),
+              if (child.interests.isNotEmpty) const SizedBox(height: 16),
+
+              // ── Reports CTA ──────────────────────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 52,
-                child: ElevatedButton.icon(
+                child: FilledButton.icon(
                   onPressed: () =>
                       context.push('/parent/reports', extra: child.id),
-                  icon: const Icon(Icons.pie_chart),
+                  icon: const Icon(Icons.bar_chart_rounded, size: 20),
                   label: Text(l10n.activityReports),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: colors.onPrimary,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: ParentColors.parentGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
               ),
+              const SizedBox(height: 12),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAvatarCircle({
-    required String? avatarId,
-    required String? avatarPath,
-    required double size,
-  }) {
-    final resolvedAvatar = _avatarAssets[avatarId] ?? avatarPath;
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(size / 2),
-        border: Border.all(
-          color: AppColors.primary,
-          width: 2,
-        ),
-      ),
-      child: ClipOval(
-        child: AvatarView(
-          avatarId: avatarId,
-          avatarPath: resolvedAvatar,
-          radius: size / 2,
-          backgroundColor: Colors.transparent,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInterestChip(String interest) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        interest,
-        style: const TextStyle(
-          fontSize: 12,
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

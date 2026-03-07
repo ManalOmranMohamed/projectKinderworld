@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
@@ -17,6 +16,7 @@ import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/widgets/plan_guard.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/dashboard_theme_switch.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -293,6 +293,13 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return childrenById.values.toList();
   }
 
+  String _dashboardGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning — here\'s today\'s overview';
+    if (hour < 17) return 'Good afternoon — here\'s what\'s happening';
+    return 'Good evening — here\'s your daily summary';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -338,52 +345,58 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
 
                   return CustomScrollView(
                     slivers: [
-                      // App Bar
+                      // ── App Bar ───────────────────────────────────────
                       SliverAppBar(
                         backgroundColor:
                             Theme.of(context).scaffoldBackgroundColor,
                         elevation: 0,
                         floating: true,
+                        titleSpacing: 16,
                         title: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Parent Dashboard',
                               style: textTheme.titleLarge?.copyWith(
-                                fontSize: AppConstants.largeFontSize,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
                               ),
                             ),
                             Text(
-                              'Welcome back! Here\'s what\'s happening',
-                              style: textTheme.bodySmall?.copyWith(
-                                fontSize: 14,
+                              _dashboardGreeting(),
+                              style: TextStyle(
+                                fontSize: 12,
                                 color: colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                         actions: [
                           IconButton(
-                            icon: const Icon(Icons.settings),
-                            color: colors.onSurface,
-                            onPressed: () {
-                              context.go('/parent/settings');
-                            },
+                            icon: Icon(
+                              Icons.notifications_outlined,
+                              color: colors.onSurface,
+                            ),
+                            tooltip: 'Notifications',
+                            onPressed: () =>
+                                context.go('/parent/notifications'),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.notifications),
-                            color: colors.onSurface,
-                            onPressed: () {
-                              context.go('/parent/notifications');
-                            },
+                            icon: Icon(
+                              Icons.settings_outlined,
+                              color: colors.onSurface,
+                            ),
+                            tooltip: 'Settings',
+                            onPressed: () => context.go('/parent/settings'),
                           ),
                           Consumer(
                             builder: (context, ref, _) {
                               final themeMode =
                                   ref.watch(themeControllerProvider).mode;
                               return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: const EdgeInsets.only(right: 8),
                                 child: DashboardThemeSwitch(
                                   value: themeMode == ThemeMode.dark,
                                   onChanged: (isDark) {
@@ -459,42 +472,15 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   }
 
   Widget _buildChildrenOverview(List<ChildProfile> children) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     if (children.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.child_care, size: 64, color: colors.onSurfaceVariant),
-            const SizedBox(height: 16),
-            Text(
-              'No children added yet',
-              style: textTheme.titleMedium?.copyWith(
-                fontSize: AppConstants.fontSize,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add your first child to get started',
-              style: textTheme.bodySmall?.copyWith(
-                fontSize: 14,
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                context.go('/parent/child-management');
-              },
-              child: const Text('Add Child'),
-            ),
-          ],
+      return ParentEmptyState(
+        icon: Icons.child_care_outlined,
+        title: 'No children added yet',
+        subtitle: 'Add your first child to start tracking their learning journey.',
+        action: FilledButton.icon(
+          onPressed: () => context.go('/parent/child-management'),
+          icon: const Icon(Icons.add_rounded, size: 18),
+          label: const Text('Add Child'),
         ),
       );
     }
@@ -502,14 +488,13 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Your Children',
-          style: textTheme.titleMedium?.copyWith(
-            fontSize: AppConstants.fontSize,
-            fontWeight: FontWeight.bold,
-          ),
+        ParentSectionHeader(
+          title: 'Your Children',
+          subtitle: '${children.length} child${children.length == 1 ? '' : 'ren'} linked',
+          actionLabel: 'Manage',
+          onAction: () => context.go('/parent/child-management'),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         ...children.map((child) => _buildChildCard(context, child)),
       ],
     );
@@ -518,118 +503,207 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   Widget _buildChildCard(BuildContext context, ChildProfile child) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final ageLabel = child.age > 0 ? l10n.yearsOld(child.age) : '—';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          AvatarView(
-            avatarId: child.avatar,
-            avatarPath: child.avatarPath,
-            radius: 30,
-            backgroundColor: colors.primary.withValues(alpha: 0.2),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final xpFraction = child.xpProgress.clamp(0.0, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ParentCard(
+        onTap: () => context.go('/parent/reports'),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
               children: [
-                Text(
-                  child.name,
-                  style: textTheme.titleSmall?.copyWith(
-                    fontSize: AppConstants.fontSize,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$ageLabel • Level ${child.level}',
-                  style: textTheme.bodySmall?.copyWith(
-                    fontSize: 14,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                // Avatar
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    _buildInfoChip('${child.activitiesCompleted} activities', AppColors.success),
-                    _buildInfoChip('${child.totalTimeSpent} min today', AppColors.info),
-                    _buildInfoChip('${child.streak} day streak', AppColors.streakColor),
+                    AvatarView(
+                      avatarId: child.avatar,
+                      avatarPath: child.avatarPath,
+                      radius: 26,
+                      backgroundColor: colors.primary.withValues(alpha: 0.15),
+                    ),
+                    Positioned(
+                      bottom: -2,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'L${child.level}',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
+                ),
+                const SizedBox(width: 14),
+
+                // Name + meta
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              child.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (child.streak > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ParentColors.streakOrange
+                                    .withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department_rounded,
+                                    size: 13,
+                                    color: ParentColors.streakOrange,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${child.streak}d',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: ParentColors.streakOrange,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '$ageLabel · ${child.activitiesCompleted} activities · ${child.totalTimeSpent} min',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: colors.onSurfaceVariant,
                 ),
               ],
             ),
-          ),
-        ],
+
+            // XP bar
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text(
+                  'Level ${child.level}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: xpFraction,
+                      minHeight: 6,
+                      backgroundColor: colors.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${child.xp % 1000}/1000 XP',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: ParentColors.xpGold,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildQuickStats(List<ChildProfile> children) {
-    if (children.isEmpty) {
-      return const SizedBox();
-    }
-    final textTheme = Theme.of(context).textTheme;
+    if (children.isEmpty) return const SizedBox();
 
-    final totalTime = children.fold<int>(0, (sum, child) => sum + child.totalTimeSpent);
-    final totalActivities =
-        children.fold<int>(0, (sum, child) => sum + child.activitiesCompleted);
-    final avgXp = children.isEmpty
-        ? 0
-        : (children.fold<int>(0, (sum, child) => sum + child.xp) ~/ children.length);
+    final totalTime = children.fold<int>(0, (s, c) => s + c.totalTimeSpent);
+    final totalActivities = children.fold<int>(0, (s, c) => s + c.activitiesCompleted);
+    final avgXp = (children.fold<int>(0, (s, c) => s + c.xp) ~/
+        children.length.clamp(1, 9999));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Today\'s Overview',
-          style: textTheme.titleMedium?.copyWith(
-            fontSize: AppConstants.fontSize,
-            fontWeight: FontWeight.bold,
-          ),
+        const ParentSectionHeader(
+          title: "Today's Overview",
+          subtitle: 'Aggregated across all children',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
-              child: _buildStatCard(
-                'Total Time',
-                '$totalTime min',
-                Icons.timer,
-                AppColors.info,
+              child: ParentStatCard(
+                value: '$totalTime',
+                label: 'Minutes',
+                icon: Icons.timer_outlined,
+                color: ParentColors.infoBlue,
+                trend: '+12%',
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
-                'Activities',
-                '$totalActivities',
-                Icons.check_circle,
-                AppColors.success,
+              child: ParentStatCard(
+                value: '$totalActivities',
+                label: 'Activities',
+                icon: Icons.check_circle_outline_rounded,
+                color: ParentColors.parentGreen,
+                trend: '+5',
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
-                'Avg XP',
-                '$avgXp',
-                Icons.star,
-                AppColors.xpColor,
+              child: ParentStatCard(
+                value: '$avgXp',
+                label: 'Avg XP',
+                icon: Icons.star_outline_rounded,
+                color: ParentColors.xpGold,
               ),
             ),
           ],
@@ -638,90 +712,13 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: textTheme.titleMedium?.copyWith(
-              fontSize: AppConstants.fontSize,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            title,
-            style: textTheme.bodySmall?.copyWith(
-              fontSize: 12,
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   Widget _buildAiInsights(List<ChildProfile> children) {
-    if (children.isEmpty) {
-      return const SizedBox();
-    }
+    if (children.isEmpty) return const SizedBox();
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-      ),
+    return ParentCard(
+      backgroundColor: colors.primary.withValues(alpha: 0.05),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -731,38 +728,49 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.2),
+                  gradient: LinearGradient(
+                    colors: [colors.primary, colors.primary.withValues(alpha: 0.7)],
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.psychology, color: colors.primary, size: 20),
+                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
-              Text(
-                'AI Insights',
-                style: textTheme.titleMedium?.copyWith(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'AI Insights',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      'Premium analysis',
+                      style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+                    ),
+                  ],
                 ),
               ),
+              const ParentStatusBadge(status: ParentBadgeStatus.premium),
             ],
           ),
-          const SizedBox(height: 16),
-          
+          const SizedBox(height: 14),
           Text(
             _generateInsightMessage(children),
-            style: textTheme.bodySmall?.copyWith(
+            style: TextStyle(
               fontSize: 14,
               color: colors.onSurfaceVariant,
-              height: 1.5,
+              height: 1.6,
             ),
           ),
-          const SizedBox(height: 12),
-          
-          ElevatedButton(
-            onPressed: () {
-              context.go('/parent/reports');
-            },
-            child: const Text('View Detailed Report'),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.go('/parent/reports'),
+              icon: const Icon(Icons.bar_chart_rounded, size: 18),
+              label: const Text('View Full Report'),
+            ),
           ),
         ],
       ),
@@ -781,67 +789,57 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   }
 
   Widget _buildRecentActivities(List<ChildProfile> children) {
-    if (children.isEmpty) {
-      return const SizedBox();
-    }
+    if (children.isEmpty) return const SizedBox();
 
     return FutureBuilder<List<ProgressRecord>>(
       future: _getRecentActivitiesForAllChildren(children),
       builder: (context, snapshot) {
-        final activities = snapshot.data ?? [];
-        final displayActivities = activities.take(4).toList();
+        final displayActivities = (snapshot.data ?? []).take(4).toList();
+        final colors = Theme.of(context).colorScheme;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Activities',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: AppConstants.fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    context.go('/parent/reports');
-                  },
-                  child: const Text('View All'),
-                ),
-              ],
+            ParentSectionHeader(
+              title: 'Recent Activities',
+              actionLabel: 'View All',
+              onAction: () => context.go('/parent/reports'),
             ),
-            const SizedBox(height: 16),
-            
+            const SizedBox(height: 14),
             if (displayActivities.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'No recent activities',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+              ParentCard(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Icon(Icons.inbox_outlined,
+                        color: colors.onSurfaceVariant, size: 22),
+                    const SizedBox(width: 12),
+                    Text(
+                      'No recent activities yet',
+                      style: TextStyle(
+                          fontSize: 14, color: colors.onSurfaceVariant),
+                    ),
+                  ],
                 ),
               )
             else
-              Column(
-                children: displayActivities.map((record) {
-                  final child = children.firstWhere(
-                    (c) => c.id == record.childId,
-                    orElse: () => children.first,
-                  );
-                  return _buildActivityItem(
-                    '${child.name} completed activity',
-                    _formatTimeAgo(record.createdAt),
-                    AppColors.educational,
-                  );
-                }).toList(),
+              ParentCard(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  children: List.generate(displayActivities.length, (i) {
+                    final record = displayActivities[i];
+                    final child = children.firstWhere(
+                      (c) => c.id == record.childId,
+                      orElse: () => children.first,
+                    );
+                    final isLast = i == displayActivities.length - 1;
+                    return _buildActivityRow(
+                      child.name,
+                      _formatTimeAgo(record.createdAt),
+                      isLast: isLast,
+                    );
+                  }),
+                ),
               ),
           ],
         );
@@ -878,125 +876,128 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     return 'Just now';
   }
 
-  Widget _buildActivityItem(String text, String time, Color color) {
+  Widget _buildActivityRow(String childName, String time,
+      {required bool isLast}) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: ParentColors.parentGreen,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '$childName completed an activity',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-          Text(
-            time,
-            style: textTheme.bodySmall?.copyWith(
-              fontSize: 12,
-              color: colors.onSurfaceVariant,
-            ),
+        ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            indent: 36,
+            color: colors.outlineVariant.withValues(alpha: 0.4),
           ),
-        ],
-      ),
+      ],
     );
   }
 
   Widget _buildWeeklyProgressChart(List<ChildProfile> children) {
-    if (children.isEmpty) {
-      return const SizedBox();
-    }
+    if (children.isEmpty) return const SizedBox();
+
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    // Placeholder data — replace with real progress records in production
+    const weekData = [3, 5, 2, 4, 6, 3, 2];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    // Placeholder data - in real app, would calculate from progress records
-    final weekData = [3, 5, 2, 4, 6, 3, 2];
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+    return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Weekly Progress',
-            style: textTheme.titleMedium?.copyWith(
-              fontSize: AppConstants.fontSize,
-              fontWeight: FontWeight.bold,
-            ),
+          const ParentSectionHeader(
+            title: 'Weekly Activity',
+            subtitle: 'Activities completed per day',
           ),
           const SizedBox(height: 20),
-          
           SizedBox(
-            height: 200,
+            height: 180,
             child: BarChart(
               BarChartData(
-                barTouchData: BarTouchData(enabled: false),
+                barTouchData: BarTouchData(enabled: true),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: colors.outlineVariant.withValues(alpha: 0.4),
+                    strokeWidth: 1,
+                  ),
+                ),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        if (value.toInt() >= 0 && value.toInt() < days.length) {
-                          return Text(
-                            days[value.toInt()],
-                            style: textTheme.bodySmall?.copyWith(
+                      reservedSize: 28,
+                      getTitlesWidget: (value, _) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= days.length) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            days[i],
+                            style: TextStyle(
+                              fontSize: 11,
                               color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
                             ),
-                          );
-                        }
-                        return const Text('');
+                          ),
+                        );
                       },
                     ),
                   ),
                   leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                      sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                      sideTitles: SideTitles(showTitles: false)),
                   rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
-                barGroups: weekData.asMap().entries.map((entry) {
+                barGroups: weekData.asMap().entries.map((e) {
+                  final isToday = e.key == DateTime.now().weekday - 1;
                   return BarChartGroupData(
-                    x: entry.key,
+                    x: e.key,
                     barRods: [
                       BarChartRodData(
-                        toY: entry.value.toDouble(),
-                        color: AppColors.educational,
-                        width: 16,
+                        toY: e.value.toDouble(),
+                        color: isToday
+                            ? colors.primary
+                            : colors.primary.withValues(alpha: 0.35),
+                        width: 18,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(6),
+                        ),
                       ),
                     ],
                   );

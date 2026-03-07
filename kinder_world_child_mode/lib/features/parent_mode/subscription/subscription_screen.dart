@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/providers/subscription_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
-import 'package:kinder_world/core/widgets/themed_card.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
@@ -20,14 +20,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   bool _isProcessing = false;
   PlanTier? _processingTier;
 
-  String _planTitle(PlanTier tier) {
+  String _planTitle(PlanTier tier, AppLocalizations l10n) {
     switch (tier) {
       case PlanTier.free:
-        return 'Free Plan';
+        return l10n.basicFeaturesOnly;
       case PlanTier.premium:
-        return 'Premium Plan';
+        return l10n.subscriptionTitle;
       case PlanTier.familyPlus:
-        return 'Family Plan';
+        return l10n.bestForFamilies;
     }
   }
 
@@ -68,7 +68,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       await _applyPlan(tier);
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('${_planTitle(tier)} activated.')),
+        SnackBar(content: Text('${_planTitle(tier, AppLocalizations.of(context)!)} activated.')),
       );
     } finally {
       if (!mounted) return;
@@ -81,17 +81,21 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
     final plan =
         ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final isPremium = plan.tier != PlanTier.free;
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text('Subscription'),
+        backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -100,34 +104,53 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             }
           },
         ),
+        title: Text(
+          l10n.subscriptionTitle,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.4)),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-              
-              // Current Plan
-              ThemedCard(
-                padding: const EdgeInsets.all(20),
-                borderRadius: BorderRadius.circular(16),
-                surfaceColor: colors.secondaryContainer,
-                border: Border.all(color: colors.secondary),
+              // ── Current Plan Banner ─────────────────────────────────────
+              ParentCard(
+                backgroundColor: isPremium
+                    ? ParentColors.xpGold.withValues(alpha: 0.08)
+                    : colors.surfaceContainerHighest,
                 child: Row(
                   children: [
                     Container(
-                      width: 60,
-                      height: 60,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: colors.secondary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: (isPremium
+                                ? ParentColors.xpGold
+                                : colors.onSurfaceVariant)
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
-                        Icons.star,
-                        size: 30,
-                        color: colors.secondary,
+                        isPremium
+                            ? Icons.workspace_premium_rounded
+                            : Icons.lock_open_rounded,
+                        size: 26,
+                        color: isPremium
+                            ? ParentColors.xpGold
+                            : colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -136,313 +159,309 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _planTitle(plan.tier),
-                            style: textTheme.titleMedium?.copyWith(
-                              fontSize: AppConstants.fontSize,
-                              fontWeight: FontWeight.bold,
+                            _planTitle(plan.tier, l10n),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            'Subscription Active',
-                            style: textTheme.bodySmall?.copyWith(
-                              fontSize: 14,
+                            isPremium
+                                ? l10n.subscriptionActiveLabel
+                                : l10n.choosePlanLabel,
+                            style: TextStyle(
+                              fontSize: 13,
                               color: colors.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Active',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: colors.onPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                    if (isPremium)
+                      const ParentStatusBadge(status: ParentBadgeStatus.premium)
+                    else
+                      const ParentStatusBadge(status: ParentBadgeStatus.active),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ── What's Included ─────────────────────────────────────────
+              ParentCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ParentSectionHeader(title: l10n.yourPlanIncludes),
+                    const SizedBox(height: 16),
+                    _buildFeatureRow(
+                        Icons.people_rounded,
+                        l10n.planChildProfiles(plan.maxChildren),
+                        ParentColors.parentGreen),
+                    _buildFeatureRow(Icons.school_rounded,
+                        l10n.unlimitedActivities, ParentColors.infoBlue),
+                    _buildFeatureRow(Icons.bar_chart_rounded,
+                        l10n.advancedReportsLabel, ParentColors.activityPurple),
+                    _buildFeatureRow(Icons.psychology_rounded, l10n.aiInsights,
+                        ParentColors.parentGreenLight),
+                    _buildFeatureRow(Icons.download_rounded,
+                        l10n.offlineDownloadsLabel, ParentColors.streakOrange),
+                    _buildFeatureRow(Icons.support_agent_rounded,
+                        l10n.prioritySupportLabel, ParentColors.xpGold),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ── Available Plans ─────────────────────────────────────────
+              ParentSectionHeader(title: l10n.availablePlans),
+              const SizedBox(height: 12),
+
+              _buildPlanCard(
+                currentPlan: plan,
+                title: 'Free',
+                price: '\$0',
+                priceLabel: 'forever',
+                subtitle: l10n.basicFeaturesOnly,
+                features: [
+                  l10n.limitedActivities,
+                  l10n.oneChildProfile,
+                  l10n.advancedReportsLabel,
+                ],
+                tier: PlanTier.free,
+                accentColor: colors.onSurfaceVariant,
+                l10n: l10n,
+              ),
+              const SizedBox(height: 12),
+
+              _buildPlanCard(
+                currentPlan: plan,
+                title: 'Family',
+                price: '\$9.99',
+                priceLabel: '/ month',
+                subtitle: l10n.bestForFamilies,
+                features: [
+                  l10n.unlimitedActivities,
+                  l10n.upToThreeChildren,
+                  '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
+                  l10n.offlineDownloadsLabel,
+                  l10n.prioritySupportLabel,
+                ],
+                tier: PlanTier.familyPlus,
+                isRecommended: true,
+                accentColor: ParentColors.parentGreen,
+                l10n: l10n,
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(IconData icon, String text, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanCard({
+    required PlanInfo currentPlan,
+    required String title,
+    required String price,
+    required String priceLabel,
+    required String subtitle,
+    required List<String> features,
+    required PlanTier tier,
+    required Color accentColor,
+    required AppLocalizations l10n,
+    bool isRecommended = false,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final isCurrent = currentPlan.tier == tier;
+    final isProcessingThis = _processingTier == tier;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isRecommended
+              ? ParentColors.parentGreen
+              : colors.outlineVariant.withValues(alpha: 0.6),
+          width: isRecommended ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: isRecommended ? 0.10 : 0.05),
+            blurRadius: isRecommended ? 18 : 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Recommended badge
+            if (isRecommended)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: ParentColors.parentGreen,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  l10n.recommendedLabel.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            if (isRecommended) const SizedBox(height: 12),
+
+            // Title + price row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: colors.onSurface,
+                          letterSpacing: -0.2,
                         ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      price,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        color: accentColor,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      priceLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              
-              // Features
-              Text(
-                'Your Plan Includes:',
-                style: textTheme.titleMedium?.copyWith(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildFeatureItem(
-                context,
-                Icons.people,
-                'Up to ${plan.maxChildren} child profiles',
-              ),
-              _buildFeatureItem(context, Icons.school, 'Unlimited activities'),
-              _buildFeatureItem(context, Icons.bar_chart, 'Advanced reports'),
-              _buildFeatureItem(context, Icons.psychology, 'AI insights'),
-              _buildFeatureItem(context, Icons.download, 'Offline downloads'),
-              _buildFeatureItem(context, Icons.support, 'Priority support'),
-              
-              const SizedBox(height: 32),
-              
-              // Available Plans
-              Text(
-                'Available Plans',
-                style: textTheme.titleMedium?.copyWith(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              _buildPlanCard(
-                context,
-                plan,
-                'Free Plan',
-                '\$0',
-                'Basic features only',
-                [
-                  'Limited activities',
-                  '1 child profile',
-                  'Basic reports',
-                ],
-                PlanTier.free,
-              ),
-              const SizedBox(height: 16),
-              
-              _buildPlanCard(
-                context,
-                plan,
-                'Family Plan',
-                '\$9.99',
-                'Best for families',
-                [
-                  'Unlimited activities',
-                  'Up to 1 child',
-                  'Advanced reports',
-                  'AI insights',
-                  'Offline downloads',
-                  'Priority support',
-                ],
-                PlanTier.familyPlus,
-              ),
-              
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+              ],
+            ),
+            const SizedBox(height: 16),
 
-  Widget _buildFeatureItem(BuildContext context, IconData icon, String text) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: colors.secondaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: colors.secondary),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: textTheme.bodyMedium?.copyWith(
-              fontSize: AppConstants.fontSize,
-              color: colors.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBillingRow(
-    BuildContext context,
-    String label,
-    String value,
-  ) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: AppConstants.fontSize,
-                color: colors.onSurfaceVariant,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: AppConstants.fontSize,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-              softWrap: false,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlanCard(
-    BuildContext context,
-    PlanInfo currentPlan,
-    String title,
-    String price,
-    String subtitle,
-    List<String> features,
-    PlanTier tier,
-  ) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final isRecommended = tier == PlanTier.familyPlus;
-    final isCurrent = currentPlan.tier == tier;
-    return ThemedCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: isRecommended ? colors.primary : colors.outlineVariant,
-        width: isRecommended ? 2 : 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: colors.shadow.withValues(alpha: 0.08),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isRecommended)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: colors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'RECOMMENDED',
-                style: textTheme.labelSmall?.copyWith(
-                  color: colors.onPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          if (isRecommended) const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              Text(
-                title,
-                style: textTheme.titleMedium?.copyWith(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    price,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+            // Feature list
+            ...features.map((f) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded,
+                          size: 16, color: accentColor),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          f,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    subtitle,
-                    style: textTheme.bodySmall?.copyWith(
-                      fontSize: 12,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          
-          ...features.map((feature) => _buildFeatureText(context, feature)),
-          
-          const SizedBox(height: 20),
-          
-          ElevatedButton(
-            onPressed: isCurrent || _isProcessing
-                ? null
-                : () => _selectPlan(
-                      tier: tier,
-                      requiresPayment: tier != PlanTier.free,
-                    ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isRecommended
-                  ? colors.primary
-                  : colors.surfaceContainerHighest,
-              foregroundColor:
-                  isRecommended ? colors.onPrimary : colors.onSurface,
-              minimumSize: const Size(double.infinity, 48),
-            ),
-            child: Text(
-              isCurrent
-                  ? 'Current Plan'
-                  : _processingTier == tier
-                      ? 'Processing...'
-                      : 'Choose Plan',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                )),
+            const SizedBox(height: 20),
 
-  Widget _buildFeatureText(BuildContext context, String text) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Icon(Icons.check, size: 16, color: colors.primary),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: textTheme.bodySmall?.copyWith(
-              fontSize: 14,
-              color: colors.onSurfaceVariant,
+            // CTA button
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: isCurrent || _isProcessing
+                    ? null
+                    : () => _selectPlan(
+                          tier: tier,
+                          requiresPayment: tier != PlanTier.free,
+                        ),
+                style: FilledButton.styleFrom(
+                  backgroundColor:
+                      isCurrent ? colors.surfaceContainerHighest : accentColor,
+                  foregroundColor: isCurrent ? colors.onSurface : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: isProcessingThis
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        isCurrent ? l10n.currentPlanLabel : l10n.choosePlanLabel,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/app.dart'; // تأكد من أن هذا المسار صحيح لاستدعاء localeProvider
+import 'package:kinder_world/core/widgets/auth_design_system.dart';
+import 'package:kinder_world/router.dart';
 
 class LanguageSelectionScreen extends ConsumerStatefulWidget {
   const LanguageSelectionScreen({super.key});
@@ -13,27 +14,27 @@ class LanguageSelectionScreen extends ConsumerStatefulWidget {
       _LanguageSelectionScreenState();
 }
 
-class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScreen>
+class _LanguageSelectionScreenState
+    extends ConsumerState<LanguageSelectionScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _slideAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 700),
     );
-
-    _slideAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
-    ));
-
+    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _controller.forward();
   }
 
@@ -43,138 +44,102 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
     super.dispose();
   }
 
-  void _selectLanguage(String languageCode) {
-    // تحديث حالة اللغة في البروفايدر
-    ref.read(localeProvider.notifier).state = Locale(languageCode);
-  }
-
-  void _continueToNextScreen() {
-    // الانتقال للشاشة التالية
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        context.go('/onboarding');
-      }
-    });
+  void _selectLanguage(String code) {
+    ref.read(localeProvider.notifier).state = Locale(code);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    
-    // مراقبة اللغة الحالية لتحديث الواجهة فوراً
     final currentLocale = ref.watch(localeProvider);
 
-    final languages = [
-      {
-        'code': 'en',
-        'name': l10n.english,
-        'flag': 'EN',
-      },
-      {
-        'code': 'ar',
-        'name': l10n.arabic,
-        'flag': 'AR',
-      },
-    ];
-
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _slideAnimation.value * 100),
-              child: child,
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+      backgroundColor: AuthColors.pageBg,
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: SlideTransition(
+          position: _slideAnim,
+          child: SafeArea(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.vertical - 48,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Header
-                    const SizedBox(height: 40),
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.language,
-                        size: 60,
-                        color: colors.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 48),
 
-                    // Title
-                    Text(
-                      l10n.chooseLanguageTitle,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontSize: AppConstants.largeFontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Subtitle
-                    Text(
-                      l10n.chooseLanguageSubtitle,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontSize: AppConstants.fontSize,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-
-                    // Language Options
-                    ...languages.map((language) => _buildLanguageCard(language)),
-
-                    const SizedBox(height: 40),
-
-                    // Continue Button
-                    ElevatedButton(
-                      onPressed: () {
-                        _continueToNextScreen();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  // Brand mark + globe icon
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: AuthColors.brand.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      child: Text(
-                        l10n.continueText,
-                        style: const TextStyle(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      const Icon(
+                        Icons.language_rounded,
+                        size: 52,
+                        color: AuthColors.brand,
                       ),
-                    ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 20),
-                  ],
-                ),
+                  const SizedBox(height: 28),
+
+                  Text(
+                    l10n.chooseLanguageTitle,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: AuthColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    l10n.chooseLanguageSubtitle,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: AuthColors.textMuted,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Language cards
+                  _LanguageCard(
+                    flag: '🇺🇸',
+                    name: l10n.english,
+                    nativeName: 'English',
+                    isSelected: currentLocale.languageCode == 'en',
+                    onTap: () => _selectLanguage('en'),
+                  ),
+                  const SizedBox(height: 16),
+                  _LanguageCard(
+                    flag: '🇸🇦',
+                    name: l10n.arabic,
+                    nativeName: 'العربية',
+                    isSelected: currentLocale.languageCode == 'ar',
+                    onTap: () => _selectLanguage('ar'),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Continue button
+                  AuthPrimaryButton(
+                    label: l10n.continueText,
+                    onPressed: () => context.go(Routes.onboarding),
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ),
@@ -182,78 +147,107 @@ class _LanguageSelectionScreenState extends ConsumerState<LanguageSelectionScree
       ),
     );
   }
+}
 
-  Widget _buildLanguageCard(Map<String, dynamic> language) {
-    // نستخدم ref.watch لمعرفة أي لغة محددة حالياً
-    final currentLocale = ref.watch(localeProvider);
-    final isSelected = currentLocale.languageCode == language['code'];
-    final colors = Theme.of(context).colorScheme;
+class _LanguageCard extends StatelessWidget {
+  final String flag;
+  final String name;
+  final String nativeName;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+  const _LanguageCard({
+    required this.flag,
+    required this.name,
+    required this.nativeName,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AuthColors.brand.withValues(alpha: 0.06)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isSelected ? AuthColors.brand : AuthColors.inputBorder,
+          width: isSelected ? 2.0 : 1.5,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AuthColors.brand.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
       child: InkWell(
-        onTap: () => _selectLanguage(language['code']),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isSelected ? colors.primary : colors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? colors.primary : colors.outlineVariant,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  // Flag
-                  Text(
-                    language['flag'],
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(width: 16),
+              // Flag emoji
+              Text(flag, style: const TextStyle(fontSize: 36)),
+              const SizedBox(width: 16),
 
-                  // Language Name
-                  Text(
-                    language['name'],
-                    style: TextStyle(
-                      fontSize: AppConstants.fontSize,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? colors.onPrimary : colors.onSurface,
+              // Names
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nativeName,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected
+                            ? AuthColors.brand
+                            : AuthColors.textPrimary,
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AuthColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
-              // Selection Indicator
-              Container(
-                width: 24,
-                height: 24,
+              // Check indicator
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected ? colors.onPrimary : Colors.transparent,
+                  color: isSelected ? AuthColors.brand : Colors.transparent,
                   border: Border.all(
-                    color: isSelected ? colors.onPrimary : colors.onSurfaceVariant,
+                    color: isSelected
+                        ? AuthColors.brand
+                        : AuthColors.inputBorder,
                     width: 2,
                   ),
                 ),
                 child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        size: 16,
-                        color: colors.primary,
-                      )
+                    ? const Icon(Icons.check_rounded,
+                        size: 16, color: Colors.white)
                     : null,
               ),
             ],

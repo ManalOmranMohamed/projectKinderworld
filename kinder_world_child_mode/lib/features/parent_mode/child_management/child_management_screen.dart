@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/router.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
@@ -360,7 +360,7 @@ class _ChildManagementScreenState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? AppColors.error : AppColors.success,
+                  color: isError ? ParentColors.alertRed : ParentColors.parentGreenLight,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -494,7 +494,7 @@ class _ChildManagementScreenState
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.error,
+                    backgroundColor: ParentColors.alertRed,
                     foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                   child: isDeleting
@@ -540,7 +540,7 @@ class _ChildManagementScreenState
   }) {
     final option = _avatarForValue(avatarId ?? avatarPath);
     final resolvedBackground =
-        option?.backgroundColor ?? AppColors.primary.withValues(alpha: 0.1);
+        option?.backgroundColor ?? ParentColors.parentGreen.withValues(alpha: 0.1);
     final resolvedPath =
         option?.assetPath.isNotEmpty == true ? option!.assetPath : avatarPath;
 
@@ -568,14 +568,32 @@ class _ChildManagementScreenState
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l10n.childManagement),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            context.go(Routes.parentDashboard);
-          },
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurface),
+          onPressed: () => context.go(Routes.parentDashboard),
+        ),
+        title: Text(
+          l10n.childManagement,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Theme.of(context).colorScheme.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: Theme.of(context)
+                  .colorScheme
+                  .outlineVariant
+                  .withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -606,17 +624,19 @@ class _ChildManagementScreenState
                             Text(
                               l10n.manageChildProfiles,
                               style: TextStyle(
-                                fontSize: AppConstants.largeFontSize,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
                                 color: Theme.of(context).colorScheme.onSurface,
+                                letterSpacing: -0.4,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               l10n.addEditManageChildren,
                               style: TextStyle(
-                                fontSize: AppConstants.fontSize,
+                                fontSize: 14,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                height: 1.4,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -631,33 +651,10 @@ class _ChildManagementScreenState
                             ),
                             const SizedBox(height: 16),
                             if (children.isEmpty)
-                              Center(
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.child_care,
-                                      size: 80,
-                                      color: AppColors.primary.withValues(alpha: 0.3),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      l10n.noChildProfilesYet,
-                                      style: TextStyle(
-                                        fontSize: AppConstants.fontSize,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      l10n.tapToAddChild,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              ParentEmptyState(
+                                icon: Icons.child_care_rounded,
+                                title: l10n.noChildProfilesYet,
+                                subtitle: l10n.tapToAddChild,
                               )
                             else
                               Column(
@@ -818,12 +815,12 @@ class _ChildManagementScreenState
                                     height: 64,
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? AppColors.primary.withValues(alpha: 0.2)
+                                          ? ParentColors.parentGreen.withValues(alpha: 0.2)
                                           : Theme.of(context).colorScheme.surface,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
-                                            ? AppColors.primary
+                                            ? ParentColors.parentGreen
                                             : Theme.of(context).colorScheme.surfaceContainerHighest,
                                         width: 2,
                                       ),
@@ -852,7 +849,7 @@ class _ChildManagementScreenState
                             Text(
                               l10n.picturePasswordError,
                               style: TextStyle(
-                                color: AppColors.error,
+                                color: ParentColors.alertRed,
                                 fontSize: 12,
                               ),
                             ),
@@ -1043,7 +1040,7 @@ class _ChildManagementScreenState
             },
           );
         },
-        backgroundColor: AppColors.primary,
+        backgroundColor: ParentColors.parentGreen,
         child: const Icon(Icons.add),
       ),
     );
@@ -1060,23 +1057,10 @@ class _ChildManagementScreenState
     if (hasLevel) {
       details.add('${l10n.level} ${child.level}');
     }
-    return InkWell(
-      onTap: () => context.push('/parent/child-profile', extra: child),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: ParentCard(
+        onTap: () => context.push('/parent/child-profile', extra: child),
         child: Row(
           children: [
             Column(
@@ -1158,15 +1142,15 @@ class _ChildManagementScreenState
                     children: [
                       _buildInfoChip(
                         '${child.activitiesCompleted} ${l10n.activities}',
-                        AppColors.success,
+                        ParentColors.parentGreenLight,
                       ),
                       _buildInfoChip(
                         '${child.totalTimeSpent} ${l10n.timeSpent}',
-                        AppColors.info,
+                        ParentColors.infoBlue,
                       ),
                       _buildInfoChip(
                         '${child.streak} ${l10n.dailyStreak}',
-                        AppColors.streakColor,
+                        ParentColors.streakOrange,
                       ),
                     ],
                   ),
@@ -1194,7 +1178,7 @@ class _ChildManagementScreenState
                     onPressed: () =>
                         context.push('/parent/reports', extra: child.id),
                     icon: const Icon(Icons.pie_chart),
-                    color: AppColors.primary,
+                    color: ParentColors.parentGreen,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints.tightFor(
@@ -1210,7 +1194,7 @@ class _ChildManagementScreenState
                   child: IconButton(
                     onPressed: () => _confirmDeleteChild(child),
                     icon: const Icon(Icons.delete_outline),
-                    color: AppColors.error,
+                    color: ParentColors.alertRed,
                     iconSize: 20,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints.tightFor(
@@ -1251,7 +1235,7 @@ class _ChildManagementScreenState
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: ParentColors.parentGreen, size: 20),
           const SizedBox(width: 12),
           Text(
             text,

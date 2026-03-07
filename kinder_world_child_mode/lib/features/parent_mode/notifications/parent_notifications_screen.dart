@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 
@@ -81,7 +81,6 @@ class _ParentNotificationsScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
     final plan =
         ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
     final isSmartLocked = !plan.hasAiInsights;
@@ -90,9 +89,11 @@ class _ParentNotificationsScreenState
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -103,17 +104,32 @@ class _ParentNotificationsScreenState
         ),
         title: Text(
           l10n.notifications,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: _markAllRead,
             child: Text(
               l10n.markAllRead,
-              style: textTheme.bodyMedium?.copyWith(color: colors.primary),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colors.primary,
+              ),
             ),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.4)),
+        ),
       ),
       body: SafeArea(
         child: Column(
@@ -148,12 +164,10 @@ class _ParentNotificationsScreenState
                   }
                   final notifications = snapshot.data ?? [];
                   if (notifications.isEmpty) {
-                    return Center(
-                      child: Text(
-                        l10n.noNotifications,
-                        style: textTheme.bodyMedium
-                            ?.copyWith(color: colors.onSurfaceVariant),
-                      ),
+                    return ParentEmptyState(
+                      icon: Icons.notifications_none_rounded,
+                      title: l10n.noNotifications,
+                      subtitle: 'You\'re all caught up! New alerts and activity summaries will appear here.',
                     );
                   }
                   return ListView.separated(
@@ -262,7 +276,7 @@ class _NotificationCard extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: AppColors.primary,
+                            color: ParentColors.parentGreenLight,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -311,15 +325,15 @@ class _NotificationCard extends StatelessWidget {
   Color _getTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'warning':
-        return AppColors.error;
+        return ParentColors.alertRed;
       case 'achievement':
-        return AppColors.success;
+        return ParentColors.parentGreenLight;
       case 'report':
-        return AppColors.info;
+        return ParentColors.infoBlue;
       case 'milestone':
-        return AppColors.streakColor;
+        return ParentColors.streakOrange;
       default:
-        return AppColors.primary;
+        return ParentColors.parentGreen;
     }
   }
 }

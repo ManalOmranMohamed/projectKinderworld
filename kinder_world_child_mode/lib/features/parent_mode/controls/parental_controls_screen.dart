@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_badge.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
@@ -100,18 +101,18 @@ class _ParentalControlsScreenState
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
     final plan =
         ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
     final isAdvancedLocked = !plan.hasSmartControls;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l10n.parentalControls),
         backgroundColor: colors.surface,
-        foregroundColor: colors.onSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -119,6 +120,21 @@ class _ParentalControlsScreenState
               context.go('/parent/dashboard');
             }
           },
+        ),
+        title: Text(
+          l10n.parentalControls,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -132,19 +148,29 @@ class _ParentalControlsScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_isLoading)
-                      const LinearProgressIndicator(),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: const LinearProgressIndicator(
+                          color: ParentColors.parentGreenLight,
+                        ),
+                      ),
                     const SizedBox(height: 20),
                     Text(
                       l10n.contentRestrictionsAndScreenTime,
-                      style: textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                        letterSpacing: -0.4,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       l10n.manageChildAccess,
-                      style: textTheme.bodyMedium?.copyWith(
+                      style: TextStyle(
+                        fontSize: 14,
                         color: colors.onSurfaceVariant,
+                        height: 1.4,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -263,43 +289,54 @@ class _ParentalControlsScreenState
                     const SizedBox(height: 40),
 
                     // Emergency Controls
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: colors.error.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colors.error.withValues(alpha: 0.4),
-                        ),
-                      ),
+                    ParentCard(
+                      backgroundColor:
+                          ParentColors.alertRed.withValues(alpha: 0.06),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            l10n.emergencyControls,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colors.error,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: ParentColors.alertRed
+                                      .withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.lock_rounded,
+                                    color: ParentColors.alertRed, size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                l10n.emergencyControls,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: ParentColors.alertRed,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
-
-                          ElevatedButton.icon(
+                          FilledButton.icon(
                             onPressed: () {
-                              setState(() {
-                                _emergencyLock = true;
-                              });
+                              setState(() => _emergencyLock = true);
                               _saveControls();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(l10n.lockAppNow)),
                               );
                             },
-                            icon: const Icon(Icons.lock),
+                            icon: const Icon(Icons.lock_rounded, size: 18),
                             label: Text(l10n.lockAppNow),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.error,
-                              foregroundColor: colors.onError,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: ParentColors.alertRed,
                               minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -323,40 +360,36 @@ class _ParentalControlsScreenState
     Widget? footer,
     bool isDimmed = false,
   }) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+    return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: colors.primary, size: 24),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: ParentColors.parentGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: ParentColors.parentGreen, size: 18),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
               if (trailing != null) trailing,
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Opacity(
             opacity: isDimmed ? 0.55 : 1,
             child: IgnorePointer(
@@ -364,7 +397,7 @@ class _ParentalControlsScreenState
               child: Column(children: controls),
             ),
           ),
-          if (footer != null) footer,
+          if (footer != null) ...[const SizedBox(height: 12), footer],
         ],
       ),
     );

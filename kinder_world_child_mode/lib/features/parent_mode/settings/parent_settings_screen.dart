@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
 
 class ParentSettingsScreen extends ConsumerWidget {
@@ -19,229 +19,369 @@ class ParentSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
+    final authState = ref.watch(authControllerProvider);
+    final user = authState.user;
+
+    final bool isPremium = user?.hasActiveSubscription ?? false;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(l10n.settings),
+        backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () {
-            context.go(Routes.parentDashboard);
-          },
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
+          onPressed: () => context.go(Routes.parentDashboard),
+        ),
+        title: Text(
+          l10n.settings,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           children: [
-            const SizedBox(height: 8),
+            // ── Profile Header ──────────────────────────────────────────
+            _ProfileHeader(
+              name: user?.name ?? 'Parent',
+              email: user?.email ?? '',
+              isPremium: isPremium,
+              onEditTap: () =>
+                  _safeNavigate(() => context.push(Routes.parentProfile)),
+            ),
+            const SizedBox(height: 24),
 
-            // Account Section
-            _buildSectionHeader(context, l10n.accountSection),
-            _buildSettingItem(
-              context,
-              l10n.profileLabel,
-              Icons.person,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentProfile),
-                );
-              },
+            // ── Account ─────────────────────────────────────────────────
+            ParentSettingsGroup(
+              label: l10n.accountSection,
+              tiles: [
+                ParentSettingsTile(
+                  icon: Icons.lock_rounded,
+                  iconColor: ParentColors.activityPurple,
+                  title: l10n.changePassword,
+                  subtitle: 'Update your login credentials',
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentChangePassword)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.notifications_rounded,
+                  iconColor: ParentColors.alertAmber,
+                  title: l10n.notifications,
+                  subtitle: 'Alerts, reminders & summaries',
+                  showDivider: false,
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentNotifications)),
+                ),
+              ],
             ),
-            _buildSettingItem(
-              context,
-              l10n.changePassword,
-              Icons.lock,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentChangePassword),
-                );
-              },
+            const SizedBox(height: 20),
+
+            // ── Family ──────────────────────────────────────────────────
+            ParentSettingsGroup(
+              label: l10n.familySection,
+              tiles: [
+                ParentSettingsTile(
+                  icon: Icons.child_care_rounded,
+                  iconColor: ParentColors.parentGreenLight,
+                  title: l10n.childProfiles,
+                  subtitle: 'Manage your children\'s accounts',
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentChildManagement)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.security_rounded,
+                  iconColor: ParentColors.alertRed,
+                  title: l10n.parentalControls,
+                  subtitle: 'Screen time, content filters & limits',
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentControls)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.workspace_premium_rounded,
+                  iconColor: ParentColors.xpGold,
+                  title: l10n.subscription,
+                  subtitle: isPremium ? 'Premium — Active' : 'Upgrade your plan',
+                  trailing: isPremium
+                      ? const ParentStatusBadge(status: ParentBadgeStatus.premium)
+                      : null,
+                  showDivider: false,
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentSubscription)),
+                ),
+              ],
             ),
-                _buildSettingItem(
-                  context,
-                  l10n.notifications,
-                  Icons.notifications,
-                  onTap: () {
-                    _safeNavigate(
-                      () => context.push(Routes.parentNotifications),
-                    );
+            const SizedBox(height: 20),
+
+            // ── Preferences ─────────────────────────────────────────────
+            ParentSettingsGroup(
+              label: l10n.preferencesSection,
+              tiles: [
+                ParentSettingsTile(
+                  icon: Icons.language_rounded,
+                  iconColor: ParentColors.infoBlue,
+                  title: l10n.language,
+                  subtitle: 'English / العربية',
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentLanguage)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.palette_rounded,
+                  iconColor: ParentColors.activityPurple,
+                  title: l10n.theme,
+                  subtitle: 'Light, dark or system default',
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentTheme)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.privacy_tip_rounded,
+                  iconColor: ParentColors.parentGreen,
+                  title: l10n.privacySettings,
+                  subtitle: 'Data sharing & permissions',
+                  showDivider: false,
+                  onTap: () => _safeNavigate(
+                      () => context.push(Routes.parentPrivacySettings)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // ── Support ─────────────────────────────────────────────────
+            ParentSettingsGroup(
+              label: l10n.supportSection,
+              tiles: [
+                ParentSettingsTile(
+                  icon: Icons.help_rounded,
+                  iconColor: ParentColors.infoBlue,
+                  title: l10n.helpFaq,
+                  subtitle: 'Guides and frequently asked questions',
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentHelp)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.mail_rounded,
+                  iconColor: ParentColors.parentGreenLight,
+                  title: l10n.contactUs,
+                  subtitle: 'Get in touch with our team',
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentContactUs)),
+                ),
+                ParentSettingsTile(
+                  icon: Icons.info_rounded,
+                  iconColor: Colors.blueGrey,
+                  title: l10n.about,
+                  subtitle: 'Version, licenses & credits',
+                  showDivider: false,
+                  onTap: () =>
+                      _safeNavigate(() => context.push(Routes.parentAbout)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // ── Danger Zone ─────────────────────────────────────────────
+            ParentSettingsGroup(
+              tiles: [
+                ParentSettingsTile(
+                  icon: Icons.logout_rounded,
+                  title: l10n.logout,
+                  isDestructive: true,
+                  showDivider: false,
+                  trailing: const SizedBox.shrink(),
+                  onTap: () async {
+                    final confirmed = await _confirmLogout(context, l10n);
+                    if (confirmed && context.mounted) {
+                      await ref
+                          .read(childSessionControllerProvider.notifier)
+                          .endChildSession();
+                      await ref
+                          .read(authControllerProvider.notifier)
+                          .logout();
+                      if (context.mounted) {
+                        context.go(Routes.selectUserType);
+                      }
+                    }
                   },
                 ),
-
-            const SizedBox(height: 24),
-
-            // Family Section
-            _buildSectionHeader(context, l10n.familySection),
-              _buildSettingItem(
-                context,
-                l10n.childProfiles,
-                Icons.child_care,
-                onTap: () {
-                  _safeNavigate(
-                    () => context.push(Routes.parentChildManagement),
-                  );
-                },
-              ),
-              _buildSettingItem(
-                context,
-                l10n.subscription,
-                Icons.payment,
-                onTap: () {
-                  _safeNavigate(
-                    () => context.push(Routes.parentSubscription),
-                  );
-                },
-              ),
-              _buildSettingItem(
-                context,
-                l10n.parentalControls,
-                Icons.security,
-                onTap: () {
-                  _safeNavigate(
-                    () => context.push(Routes.parentControls),
-                  );
-                },
-              ),
-
-            const SizedBox(height: 24),
-
-            // Preferences Section
-            _buildSectionHeader(context, l10n.preferencesSection),
-            _buildSettingItem(
-              context,
-              l10n.language,
-              Icons.language,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentLanguage),
-                );
-              },
+              ],
             ),
-            _buildSettingItem(
-              context,
-              l10n.theme,
-              Icons.palette,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentTheme),
-                );
-              },
-            ),
-            _buildSettingItem(
-              context,
-              l10n.privacySettings,
-              Icons.privacy_tip,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentPrivacySettings),
-                );
-              },
-            ),
+            const SizedBox(height: 32),
 
-            const SizedBox(height: 24),
-
-            // Support Section
-            _buildSectionHeader(context, l10n.supportSection),
-            _buildSettingItem(
-              context,
-              l10n.helpFaq,
-              Icons.help,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentHelp),
-                );
-              },
-            ),
-            _buildSettingItem(
-              context,
-              l10n.contactUs,
-              Icons.contact_mail,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentContactUs),
-                );
-              },
-            ),
-            _buildSettingItem(
-              context,
-              l10n.about,
-              Icons.info,
-              onTap: () {
-                _safeNavigate(
-                  () => context.push(Routes.parentAbout),
-                );
-              },
-            ),
-
-            const SizedBox(height: 40),
-
-            // Logout Button
-            ElevatedButton.icon(
-              onPressed: () async {
-                await ref
-                    .read(childSessionControllerProvider.notifier)
-                    .endChildSession();
-                await ref.read(authControllerProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go(Routes.selectUserType);
-                }
-              },
-              icon: const Icon(Icons.logout),
-              label: Text(l10n.logout),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colors.error,
-                foregroundColor: colors.onError,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+            // ── App version footnote ─────────────────────────────────────
+            Center(
+              child: Text(
+                'Kinder World • v1.0.0',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontSize: AppConstants.fontSize,
-              fontWeight: FontWeight.bold,
+  Future<bool> _confirmLogout(
+      BuildContext context, AppLocalizations l10n) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Log out?',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'You will need to sign in again to access the parent dashboard.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: ParentColors.alertRed,
             ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.logout),
+          ),
+        ],
       ),
     );
+    return result ?? false;
   }
+}
 
-  Widget _buildSettingItem(BuildContext context, String title, IconData icon, {VoidCallback? onTap}) {
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFILE HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileHeader extends StatelessWidget {
+  final String name;
+  final String email;
+  final bool isPremium;
+  final VoidCallback? onEditTap;
+
+  const _ProfileHeader({
+    required this.name,
+    required this.email,
+    required this.isPremium,
+    this.onEditTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: colors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: colors.primary, size: 20),
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      title: Text(
-        title,
-        style: textTheme.bodyMedium?.copyWith(
-          fontSize: AppConstants.fontSize,
-        ),
+      child: Row(
+        children: [
+          // Avatar circle
+          Container(
+            width: 60,
+            height: 60,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  ParentColors.parentGreen,
+                  ParentColors.parentGreenLight,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : 'P',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Name + email
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                if (email.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    email,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 6),
+                if (isPremium)
+                  const ParentStatusBadge(status: ParentBadgeStatus.premium)
+                else
+                  const ParentStatusBadge(status: ParentBadgeStatus.active),
+              ],
+            ),
+          ),
+          // Edit icon
+          GestureDetector(
+            onTap: onEditTap,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.edit_rounded,
+                size: 18,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: colors.onSurfaceVariant,
-      ),
-      onTap: onTap,
     );
   }
 }

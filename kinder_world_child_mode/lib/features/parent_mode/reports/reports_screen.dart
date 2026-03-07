@@ -11,10 +11,10 @@ import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
-import 'package:kinder_world/core/widgets/themed_card.dart';
 
 enum ReportPeriod { week, month, year }
 
@@ -278,11 +278,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(l10n.reportsAndAnalytics),
         backgroundColor: colors.surface,
-        foregroundColor: colors.onSurface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: 20, color: colors.onSurface),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -290,6 +291,21 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               context.go('/parent/dashboard');
             }
           },
+        ),
+        title: Text(
+          l10n.reportsAndAnalytics,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: colors.onSurface,
+            letterSpacing: -0.3,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+              height: 1,
+              color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -340,15 +356,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       const SizedBox(height: 20),
                       Text(
                         l10n.learningProgressReports,
-                        style: textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: colors.onSurface,
+                          letterSpacing: -0.4,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         l10n.trackChildDevelopment,
-                        style: textTheme.bodyMedium?.copyWith(
+                        style: TextStyle(
+                          fontSize: 14,
                           color: colors.onSurfaceVariant,
+                          height: 1.4,
                         ),
                       ),
                       if (_isLoadingReports) ...[
@@ -387,16 +408,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       const SizedBox(height: 24),
 
                       // Child Selection
-                      ThemedCard(
-                        padding: const EdgeInsets.all(20),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.shadow.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+                      ParentCard(
+                        onTap: children.isEmpty
+                            ? null
+                            : () => _showChildSelection(children),
                         child: Row(
                           children: [
                             AvatarView(
@@ -412,26 +427,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 children: [
                                   Text(
                                     selectedChild?.name ?? l10n.noChildSelected,
-                                    style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.onSurface,
                                     ),
                                   ),
+                                  const SizedBox(height: 2),
                                   Text(
                                     selectedChild != null
-                                        ? '${l10n.childAge} ${selectedChild.age} - ${l10n.level} ${selectedChild.level}'
+                                        ? '${l10n.childAge} ${selectedChild.age} · ${l10n.level} ${selectedChild.level}'
                                         : l10n.addChildToViewReports,
-                                    style: textTheme.bodySmall?.copyWith(
+                                    style: TextStyle(
+                                      fontSize: 13,
                                       color: colors.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.arrow_drop_down),
-                              onPressed: children.isEmpty
-                                  ? null
-                                  : () => _showChildSelection(children),
+                            Icon(
+                              Icons.expand_more_rounded,
+                              color: colors.onSurfaceVariant,
                             ),
                           ],
                         ),
@@ -536,23 +553,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required List<_ActivitySegment> segments,
     required TextDirection textDirection,
   }) {
-    return ThemedCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: colors.shadow.withValues(alpha: 0.08),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
+    return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.activityBreakdown,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          ParentSectionHeader(title: l10n.activityBreakdown),
           const SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -620,23 +625,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required ColorScheme colors,
     required TextTheme textTheme,
   }) {
-    return ThemedCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: colors.shadow.withValues(alpha: 0.08),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
+    return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.recentAchievements,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          ParentSectionHeader(title: l10n.recentAchievements),
           const SizedBox(height: 16),
           _buildAchievementItem(
             '*',
@@ -687,46 +680,39 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     String score,
     String time,
   ) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return ThemedCard(
-      padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: colors.shadow.withValues(alpha: 0.08),
-          blurRadius: 10,
-          offset: const Offset(0, 5),
-        ),
-      ],
+    return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
+          ParentSectionHeader(title: title),
+          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-          _buildProgressMetric(
-            'Activities',
-            activities,
-            colors.primary,
-            Icons.check_circle,
-          ),
-              _buildProgressMetric(
-                'Avg Score',
-                score,
-            colors.secondary,
-                Icons.star,
+              Expanded(
+                child: ParentStatCard(
+                  value: activities,
+                  label: 'Activities',
+                  icon: Icons.check_circle_rounded,
+                  color: ParentColors.parentGreen,
+                ),
               ),
-              _buildProgressMetric(
-                'Time',
-                time,
-            colors.tertiary,
-                Icons.timer,
+              const SizedBox(width: 10),
+              Expanded(
+                child: ParentStatCard(
+                  value: score,
+                  label: 'Avg Score',
+                  icon: Icons.star_rounded,
+                  color: ParentColors.xpGold,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ParentStatCard(
+                  value: time,
+                  label: 'Screen Time',
+                  icon: Icons.timer_rounded,
+                  color: ParentColors.infoBlue,
+                ),
               ),
             ],
           ),
@@ -735,41 +721,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildProgressMetric(
-    String label,
-    String value,
-    Color color,
-    IconData icon,
-  ) {
-    final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            size: 25,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAchievementItem(
     String emoji,

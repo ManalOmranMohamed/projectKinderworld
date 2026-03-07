@@ -2,8 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
@@ -17,96 +16,134 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
   int _selectedTab = 0;
   String _searchQuery = '';
 
-  static const _tabs = [
-    {'label': 'All', 'icon': Icons.waves},
-    {'label': 'Kindness', 'icon': Icons.favorite},
-    {'label': 'Learning', 'icon': Icons.school},
-    {'label': 'Skills', 'icon': Icons.handyman},
-    {'label': 'Music', 'icon': Icons.music_note},
+  static const _tabs = <Map<String, Object>>[
+    {'label': 'All', 'emoji': '🌟', 'color': Color(0xFF6C63FF)},
+    {'label': 'Kindness', 'emoji': '💖', 'color': Color(0xFFE91E63)},
+    {'label': 'Learning', 'emoji': '📚', 'color': Color(0xFF3F51B5)},
+    {'label': 'Skills', 'emoji': '🧩', 'color': Color(0xFF9C27B0)},
+    {'label': 'Music', 'emoji': '🎵', 'color': Color(0xFF00BCD4)},
   ];
 
-  static const _cards = [
+  static const _cards = <Map<String, String>>[
     {
       'title': 'Tom & Jerry | Keep Calm',
       'duration': '1:27:03',
       'image': 'assets/images/ent_tomjerry.png',
       'tag': 'Entertaining',
+      'emoji': '😄',
     },
     {
       'title': 'Momo & Mimi | Arabic',
       'duration': '3:39',
       'image': 'assets/images/ent_momo.png',
       'tag': 'Entertaining',
+      'emoji': '🌙',
     },
     {
       'title': 'Kindness Challenge',
       'duration': '7:00',
       'image': 'assets/images/behavior_kindness.png',
       'tag': 'Behavioral',
+      'emoji': '💖',
     },
     {
       'title': 'Build & Create',
       'duration': '5:20',
       'image': 'assets/images/skill_handcrafts.png',
       'tag': 'Skillful',
+      'emoji': '🏗️',
     },
     {
       'title': 'Math Basics | Fun',
       'duration': '8:10',
       'image': 'assets/images/educational_main.png',
       'tag': 'Educational',
+      'emoji': '🔢',
     },
     {
       'title': 'Science Wonders',
       'duration': '6:45',
       'image': 'assets/images/edu_science.png',
       'tag': 'Educational',
+      'emoji': '🔬',
     },
     {
       'title': 'Story Time',
       'duration': '4:12',
       'image': 'assets/images/behavior_love.png',
       'tag': 'Behavioral',
+      'emoji': '📖',
     },
     {
       'title': 'Coloring Fun',
       'duration': '5:05',
       'image': 'assets/images/skill_coloring.png',
       'tag': 'Skillful',
+      'emoji': '🎨',
     },
     {
       'title': 'Alphabet Song',
       'duration': '2:30',
       'image': 'assets/images/edu_english.png',
       'tag': 'Educational',
+      'emoji': '🔤',
     },
     {
       'title': 'Animal Friends',
       'duration': '3:55',
       'image': 'assets/images/edu_animals.png',
       'tag': 'Educational',
+      'emoji': '🦁',
     },
     {
       'title': 'Dance Party',
       'duration': '4:20',
       'image': 'assets/images/ent_clips.png',
       'tag': 'Entertaining',
+      'emoji': '💃',
     },
     {
       'title': 'Sharing Time',
       'duration': '6:10',
       'image': 'assets/images/behavior_giving.png',
       'tag': 'Behavioral',
+      'emoji': '🤝',
     },
     {
       'title': 'Puzzle Play',
       'duration': '5:40',
       'image': 'assets/images/skill_handcrafts.png',
       'tag': 'Skillful',
+      'emoji': '🧩',
     },
   ];
 
-  List<Map<String, String>> get _suggestedCards {
+  // ── featured picks (always shown at top) ──────────────────────────────────
+  static const _featured = <Map<String, String>>[
+    {
+      'title': 'Tom & Jerry\nKeep Calm',
+      'duration': '1:27:03',
+      'image': 'assets/images/ent_tomjerry.png',
+      'emoji': '😄',
+      'label': 'Fan Favourite',
+    },
+    {
+      'title': 'Kindness\nChallenge',
+      'duration': '7:00',
+      'image': 'assets/images/behavior_kindness.png',
+      'emoji': '💖',
+      'label': 'Today\'s Pick',
+    },
+    {
+      'title': 'Math Basics\nFun Edition',
+      'duration': '8:10',
+      'image': 'assets/images/educational_main.png',
+      'emoji': '🔢',
+      'label': 'Top Rated',
+    },
+  ];
+
+  List<Map<String, String>> get _filteredCards {
     final query = _searchQuery.trim().toLowerCase();
     final label = _tabs[_selectedTab]['label'] as String;
     final tag = switch (label) {
@@ -118,16 +155,12 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     };
     final base = label == 'All'
         ? _cards
-        : _cards.where((card) => card['tag'] == tag).toList();
+        : _cards.where((c) => c['tag'] == tag).toList();
     final filtered = query.isEmpty
         ? base
-        : base
-            .where((card) =>
-                (card['title'] ?? '').toLowerCase().contains(query))
-            .toList();
+        : base.where((c) => (c['title'] ?? '').toLowerCase().contains(query)).toList();
     final seed = query.hashCode ^ _selectedTab.hashCode;
-    final list = filtered.toList()..shuffle(Random(seed));
-    return list.cast<Map<String, String>>();
+    return (filtered.toList()..shuffle(Random(seed))).cast<Map<String, String>>();
   }
 
   @override
@@ -139,74 +172,322 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildHeader(colors),
+            _buildCategoryTabs(),
+            const SizedBox(height: 14),
+            _buildSearchBar(colors),
             const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      } else {
-                        context.go('/child/home');
-                      }
-                    },
-                  ),
-                  const ChildHeader(compact: true),
-                  const Spacer(),
-                  _iconBubble(Icons.cast, onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Cast coming soon')),
-                    );
-                  }),
-                  const SizedBox(width: 10),
-                  _iconBubble(Icons.shield_outlined, onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Safe mode enabled')),
-                    );
-                  }),
-                  const SizedBox(width: 10),
-                  _iconBubble(Icons.settings, onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ChildSettingsScreen(),
+            Expanded(
+              child: _filteredCards.isEmpty
+                  ? const ChildEmptyState(
+                      emoji: '🎬',
+                      title: 'Nothing found',
+                      subtitle: 'Try a different search or category!',
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 16,
                       ),
-                    );
-                  }),
-                ],
+                      children: [
+                        // Featured row (only in "All" tab, no search active)
+                        if (_selectedTab == 0 && _searchQuery.isEmpty) ...[
+                          _buildFeaturedSection(),
+                          const SizedBox(height: 20),
+                          const ChildSectionHeader(title: 'All Videos'),
+                          const SizedBox(height: 12),
+                        ],
+                        ..._filteredCards
+                            .map((c) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: _buildMediaCard(c, colors),
+                                )),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── HEADER ─────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+      child: Row(
+        children: [
+          // Screen title
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Play Time',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: colors.onSurface,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                'Safe & fun videos for you',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          // Safe badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.green.withValues(alpha: 0.3),
+                width: 1,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildTabs(),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: TextField(
-                onChanged: (value) => setState(() => _searchQuery = value),
-                decoration: InputDecoration(
-                  hintText: 'Search videos...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield_rounded, size: 14, color: Colors.green),
+                SizedBox(width: 4),
+                Text(
+                  'Safe Mode',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.green,
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _iconBubble(
+            Icons.settings_rounded,
+            colors: colors,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ChildSettingsScreen()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── CATEGORY TABS ──────────────────────────────────────────────────────────
+
+  Widget _buildCategoryTabs() {
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _tabs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (_, i) {
+          final tab = _tabs[i];
+          return ChildCategoryChip(
+            label: tab['label'] as String,
+            emoji: tab['emoji'] as String,
+            color: tab['color'] as Color,
+            isSelected: _selectedTab == i,
+            onTap: () => setState(() => _selectedTab = i),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── SEARCH BAR ─────────────────────────────────────────────────────────────
+
+  Widget _buildSearchBar(ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TextField(
+        onChanged: (v) => setState(() => _searchQuery = v),
+        decoration: InputDecoration(
+          hintText: 'Search videos...',
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: colors.onSurfaceVariant,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded),
+                  onPressed: () => setState(() => _searchQuery = ''),
+                )
+              : null,
+          filled: true,
+          fillColor: colors.surfaceContainerHighest,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  // ── FEATURED SECTION ───────────────────────────────────────────────────────
+
+  Widget _buildFeaturedSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ChildSectionHeader(title: 'Featured'),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 180,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _featured.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) => _buildFeaturedCard(_featured[i]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedCard(Map<String, String> card) {
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 200,
+      child: KinderCard(
+        padding: EdgeInsets.zero,
+        borderRadius: 18,
+        onTap: () {},
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            Expanded(
+              child: ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(18)),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      card['image'] ?? '',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              colors.primary.withValues(alpha: 0.6),
+                              colors.primary.withValues(alpha: 0.3),
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            card['emoji'] ?? '🎬',
+                            style: const TextStyle(fontSize: 40),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Dark overlay
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.55),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Label pill
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          card['label'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Duration
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          card['duration'] ?? '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Play button
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.black87,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                itemBuilder: (context, index) {
-                  final card = _suggestedCards[index];
-                  return _buildMediaCard(card);
-                },
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemCount: _suggestedCards.length,
+            // Title
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                card['title'] ?? '',
+                maxLines: 2,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: colors.onSurface,
+                  height: 1.3,
+                ),
               ),
             ),
           ],
@@ -215,115 +496,132 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  Widget _buildTabs() {
-    return SizedBox(
-      height: 44,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _tabs.length,
-        itemBuilder: (context, index) {
-          final tab = _tabs[index];
-          final isSelected = _selectedTab == index;
-          final colors = Theme.of(context).colorScheme;
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              onTap: () => setState(() => _selectedTab = index),
-              borderRadius: BorderRadius.circular(14),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? colors.primary : colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      tab['icon'] as IconData,
-                      size: 18,
-                      color: isSelected ? colors.onPrimary : colors.onSurface,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      tab['label'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? colors.onPrimary : colors.onSurface,
+  // ── LIST MEDIA CARD ────────────────────────────────────────────────────────
+
+  Widget _buildMediaCard(Map<String, String> card, ColorScheme colors) {
+    final tagColor = _tagColor(card['tag'] ?? '');
+    return KinderCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 18,
+      onTap: () {},
+      child: Row(
+        children: [
+          // Thumbnail
+          ClipRRect(
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(18),
+            ),
+            child: SizedBox(
+              width: 110,
+              height: 80,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    card['image'] ?? '',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: colors.surfaceContainerHighest,
+                      child: Center(
+                        child: Text(
+                          card['emoji'] ?? '🎬',
+                          style: const TextStyle(fontSize: 30),
+                        ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Center(
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 5,
+                    right: 5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        card['duration'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildMediaCard(Map<String, String> card) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            child: Stack(
-              children: [
-                Image.asset(
-                  card['image'] ?? '',
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 180,
-                    color: colors.surfaceContainerHighest,
-                    child: const Center(child: Icon(Icons.play_circle, size: 40)),
+
+          // Info
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    card['title'] ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
+                      height: 1.3,
+                    ),
                   ),
-                ),
-                Positioned(
-                  right: 10,
-                  bottom: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  const SizedBox(height: 6),
+                  // Tag badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(8),
+                      color: tagColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      card['duration'] ?? '',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      card['tag'] ?? '',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: tagColor,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+
+          // Arrow
           Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(
-              card['title'] ?? '',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colors.onSurface,
-              ),
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              color: colors.onSurfaceVariant,
+              size: 20,
             ),
           ),
         ],
@@ -331,17 +629,30 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  Widget _iconBubble(IconData icon, {VoidCallback? onTap}) {
-    final colors = Theme.of(context).colorScheme;
+  Color _tagColor(String tag) {
+    return switch (tag) {
+      'Behavioral' => ChildColors.kindnessPink,
+      'Educational' => ChildColors.learningBlue,
+      'Skillful' => ChildColors.skillPurple,
+      'Entertaining' => ChildColors.funCyan,
+      _ => ChildColors.learningBlue,
+    };
+  }
+
+  Widget _iconBubble(
+    IconData icon, {
+    required ColorScheme colors,
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: 36,
-        height: 36,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
           color: colors.surfaceContainerHighest,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(icon, size: 18, color: colors.onSurface),
       ),

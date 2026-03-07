@@ -11,6 +11,7 @@ import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
+import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/app.dart';
@@ -91,46 +92,102 @@ class ChildProfileScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
+              // ── Avatar with gradient ring + level badge ────────────────────
               Center(
-                child: InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const SettingsAvatarSelectionScreen(),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Gradient ring
+                    Container(
+                      width: 128,
+                      height: 128,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colors.primary,
+                            colors.primary.withValues(alpha: 0.5),
+                          ],
+                        ),
                       ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(60),
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.primary,
-                        width: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: InkWell(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const SettingsAvatarSelectionScreen(),
+                            ),
+                          ),
+                          borderRadius: BorderRadius.circular(60),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colors.surface,
+                            ),
+                            child: AvatarView(
+                              avatarId: child.avatar,
+                              avatarPath: child.avatarPath,
+                              radius: 56,
+                              backgroundColor:
+                                  colors.primary.withValues(alpha: 0.15),
+                            ),
+                          ),
+                        ),
                       ),
-                      color: colors.primary.withValues(alpha: 0.2),
                     ),
-                    child: AvatarView(
-                      avatarId: child.avatar,
-                      avatarPath: child.avatarPath,
-                      radius: 56,
-                      backgroundColor: Colors.transparent,
+                    // Level badge
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              ChildColors.buddyStart,
+                              ChildColors.buddyEnd,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: ChildColors.buddyStart
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Lv. ${child.level}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Text(
-                'Hello, ${childName ?? ''}',
+                childName ?? '',
                 style: textTheme.headlineSmall?.copyWith(
                   fontSize: AppConstants.largeFontSize * 1.2,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
                 l10n.levelExplorer(child.level),
                 style: textTheme.bodyMedium?.copyWith(
@@ -138,45 +195,63 @@ class ChildProfileScreen extends ConsumerWidget {
                   color: colors.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
+
+              // ── Stats row using ChildStatBubble ────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildStatItem(context, '${child.xp}', l10n.xp, AppColors.xpColor, Icons.star),
-                  _buildStatItem(context, '${child.streak}', l10n.streak, AppColors.streakColor, Icons.local_fire_department),
-                  _buildStatItem(context, '${child.activitiesCompleted}', l10n.activities, AppColors.success, Icons.check_circle),
+                  ChildStatBubble(
+                    value: '${child.xp % 1000}',
+                    label: l10n.xp,
+                    icon: Icons.star_rounded,
+                    color: ChildColors.xpGold,
+                  ),
+                  ChildStatBubble(
+                    value: '${child.streak}',
+                    label: l10n.streak,
+                    icon: Icons.local_fire_department_rounded,
+                    color: ChildColors.streakFire,
+                  ),
+                  ChildStatBubble(
+                    value: '${child.activitiesCompleted}',
+                    label: l10n.activities,
+                    icon: Icons.check_circle_rounded,
+                    color: ChildColors.successGreen,
+                  ),
                 ],
               ),
-              const SizedBox(height: 30),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 24),
+
+              // ── Progress card with fixed XP bar ────────────────────────────
+              KinderCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.yourProgress,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontSize: AppConstants.fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    ChildSectionHeader(title: l10n.yourProgress),
                     const SizedBox(height: 20),
-                    _buildProgressBar(context, l10n.xpToLevel(child.level + 1), child.xpProgress / 1000, AppColors.xpColor, '${child.xpProgress}/1000'),
+                    // XP bar — fixed: xpProgress is already 0.0–1.0
+                    ChildXpProgressBar(
+                      progress: child.xpProgress.clamp(0.0, 1.0),
+                      currentXp: child.xp % 1000,
+                      nextLevelXp: 1000,
+                    ),
                     const SizedBox(height: 16),
-                    _buildProgressBar(context, l10n.dailyGoal, 0.7, AppColors.success, '7/10 ${l10n.activities}'),
+                    _buildProgressBar(
+                      context,
+                      l10n.dailyGoal,
+                      0.7,
+                      AppColors.success,
+                      '7/10 ${l10n.activities}',
+                    ),
                     const SizedBox(height: 16),
-                    _buildProgressBar(context, l10n.weeklyChallenge, 0.5, AppColors.secondary, '3/6'),
+                    _buildProgressBar(
+                      context,
+                      l10n.weeklyChallenge,
+                      0.5,
+                      AppColors.secondary,
+                      '3/6',
+                    ),
                   ],
                 ),
               ),
@@ -339,27 +414,6 @@ class ChildProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(BuildContext context, String value, String label, Color color, IconData icon) {
-    final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 25, color: color),
-        ),
-        const SizedBox(height: 8),
-        Text(value, style: textTheme.titleMedium?.copyWith(fontSize: AppConstants.fontSize, fontWeight: FontWeight.bold)),
-        Text(label, style: textTheme.bodySmall?.copyWith(fontSize: 12, color: colors.onSurfaceVariant)),
-      ],
     );
   }
 
