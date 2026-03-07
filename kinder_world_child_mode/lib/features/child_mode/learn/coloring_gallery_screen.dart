@@ -28,14 +28,62 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
   static const List<Map<String, String>> _items = [
     {
       'title': 'Coloring Page 1',
-      'image': 'assets/images/coloring/kids_coloring_20zones.svg',
-      'svg': 'assets/images/coloring/kids_coloring_20zones.svg',
+      'image': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
+      'svg': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
       'level': 'Beginner',
     },
-        {
+    {
       'title': 'Coloring Page 2',
-      'image': 'assets/images/coloring/house_coloring_17regions.svg',
-      'svg': 'assets/images/coloring/house_coloring_17regions.svg',
+      'image': 'assets/images/coloring/house_coloring_fixed.svg',
+      'svg': 'assets/images/coloring/house_coloring_fixed.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 3',
+      'image': 'assets/images/coloring/fish_coloring_v2.svg',
+      'svg': 'assets/images/coloring/fish_coloring_v2.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 4',
+      'image': 'assets/images/coloring/butterfly_coloring.svg',
+      'svg': 'assets/images/coloring/butterfly_coloring.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 5',
+      'image': 'assets/images/coloring/apple_coloring.svg',
+      'svg': 'assets/images/coloring/apple_coloring.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 6',
+      'image': 'assets/images/coloring/rabbit2_coloring.svg',
+      'svg': 'assets/images/coloring/rabbit2_coloring.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 7',
+      'image': 'assets/images/coloring/coloring_bw_fixed.svg',
+      'svg': 'assets/images/coloring/coloring_bw_fixed.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 8',
+      'image': 'assets/images/coloring/bird_coloring.svg',
+      'svg': 'assets/images/coloring/bird_coloring.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 9',
+      'image': 'assets/images/coloring/new_coloring.svg',
+      'svg': 'assets/images/coloring/new_coloring.svg',
+      'level': 'Beginner',
+    },
+    {
+      'title': 'Coloring Page 10',
+      'image': 'assets/images/coloring/coloring3.svg',
+      'svg': 'assets/images/coloring/coloring3.svg',
       'level': 'Beginner',
     },
   ];

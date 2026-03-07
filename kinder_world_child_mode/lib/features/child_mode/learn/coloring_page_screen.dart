@@ -226,11 +226,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFFFFFFFF), Color(0xFFFFFBE5)],
-                      ),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(32),
                     ),
                     child: ClipRRect(
@@ -355,7 +351,8 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                                     template.buildAreasSvg(
                                       _controller.colorsByAreaId,
                                     ),
-                                    key: ValueKey<int>(_controller.paintRevision),
+                                    key: ValueKey<int>(
+                                        _controller.paintRevision),
                                     fit: BoxFit.fill,
                                   ),
                                 );
@@ -383,8 +380,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                   child: GestureDetector(
                     behavior: HitTestBehavior.translucent,
                     onTapUp: (details) {
-                      final scenePoint =
-                          _canvasTransformController.toScene(
+                      final scenePoint = _canvasTransformController.toScene(
                         details.localPosition,
                       );
                       if (scenePoint.dx < drawLeft ||
@@ -448,8 +444,8 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
           const gap = 10.0;
           final firstRowWidth =
               (firstRow.length * bubbleSize) + ((firstRow.length - 1) * gap);
-          final secondRowWidth = (secondRow.length * bubbleSize) +
-              ((secondRow.length - 1) * gap);
+          final secondRowWidth =
+              (secondRow.length * bubbleSize) + ((secondRow.length - 1) * gap);
           final contentMinWidth = (firstRowWidth > secondRowWidth
                   ? firstRowWidth
                   : secondRowWidth) +
@@ -652,11 +648,13 @@ class SvgColorArea {
     required this.id,
     required this.pathData,
     required this.path,
+    required this.useEvenOddFill,
   });
 
   final String id;
   final String pathData;
   final Path path;
+  final bool useEvenOddFill;
 }
 
 class SvgColoringTemplate {
@@ -692,7 +690,8 @@ class SvgColoringTemplate {
     }
 
     final outlineGroup = _findGroupById(svgElement, 'outlines') ??
-        _findGroupById(svgElement, 'outline');
+        _findGroupById(svgElement, 'outline') ??
+        _findGroupById(svgElement, 'original_lines');
     final colorAreasGroup = _findGroupById(svgElement, 'colorRegions') ??
         _findGroupById(svgElement, 'color_areas');
 
@@ -701,6 +700,7 @@ class SvgColoringTemplate {
         : _fallbackAreaElements(svgElement);
 
     final areas = <SvgColorArea>[];
+    final areaIndexByGeometry = <String, int>{};
     for (var i = 0; i < areaElements.length; i++) {
       final node = areaElements[i];
       final d = node.getAttribute('d');
@@ -708,19 +708,33 @@ class SvgColoringTemplate {
 
       try {
         final parsedPath = parseSvgPathData(d);
+        final style = node.getAttribute('style')?.toLowerCase() ?? '';
+        final fillRule = node.getAttribute('fill-rule')?.toLowerCase() ?? '';
+        final useEvenOddFill =
+            fillRule == 'evenodd' || style.contains('fill-rule:evenodd');
+        parsedPath.fillType =
+            useEvenOddFill ? PathFillType.evenOdd : PathFillType.nonZero;
         final bounds = parsedPath.getBounds();
         // Ignore only near-full-canvas shapes (usually background catch-alls).
         final coversCanvas =
             bounds.width * bounds.height >= (width * height * 0.98);
         if (coversCanvas) continue;
 
-        areas.add(
-          SvgColorArea(
-            id: node.getAttribute('id') ?? 'area_$i',
-            pathData: d,
-            path: parsedPath,
-          ),
+        final area = SvgColorArea(
+          id: node.getAttribute('id') ?? 'area_$i',
+          pathData: d,
+          path: parsedPath,
+          useEvenOddFill: useEvenOddFill,
         );
+        final geometryKey = '${d.trim()}|${useEvenOddFill ? 'eo' : 'nz'}';
+        final existingIndex = areaIndexByGeometry[geometryKey];
+        if (existingIndex != null) {
+          // Keep the latest duplicate so it matches visual top-most order.
+          areas[existingIndex] = area;
+        } else {
+          areaIndexByGeometry[geometryKey] = areas.length;
+          areas.add(area);
+        }
       } catch (_) {
         // Ignore malformed path data.
       }
@@ -763,7 +777,11 @@ class SvgColoringTemplate {
         ..write(area.pathData)
         ..write('" fill="')
         ..write(_toHex(color))
-        ..write('" stroke="none"/>');
+        ..write('"');
+      if (area.useEvenOddFill) {
+        buffer.write(' fill-rule="evenodd"');
+      }
+      buffer.write(' stroke="none"/>');
     }
 
     buffer.write('</svg>');
@@ -777,7 +795,23 @@ class SvgColoringTemplate {
       if (!area.path.contains(point)) continue;
       final bounds = area.path.getBounds();
       final areaSize = bounds.width * bounds.height;
-      if (areaSize < bestAreaSize) {
+      // Use <= so if two overlapping areas have same bounds,
+      // we prefer the later one (typically top-most in SVG order).
+      if (areaSize <= bestAreaSize) {
+        bestAreaSize = areaSize;
+        best = area;
+      }
+    }
+    if (best != null) return best!.id;
+
+    // Fallback for SVGs that use open/complex paths where `contains`
+    // may fail: pick the nearest small bounds around the tap point.
+    const hitPadding = 10.0;
+    for (final area in areas) {
+      final bounds = area.path.getBounds();
+      if (!bounds.inflate(hitPadding).contains(point)) continue;
+      final areaSize = bounds.width * bounds.height;
+      if (areaSize <= bestAreaSize) {
         bestAreaSize = areaSize;
         best = area;
       }
@@ -800,9 +834,13 @@ class SvgColoringTemplate {
     return svgElement.findAllElements('path').where((node) {
       final style = node.getAttribute('style')?.toLowerCase() ?? '';
       final fill = node.getAttribute('fill')?.toLowerCase() ?? '';
+      final cssClass = node.getAttribute('class')?.toLowerCase() ?? '';
+      final onClick = node.getAttribute('onclick')?.toLowerCase() ?? '';
       return style.contains('fill:#ffffff') ||
           fill == '#ffffff' ||
-          fill == 'white';
+          fill == 'white' ||
+          cssClass.contains('region') ||
+          onClick.contains('fill(');
     }).toList();
   }
 
@@ -856,11 +894,20 @@ class SvgColoringTemplate {
         'stroke-linejoin="round" stroke-linecap="round">',
       );
       final skip = areaElements.toSet();
+      var wroteAnyPath = false;
       for (final path in svgElement.findAllElements('path')) {
         if (skip.contains(path)) continue;
         final d = path.getAttribute('d') ?? '';
         if (d.isEmpty) continue;
         buffer.write('<path d="$d"/>');
+        wroteAnyPath = true;
+      }
+      if (!wroteAnyPath) {
+        for (final area in areaElements) {
+          final d = area.getAttribute('d') ?? '';
+          if (d.isEmpty) continue;
+          buffer.write('<path d="$d"/>');
+        }
       }
       buffer.write('</g>');
     }
