@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class NoInternetScreen extends ConsumerStatefulWidget {
   const NoInternetScreen({super.key});
@@ -45,8 +46,9 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final auth = context.authTheme;
     return Scaffold(
-      backgroundColor: const Color(0xFF4C4552),
+      backgroundColor: colors.surfaceContainerHighest,
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _controller,
@@ -79,13 +81,13 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE8EE),
+                      color: auth.childBackground,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.portable_wifi_off_rounded,
                       size: 44,
-                      color: Color(0xFFE95C82),
+                      color: auth.child,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -113,7 +115,7 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                     child: ElevatedButton(
                       onPressed: () => context.pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B2A8B),
+                        backgroundColor: colors.primary,
                         foregroundColor: colors.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -121,7 +123,10 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
                       ),
                       child: Text(
                         AppLocalizations.of(context)!.cancel,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.onPrimary,
+                        ),
                       ),
                     ),
                   ),

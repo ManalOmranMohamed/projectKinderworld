@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_design_system.dart';
 import 'package:kinder_world/router.dart';
 
@@ -52,9 +53,11 @@ class _LanguageSelectionScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final currentLocale = ref.watch(localeProvider);
+    final auth = context.authTheme;
+    final textTheme = context.text;
 
     return Scaffold(
-      backgroundColor: AuthColors.pageBg,
+      backgroundColor: auth.pageBackground,
       body: FadeTransition(
         opacity: _fadeAnim,
         child: SlideTransition(
@@ -74,14 +77,14 @@ class _LanguageSelectionScreenState
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: AuthColors.brand.withValues(alpha: 0.08),
+                          color: auth.brand.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.language_rounded,
                         size: 52,
-                        color: AuthColors.brand,
+                        color: auth.brand,
                       ),
                     ],
                   ),
@@ -90,10 +93,10 @@ class _LanguageSelectionScreenState
 
                   Text(
                     l10n.chooseLanguageTitle,
-                    style: const TextStyle(
+                    style: textTheme.displayMedium?.copyWith(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AuthColors.textPrimary,
+                      color: auth.textPrimary,
                       letterSpacing: -0.5,
                     ),
                     textAlign: TextAlign.center,
@@ -103,9 +106,9 @@ class _LanguageSelectionScreenState
 
                   Text(
                     l10n.chooseLanguageSubtitle,
-                    style: const TextStyle(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontSize: 15,
-                      color: AuthColors.textMuted,
+                      color: auth.textMuted,
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
@@ -166,28 +169,30 @@ class _LanguageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.authTheme;
+    final textTheme = context.text;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: isSelected
-            ? AuthColors.brand.withValues(alpha: 0.06)
-            : Colors.white,
+            ? auth.brand.withValues(alpha: 0.06)
+            : context.colors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isSelected ? AuthColors.brand : AuthColors.inputBorder,
+          color: isSelected ? auth.brand : auth.inputBorder,
           width: isSelected ? 2.0 : 1.5,
         ),
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: AuthColors.brand.withValues(alpha: 0.12),
+                  color: auth.brand.withValues(alpha: 0.12),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: context.colors.shadow.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -211,19 +216,17 @@ class _LanguageCard extends StatelessWidget {
                   children: [
                     Text(
                       nativeName,
-                      style: TextStyle(
+                      style: textTheme.titleMedium?.copyWith(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? AuthColors.brand
-                            : AuthColors.textPrimary,
+                        color: isSelected ? auth.brand : auth.textPrimary,
                       ),
                     ),
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: textTheme.bodySmall?.copyWith(
                         fontSize: 13,
-                        color: AuthColors.textMuted,
+                        color: auth.textMuted,
                       ),
                     ),
                   ],
@@ -237,17 +240,18 @@ class _LanguageCard extends StatelessWidget {
                 height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isSelected ? AuthColors.brand : Colors.transparent,
+                  color: isSelected ? auth.brand : Colors.transparent,
                   border: Border.all(
-                    color: isSelected
-                        ? AuthColors.brand
-                        : AuthColors.inputBorder,
+                    color: isSelected ? auth.brand : auth.inputBorder,
                     width: 2,
                   ),
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check_rounded,
-                        size: 16, color: Colors.white)
+                    ? Icon(
+                        Icons.check_rounded,
+                        size: 16,
+                        color: context.colors.onPrimary,
+                      )
                     : null,
               ),
             ],

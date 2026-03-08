@@ -1557,6 +1557,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coppaGdprNote => 'COPPA & GDPR Compliant - Child Safe';
 
   @override
+  String get onboardingLearn => 'Learn';
+
+  @override
+  String get onboardingPlay => 'Play';
+
+  @override
   String get onboardingGrow => 'Grow';
 
   @override
@@ -1873,10 +1879,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentPasswordHint => 'Enter your current password';
 
   @override
+  String get currentPassword => 'Current Password';
+
+  @override
+  String get currentPasswordRequired => 'Please enter your current password';
+
+  @override
   String get newPasswordLabel => 'New Password';
 
   @override
   String get newPasswordHint => 'Enter your new password (min 6 characters)';
+
+  @override
+  String get newPassword => 'New Password';
+
+  @override
+  String get newPasswordRequired => 'Please enter your new password';
+
+  @override
+  String get confirmNewPassword => 'Confirm New Password';
+
+  @override
+  String get confirmNewPasswordRequired => 'Please confirm your new password';
 
   @override
   String get confirmPasswordLabel => 'Confirm Password';
@@ -1889,6 +1913,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordUpdatedSuccess => 'Password updated successfully.';
+
+  @override
+  String get passwordChanged => 'Password changed successfully.';
+
+  @override
+  String get passwordChangeFailed => 'Failed to change password.';
 
   @override
   String get privacySettingsError => 'Error loading privacy settings';
@@ -1934,10 +1964,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpPreparingArticles => 'We are preparing helpful articles for you.';
 
   @override
+  String get noFaqFound => 'No FAQ found';
+
+  @override
   String get contactUsAction => 'Contact Us';
 
   @override
   String get contactUsIntro => "We'd love to hear from you. Send us your message and we'll get back to you shortly.";
+
+  @override
+  String get contactEmailLabel => 'Email';
+
+  @override
+  String get contactEmailValue => 'support@kinderworld.app';
+
+  @override
+  String get contactPhoneLabel => 'Phone';
+
+  @override
+  String get contactPhoneValue => '+1 (800) 123-4567';
+
+  @override
+  String get contactHoursLabel => 'Support Hours';
+
+  @override
+  String get contactHoursValue => 'Monday - Friday, 9 AM - 6 PM';
+
+  @override
+  String get sendMessageTitle => 'Send us a message';
 
   @override
   String get subjectLabel => 'Subject *';
@@ -1956,6 +2010,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messageRequiredError => 'Please enter a message';
+
+  @override
+  String get messageSent => 'Your message has been sent successfully!';
 
   @override
   String get messageSentSuccess => "Message sent successfully. We'll get back to you soon.";
@@ -2091,6 +2148,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'No worries! Enter your email address and we\'ll send you a link to reset your password.';
 
   @override
+  String get forgotPasswordTitle => 'Forgot Password';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Enter your email address and we\'ll send you a reset link.';
+
+  @override
   String get emailAddress => 'Email Address';
 
   @override
@@ -2109,6 +2173,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendResetLink => 'Send Reset Link';
+
+  @override
+  String get resetLinkSent => 'A reset link has been sent to your email address';
 
   @override
   String get backToLogin => 'Back to Login';
@@ -2145,6 +2212,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get forgotPicturesDescription =>
       'No problem! Tell us your Child ID and your parent\'s email. We\'ll send them a message to help you get back in.';
+
+  @override
+  String get childForgotPasswordTitle => 'Forgot Picture Password';
+
+  @override
+  String get childForgotPasswordSubtitle =>
+      'Ask your parent for help resetting your picture password.';
 
   @override
   String get yourChildId => 'Your Child ID';
@@ -2198,6 +2272,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tryAgainDifferentInfo => 'Try again with different info';
+
+  @override
+  String get childNameLabel => 'Child Name';
+
+  @override
+  String get childNameHint => 'Enter the child\'s name';
+
+  @override
+  String get childNameRequired => 'Please enter the child\'s name';
+
+  @override
+  String get childAgeLabel => 'Child Age';
+
+  @override
+  String get childAgeHint => 'Enter the child\'s age (5-12)';
+
+  @override
+  String get childAgeRequired => 'Please enter the child\'s age';
+
+  @override
+  String get selectAvatarLabel => 'Select an avatar';
+
+  @override
+  String get setPicturePassword => 'Set picture password';
+
+  @override
+  String get createProfile => 'Create Profile';
 
   // ── Parent Register Screen ──
   @override
@@ -2263,6 +2364,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parentAccess => 'Parent Access';
 
   @override
+  String get parentPinTitle => 'Parent Verification';
+
+  @override
+  String get parentPinSubtitle =>
+      'Enter your PIN to access parent settings.';
+
+  @override
+  String get parentPinHint => 'Enter a 4-digit PIN';
+
+  @override
+  String get parentPinError =>
+      'The PIN you entered is incorrect. Please try again.';
+
+  @override
+  String get parentPinSuccess => 'PIN verified successfully';
+
+  @override
+  String get parentPinVerify => 'Verify';
+
+  @override
+  String get parentPinForgot => 'Forgot PIN?';
+
+  @override
   String get enterPinToContinue => 'Enter your PIN to continue';
 
   @override
@@ -2274,6 +2398,12 @@ class AppLocalizationsEn extends AppLocalizations {
   // ── Child Header ──
   @override
   String get friendFallback => 'Friend';
+
+  @override
+  String get childHeaderGreeting => 'Hello';
+
+  @override
+  String get childHeaderSubtitle => 'Ready for your next adventure?';
 
   @override
   String levelLabel(int level) => 'Level $level';

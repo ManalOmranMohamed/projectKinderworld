@@ -806,7 +806,7 @@ class SvgColoringTemplate {
         best = area;
       }
     }
-    if (best != null) return best!.id;
+    if (best != null) return best.id;
 
     // Fallback for SVGs that use open/complex paths where `contains`
     // may fail: pick the nearest small bounds around the tap point.
@@ -1097,9 +1097,9 @@ class _SunStarBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return const Stack(
       clipBehavior: Clip.none,
-      children: const [
+      children: [
         Icon(
           Icons.wb_sunny_rounded,
           color: Color(0xFFFFC107),

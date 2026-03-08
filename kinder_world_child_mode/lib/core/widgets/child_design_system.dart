@@ -4,6 +4,7 @@
 // Used across Home, Learn, Play, AI Buddy, and Profile screens.
 
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -148,6 +149,7 @@ class _ChildXpProgressBarState extends State<ChildXpProgressBar>
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final childTheme = context.childTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -156,10 +158,10 @@ class _ChildXpProgressBarState extends State<ChildXpProgressBar>
           children: [
             Text(
               '⭐ ${widget.currentXp} XP',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: ChildColors.xpGold,
+                color: childTheme.xp,
               ),
             ),
             Text(
@@ -179,8 +181,8 @@ class _ChildXpProgressBarState extends State<ChildXpProgressBar>
             child: LinearProgressIndicator(
               value: _anim.value,
               backgroundColor: colors.surfaceContainerHighest,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                ChildColors.xpGold,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                childTheme.xp,
               ),
               minHeight: 10,
             ),
@@ -274,17 +276,18 @@ class ChildStreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final childTheme = context.childTheme;
     if (streak <= 0) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [ChildColors.streakFire, ChildColors.streakFireLight],
+        gradient: LinearGradient(
+          colors: [childTheme.streak, childTheme.streakLight],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: ChildColors.streakFire.withValues(alpha: 0.35),
+            color: childTheme.streak.withValues(alpha: 0.35),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -297,10 +300,10 @@ class ChildStreakBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             '$streak day${streak == 1 ? '' : 's'}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: context.colors.onPrimary,
             ),
           ),
         ],

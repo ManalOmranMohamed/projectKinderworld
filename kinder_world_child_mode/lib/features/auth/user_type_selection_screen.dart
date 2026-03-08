@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class UserTypeSelectionScreen extends ConsumerStatefulWidget {
   const UserTypeSelectionScreen({super.key});
@@ -108,9 +109,12 @@ class _UserTypeSelectionScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final auth = context.authTheme;
+    final textTheme = context.text;
+    final childTheme = context.childTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFF),
+      backgroundColor: auth.pageBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -135,10 +139,10 @@ class _UserTypeSelectionScreenState
                       Text(
                         l10n.whoIsUsingKinderWorld,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: textTheme.displayMedium?.copyWith(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF111827),
+                          color: auth.textPrimary,
                           letterSpacing: -0.8,
                           height: 1.2,
                         ),
@@ -147,9 +151,9 @@ class _UserTypeSelectionScreenState
                       Text(
                         l10n.selectUserTypeSubtitle,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: textTheme.bodyMedium?.copyWith(
                           fontSize: 14,
-                          color: Color(0xFF6B7280),
+                          color: auth.textMuted,
                           height: 1.5,
                         ),
                       ),
@@ -179,12 +183,12 @@ class _UserTypeSelectionScreenState
                             icon: Icons.shield_rounded,
                             secondaryIcon: Icons.bar_chart_rounded,
                             tertiaryIcon: Icons.family_restroom_rounded,
-                            gradientColors: const [
-                              Color(0xFF1565C0),
-                              Color(0xFF1976D2),
-                              Color(0xFF1E88E5),
+                            gradientColors: [
+                              auth.brandDeep,
+                              auth.brand,
+                              auth.brandLight,
                             ],
-                            accentColor: const Color(0xFF90CAF9),
+                            accentColor: auth.brandLight,
                             tag: l10n.secureAndStructured,
                             tagIcon: Icons.verified_rounded,
                             isPressed: _pressedPanel == 'parent',
@@ -206,12 +210,12 @@ class _UserTypeSelectionScreenState
                             icon: Icons.auto_awesome_rounded,
                             secondaryIcon: Icons.sports_esports_rounded,
                             tertiaryIcon: Icons.emoji_events_rounded,
-                            gradientColors: const [
-                              Color(0xFFE91E63),
-                              Color(0xFFFF5722),
-                              Color(0xFFFF9800),
+                            gradientColors: [
+                              childTheme.kindness,
+                              auth.child,
+                              auth.childLight,
                             ],
-                            accentColor: const Color(0xFFFFCDD2),
+                            accentColor: auth.childBackground,
                             tag: l10n.funAndPlayful,
                             tagIcon: Icons.star_rounded,
                             isPressed: _pressedPanel == 'child',
@@ -455,19 +459,20 @@ class _CircleBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.authTheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+          color: auth.inputBackground,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.arrow_back_rounded,
           size: 20,
-          color: Color(0xFF374151),
+          color: auth.textMuted,
         ),
       ),
     );

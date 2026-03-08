@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GradientButton — full-width CTA with gradient fill + loading state
@@ -9,7 +9,7 @@ class GradientButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
-  final List<Color> gradientColors;
+  final List<Color>? gradientColors;
   final double height;
   final double borderRadius;
   final TextStyle? textStyle;
@@ -20,7 +20,7 @@ class GradientButton extends StatefulWidget {
     required this.label,
     this.onPressed,
     this.isLoading = false,
-    this.gradientColors = const [Color(0xFF1976D2), Color(0xFF42A5F5)],
+    this.gradientColors,
     this.height = 56,
     this.borderRadius = 16,
     this.textStyle,
@@ -61,7 +61,10 @@ class _GradientButtonState extends State<GradientButton>
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final auth = context.authTheme;
     final disabled = widget.onPressed == null || widget.isLoading;
+    final gradientColors = widget.gradientColors ?? [auth.brand, auth.brandLight];
     return GestureDetector(
       onTapDown: disabled ? null : _onTapDown,
       onTapUp: disabled ? null : _onTapUp,
@@ -79,17 +82,17 @@ class _GradientButtonState extends State<GradientButton>
             gradient: disabled
                 ? null
                 : LinearGradient(
-                    colors: widget.gradientColors,
+                    colors: gradientColors,
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
-            color: disabled ? Colors.grey.shade300 : null,
+            color: disabled ? colors.surfaceContainerHighest : null,
             borderRadius: BorderRadius.circular(widget.borderRadius),
             boxShadow: disabled
                 ? []
                 : [
                     BoxShadow(
-                      color: widget.gradientColors.first.withValues(alpha: 0.35),
+                      color: gradientColors.first.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -115,10 +118,10 @@ class _GradientButtonState extends State<GradientButton>
                       Text(
                         widget.label,
                         style: widget.textStyle ??
-                            const TextStyle(
+                            TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: colors.onPrimary,
                               letterSpacing: 0.3,
                             ),
                       ),
@@ -137,8 +140,8 @@ class _GradientButtonState extends State<GradientButton>
 class OutlineAuthButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
-  final Color borderColor;
-  final Color textColor;
+  final Color? borderColor;
+  final Color? textColor;
   final double height;
   final double borderRadius;
 
@@ -146,21 +149,24 @@ class OutlineAuthButton extends StatelessWidget {
     super.key,
     required this.label,
     this.onPressed,
-    this.borderColor = AppColors.primary,
-    this.textColor = AppColors.primary,
+    this.borderColor,
+    this.textColor,
     this.height = 54,
     this.borderRadius = 16,
   });
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.authTheme;
+    final resolvedBorder = borderColor ?? auth.brand;
+    final resolvedText = textColor ?? auth.brand;
     return SizedBox(
       height: height,
       width: double.infinity,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: borderColor, width: 1.8),
+          side: BorderSide(color: resolvedBorder, width: 1.8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
@@ -170,7 +176,7 @@ class OutlineAuthButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: textColor,
+            color: resolvedText,
           ),
         ),
       ),
@@ -245,7 +251,7 @@ class _AuthInputFieldState extends State<AuthInputField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -275,17 +281,17 @@ class _AuthInputFieldState extends State<AuthInputField> {
             duration: const Duration(milliseconds: 200),
             child: Icon(
               widget.prefixIcon,
-              color: _isFocused ? AppColors.primary : colors.onSurfaceVariant,
+              color: _isFocused ? colors.primary : colors.onSurfaceVariant,
               size: 20,
             ),
           ),
           suffixIcon: widget.suffixIcon,
           filled: true,
           fillColor: _isFocused
-              ? AppColors.primary.withValues(alpha: 0.04)
+              ? colors.primary.withValues(alpha: 0.04)
               : colors.surfaceContainerHighest.withValues(alpha: 0.5),
           labelStyle: TextStyle(
-            color: _isFocused ? AppColors.primary : colors.onSurfaceVariant,
+            color: _isFocused ? colors.primary : colors.onSurfaceVariant,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -302,22 +308,22 @@ class _AuthInputFieldState extends State<AuthInputField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.primary,
+            borderSide: BorderSide(
+              color: colors.primary,
               width: 1.8,
             ),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.error,
+            borderSide: BorderSide(
+              color: colors.error,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.error,
+            borderSide: BorderSide(
+              color: colors.error,
               width: 1.8,
             ),
           ),
@@ -358,12 +364,13 @@ class PasswordStrengthIndicator extends StatelessWidget {
     if (strength == _PasswordStrength.none) return const SizedBox.shrink();
 
     final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
     final (color, label, filled) = switch (strength) {
-      _PasswordStrength.weak => (AppColors.error, l10n.passwordWeak, 1),
-      _PasswordStrength.fair => (AppColors.warning, l10n.passwordFair, 2),
-      _PasswordStrength.strong => (AppColors.success, l10n.passwordStrong, 3),
+      _PasswordStrength.weak => (colors.error, l10n.passwordWeak, 1),
+      _PasswordStrength.fair => (colors.tertiary, l10n.passwordFair, 2),
+      _PasswordStrength.strong => (colors.primary, l10n.passwordStrong, 3),
       _PasswordStrength.veryStrong =>
-        (const Color(0xFF1B5E20), l10n.passwordVeryStrong, 4),
+        (Color.lerp(colors.primary, colors.secondary, 0.35)!, l10n.passwordVeryStrong, 4),
       _ => (Colors.transparent, '', 0),
     };
 
@@ -379,7 +386,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
                 margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
                 height: 4,
                 decoration: BoxDecoration(
-                  color: i < filled ? color : Colors.grey.shade200,
+                  color: i < filled ? color : colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -483,7 +490,7 @@ class AuthSuccessView extends StatelessWidget {
   final String subtitle;
   final String buttonLabel;
   final VoidCallback onPressed;
-  final Color accentColor;
+  final Color? accentColor;
   final IconData icon;
 
   const AuthSuccessView({
@@ -492,7 +499,7 @@ class AuthSuccessView extends StatelessWidget {
     required this.subtitle,
     required this.buttonLabel,
     required this.onPressed,
-    this.accentColor = AppColors.success,
+    this.accentColor,
     this.icon = Icons.mark_email_read_rounded,
   });
 
@@ -500,6 +507,8 @@ class AuthSuccessView extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
+    final resolvedAccent =
+        accentColor ?? Color.lerp(colors.primary, colors.secondary, 0.4)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -511,9 +520,9 @@ class AuthSuccessView extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: accentColor.withValues(alpha: 0.12),
+                color: resolvedAccent.withValues(alpha: 0.12),
               ),
-              child: Icon(icon, size: 60, color: accentColor),
+              child: Icon(icon, size: 60, color: resolvedAccent),
             ),
             const SizedBox(height: 32),
             Text(
@@ -539,7 +548,10 @@ class AuthSuccessView extends StatelessWidget {
             GradientButton(
               label: buttonLabel,
               onPressed: onPressed,
-              gradientColors: [accentColor, accentColor.withValues(alpha: 0.7)],
+              gradientColors: [
+                resolvedAccent,
+                resolvedAccent.withValues(alpha: 0.7),
+              ],
             ),
           ],
         ),

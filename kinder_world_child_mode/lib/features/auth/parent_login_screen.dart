@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
 class ParentLoginScreen extends ConsumerStatefulWidget {
@@ -107,6 +107,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
   }
 
   void _showError(String message) {
+    final colors = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -117,10 +118,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        backgroundColor: colors.error,
       ),
     );
   }
@@ -131,9 +129,10 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
     final authState = ref.watch(authControllerProvider);
     final isLoading = _isLoading || authState.isLoading;
     final size = MediaQuery.of(context).size;
+    final auth = context.authTheme;
+    final text = context.text;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
@@ -163,19 +162,19 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                           // Section title
                           Text(
                             l10n.signIn,
-                            style: const TextStyle(
+                            style: text.displayMedium?.copyWith(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF111827),
+                              color: auth.textPrimary,
                               letterSpacing: -0.6,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             l10n.parentLoginSubtitle,
-                            style: const TextStyle(
+                            style: text.bodyMedium?.copyWith(
                               fontSize: 14,
-                              color: Color(0xFF6B7280),
+                              color: auth.textMuted,
                             ),
                           ),
                           const SizedBox(height: 28),
@@ -213,7 +212,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                                 _obscurePassword
                                     ? Icons.visibility_outlined
                                     : Icons.visibility_off_outlined,
-                                color: const Color(0xFF9CA3AF),
+                                color: auth.textHint,
                                 size: 20,
                               ),
                               onPressed: () => setState(
@@ -238,16 +237,16 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                               onPressed: () =>
                                   context.go('/parent/forgot-password'),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primary,
+                                foregroundColor: auth.brand,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 4, vertical: 4),
                               ),
                               child: Text(
                                 l10n.forgotPassword,
-                                style: const TextStyle(
+                                style: text.labelMedium?.copyWith(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  color: auth.brand,
                                 ),
                               ),
                             ),
@@ -259,9 +258,9 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                             label: l10n.login,
                             isLoading: isLoading,
                             onPressed: isLoading ? null : _login,
-                            gradientColors: const [
-                              Color(0xFF1565C0),
-                              Color(0xFF42A5F5),
+                            gradientColors: [
+                              auth.brandDeep,
+                              auth.brandLight,
                             ],
                           ),
                           const SizedBox(height: 24),
@@ -274,8 +273,8 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                           OutlineAuthButton(
                             label: l10n.createAccount,
                             onPressed: () => context.go('/parent/register'),
-                            borderColor: AppColors.primary,
-                            textColor: AppColors.primary,
+                            borderColor: auth.brand,
+                            textColor: auth.brand,
                           ),
                           const SizedBox(height: 28),
 
@@ -283,9 +282,9 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
                           Center(
                             child: Text(
                               l10n.coppaGdprNote,
-                              style: const TextStyle(
+                              style: text.bodySmall?.copyWith(
                                 fontSize: 12,
-                                color: Color(0xFF9CA3AF),
+                                color: auth.textHint,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -314,20 +313,22 @@ class _ParentLoginHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final headerHeight = screenHeight * 0.24;
+    final auth = context.authTheme;
+    final text = context.text;
     return Container(
       height: headerHeight,
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1565C0),
-            Color(0xFF1976D2),
-            Color(0xFF1E88E5),
+            auth.brandDeep,
+            auth.brand,
+            auth.brandLight,
           ],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
       child: Stack(
         children: [
@@ -410,7 +411,7 @@ class _ParentLoginHeader extends StatelessWidget {
                         children: [
                           Text(
                             AppLocalizations.of(context)!.parentPortal,
-                            style: const TextStyle(
+                            style: text.titleLarge?.copyWith(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -419,7 +420,7 @@ class _ParentLoginHeader extends StatelessWidget {
                           ),
                           Text(
                             AppLocalizations.of(context)!.appTitle,
-                            style: TextStyle(
+                            style: text.bodySmall?.copyWith(
                               fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.75),
                               fontWeight: FontWeight.w500,

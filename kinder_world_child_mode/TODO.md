@@ -1,9 +1,9 @@
 # i18n Full Refactoring TODO
 
 ## Phase 1: Add missing localization keys
-- [ ] 1.1 Add new abstract getters to `app_localizations.dart`
-- [ ] 1.2 Add EN implementations to `app_localizations_en.dart`
-- [ ] 1.3 Complete ALL Arabic translations in `app_localizations_ar.dart`
+- [x] 1.1 Add new abstract getters to `app_localizations.dart`
+- [x] 1.2 Add EN implementations to `app_localizations_en.dart`
+- [x] 1.3 Complete ALL Arabic translations in `app_localizations_ar.dart`
 
 ## Phase 2: Replace hardcoded strings in screens
 - [ ] 2.1 `splash_screen.dart` — "Kinder World", "Learn • Play • Grow"
@@ -28,3 +28,9 @@
 ## Phase 3: Verification
 - [ ] 3.1 Run flutter analyze
 - [ ] 3.2 Document remaining manual-review items
+
+## Hotfix: app_localizations_ar override diagnostics
+- [ ] H1 Update this TODO for override hotfix tracking
+- [ ] H2 Remove invalid `@override` annotations from `app_localizations_ar.dart` only
+- [ ] H3 Run targeted `flutter analyze` for localization files
+- [ ] H4 Fix any additional diagnostics in same file/scope without behavior changes

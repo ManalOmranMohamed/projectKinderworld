@@ -136,12 +136,20 @@ abstract class AppLocalizations {
   String get weekdaySun;
   String get currentPasswordLabel;
   String get currentPasswordHint;
+  String get currentPassword;
+  String get currentPasswordRequired;
   String get newPasswordLabel;
   String get newPasswordHint;
+  String get newPassword;
+  String get newPasswordRequired;
+  String get confirmNewPassword;
+  String get confirmNewPasswordRequired;
   String get confirmPasswordLabel;
   String get confirmPasswordHintAlt;
   String get updatePassword;
   String get passwordUpdatedSuccess;
+  String get passwordChanged;
+  String get passwordChangeFailed;
   String get privacySettingsError;
   String get retryAction;
   String get analyticsTitle;
@@ -156,14 +164,23 @@ abstract class AppLocalizations {
   String get noFaqsYet;
   String get noResultsFound;
   String get helpPreparingArticles;
+  String get noFaqFound;
   String get contactUsAction;
   String get contactUsIntro;
+  String get contactEmailLabel;
+  String get contactEmailValue;
+  String get contactPhoneLabel;
+  String get contactPhoneValue;
+  String get contactHoursLabel;
+  String get contactHoursValue;
+  String get sendMessageTitle;
   String get subjectLabel;
   String get subjectHint;
   String get messageLabel;
   String get messageHint;
   String get subjectRequiredError;
   String get messageRequiredError;
+  String get messageSent;
   String get messageSentSuccess;
   String get sendMessage;
   String get subscriptionTitle;
@@ -570,6 +587,8 @@ abstract class AppLocalizations {
   String get safe;
   String get getStarted;
   String get coppaGdprNote;
+  String get onboardingLearn;
+  String get onboardingPlay;
   String get onboardingGrow;
   String get onboardingLearnSubtitle;
   String get onboardingLearnDescription;
@@ -747,12 +766,15 @@ abstract class AppLocalizations {
   String get parentAccount;
   String get forgotYourPassword;
   String get forgotPasswordDescription;
+  String get forgotPasswordTitle;
+  String get forgotPasswordSubtitle;
   String get emailAddress;
   String get emailPlaceholder;
   String get emailValidationEmpty;
   String get emailValidationInvalid;
   String get spamFolderNote;
   String get sendResetLink;
+  String get resetLinkSent;
   String get backToLogin;
   String get checkYourInbox;
   String resetLinkSentTo(String email);
@@ -766,6 +788,8 @@ abstract class AppLocalizations {
   String get wellAskYourParent;
   String get forgotYourPictures;
   String get forgotPicturesDescription;
+  String get childForgotPasswordTitle;
+  String get childForgotPasswordSubtitle;
   String get yourChildId;
   String get childIdHint;
   String get childIdRequired;
@@ -783,6 +807,15 @@ abstract class AppLocalizations {
   String get childStep2;
   String get childStep3;
   String get tryAgainDifferentInfo;
+  String get childNameLabel;
+  String get childNameHint;
+  String get childNameRequired;
+  String get childAgeLabel;
+  String get childAgeHint;
+  String get childAgeRequired;
+  String get selectAvatarLabel;
+  String get setPicturePassword;
+  String get createProfile;
 
   // ── Parent Register Screen ──
   String get personalInformation;
@@ -809,12 +842,21 @@ abstract class AppLocalizations {
 
   // ── Parent PIN Screen ──
   String get parentAccess;
+  String get parentPinTitle;
+  String get parentPinSubtitle;
+  String get parentPinHint;
+  String get parentPinError;
+  String get parentPinSuccess;
+  String get parentPinVerify;
+  String get parentPinForgot;
   String get enterPinToContinue;
   String get forgotPin;
   String get contactSupportToResetPin;
 
   // ── Child Header ──
   String get friendFallback;
+  String get childHeaderGreeting;
+  String get childHeaderSubtitle;
   String levelLabel(int level);
 
   // ── Router fallback messages ──

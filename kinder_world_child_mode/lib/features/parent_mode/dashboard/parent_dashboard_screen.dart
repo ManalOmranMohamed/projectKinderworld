@@ -578,7 +578,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.local_fire_department_rounded,
                                     size: 13,
                                     color: ParentColors.streakOrange,
@@ -586,7 +586,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                                   const SizedBox(width: 3),
                                   Text(
                                     '${child.streak}d',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: ParentColors.streakOrange,
@@ -646,7 +646,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                 const SizedBox(width: 8),
                 Text(
                   '${child.xp % 1000}/1000 XP',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: ParentColors.xpGold,

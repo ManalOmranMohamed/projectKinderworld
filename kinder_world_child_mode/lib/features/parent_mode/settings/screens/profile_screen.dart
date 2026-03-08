@@ -115,7 +115,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline_rounded,
+                const Icon(Icons.error_outline_rounded,
                     size: 48, color: ParentColors.alertRed),
                 const SizedBox(height: 16),
                 Text(l10n.error,
@@ -184,10 +184,10 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                             letterSpacing: -0.3,
                           ),
                         ),
-                        if (user.email?.isNotEmpty == true) ...[
+                        if (user.email.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            user.email!,
+                            user.email,
                             style: TextStyle(
                                 fontSize: 13,
                                 color: colors.onSurfaceVariant),
@@ -252,7 +252,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller:
-                              TextEditingController(text: user.email ?? ''),
+                              TextEditingController(text: user.email),
                           enabled: false,
                           decoration: InputDecoration(
                             prefixIcon: Icon(Icons.email_rounded,

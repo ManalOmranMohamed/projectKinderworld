@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class AppTheme {
   AppTheme._();
@@ -9,17 +10,29 @@ class AppTheme {
     final scheme = palette.colorScheme(Brightness.light).copyWith(
       surface: palette.lightSurface,
     );
-    return _themeFromScheme(scheme, isChildFriendly);
+    return _themeFromScheme(
+      scheme: scheme,
+      background: palette.lightBackground,
+      isChildFriendly: isChildFriendly,
+    );
   }
 
   static ThemeData darkTheme({required ThemePalette palette, bool isChildFriendly = true}) {
     final scheme = palette.colorScheme(Brightness.dark).copyWith(
       surface: palette.darkSurface,
     );
-    return _themeFromScheme(scheme, isChildFriendly);
+    return _themeFromScheme(
+      scheme: scheme,
+      background: palette.darkBackground,
+      isChildFriendly: isChildFriendly,
+    );
   }
 
-  static ThemeData _themeFromScheme(ColorScheme scheme, bool isChildFriendly) {
+  static ThemeData _themeFromScheme({
+    required ColorScheme scheme,
+    required Color background,
+    required bool isChildFriendly,
+  }) {
     final textPrimary = scheme.brightness == Brightness.dark
         ? scheme.onSurface.withValues(alpha: 0.92)
         : scheme.onSurface;
@@ -85,9 +98,11 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       brightness: scheme.brightness,
-      scaffoldBackgroundColor: scheme.surface,
+      scaffoldBackgroundColor: background,
       fontFamily: 'SFPro',
       textTheme: textTheme,
+      canvasColor: scheme.surface,
+      dialogBackgroundColor: scheme.surface,
       appBarTheme: AppBarTheme(
         elevation: 0,
         backgroundColor: scheme.surface,
@@ -95,6 +110,15 @@ class AppTheme {
         centerTitle: true,
         iconTheme: IconThemeData(color: textPrimary),
         titleTextStyle: textTheme.titleLarge,
+        surfaceTintColor: Colors.transparent,
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: textPrimary,
+          backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+          hoverColor: scheme.primary.withValues(alpha: 0.08),
+          highlightColor: scheme.primary.withValues(alpha: 0.12),
+        ),
       ),
       cardTheme: CardThemeData(
         color: scheme.surface,
@@ -104,11 +128,69 @@ class AppTheme {
         ),
         shadowColor: scheme.shadow.withValues(alpha: 0.08),
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: scheme.inverseSurface,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onInverseSurface,
+        ),
+        actionTextColor: scheme.inversePrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: textTheme.titleLarge,
+        contentTextStyle: textTheme.bodyMedium,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: scheme.surface,
+        showDragHandle: true,
+        dragHandleColor: scheme.outlineVariant,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: scheme.surface,
         selectedItemColor: scheme.primary,
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.secondaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onSecondaryContainer
+                : textSecondary,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => textTheme.labelMedium?.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? scheme.onSecondaryContainer
+                : textSecondary,
+          ),
+        ),
+      ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: scheme.primary,
+        unselectedLabelColor: textSecondary,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(color: scheme.primary, width: 2),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        labelStyle: textTheme.labelLarge?.copyWith(color: scheme.primary),
+        unselectedLabelStyle: textTheme.labelLarge?.copyWith(color: textSecondary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -121,6 +203,17 @@ class AppTheme {
           textStyle: textTheme.labelLarge,
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: scheme.primary,
+          textStyle: textTheme.labelLarge?.copyWith(
+            color: scheme.primary,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: scheme.secondaryContainer,
@@ -128,6 +221,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          textStyle: textTheme.labelLarge,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -137,7 +231,48 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          textStyle: textTheme.labelLarge?.copyWith(color: scheme.primary),
         ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return scheme.primary;
+          }
+          return scheme.outline;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return scheme.primary.withValues(alpha: 0.35);
+          }
+          return scheme.surfaceContainerHighest;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return scheme.primary;
+          }
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStatePropertyAll(scheme.onPrimary),
+        side: BorderSide(color: scheme.outline),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return scheme.primary;
+          }
+          return scheme.outline;
+        }),
       ),
       iconTheme: IconThemeData(color: textPrimary),
       chipTheme: ChipThemeData(
@@ -146,7 +281,10 @@ class AppTheme {
         selectedColor: scheme.secondaryContainer,
         secondarySelectedColor: scheme.secondaryContainer,
         labelStyle: textTheme.bodySmall!,
-        secondaryLabelStyle: textTheme.bodySmall!,
+        secondaryLabelStyle: textTheme.bodySmall!.copyWith(
+          color: scheme.onSecondaryContainer,
+        ),
+        side: BorderSide(color: scheme.outlineVariant),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -173,6 +311,7 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: textTheme.bodyMedium?.copyWith(color: textSecondary),
+        floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: scheme.primary),
         hintStyle: textTheme.bodyMedium?.copyWith(
           color: textSecondary.withValues(alpha: 0.9),
         ),
@@ -188,7 +327,16 @@ class AppTheme {
         iconColor: textSecondary,
         textColor: textPrimary,
         tileColor: scheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
+      extensions: <ThemeExtension<dynamic>>[
+        AuthThemeTokens.fromScheme(scheme),
+        ParentThemeTokens.fromScheme(scheme),
+        ChildThemeTokens.fromScheme(scheme),
+      ],
     );
   }
 }

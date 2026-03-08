@@ -4,6 +4,7 @@
 // Used across Dashboard, Settings, Reports, Controls, and Notifications.
 
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
@@ -186,6 +187,7 @@ class ParentStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
     return ParentCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -207,7 +209,7 @@ class ParentStatCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (trendUp ? Colors.green : Colors.red)
+                    color: (trendUp ? parent.primary : parent.alert)
                         .withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -219,7 +221,7 @@ class ParentStatCard extends StatelessWidget {
                             ? Icons.trending_up_rounded
                             : Icons.trending_down_rounded,
                         size: 12,
-                        color: trendUp ? Colors.green : Colors.red,
+                        color: trendUp ? parent.primary : parent.alert,
                       ),
                       const SizedBox(width: 2),
                       Text(
@@ -227,7 +229,7 @@ class ParentStatCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: trendUp ? Colors.green : Colors.red,
+                          color: trendUp ? parent.primary : parent.alert,
                         ),
                       ),
                     ],
@@ -290,8 +292,9 @@ class ParentSettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
     final titleColor =
-        isDestructive ? ParentColors.alertRed : colors.onSurface;
+        isDestructive ? parent.alert : colors.onSurface;
     final effectiveTrailing = trailing ??
         Icon(
           Icons.chevron_right_rounded,
@@ -312,14 +315,14 @@ class ParentSettingsTile extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: isDestructive
-                        ? ParentColors.alertRed.withValues(alpha: 0.10)
+                        ? parent.alert.withValues(alpha: 0.10)
                         : iconColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
                     size: 18,
-                    color: isDestructive ? ParentColors.alertRed : iconColor,
+                    color: isDestructive ? parent.alert : iconColor,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -436,25 +439,26 @@ class ParentStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final parent = context.parentTheme;
     final (color, dot, text) = switch (status) {
       ParentBadgeStatus.active => (
-          Colors.green,
-          Colors.green,
+          parent.primary,
+          parent.primary,
           label ?? 'Active',
         ),
       ParentBadgeStatus.inactive => (
-          Colors.grey,
-          Colors.grey,
+          context.colors.outline,
+          context.colors.outline,
           label ?? 'Inactive',
         ),
       ParentBadgeStatus.alert => (
-          ParentColors.alertAmber,
-          ParentColors.alertAmber,
+          parent.warning,
+          parent.warning,
           label ?? 'Alert',
         ),
       ParentBadgeStatus.premium => (
-          ParentColors.xpGold,
-          ParentColors.xpGold,
+          parent.reward,
+          parent.reward,
           label ?? 'Premium',
         ),
     };

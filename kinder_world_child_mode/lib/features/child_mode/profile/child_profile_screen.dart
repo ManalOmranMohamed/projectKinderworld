@@ -514,7 +514,6 @@ class ChildLevelsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final levels = _buildLevels();
     final displayLevels = levels.reversed.toList();
 
@@ -806,42 +805,6 @@ class _LevelBadge extends StatelessWidget {
   }
 }
 
-class _LevelActionPill extends StatelessWidget {
-  const _LevelActionPill({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
-      ),
-      child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PathPainter extends CustomPainter {
   _PathPainter({required this.points});
 
@@ -893,7 +856,6 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
     final l10n = AppLocalizations.of(context)!;
     final locale = ref.watch(localeProvider);
 
@@ -1259,6 +1221,9 @@ class _SettingsAvatarSelectionScreenState
             onPressed: child == null
                 ? null
                 : () async {
+                    final navigator = Navigator.of(context);
+                    final messenger = ScaffoldMessenger.of(context);
+                    final l10n = AppLocalizations.of(context)!;
                     final updated = child.copyWith(
                       avatar: selectedPath,
                       avatarPath: selectedPath,
@@ -1267,9 +1232,9 @@ class _SettingsAvatarSelectionScreenState
                         .read(childSessionControllerProvider.notifier)
                         .updateChildProfile(updated);
                     if (!mounted) return;
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context)!.avatarSaved)),
+                    navigator.pop();
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(l10n.avatarSaved)),
                     );
                   },
             child: Text(AppLocalizations.of(context)!.save, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -1372,13 +1337,16 @@ class _SettingsEditProfileScreenState
   }
 
   Future<void> _saveProfile(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final child = ref.read(currentChildProvider);
     if (child == null) return;
 
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPictures.length != 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseSelectThreePictures)),
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.pleaseSelectThreePictures)),
       );
       return;
     }
@@ -1400,8 +1368,8 @@ class _SettingsEditProfileScreenState
         );
       } catch (_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.failedToUpdatePicturePassword)),
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.failedToUpdatePicturePassword)),
         );
         return;
       }
@@ -1417,9 +1385,8 @@ class _SettingsEditProfileScreenState
         .updateChildProfile(updated);
 
     if (!mounted) return;
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)));
+    navigator.pop();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.profileUpdated)));
   }
 
   @override
