@@ -7,17 +7,16 @@ import bcrypt
 
 logger = logging.getLogger(__name__)
 
+ALGORITHM = "HS256"
+
 SECRET_KEY = (
     os.getenv("KINDER_JWT_SECRET")
     or os.getenv("JWT_SECRET_KEY")
-    or os.getenv("SECRET_KEY")
-    or "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+    or os.getenv("SECRET_KEY")  # legacy fallback for existing deployments
 )
-ALGORITHM = "HS256"
-
-if SECRET_KEY == "CHANGE_ME_TO_A_LONG_RANDOM_SECRET":
-    logger.warning(
-        "Using fallback JWT secret. Set KINDER_JWT_SECRET (or JWT_SECRET_KEY) in production."
+if not SECRET_KEY:
+    raise ValueError(
+        "JWT secret not configured. Set KINDER_JWT_SECRET, JWT_SECRET_KEY, or SECRET_KEY environment variable."
     )
 
 def hash_password(password: str) -> str:

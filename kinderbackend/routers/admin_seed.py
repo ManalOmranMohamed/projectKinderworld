@@ -10,6 +10,7 @@ It seeds:
   - role-permission mappings
   - one default super admin
 """
+import os
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,11 +21,16 @@ from deps import get_db
 
 router = APIRouter(prefix="/admin", tags=["Admin Seed"])
 
-SEED_SECRET = "kinder_admin_seed_2024"
+SEED_ENABLED = os.getenv("ENABLE_ADMIN_SEED_ENDPOINT", "").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+SEED_SECRET = os.getenv("ADMIN_SEED_SECRET", "").strip()
 
-DEFAULT_ADMIN_EMAIL = "admin@kinderworld.app"
-DEFAULT_ADMIN_PASSWORD = "Admin@123456"
-DEFAULT_ADMIN_NAME = "Super Admin"
+DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "admin@kinderworld.app").strip()
+DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "").strip()
+DEFAULT_ADMIN_NAME = os.getenv("ADMIN_SEED_NAME", "Super Admin").strip() or "Super Admin"
 
 PERMISSION_DEFS = [
     ("admin.content.view", "View content categories, content items, and quizzes"),
@@ -82,6 +88,21 @@ ROLE_DEFS = {
 
 @router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
 def seed_admin_system(secret: str, db: Session = Depends(get_db)):
+    if not SEED_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Admin seed endpoint is disabled",
+        )
+    if not SEED_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin seed secret is not configured",
+        )
+    if not DEFAULT_ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin seed password is not configured",
+        )
     if secret != SEED_SECRET:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -226,7 +247,7 @@ def seed_admin_system(secret: str, db: Session = Depends(get_db)):
         },
         "default_admin": {
             "email": DEFAULT_ADMIN_EMAIL,
-            "password": DEFAULT_ADMIN_PASSWORD if created_admins else None,
+            "password_set": created_admins > 0,
             "is_active": True,
         },
     }

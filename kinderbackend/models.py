@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date, func, ForeignKey, JSON, text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date, func, ForeignKey, JSON, text, true, false
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -11,7 +11,7 @@ class User(Base):
     name = Column(String, nullable=True)
     role = Column(String, nullable=False, default="parent")
     is_active = Column(Boolean, default=True, nullable=False)
-    is_premium = Column(Boolean, default=False, nullable=False, server_default=text("0"))
+    is_premium = Column(Boolean, default=False, nullable=False, server_default=false())
     plan = Column(String, nullable=False, default="FREE", server_default=text("'FREE'"))
 
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
@@ -38,7 +38,7 @@ class ChildProfile(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     age = Column(Integer, nullable=True)
     avatar = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False, server_default=text("1"))
+    is_active = Column(Boolean, default=True, nullable=False, server_default=true())
 
     parent = relationship("User", back_populates="children")
 

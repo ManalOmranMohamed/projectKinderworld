@@ -94,6 +94,17 @@ def get_current_admin(
             detail="Admin account not found",
         )
 
+    token_version = payload.get("token_version")
+    try:
+        token_version_value = int(token_version)
+    except (TypeError, ValueError):
+        token_version_value = None
+    if token_version_value is None or token_version_value != int(admin.token_version or 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin token has been revoked",
+        )
+
     # Disabled admins are blocked even with a valid token
     if not admin.is_active:
         logger.warning("Disabled admin %s attempted access", admin.email)

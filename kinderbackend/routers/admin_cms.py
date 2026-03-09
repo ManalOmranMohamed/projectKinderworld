@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -23,6 +24,8 @@ from models import ContentCategory, ContentItem, Quiz
 router = APIRouter(tags=["Admin CMS"])
 
 CONTENT_STATUSES = {"draft", "review", "published"}
+CONTENT_TYPES = {"lesson", "story", "video", "activity"}
+AGE_GROUP_PATTERN = re.compile(r"^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$")
 
 
 class CategoryCreateRequest(BaseModel):
@@ -98,11 +101,157 @@ def _slugify(value: str) -> str:
     return slug.strip("-")
 
 
+def _error(detail: str, status_code: int = 400) -> HTTPException:
+    return HTTPException(status_code=status_code, detail=detail)
+
+
+def _trim_or_none(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    return trimmed if trimmed else None
+
+
+def _require_text(value: Optional[str], field_label: str) -> str:
+    trimmed = _trim_or_none(value)
+    if trimmed is None:
+        raise _error(f"{field_label} is required")
+    return trimmed
+
+
 def _normalize_status(value: str) -> str:
     normalized = value.strip().lower()
     if normalized not in CONTENT_STATUSES:
-        raise HTTPException(status_code=400, detail="Status must be draft, review, or published")
+        raise _error("Status must be draft, review, or published")
     return normalized
+
+
+def _normalize_content_type(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if normalized not in CONTENT_TYPES:
+        raise _error("Content type must be lesson, story, video, or activity")
+    return normalized
+
+
+def _validate_thumbnail_url(value: Optional[str]) -> Optional[str]:
+    trimmed = _trim_or_none(value)
+    if trimmed is None:
+        return None
+    parsed = urlparse(trimmed)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise _error("Thumbnail URL must be a valid http or https URL")
+    return trimmed
+
+
+def _validate_age_group(value: Optional[str]) -> Optional[str]:
+    trimmed = _trim_or_none(value)
+    if trimmed is None:
+        return None
+    if not AGE_GROUP_PATTERN.match(trimmed):
+        raise _error("Age group must be in the format 5-7 or 8+")
+    return re.sub(r"\s+", "", trimmed)
+
+
+def _validate_metadata_json(value: Optional[dict[str, Any]]) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise _error("Metadata must be a JSON object")
+    return value
+
+
+def _prompt_for_question(question: dict[str, Any]) -> str | None:
+    for key in ("prompt_en", "prompt_ar", "prompt", "question", "title"):
+        raw = question.get(key)
+        if raw is not None and str(raw).strip():
+            return str(raw).strip()
+    return None
+
+
+def _normalize_question_options(question: dict[str, Any]) -> list[Any]:
+    raw_options = question.get("options")
+    if raw_options is None:
+        raw_options = question.get("choices")
+    if not isinstance(raw_options, list):
+        raise _error("Each quiz question must include an options list")
+    normalized = []
+    for option in raw_options:
+        if isinstance(option, dict):
+            label = (
+                _trim_or_none(option.get("label_en"))
+                or _trim_or_none(option.get("label_ar"))
+                or _trim_or_none(option.get("label"))
+                or _trim_or_none(option.get("text"))
+                or _trim_or_none(option.get("value"))
+            )
+            if label is None:
+                raise _error("Each quiz option must include display text")
+            normalized.append(option)
+            continue
+        if str(option).strip():
+            normalized.append(option)
+            continue
+        raise _error("Quiz options cannot be empty")
+    if len(normalized) < 2:
+        raise _error("Each quiz question must have at least two options")
+    return normalized
+
+
+def _normalize_correct_index(question: dict[str, Any], option_count: int) -> int:
+    raw_value = question.get("correct_index")
+    if raw_value is None:
+        raw_value = question.get("answer_index")
+    if raw_value is None:
+        raw_value = question.get("correctAnswerIndex")
+    if raw_value is None and question.get("correct_answer") is not None:
+        raw_value = question.get("correct_answer")
+
+    try:
+        correct_index = int(raw_value)
+    except (TypeError, ValueError):
+        raise _error("Each quiz question must include a valid correct answer index")
+
+    if correct_index < 0 or correct_index >= option_count:
+        raise _error("Correct answer index must match one of the quiz options")
+    return correct_index
+
+
+def _validate_questions_json(
+    value: Optional[list[dict[str, Any]]],
+    *,
+    require_non_empty: bool,
+) -> list[dict[str, Any]]:
+    questions = value or []
+    if require_non_empty and not questions:
+        raise _error("Published quizzes must include at least one question")
+
+    for question in questions:
+        if not isinstance(question, dict):
+            raise _error("Each quiz question must be a JSON object")
+        if _prompt_for_question(question) is None:
+            raise _error("Each quiz question must include prompt text")
+        options = _normalize_question_options(question)
+        _normalize_correct_index(question, len(options))
+    return questions
+
+
+def _validate_publishable_content(
+    *,
+    title_en: Optional[str],
+    title_ar: Optional[str],
+    body_en: Optional[str],
+    body_ar: Optional[str],
+) -> None:
+    if _trim_or_none(title_en) is None:
+        raise _error("Published content must include an English title")
+    if _trim_or_none(title_ar) is None:
+        raise _error("Published content must include an Arabic title")
+    if _trim_or_none(body_en) is None:
+        raise _error("Published content must include an English body")
+    if _trim_or_none(body_ar) is None:
+        raise _error("Published content must include an Arabic body")
 
 
 def _categories_query(db: Session):
@@ -197,19 +346,22 @@ def create_category(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.create")),
 ):
-    slug = _slugify(payload.slug or payload.title_en)
+    title_en = _require_text(payload.title_en, "English title")
+    title_ar = _require_text(payload.title_ar, "Arabic title")
+    slug = _slugify(payload.slug or title_en)
     if not slug:
-        raise HTTPException(status_code=400, detail="Category slug is required")
+        raise _error("Category slug is required")
+
     duplicate = db.query(ContentCategory).filter(func.lower(ContentCategory.slug) == slug).first()
     if duplicate is not None:
-        raise HTTPException(status_code=400, detail="Category slug already exists")
+        raise _error("Category slug already exists")
 
     category = ContentCategory(
         slug=slug,
-        title_en=payload.title_en.strip(),
-        title_ar=payload.title_ar.strip(),
-        description_en=payload.description_en.strip() if payload.description_en else None,
-        description_ar=payload.description_ar.strip() if payload.description_ar else None,
+        title_en=title_en,
+        title_ar=title_ar,
+        description_en=_trim_or_none(payload.description_en),
+        description_ar=_trim_or_none(payload.description_ar),
         created_by=admin.id,
         updated_by=admin.id,
         created_at=datetime.utcnow(),
@@ -245,24 +397,24 @@ def update_category(
     if payload.slug is not None:
         slug = _slugify(payload.slug)
         if not slug:
-            raise HTTPException(status_code=400, detail="Category slug is required")
+            raise _error("Category slug is required")
         duplicate = (
             db.query(ContentCategory)
             .filter(func.lower(ContentCategory.slug) == slug, ContentCategory.id != category.id)
             .first()
         )
         if duplicate is not None:
-            raise HTTPException(status_code=400, detail="Category slug already exists")
+            raise _error("Category slug already exists")
         category.slug = slug
 
     if payload.title_en is not None:
-        category.title_en = payload.title_en.strip()
+        category.title_en = _require_text(payload.title_en, "English title")
     if payload.title_ar is not None:
-        category.title_ar = payload.title_ar.strip()
+        category.title_ar = _require_text(payload.title_ar, "Arabic title")
     if payload.description_en is not None:
-        category.description_en = payload.description_en.strip()
+        category.description_en = _trim_or_none(payload.description_en)
     if payload.description_ar is not None:
-        category.description_ar = payload.description_ar.strip()
+        category.description_ar = _trim_or_none(payload.description_ar)
 
     category.updated_by = admin.id
     category.updated_at = datetime.utcnow()
@@ -294,10 +446,7 @@ def delete_category(
     active_contents = [item for item in (category.contents or []) if item.deleted_at is None]
     active_quizzes = [item for item in (category.quizzes or []) if item.deleted_at is None]
     if active_contents or active_quizzes:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete a category that still has content or quizzes",
-        )
+        raise _error("Cannot delete a category that still has content or quizzes")
 
     before = serialize_content_category(category)
     category.deleted_at = datetime.utcnow()
@@ -345,7 +494,7 @@ def list_contents(
     if category_id is not None:
         query = query.filter(ContentItem.category_id == category_id)
     if content_type.strip():
-        query = query.filter(ContentItem.content_type == content_type.strip().lower())
+        query = query.filter(ContentItem.content_type == _normalize_content_type(content_type))
 
     total = query.count()
     items = (
@@ -384,27 +533,45 @@ def create_content(
     admin=Depends(require_permission("admin.content.create")),
 ):
     _ensure_category_exists(payload.category_id, db)
+
+    content_type = _normalize_content_type(payload.content_type)
     status_value = _normalize_status(payload.status)
-    published_at = datetime.utcnow() if status_value == "published" else None
+    title_en = _require_text(payload.title_en, "English title")
+    title_ar = _require_text(payload.title_ar, "Arabic title")
+    description_en = _trim_or_none(payload.description_en)
+    description_ar = _trim_or_none(payload.description_ar)
+    body_en = _trim_or_none(payload.body_en)
+    body_ar = _trim_or_none(payload.body_ar)
+    thumbnail_url = _validate_thumbnail_url(payload.thumbnail_url)
+    age_group = _validate_age_group(payload.age_group)
+    metadata_json = _validate_metadata_json(payload.metadata_json)
+
+    if status_value == "published":
+        _validate_publishable_content(
+            title_en=title_en,
+            title_ar=title_ar,
+            body_en=body_en,
+            body_ar=body_ar,
+        )
 
     content = ContentItem(
         category_id=payload.category_id,
-        content_type=payload.content_type.strip().lower(),
+        content_type=content_type or "lesson",
         status=status_value,
-        title_en=payload.title_en.strip(),
-        title_ar=payload.title_ar.strip(),
-        description_en=payload.description_en.strip() if payload.description_en else None,
-        description_ar=payload.description_ar.strip() if payload.description_ar else None,
-        body_en=payload.body_en,
-        body_ar=payload.body_ar,
-        thumbnail_url=payload.thumbnail_url,
-        age_group=payload.age_group,
-        metadata_json=payload.metadata_json or {},
+        title_en=title_en,
+        title_ar=title_ar,
+        description_en=description_en,
+        description_ar=description_ar,
+        body_en=body_en,
+        body_ar=body_ar,
+        thumbnail_url=thumbnail_url,
+        age_group=age_group,
+        metadata_json=metadata_json,
         created_by=admin.id,
         updated_by=admin.id,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
-        published_at=published_at,
+        published_at=datetime.utcnow() if status_value == "published" else None,
     )
     db.add(content)
     db.flush()
@@ -438,28 +605,38 @@ def update_content(
         _ensure_category_exists(payload.category_id, db)
         content.category_id = payload.category_id
     if payload.content_type is not None:
-        content.content_type = payload.content_type.strip().lower()
+        content.content_type = _normalize_content_type(payload.content_type) or content.content_type
     if payload.status is not None:
         content.status = _normalize_status(payload.status)
-        content.published_at = datetime.utcnow() if content.status == "published" else None
     if payload.title_en is not None:
-        content.title_en = payload.title_en.strip()
+        content.title_en = _require_text(payload.title_en, "English title")
     if payload.title_ar is not None:
-        content.title_ar = payload.title_ar.strip()
+        content.title_ar = _require_text(payload.title_ar, "Arabic title")
     if payload.description_en is not None:
-        content.description_en = payload.description_en.strip()
+        content.description_en = _trim_or_none(payload.description_en)
     if payload.description_ar is not None:
-        content.description_ar = payload.description_ar.strip()
+        content.description_ar = _trim_or_none(payload.description_ar)
     if payload.body_en is not None:
-        content.body_en = payload.body_en
+        content.body_en = _trim_or_none(payload.body_en)
     if payload.body_ar is not None:
-        content.body_ar = payload.body_ar
+        content.body_ar = _trim_or_none(payload.body_ar)
     if payload.thumbnail_url is not None:
-        content.thumbnail_url = payload.thumbnail_url
+        content.thumbnail_url = _validate_thumbnail_url(payload.thumbnail_url)
     if payload.age_group is not None:
-        content.age_group = payload.age_group
+        content.age_group = _validate_age_group(payload.age_group)
     if payload.metadata_json is not None:
-        content.metadata_json = payload.metadata_json
+        content.metadata_json = _validate_metadata_json(payload.metadata_json)
+
+    if content.status == "published":
+        _validate_publishable_content(
+            title_en=content.title_en,
+            title_ar=content.title_ar,
+            body_en=content.body_en,
+            body_ar=content.body_ar,
+        )
+        content.published_at = content.published_at or datetime.utcnow()
+    else:
+        content.published_at = None
 
     content.updated_by = admin.id
     content.updated_at = datetime.utcnow()
@@ -489,6 +666,13 @@ def publish_content(
     admin=Depends(require_permission("admin.content.publish")),
 ):
     content = _get_content_or_404(content_id, db)
+    _validate_publishable_content(
+        title_en=content.title_en,
+        title_ar=content.title_ar,
+        body_en=content.body_en,
+        body_ar=content.body_ar,
+    )
+
     before = serialize_content_item(content, include_quizzes=True)
     content.status = "published"
     content.published_at = datetime.utcnow()
@@ -609,16 +793,24 @@ def create_quiz(
 ):
     _ensure_category_exists(payload.category_id, db)
     _ensure_content_exists(payload.content_id, db)
+
     status_value = _normalize_status(payload.status)
+    title_en = _require_text(payload.title_en, "English title")
+    title_ar = _require_text(payload.title_ar, "Arabic title")
+    questions_json = _validate_questions_json(
+        payload.questions_json,
+        require_non_empty=status_value == "published",
+    )
+
     quiz = Quiz(
         content_id=payload.content_id,
         category_id=payload.category_id,
         status=status_value,
-        title_en=payload.title_en.strip(),
-        title_ar=payload.title_ar.strip(),
-        description_en=payload.description_en.strip() if payload.description_en else None,
-        description_ar=payload.description_ar.strip() if payload.description_ar else None,
-        questions_json=payload.questions_json,
+        title_en=title_en,
+        title_ar=title_ar,
+        description_en=_trim_or_none(payload.description_en),
+        description_ar=_trim_or_none(payload.description_ar),
+        questions_json=questions_json,
         created_by=admin.id,
         updated_by=admin.id,
         created_at=datetime.utcnow(),
@@ -661,17 +853,25 @@ def update_quiz(
         quiz.category_id = payload.category_id
     if payload.status is not None:
         quiz.status = _normalize_status(payload.status)
-        quiz.published_at = datetime.utcnow() if quiz.status == "published" else None
     if payload.title_en is not None:
-        quiz.title_en = payload.title_en.strip()
+        quiz.title_en = _require_text(payload.title_en, "English title")
     if payload.title_ar is not None:
-        quiz.title_ar = payload.title_ar.strip()
+        quiz.title_ar = _require_text(payload.title_ar, "Arabic title")
     if payload.description_en is not None:
-        quiz.description_en = payload.description_en.strip()
+        quiz.description_en = _trim_or_none(payload.description_en)
     if payload.description_ar is not None:
-        quiz.description_ar = payload.description_ar.strip()
+        quiz.description_ar = _trim_or_none(payload.description_ar)
     if payload.questions_json is not None:
-        quiz.questions_json = payload.questions_json
+        quiz.questions_json = _validate_questions_json(
+            payload.questions_json,
+            require_non_empty=False,
+        )
+
+    if quiz.status == "published":
+        _validate_questions_json(quiz.questions_json, require_non_empty=True)
+        quiz.published_at = quiz.published_at or datetime.utcnow()
+    else:
+        quiz.published_at = None
 
     quiz.updated_by = admin.id
     quiz.updated_at = datetime.utcnow()

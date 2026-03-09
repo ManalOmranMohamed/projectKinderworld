@@ -1,23 +1,23 @@
+import os
 from typing import Optional, List
 import logging
 import logging.handlers
-import time
 from fastapi import FastAPI, Depends, HTTPException, Header
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from sqlalchemy import inspect, func
-from sqlalchemy.exc import OperationalError
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, date
 from jose import jwt, JWTError
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import engine, Base
+from database import engine
+from db_migrations import verify_database_schema
 from models import User, ChildProfile
 from auth import hash_password, verify_password, create_access_token, create_refresh_token, SECRET_KEY, ALGORITHM
 from deps import decode_bearer, get_db, get_current_user
 from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from serializers import child_to_json, user_to_json
-from routers.subscription import router as subscription_router, public_router as subscription_public_router, billing_router as subscription_billing_router
+from rate_limit import auth_rate_limit, api_rate_limit
 from routers.auth import router as auth_router
 from routers.notifications import router as notifications_router
 from routers.privacy import router as privacy_router
@@ -26,6 +26,11 @@ from routers.support import router as support_router
 from routers.features import router as features_router
 from routers.parental_controls import router as parental_controls_router
 from routers.billing_methods import router as billing_methods_router
+from routers.subscription import (
+    router as subscription_router,
+    public_router as subscription_public_router,
+    billing_router as subscription_billing_router,
+)
 from routers.admin_auth import router as admin_auth_router
 from routers.admin_admins import router as admin_admins_router
 from routers.admin_audit import router as admin_audit_router
@@ -33,7 +38,7 @@ from routers.admin_analytics import router as admin_analytics_router
 from routers.admin_cms import router as admin_cms_router
 from routers.admin_settings import router as admin_settings_router
 from routers.admin_children import router as admin_children_router
-from routers.admin_seed import router as admin_seed_router
+from routers.admin_seed import router as admin_seed_router, SEED_ENABLED as ADMIN_SEED_ENABLED
 from routers.admin_support import router as admin_support_router
 from routers.admin_subscriptions import router as admin_subscriptions_router
 from routers.admin_users import router as admin_users_router
@@ -57,173 +62,32 @@ PREMIUM_PRICE_USD = 10
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^https?://((localhost|127\.0\.0\.1)|(\d{1,3}\.){3}\d{1,3})(:\d+)?$",
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000",  # React dev server
+        "http://localhost:8080",  # Vue/Angular dev server
+        "https://localhost:3000",
+        "https://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "https://127.0.0.1:3000",
+        "https://127.0.0.1:8080",
+    ] if os.getenv("ENVIRONMENT") != "production" else [],  # No origins in production - use reverse proxy
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "Accept",
+        "X-Requested-With",
+        "X-CSRF-Token",
+    ],
+    allow_credentials=True,  # Required for cookies/auth headers
+    max_age=86400,  # Cache preflight for 24 hours
 )
 
 
 @app.on_event("startup")
 def on_startup():
-    run_startup_db_migrations()
-
-
-def run_startup_db_migrations():
-    _run_with_db_lock_retry(lambda: Base.metadata.create_all(bind=engine))
-    _run_with_db_lock_retry(ensure_user_columns)
-    _run_with_db_lock_retry(ensure_child_columns)
-    _run_with_db_lock_retry(ensure_parental_controls_columns)
-    _run_with_db_lock_retry(ensure_support_ticket_columns)
-
-
-def _run_with_db_lock_retry(action, attempts: int = 6, delay_seconds: float = 0.35):
-    for i in range(attempts):
-        try:
-            return action()
-        except OperationalError as exc:
-            # SQLite can briefly lock during concurrent startup/import cycles.
-            if "database is locked" not in str(exc).lower() or i == attempts - 1:
-                raise
-            time.sleep(delay_seconds * (i + 1))
-
-
-def ensure_user_columns():
-    inspector = inspect(engine)
-    if "users" not in inspector.get_table_names():
-        return
-    columns = {col["name"] for col in inspector.get_columns("users")}
-    with engine.begin() as conn:
-        if "plan" not in columns:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'FREE'")
-            columns.add("plan")
-        if "is_premium" in columns and "plan" in columns:
-            conn.exec_driver_sql(
-                "UPDATE users SET plan = 'PREMIUM' WHERE is_premium = 1 AND (plan IS NULL OR plan = 'FREE')"
-            )
-        if "token_version" not in columns:
-            conn.exec_driver_sql("ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0")
-            columns.add("token_version")
-
-
-def ensure_child_columns():
-    inspector = inspect(engine)
-    if "child_profiles" not in inspector.get_table_names():
-        return
-    columns = {col["name"] for col in inspector.get_columns("child_profiles")}
-    with engine.begin() as conn:
-        if "date_of_birth" not in columns:
-            conn.exec_driver_sql("ALTER TABLE child_profiles ADD COLUMN date_of_birth DATE")
-            columns.add("date_of_birth")
-        if "updated_at" not in columns:
-            # SQLite does not allow non-constant defaults when adding columns.
-            conn.exec_driver_sql(
-                "ALTER TABLE child_profiles ADD COLUMN updated_at DATETIME"
-            )
-            conn.exec_driver_sql(
-                "UPDATE child_profiles SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"
-            )
-            columns.add("updated_at")
-        if "age" not in columns:
-            conn.exec_driver_sql("ALTER TABLE child_profiles ADD COLUMN age INTEGER")
-            columns.add("age")
-        if "avatar" not in columns:
-            conn.exec_driver_sql("ALTER TABLE child_profiles ADD COLUMN avatar TEXT")
-            columns.add("avatar")
-        if "is_active" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE child_profiles ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"
-            )
-            columns.add("is_active")
-
-
-def ensure_parental_controls_columns():
-    inspector = inspect(engine)
-    if "parental_controls" not in inspector.get_table_names():
-        return
-    columns = {col["name"] for col in inspector.get_columns("parental_controls")}
-    with engine.begin() as conn:
-        if "daily_limit_enabled" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN daily_limit_enabled BOOLEAN NOT NULL DEFAULT 1"
-            )
-            columns.add("daily_limit_enabled")
-        if "hours_per_day" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN hours_per_day INTEGER NOT NULL DEFAULT 2"
-            )
-            columns.add("hours_per_day")
-        if "break_reminders_enabled" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN break_reminders_enabled BOOLEAN NOT NULL DEFAULT 1"
-            )
-            columns.add("break_reminders_enabled")
-        if "age_appropriate_only" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN age_appropriate_only BOOLEAN NOT NULL DEFAULT 1"
-            )
-            columns.add("age_appropriate_only")
-        if "block_educational" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN block_educational BOOLEAN NOT NULL DEFAULT 0"
-            )
-            columns.add("block_educational")
-        if "require_approval" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN require_approval BOOLEAN NOT NULL DEFAULT 0"
-            )
-            columns.add("require_approval")
-        if "sleep_mode" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN sleep_mode BOOLEAN NOT NULL DEFAULT 1"
-            )
-            columns.add("sleep_mode")
-        if "bedtime" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN bedtime TEXT"
-            )
-            columns.add("bedtime")
-        if "wake_time" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN wake_time TEXT"
-            )
-            columns.add("wake_time")
-        if "emergency_lock" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE parental_controls ADD COLUMN emergency_lock BOOLEAN NOT NULL DEFAULT 0"
-            )
-            columns.add("emergency_lock")
-
-
-def ensure_support_ticket_columns():
-    inspector = inspect(engine)
-    if "support_tickets" not in inspector.get_table_names():
-        return
-    columns = {col["name"] for col in inspector.get_columns("support_tickets")}
-    with engine.begin() as conn:
-        if "status" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE support_tickets ADD COLUMN status TEXT NOT NULL DEFAULT 'open'"
-            )
-            columns.add("status")
-        if "assigned_admin_id" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE support_tickets ADD COLUMN assigned_admin_id INTEGER"
-            )
-            columns.add("assigned_admin_id")
-        if "closed_at" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE support_tickets ADD COLUMN closed_at DATETIME"
-            )
-            columns.add("closed_at")
-        if "updated_at" not in columns:
-            conn.exec_driver_sql(
-                "ALTER TABLE support_tickets ADD COLUMN updated_at DATETIME"
-            )
-            conn.exec_driver_sql(
-                "UPDATE support_tickets SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"
-            )
-            columns.add("updated_at")
+    verify_database_schema(engine, logger)
 
 
 class RegisterIn(BaseModel):
@@ -337,7 +201,7 @@ def root():
 
 
 @app.post("/auth/register")
-def register(payload: RegisterIn, db: Session = Depends(get_db)):
+def register(payload: RegisterIn, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     try:
         normalized_email = normalize_email(payload.email)
         validate_email_domain(normalized_email)
@@ -375,7 +239,7 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/login")
-def login(payload: LoginIn, db: Session = Depends(get_db)):
+def login(payload: LoginIn, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     normalized_email = normalize_email(payload.email)
     validate_email_domain(normalized_email)
     user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
@@ -396,7 +260,7 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/refresh")
-def refresh(payload: RefreshIn, db: Session = Depends(get_db)):
+def refresh(payload: RefreshIn, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     try:
         decoded = jwt.decode(payload.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = decoded.get("sub")
@@ -514,7 +378,7 @@ def update_child(
 
 
 @app.post("/auth/child/register")
-def child_register(payload: ChildRegisterIn, db: Session = Depends(get_db)):
+def child_register(payload: ChildRegisterIn, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     parent_email = normalize_email(payload.parent_email)
     validate_email_domain(parent_email)
     parent = db.query(User).filter(func.lower(User.email) == parent_email).first()
@@ -542,7 +406,7 @@ def child_register(payload: ChildRegisterIn, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/child/login")
-def child_login(payload: ChildLoginIn, db: Session = Depends(get_db)):
+def child_login(payload: ChildLoginIn, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     child = db.query(ChildProfile).filter(ChildProfile.id == payload.child_id).first()
     if not child:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -720,4 +584,6 @@ app.include_router(admin_analytics_router)
 app.include_router(admin_cms_router)
 app.include_router(admin_subscriptions_router)
 app.include_router(admin_settings_router)
-app.include_router(admin_seed_router)
+if ADMIN_SEED_ENABLED:
+    logger.warning("Admin seed endpoint is enabled for this environment")
+    app.include_router(admin_seed_router)

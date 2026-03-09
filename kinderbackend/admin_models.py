@@ -3,7 +3,7 @@ Admin system models — fully separate from parent/child user tables.
 Tables: admin_users, roles, permissions, role_permissions, admin_user_roles
 """
 from sqlalchemy import (
-    JSON, Column, Integer, String, DateTime, Boolean, ForeignKey, func, text, UniqueConstraint
+    JSON, Column, Integer, String, DateTime, Boolean, ForeignKey, func, text, true, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 from database import Base
@@ -21,7 +21,7 @@ class AdminUser(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False, server_default=text("1"))
+    is_active = Column(Boolean, default=True, nullable=False, server_default=true())
     # Bump token_version on logout to invalidate all existing refresh tokens
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

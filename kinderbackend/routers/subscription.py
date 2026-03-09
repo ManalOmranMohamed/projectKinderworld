@@ -48,7 +48,14 @@ class SubscriptionStatus(BaseModel):
 
 
 class SubscriptionSelectRequest(BaseModel):
-    plan_id: str = Field(..., description="Plan id: free|premium|family_plus")
+    plan_id: str | None = Field(None, description="Plan id: FREE|PREMIUM|FAMILY_PLUS")
+    plan_type: str | None = Field(None, description="Alias for plan_id (Flutter compat): free|premium|family_plus")
+
+    @property
+    def resolved_plan(self) -> str:
+        """Return the plan identifier, normalised to uppercase."""
+        raw = self.plan_id or self.plan_type or ""
+        return raw.strip().upper().replace("-", "_")
 
 
 class SubscriptionSelectResponse(SubscriptionStatus):
@@ -140,17 +147,21 @@ def select_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    requested = payload.plan_id.strip().upper()
+    requested = payload.resolved_plan
+    if not requested:
+        raise HTTPException(status_code=422, detail="plan_id or plan_type is required")
     catalog = get_plan_catalog()
     if requested not in catalog:
-        raise HTTPException(status_code=400, detail="Invalid plan")
+        raise HTTPException(status_code=400, detail=f"Invalid plan '{requested}'. Valid: {list(catalog.keys())}")
 
     plan = requested
+    # Demo mode: immediately activate the plan (no real payment gateway)
+    user.plan = plan
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
     if plan == PLAN_FREE:
-        user.plan = PLAN_FREE
-        db.add(user)
-        db.commit()
-        db.refresh(user)
         return {
             "current_plan_id": PLAN_FREE,
             "is_active": True,
@@ -161,9 +172,9 @@ def select_subscription(
     session_id = f"mock_session_{user.id}_{plan}_{int(datetime.utcnow().timestamp())}"
     return {
         "current_plan_id": plan,
-        "is_active": False,
+        "is_active": True,
         "expires_at": None,
-        "will_renew": False,
+        "will_renew": True,
         "session_id": session_id,
     }
 
@@ -174,7 +185,7 @@ def activate_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Alias for /subscription/select to keep frontend compatibility."""
+    """Alias for /subscription/select — keeps frontend compatibility."""
     return select_subscription(payload=payload, db=db, user=user)
 
 

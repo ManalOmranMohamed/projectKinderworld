@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -19,6 +19,8 @@ from sqlalchemy.orm import Session
 from auth import SECRET_KEY, ALGORITHM, verify_password
 from admin_auth import ADMIN_TOKEN_TYPE, create_admin_access_token, create_admin_refresh_token
 from admin_deps import get_current_admin
+from admin_utils import write_audit_log
+from rate_limit import auth_rate_limit
 from deps import get_db
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,12 @@ def _build_admin_payload(admin, db: Session) -> dict:
 # ─────────────────────────── Endpoints ───────────────────────────────────────
 
 @router.post("/login", response_model=AdminLoginResponse, summary="Admin login")
-def admin_login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
+def admin_login(
+    payload: AdminLoginRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    rate_limit_check: None = Depends(auth_rate_limit),
+):
     """
     Authenticate an admin with email + password.
 
@@ -127,9 +134,21 @@ def admin_login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
     db.refresh(admin)
 
     logger.info("Admin login success: %s (id=%s)", admin.email, admin.id)
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="admin_auth.login",
+        entity_type="admin_user",
+        entity_id=admin.id,
+        before_json=None,
+        after_json={"id": admin.id, "email": admin.email, "is_active": admin.is_active},
+    )
+    db.commit()
+    db.refresh(admin)
 
     return {
-        "access_token": create_admin_access_token(admin.id),
+        "access_token": create_admin_access_token(admin.id, admin.token_version),
         "refresh_token": create_admin_refresh_token(admin.id, admin.token_version),
         "token_type": "bearer",
         "admin": _build_admin_payload(admin, db),
@@ -137,7 +156,7 @@ def admin_login(payload: AdminLoginRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/refresh", response_model=AdminTokenResponse, summary="Refresh admin access token")
-def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db)):
+def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db), rate_limit_check: None = Depends(auth_rate_limit)):
     """
     Exchange a valid admin refresh token for a new access token.
 
@@ -180,8 +199,16 @@ def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db)):
             detail="Admin not found",
         )
 
+    try:
+        stored_version_value = int(stored_version)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload",
+        )
+
     # token_version mismatch means the admin has logged out — token is revoked
-    if int(stored_version) != int(admin.token_version):
+    if stored_version_value != int(admin.token_version or 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token has been revoked",
@@ -197,13 +224,14 @@ def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db)):
         )
 
     return {
-        "access_token": create_admin_access_token(admin.id),
+        "access_token": create_admin_access_token(admin.id, admin.token_version),
         "token_type": "bearer",
     }
 
 
 @router.post("/logout", summary="Admin logout — invalidates refresh tokens")
 def admin_logout(
+    request: Request,
     admin=Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
@@ -214,6 +242,16 @@ def admin_logout(
     admin.token_version = (admin.token_version or 0) + 1
     admin.updated_at = datetime.utcnow()
     db.add(admin)
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="admin_auth.logout",
+        entity_type="admin_user",
+        entity_id=admin.id,
+        before_json={"id": admin.id, "token_version": (admin.token_version or 0) - 1},
+        after_json={"id": admin.id, "token_version": admin.token_version},
+    )
     db.commit()
 
     logger.info("Admin logout: %s (id=%s)", admin.email, admin.id)

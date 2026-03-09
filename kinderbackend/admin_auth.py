@@ -21,7 +21,7 @@ _ACCESS_MINUTES = 60          # 1 hour
 _REFRESH_DAYS   = 7           # 7 days
 
 
-def create_admin_access_token(admin_id: int) -> str:
+def create_admin_access_token(admin_id: int, token_version: int = 0) -> str:
     """
     Create a short-lived access token for an admin user.
     The token_type='admin' claim prevents it from being used on parent/child endpoints.
@@ -31,6 +31,7 @@ def create_admin_access_token(admin_id: int) -> str:
         "sub": str(admin_id),
         "exp": expire,
         "token_type": ADMIN_TOKEN_TYPE,
+        "token_version": token_version,
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
