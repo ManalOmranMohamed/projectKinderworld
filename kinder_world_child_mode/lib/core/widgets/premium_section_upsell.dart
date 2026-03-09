@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/premium_badge.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class PremiumSectionUpsell extends StatelessWidget {
   final String title;
   final String description;
@@ -21,7 +25,7 @@ class PremiumSectionUpsell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -70,7 +74,7 @@ class PremiumSectionUpsell extends StatelessWidget {
                 foregroundColor: colors.primary,
                 side: BorderSide(color: colors.primary),
               ),
-              child: Text(buttonLabel ?? l10n?.upgradeNow ?? 'Upgrade'),
+              child: Text(buttonLabel ?? l10n.upgradeNow),
             ),
           ),
         ],

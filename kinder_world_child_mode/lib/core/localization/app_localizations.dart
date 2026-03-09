@@ -24,6 +24,7 @@ abstract class AppLocalizations {
   String get edit;
   String get loading;
   String get error;
+  String get notAvailable;
   String get connectionError;
   String get success;
   String get retry;
@@ -69,6 +70,18 @@ abstract class AppLocalizations {
   String get legalPrivacyPlaceholder;
   String get legalCoppaPlaceholder;
   String get legalPlaceholder;
+  String get legalTermsHeroTitle;
+  String get legalTermsHeroSubtitle;
+  String get legalTermsSectionTitle;
+  String get legalTermsFooterText;
+  String get legalPrivacyHeroTitle;
+  String get legalPrivacyHeroSubtitle;
+  String get legalPrivacySectionTitle;
+  String get legalPrivacyFooterText;
+  String get legalCoppaHeroTitle;
+  String get legalCoppaHeroSubtitle;
+  String get legalCoppaSectionTitle;
+  String get legalCoppaFooterText;
   String get maintenanceTitle;
   String get maintenanceDescription;
   String get maintenanceEtaTitle;
@@ -186,6 +199,8 @@ abstract class AppLocalizations {
   String get subscriptionTitle;
   String get subscriptionActiveLabel;
   String get activeLabel;
+  String get inactiveLabel;
+  String get alertLabel;
   String get yourPlanIncludes;
   String planChildProfiles(int count);
   String get unlimitedActivities;
@@ -323,6 +338,14 @@ abstract class AppLocalizations {
   String get childLoginIncorrectPictures;
   String get childLoginMissingData;
   String get createChildProfile;
+  String get childProfileBasicInfoTitle;
+  String get childProfileBasicInfoSubtitle;
+  String get childProfileAvatarTitle;
+  String get childProfileAvatarSubtitle;
+  String get childProfileInterestsTitle;
+  String get childProfileInterestsSubtitle;
+  String get childProfilePicturePasswordTitle;
+  String get childProfilePicturePasswordSubtitle;
   String get childRegisterParentNotFound;
   String get childRegisterLimitReached;
   String get childRegisterForbidden;
@@ -808,6 +831,7 @@ abstract class AppLocalizations {
   String get childStep3;
   String get tryAgainDifferentInfo;
   String get childNameLabel;
+  String get pleaseEnterChildName;
   String get childNameHint;
   String get childNameRequired;
   String get childAgeLabel;
@@ -1251,6 +1275,7 @@ abstract class AppLocalizations {
   String get adminAdminsCreateRoleAction;
   String get adminAdminsRoleNameField;
   String get adminAdminsRoleDescriptionField;
+  String adminRoleStats(int permissionCount, int adminCount);
   String get adminAdminsRoleCreatedMessage;
   String get adminAdminsEditRoleTitle;
   String get adminAdminsEditRoleAction;

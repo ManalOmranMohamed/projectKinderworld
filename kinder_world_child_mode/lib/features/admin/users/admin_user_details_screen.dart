@@ -6,6 +6,10 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminUserDetailsScreen extends ConsumerStatefulWidget {
   const AdminUserDetailsScreen({
     super.key,

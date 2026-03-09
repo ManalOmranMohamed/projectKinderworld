@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter, lerpDouble;
@@ -508,37 +509,55 @@ class _SplashLayout {
     final width = constraints.maxWidth;
     final height = constraints.maxHeight;
     final scale = (width / 390).clamp(0.85, 1.18);
-    final boyHeight = height * 0.72;
-    final boyWidth = boyHeight * 0.60;
+
+    final boyHeight = height * 0.7;
+    final boyWidth = boyHeight * 0.45; // Estimated aspect ratio for character image
+    final boyLeft = (width - boyWidth) / 2 - boyWidth * 0.21; // Center horizontally
+
+    final textBottom = height * 0.12;
+    final taglineFontSize = 18 * scale;
+    final titleFontSize = 42 * scale;
+    final taglineSpacing = 12 * scale;
+
+    final brandingHeight = titleFontSize + taglineSpacing + taglineFontSize + 15;
+    final boyTop = height - textBottom - brandingHeight - boyHeight + 40 ;
+
     final starWidth = width * 0.11;
 
     return _SplashLayout(
       starsHeight: height * 0.78,
-      boyTop: height * 0.07,
-      boyLeft: (width - boyWidth) / 2,
+      boyTop: boyTop,
+      boyLeft: boyLeft,
       boyHeight: boyHeight,
-      planetTop: height * 0.27,
+
+      planetTop: height * 0.13,
       planetRight: width * 0.04,
       planetWidth: width * 0.17,
+
       bookTop: height * 0.15,
       bookLeft: width * 0.07,
       bookWidth: width * 0.16,
-      book2Top: height * 0.52,
-      book2Left: width * 0.08,
+
+      book2Top: height * 0.65,
+      book2Left: width * 0.33,
       book2Width: width * 0.15,
+
       starTop: height * 0.13,
-      starLeft: width * 0.74,
+      starLeft: width * 0.6,
       starWidth: starWidth,
-      bulbTop: height * 0.57,
+
+      bulbTop: height * 0.63,
       bulbRight: width * 0.06,
       bulbWidth: width * 0.13,
+
       fogHeight: height * 0.34,
       textHorizontalPadding: width * 0.06,
-      textBottom: height * 0.04,
-      titleFontSize: 42 * scale,
+      textBottom: textBottom,
+
+      titleFontSize: titleFontSize,
       titleStrokeWidth: 8 * scale,
-      taglineFontSize: 18 * scale,
-      taglineSpacing: 12 * scale,
+      taglineFontSize: taglineFontSize,
+      taglineSpacing: taglineSpacing,
     );
   }
 
@@ -618,12 +637,12 @@ class _SparklesPainter extends CustomPainter {
   ];
 
   void _drawSparkle(
-    Canvas canvas,
-    double cx,
-    double cy,
-    double size,
-    double opacity,
-  ) {
+      Canvas canvas,
+      double cx,
+      double cy,
+      double size,
+      double opacity,
+      ) {
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: opacity)
       ..style = PaintingStyle.fill;

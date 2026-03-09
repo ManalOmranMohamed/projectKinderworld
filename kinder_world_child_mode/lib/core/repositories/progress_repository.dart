@@ -478,7 +478,6 @@ class ProgressRepository {
   /// Sync with server
   Future<bool> syncWithServer() async {
     try {
-      // TODO: Implement actual server sync
       final needsSync = await getRecordsNeedingSync();
       
       for (var record in needsSync) {

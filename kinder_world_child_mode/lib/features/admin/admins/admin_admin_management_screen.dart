@@ -7,6 +7,10 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminAdminManagementScreen extends ConsumerStatefulWidget {
   const AdminAdminManagementScreen({super.key});
 
@@ -124,7 +128,7 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _showCreateAdminDialog() async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final emailController = TextEditingController();
     final nameController = TextEditingController();
     final passwordController = TextEditingController();
@@ -133,7 +137,7 @@ class _AdminAdminManagementScreenState
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
-              title: Text(l10n?.adminAdminsCreateTitle ?? 'Create admin'),
+              title: Text(l10n.adminAdminsCreateTitle),
               content: SizedBox(
                 width: 520,
                 child: SingleChildScrollView(
@@ -144,14 +148,14 @@ class _AdminAdminManagementScreenState
                       TextField(
                         controller: nameController,
                         decoration: InputDecoration(
-                          labelText: l10n?.adminAdminsNameField ?? 'Name',
+                          labelText: l10n.adminAdminsNameField,
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
-                          labelText: l10n?.adminAdminsEmailField ?? 'Email',
+                          labelText: l10n.adminAdminsEmailField,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -160,12 +164,12 @@ class _AdminAdminManagementScreenState
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText:
-                              l10n?.adminAdminsPasswordField ?? 'Password',
+                              l10n.adminAdminsPasswordField,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        l10n?.adminAdminsInitialRolesLabel ?? 'Initial roles',
+                        l10n.adminAdminsInitialRolesLabel,
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 8),
@@ -196,11 +200,11 @@ class _AdminAdminManagementScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n?.adminAdminsCreateAction ?? 'Create admin'),
+                  child: Text(l10n.adminAdminsCreateAction),
                 ),
               ],
             ),
@@ -219,8 +223,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsCreatedMessage ??
-              'Admin account created successfully',
+          l10n.adminAdminsCreatedMessage,
         ),
       ),
     );
@@ -229,14 +232,14 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _showEditAdminDialog(AdminUser adminUser) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final emailController = TextEditingController(text: adminUser.email);
     final nameController = TextEditingController(text: adminUser.name);
     final passwordController = TextEditingController();
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminAdminsEditTitle ?? 'Edit admin'),
+            title: Text(l10n.adminAdminsEditTitle),
             content: SizedBox(
               width: 440,
               child: Column(
@@ -245,14 +248,14 @@ class _AdminAdminManagementScreenState
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsNameField ?? 'Name',
+                      labelText: l10n.adminAdminsNameField,
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: emailController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsEmailField ?? 'Email',
+                      labelText: l10n.adminAdminsEmailField,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -260,9 +263,8 @@ class _AdminAdminManagementScreenState
                     controller: passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsPasswordField ?? 'Password',
-                      helperText: l10n?.adminAdminsPasswordHelper ??
-                          'Leave blank to keep the current password',
+                      labelText: l10n.adminAdminsPasswordField,
+                      helperText: l10n.adminAdminsPasswordHelper,
                     ),
                   ),
                 ],
@@ -271,11 +273,11 @@ class _AdminAdminManagementScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n?.save ?? 'Save'),
+                child: Text(l10n.save),
               ),
             ],
           ),
@@ -293,8 +295,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsUpdatedMessage ??
-              'Admin account updated successfully',
+          l10n.adminAdminsUpdatedMessage,
         ),
       ),
     );
@@ -302,33 +303,31 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _setAdminEnabled(AdminUser adminUser, bool enabled) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: Text(
               enabled
-                  ? (l10n?.adminAdminsEnableTitle ?? 'Enable admin')
-                  : (l10n?.adminAdminsDisableTitle ?? 'Disable admin'),
+                  ? l10n.adminAdminsEnableTitle
+                  : l10n.adminAdminsDisableTitle,
             ),
             content: Text(
               enabled
-                  ? (l10n?.adminAdminsEnableConfirm ??
-                      'Enable this admin account?')
-                  : (l10n?.adminAdminsDisableConfirm ??
-                      'Disable this admin account?'),
+                  ? l10n.adminAdminsEnableConfirm
+                  : l10n.adminAdminsDisableConfirm,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
                   enabled
-                      ? (l10n?.adminAdminsEnableAction ?? 'Enable')
-                      : (l10n?.adminAdminsDisableAction ?? 'Disable'),
+                      ? l10n.adminAdminsEnableAction
+                      : l10n.adminAdminsDisableAction,
                 ),
               ),
             ],
@@ -344,10 +343,8 @@ class _AdminAdminManagementScreenState
       SnackBar(
         content: Text(
           enabled
-              ? (l10n?.adminAdminsEnabledMessage ??
-                  'Admin account enabled successfully')
-              : (l10n?.adminAdminsDisabledMessage ??
-                  'Admin account disabled successfully'),
+              ? l10n.adminAdminsEnabledMessage
+              : l10n.adminAdminsDisabledMessage,
         ),
       ),
     );
@@ -355,7 +352,7 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _showAssignRoleDialog(AdminUser adminUser) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final availableRoles =
         _roles.where((role) => !adminUser.roles.contains(role.name)).toList();
     if (availableRoles.isEmpty) return;
@@ -364,7 +361,7 @@ class _AdminAdminManagementScreenState
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
-              title: Text(l10n?.adminAdminsAssignRoleTitle ?? 'Assign role'),
+              title: Text(l10n.adminAdminsAssignRoleTitle),
               content: DropdownButtonFormField<int>(
                 initialValue: selectedRoleId,
                 items: availableRoles
@@ -381,12 +378,12 @@ class _AdminAdminManagementScreenState
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(context, true),
                   child: Text(
-                    l10n?.adminAdminsAssignRoleAction ?? 'Assign role',
+                    l10n.adminAdminsAssignRoleAction,
                   ),
                 ),
               ],
@@ -402,7 +399,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsRoleAssignedMessage ?? 'Role assigned successfully',
+          l10n.adminAdminsRoleAssignedMessage,
         ),
       ),
     );
@@ -411,24 +408,23 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _removeRole(AdminUser adminUser, AdminRoleRecord role) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminAdminsRemoveRoleTitle ?? 'Remove role'),
+            title: Text(l10n.adminAdminsRemoveRoleTitle),
             content: Text(
-              l10n?.adminAdminsRemoveRoleConfirm(role.name) ??
-                  'Remove ${role.name} from this admin?',
+              l10n.adminAdminsRemoveRoleConfirm(role.name),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
-                  l10n?.adminAdminsRemoveRoleAction ?? 'Remove role',
+                  l10n.adminAdminsRemoveRoleAction,
                 ),
               ),
             ],
@@ -443,7 +439,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsRoleRemovedMessage ?? 'Role removed successfully',
+          l10n.adminAdminsRoleRemovedMessage,
         ),
       ),
     );
@@ -452,13 +448,13 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _showCreateRoleDialog() async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminAdminsCreateRoleTitle ?? 'Create role'),
+            title: Text(l10n.adminAdminsCreateRoleTitle),
             content: SizedBox(
               width: 440,
               child: Column(
@@ -467,15 +463,14 @@ class _AdminAdminManagementScreenState
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsRoleNameField ?? 'Role name',
+                      labelText: l10n.adminAdminsRoleNameField,
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsRoleDescriptionField ??
-                          'Description',
+                      labelText: l10n.adminAdminsRoleDescriptionField,
                     ),
                   ),
                 ],
@@ -484,12 +479,12 @@ class _AdminAdminManagementScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
-                  l10n?.adminAdminsCreateRoleAction ?? 'Create role',
+                  l10n.adminAdminsCreateRoleAction,
                 ),
               ),
             ],
@@ -506,7 +501,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsRoleCreatedMessage ?? 'Role created successfully',
+          l10n.adminAdminsRoleCreatedMessage,
         ),
       ),
     );
@@ -514,13 +509,13 @@ class _AdminAdminManagementScreenState
   }
 
   Future<void> _showEditRoleDialog(AdminRoleRecord role) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: role.name);
     final descriptionController = TextEditingController(text: role.description);
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminAdminsEditRoleTitle ?? 'Edit role'),
+            title: Text(l10n.adminAdminsEditRoleTitle),
             content: SizedBox(
               width: 440,
               child: Column(
@@ -529,15 +524,14 @@ class _AdminAdminManagementScreenState
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsRoleNameField ?? 'Role name',
+                      labelText: l10n.adminAdminsRoleNameField,
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: descriptionController,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsRoleDescriptionField ??
-                          'Description',
+                      labelText: l10n.adminAdminsRoleDescriptionField,
                     ),
                   ),
                 ],
@@ -546,11 +540,11 @@ class _AdminAdminManagementScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n?.save ?? 'Save'),
+                child: Text(l10n.save),
               ),
             ],
           ),
@@ -567,7 +561,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsRoleUpdatedMessage ?? 'Role updated successfully',
+          l10n.adminAdminsRoleUpdatedMessage,
         ),
       ),
     );
@@ -578,7 +572,7 @@ class _AdminAdminManagementScreenState
     AdminRoleRecord role,
     Set<int> permissionIds,
   ) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final updated = await ref
         .read(adminManagementRepositoryProvider)
         .updateRolePermissions(role.id, permissionIds.toList());
@@ -586,8 +580,7 @@ class _AdminAdminManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          l10n?.adminAdminsPermissionsUpdatedMessage ??
-              'Role permissions updated successfully',
+          l10n.adminAdminsPermissionsUpdatedMessage,
         ),
       ),
     );
@@ -600,7 +593,7 @@ class _AdminAdminManagementScreenState
     if (!(currentAdmin?.hasPermission('admin.admins.manage') ?? false)) {
       return const AdminPermissionPlaceholder();
     }
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 2,
       child: Padding(
@@ -609,20 +602,19 @@ class _AdminAdminManagementScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n?.adminAdminsTitle ?? 'Admin management',
+              l10n.adminAdminsTitle,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              l10n?.adminAdminsSubtitle ??
-                  'Manage admin accounts, role assignments, and permission maps.',
+              l10n.adminAdminsSubtitle,
             ),
             const SizedBox(height: 20),
             TabBar(
               isScrollable: true,
               tabs: [
-                Tab(text: l10n?.adminAdminsUsersTab ?? 'Admin users'),
-                Tab(text: l10n?.adminAdminsRolesTab ?? 'Roles & permissions'),
+                Tab(text: l10n.adminAdminsUsersTab),
+                Tab(text: l10n.adminAdminsRolesTab),
               ],
             ),
             const SizedBox(height: 16),
@@ -642,7 +634,7 @@ class _AdminAdminManagementScreenState
 
   Widget _buildUsersTab(
     BuildContext context,
-    AppLocalizations? l10n,
+    AppLocalizations l10n,
     AdminUser? currentAdmin,
   ) {
     if (_loadingUsers) {
@@ -667,7 +659,7 @@ class _AdminAdminManagementScreenState
                     initialValue: _search,
                     decoration: InputDecoration(
                       labelText:
-                          l10n?.adminAdminsSearchLabel ?? 'Search admins',
+                          l10n.adminAdminsSearchLabel,
                     ),
                     onFieldSubmitted: (value) {
                       setState(() {
@@ -683,21 +675,21 @@ class _AdminAdminManagementScreenState
                   child: DropdownButtonFormField<String>(
                     initialValue: _status,
                     decoration: InputDecoration(
-                      labelText: l10n?.adminAdminsStatusFilter ?? 'Status',
+                      labelText: l10n.adminAdminsStatusFilter,
                     ),
                     items: [
                       DropdownMenuItem(
                         value: 'all',
-                        child: Text(l10n?.adminUsersStatusAll ?? 'All'),
+                        child: Text(l10n.adminUsersStatusAll),
                       ),
                       DropdownMenuItem(
                         value: 'active',
-                        child: Text(l10n?.adminUsersStatusActive ?? 'Active'),
+                        child: Text(l10n.adminUsersStatusActive),
                       ),
                       DropdownMenuItem(
                         value: 'disabled',
                         child:
-                            Text(l10n?.adminUsersStatusDisabled ?? 'Disabled'),
+                            Text(l10n.adminUsersStatusDisabled),
                       ),
                     ],
                     onChanged: (value) {
@@ -712,12 +704,12 @@ class _AdminAdminManagementScreenState
                 FilledButton.icon(
                   onPressed: _showCreateAdminDialog,
                   icon: const Icon(Icons.person_add_alt_1),
-                  label: Text(l10n?.adminAdminsCreateAction ?? 'Create admin'),
+                  label: Text(l10n.adminAdminsCreateAction),
                 ),
                 OutlinedButton.icon(
                   onPressed: _loadUsers,
                   icon: const Icon(Icons.refresh),
-                  label: Text(l10n?.retry ?? 'Refresh'),
+                  label: Text(l10n.retry),
                 ),
               ],
             ),
@@ -739,8 +731,8 @@ class _AdminAdminManagementScreenState
                   isThreeLine: true,
                   trailing: _StatusChip(
                     active: adminUser.isActive,
-                    activeLabel: l10n?.adminUsersStatusActive ?? 'Active',
-                    disabledLabel: l10n?.adminUsersStatusDisabled ?? 'Disabled',
+                    activeLabel: l10n.adminUsersStatusActive,
+                    disabledLabel: l10n.adminUsersStatusDisabled,
                   ),
                 ),
               ),
@@ -750,13 +742,12 @@ class _AdminAdminManagementScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  l10n?.adminPaginationSummary(
+                  l10n.adminPaginationSummary(
                         (_adminPagination['page'] as int?) ?? _page,
                         (_adminPagination['total_pages'] as int?) ?? 1,
                         (_adminPagination['total'] as int?) ??
                             _adminUsers.length,
-                      ) ??
-                      '',
+                      ),
                 ),
                 Row(
                   children: [
@@ -768,7 +759,7 @@ class _AdminAdminManagementScreenState
                                   _loadUsers();
                                 }
                               : null,
-                      child: Text(l10n?.adminPaginationPrevious ?? 'Previous'),
+                      child: Text(l10n.adminPaginationPrevious),
                     ),
                     const SizedBox(width: 8),
                     FilledButton(
@@ -779,7 +770,7 @@ class _AdminAdminManagementScreenState
                                   _loadUsers();
                                 }
                               : null,
-                      child: Text(l10n?.adminPaginationNext ?? 'Next'),
+                      child: Text(l10n.adminPaginationNext),
                     ),
                   ],
                 ),
@@ -809,7 +800,7 @@ class _AdminAdminManagementScreenState
 
   Widget _buildAdminDetail(
     BuildContext context,
-    AppLocalizations? l10n,
+    AppLocalizations l10n,
     AdminUser? currentAdmin,
   ) {
     final adminUser = _selectedAdmin;
@@ -818,8 +809,7 @@ class _AdminAdminManagementScreenState
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            l10n?.adminAdminsNoSelection ??
-                'Select an admin account to view details',
+            l10n.adminAdminsNoSelection,
           ),
         ),
       );
@@ -840,19 +830,19 @@ class _AdminAdminManagementScreenState
                 ),
                 _StatusChip(
                   active: adminUser.isActive,
-                  activeLabel: l10n?.adminUsersStatusActive ?? 'Active',
-                  disabledLabel: l10n?.adminUsersStatusDisabled ?? 'Disabled',
+                  activeLabel: l10n.adminUsersStatusActive,
+                  disabledLabel: l10n.adminUsersStatusDisabled,
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              '${l10n?.adminAdminsNameField ?? 'Name'}: ${adminUser.name.isEmpty ? '—' : adminUser.name}',
+              '${l10n.adminAdminsNameField}: ${adminUser.name.isEmpty ? l10n.notAvailable : adminUser.name}',
             ),
-            Text('${l10n?.adminAdminsIdLabel ?? 'ID'}: ${adminUser.id}'),
+            Text('${l10n.adminAdminsIdLabel}: ${adminUser.id}'),
             const SizedBox(height: 16),
             Text(
-              l10n?.adminAdminsRolesSection ?? 'Assigned roles',
+              l10n.adminAdminsRolesSection,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -879,12 +869,12 @@ class _AdminAdminManagementScreenState
                 FilledButton(
                   onPressed: () => _showAssignRoleDialog(adminUser),
                   child: Text(
-                    l10n?.adminAdminsAssignRoleAction ?? 'Assign role',
+                    l10n.adminAdminsAssignRoleAction,
                   ),
                 ),
                 OutlinedButton(
                   onPressed: () => _showEditAdminDialog(adminUser),
-                  child: Text(l10n?.adminAdminsEditAction ?? 'Edit admin'),
+                  child: Text(l10n.adminAdminsEditAction),
                 ),
                 OutlinedButton(
                   onPressed: adminUser.isActive
@@ -892,15 +882,15 @@ class _AdminAdminManagementScreenState
                       : () => _setAdminEnabled(adminUser, true),
                   child: Text(
                     adminUser.isActive
-                        ? (l10n?.adminAdminsDisableAction ?? 'Disable')
-                        : (l10n?.adminAdminsEnableAction ?? 'Enable'),
+                        ? l10n.adminAdminsDisableAction
+                        : l10n.adminAdminsEnableAction,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Text(
-              l10n?.adminAdminsPermissionsSection ?? 'Effective permissions',
+              l10n.adminAdminsPermissionsSection,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -914,8 +904,7 @@ class _AdminAdminManagementScreenState
             if (currentAdmin?.id == adminUser.id) ...[
               const SizedBox(height: 16),
               Text(
-                l10n?.adminAdminsCurrentAdminHint ??
-                    'Your own admin account is protected from self-disable and self-role removal.',
+                l10n.adminAdminsCurrentAdminHint,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -925,7 +914,7 @@ class _AdminAdminManagementScreenState
     );
   }
 
-  Widget _buildRolesTab(BuildContext context, AppLocalizations? l10n) {
+  Widget _buildRolesTab(BuildContext context, AppLocalizations l10n) {
     if (_loadingRoles) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -946,12 +935,12 @@ class _AdminAdminManagementScreenState
                   onPressed: _showCreateRoleDialog,
                   icon: const Icon(Icons.add),
                   label:
-                      Text(l10n?.adminAdminsCreateRoleAction ?? 'Create role'),
+                      Text(l10n.adminAdminsCreateRoleAction),
                 ),
                 OutlinedButton.icon(
                   onPressed: _loadRoles,
                   icon: const Icon(Icons.refresh),
-                  label: Text(l10n?.retry ?? 'Refresh'),
+                  label: Text(l10n.retry),
                 ),
               ],
             ),
@@ -996,7 +985,7 @@ class _AdminAdminManagementScreenState
     );
   }
 
-  Widget _buildRoleDetail(BuildContext context, AppLocalizations? l10n) {
+  Widget _buildRoleDetail(BuildContext context, AppLocalizations l10n) {
     final role = _selectedRole;
     final permissionsPayload = _permissionsPayload;
     if (role == null || permissionsPayload == null) {
@@ -1004,8 +993,7 @@ class _AdminAdminManagementScreenState
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            l10n?.adminAdminsNoRoleSelection ??
-                'Select a role to edit permissions',
+            l10n.adminAdminsNoRoleSelection,
           ),
         ),
       );
@@ -1029,7 +1017,7 @@ class _AdminAdminManagementScreenState
                   ),
                   OutlinedButton(
                     onPressed: () => _showEditRoleDialog(role),
-                    child: Text(l10n?.adminAdminsEditRoleAction ?? 'Edit role'),
+                    child: Text(l10n.adminAdminsEditRoleAction),
                   ),
                 ],
               ),
@@ -1037,7 +1025,7 @@ class _AdminAdminManagementScreenState
               Text(role.description.isEmpty ? '—' : role.description),
               const SizedBox(height: 16),
               Text(
-                l10n?.adminAdminsPermissionsSection ?? 'Permissions',
+                l10n.adminAdminsPermissionsSection,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
@@ -1078,7 +1066,7 @@ class _AdminAdminManagementScreenState
                 onPressed: () =>
                     _saveRolePermissions(role, selectedPermissionIds),
                 child: Text(
-                  l10n?.adminAdminsSavePermissionsAction ?? 'Save permissions',
+                  l10n.adminAdminsSavePermissionsAction,
                 ),
               ),
             ],

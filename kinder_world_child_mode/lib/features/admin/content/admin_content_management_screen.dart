@@ -8,6 +8,10 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminContentManagementScreen extends ConsumerStatefulWidget {
   const AdminContentManagementScreen({super.key});
 
@@ -38,22 +42,22 @@ class _AdminContentManagementScreenState
   int? _quizCategoryId;
   int _quizPage = 1;
 
-  List<DropdownMenuItem<String>> _contentTypeItems(AppLocalizations? l10n) => [
+  List<DropdownMenuItem<String>> _contentTypeItems(AppLocalizations l10n) => [
         DropdownMenuItem(
           value: 'lesson',
-          child: Text(l10n?.adminCmsTypeLesson ?? 'Lesson'),
+          child: Text(l10n.adminCmsTypeLesson),
         ),
         DropdownMenuItem(
           value: 'story',
-          child: Text(l10n?.adminCmsTypeStory ?? 'Story'),
+          child: Text(l10n.adminCmsTypeStory),
         ),
         DropdownMenuItem(
           value: 'video',
-          child: Text(l10n?.adminCmsTypeVideo ?? 'Video'),
+          child: Text(l10n.adminCmsTypeVideo),
         ),
         DropdownMenuItem(
           value: 'activity',
-          child: Text(l10n?.adminCmsTypeActivity ?? 'Activity'),
+          child: Text(l10n.adminCmsTypeActivity),
         ),
       ];
 
@@ -107,14 +111,14 @@ class _AdminContentManagementScreenState
     }
   }
 
-  List<_StatusOption> _statusOptions(AppLocalizations? l10n) => [
-        _StatusOption('draft', l10n?.adminCmsStatusDraft ?? 'Draft'),
-        _StatusOption('review', l10n?.adminCmsStatusReview ?? 'Review'),
+  List<_StatusOption> _statusOptions(AppLocalizations l10n) => [
+        _StatusOption('draft', l10n.adminCmsStatusDraft),
+        _StatusOption('review', l10n.adminCmsStatusReview),
         _StatusOption(
-            'published', l10n?.adminCmsStatusPublished ?? 'Published'),
+            'published', l10n.adminCmsStatusPublished),
       ];
 
-  String _statusLabel(String status, AppLocalizations? l10n) {
+  String _statusLabel(String status, AppLocalizations l10n) {
     for (final option in _statusOptions(l10n)) {
       if (option.value == status) return option.label;
     }
@@ -122,7 +126,7 @@ class _AdminContentManagementScreenState
   }
 
   Future<void> _saveCategory({AdminCmsCategory? category}) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final slug = TextEditingController(text: category?.slug ?? '');
     final titleEn = TextEditingController(text: category?.titleEn ?? '');
     final titleAr = TextEditingController(text: category?.titleAr ?? '');
@@ -132,8 +136,8 @@ class _AdminContentManagementScreenState
           context: context,
           builder: (context) => AlertDialog(
             title: Text(category == null
-                ? (l10n?.adminCmsCategoryCreateTitle ?? 'Create category')
-                : (l10n?.adminCmsCategoryEditTitle ?? 'Edit category')),
+                ? (l10n.adminCmsCategoryCreateTitle)
+                : (l10n.adminCmsCategoryEditTitle)),
             content: SizedBox(
               width: 520,
               child: Column(
@@ -142,41 +146,39 @@ class _AdminContentManagementScreenState
                   TextField(
                       controller: slug,
                       decoration: InputDecoration(
-                          labelText: l10n?.adminCmsCategorySlug ?? 'Slug')),
+                          labelText: l10n.adminCmsCategorySlug)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: titleEn,
                       decoration: InputDecoration(
                           labelText:
-                              l10n?.adminCmsTitleEnLabel ?? 'English title')),
+                              l10n.adminCmsTitleEnLabel)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: titleAr,
                       decoration: InputDecoration(
                           labelText:
-                              l10n?.adminCmsTitleArLabel ?? 'Arabic title')),
+                              l10n.adminCmsTitleArLabel)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: descEn,
                       decoration: InputDecoration(
-                          labelText: l10n?.adminCmsDescriptionEnLabel ??
-                              'English description')),
+                          labelText: l10n.adminCmsDescriptionEnLabel)),
                   const SizedBox(height: 12),
                   TextField(
                       controller: descAr,
                       decoration: InputDecoration(
-                          labelText: l10n?.adminCmsDescriptionArLabel ??
-                              'Arabic description')),
+                          labelText: l10n.adminCmsDescriptionArLabel)),
                 ],
               ),
             ),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel')),
+                  child: Text(l10n.cancel)),
               FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n?.save ?? 'Save')),
+                  child: Text(l10n.save)),
             ],
           ),
         ) ??
@@ -203,26 +205,26 @@ class _AdminContentManagementScreenState
     }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n?.adminCmsCategorySaved ?? 'Category saved')),
+      SnackBar(content: Text(l10n.adminCmsCategorySaved)),
     );
     await _loadAll();
   }
 
   Future<void> _deleteCategory(AdminCmsCategory category) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminCmsDeleteCategoryTitle ?? 'Delete category'),
+            title: Text(l10n.adminCmsDeleteCategoryTitle),
             content: Text(
-                l10n?.adminCmsDeleteCategoryConfirm ?? 'Delete this category?'),
+                l10n.adminCmsDeleteCategoryConfirm),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n?.cancel ?? 'Cancel')),
+                  child: Text(l10n.cancel)),
               FilledButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n?.delete ?? 'Delete')),
+                  child: Text(l10n.delete)),
             ],
           ),
         ) ??
@@ -236,7 +238,7 @@ class _AdminContentManagementScreenState
   }
 
   Future<void> _saveContent({AdminCmsContent? content}) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final titleEn = TextEditingController(text: content?.titleEn ?? '');
     final titleAr = TextEditingController(text: content?.titleAr ?? '');
     final descEn = TextEditingController(text: content?.descriptionEn ?? '');
@@ -257,8 +259,8 @@ class _AdminContentManagementScreenState
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(
               title: Text(content == null
-                  ? (l10n?.adminCmsCreateContentTitle ?? 'Create content')
-                  : (l10n?.adminCmsEditContentTitle ?? 'Edit content')),
+                  ? (l10n.adminCmsCreateContentTitle)
+                  : (l10n.adminCmsEditContentTitle)),
               content: SizedBox(
                 width: 700,
                 child: SingleChildScrollView(
@@ -269,12 +271,12 @@ class _AdminContentManagementScreenState
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
                             labelText:
-                                l10n?.adminCmsCategoryLabel ?? 'Category'),
+                                l10n.adminCmsCategoryLabel),
                         items: [
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(
-                                  l10n?.adminCmsNoCategory ?? 'No category')),
+                                  l10n.adminCmsNoCategory)),
                           ..._categories.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
@@ -289,16 +291,14 @@ class _AdminContentManagementScreenState
                           child: TextField(
                               controller: titleEn,
                               decoration: InputDecoration(
-                                  labelText: l10n?.adminCmsTitleEnLabel ??
-                                      'English title')),
+                                  labelText: l10n.adminCmsTitleEnLabel)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                               controller: titleAr,
                               decoration: InputDecoration(
-                                  labelText: l10n?.adminCmsTitleArLabel ??
-                                      'Arabic title')),
+                                  labelText: l10n.adminCmsTitleArLabel)),
                         ),
                       ]),
                       const SizedBox(height: 12),
@@ -307,7 +307,7 @@ class _AdminContentManagementScreenState
                           child: DropdownButtonFormField<String>(
                             initialValue: selectedType,
                             decoration: InputDecoration(
-                                labelText: l10n?.adminCmsTypeLabel ?? 'Type'),
+                                labelText: l10n.adminCmsTypeLabel),
                             items: _contentTypeItems(l10n),
                             onChanged: (value) => setStateDialog(
                                 () => selectedType = value ?? 'lesson'),
@@ -319,7 +319,7 @@ class _AdminContentManagementScreenState
                             initialValue: selectedStatus,
                             decoration: InputDecoration(
                                 labelText:
-                                    l10n?.adminCmsStatusLabel ?? 'Status'),
+                                    l10n.adminCmsStatusLabel),
                             items: _statusOptions(l10n)
                                 .map((item) => DropdownMenuItem(
                                     value: item.value, child: Text(item.label)))
@@ -335,16 +335,14 @@ class _AdminContentManagementScreenState
                           minLines: 2,
                           maxLines: 4,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsDescriptionEnLabel ??
-                                  'English description')),
+                              labelText: l10n.adminCmsDescriptionEnLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: descAr,
                           minLines: 2,
                           maxLines: 4,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsDescriptionArLabel ??
-                                  'Arabic description')),
+                              labelText: l10n.adminCmsDescriptionArLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: bodyEn,
@@ -352,7 +350,7 @@ class _AdminContentManagementScreenState
                           maxLines: 6,
                           decoration: InputDecoration(
                               labelText:
-                                  l10n?.adminCmsBodyEnLabel ?? 'English body')),
+                                  l10n.adminCmsBodyEnLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: bodyAr,
@@ -360,27 +358,25 @@ class _AdminContentManagementScreenState
                           maxLines: 6,
                           decoration: InputDecoration(
                               labelText:
-                                  l10n?.adminCmsBodyArLabel ?? 'Arabic body')),
+                                  l10n.adminCmsBodyArLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: thumb,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsThumbnailLabel ??
-                                  'Thumbnail URL')),
+                              labelText: l10n.adminCmsThumbnailLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: age,
                           decoration: InputDecoration(
                               labelText:
-                                  l10n?.adminCmsAgeGroupLabel ?? 'Age group')),
+                                  l10n.adminCmsAgeGroupLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: metadata,
                           minLines: 4,
                           maxLines: 8,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsMetadataLabel ??
-                                  'Metadata JSON')),
+                              labelText: l10n.adminCmsMetadataLabel)),
                     ],
                   ),
                 ),
@@ -388,10 +384,10 @@ class _AdminContentManagementScreenState
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: Text(l10n?.cancel ?? 'Cancel')),
+                    child: Text(l10n.cancel)),
                 FilledButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: Text(l10n?.save ?? 'Save')),
+                    child: Text(l10n.save)),
               ],
             ),
           ),
@@ -425,7 +421,7 @@ class _AdminContentManagementScreenState
   }
 
   Future<void> _previewContent(AdminCmsContent content) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final detail = await ref
         .read(adminManagementRepositoryProvider)
         .fetchContentDetail(content.id);
@@ -433,7 +429,7 @@ class _AdminContentManagementScreenState
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n?.adminCmsPreviewTitle ?? 'Preview'),
+        title: Text(l10n.adminCmsPreviewTitle),
         content: SizedBox(
           width: 680,
           child: SingleChildScrollView(
@@ -449,7 +445,7 @@ class _AdminContentManagementScreenState
                 Text(detail.bodyEn ?? ''),
                 const SizedBox(height: 16),
                 Text(
-                    '${l10n?.adminCmsLinkedQuizzes ?? 'Linked quizzes'}: ${detail.quizCount}'),
+                    '${l10n.adminCmsLinkedQuizzes}: ${detail.quizCount}'),
               ],
             ),
           ),
@@ -457,7 +453,7 @@ class _AdminContentManagementScreenState
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(l10n?.cancel ?? 'Close')),
+              child: Text(l10n.cancel)),
         ],
       ),
     );
@@ -481,7 +477,7 @@ class _AdminContentManagementScreenState
   }
 
   Future<void> _saveQuiz({AdminCmsQuiz? quiz}) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final titleEn = TextEditingController(text: quiz?.titleEn ?? '');
     final titleAr = TextEditingController(text: quiz?.titleAr ?? '');
     final descEn = TextEditingController(text: quiz?.descriptionEn ?? '');
@@ -498,8 +494,8 @@ class _AdminContentManagementScreenState
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(
               title: Text(quiz == null
-                  ? (l10n?.adminCmsCreateQuizTitle ?? 'Create quiz')
-                  : (l10n?.adminCmsEditQuizTitle ?? 'Edit quiz')),
+                  ? (l10n.adminCmsCreateQuizTitle)
+                  : (l10n.adminCmsEditQuizTitle)),
               content: SizedBox(
                 width: 680,
                 child: SingleChildScrollView(
@@ -510,12 +506,12 @@ class _AdminContentManagementScreenState
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
                             labelText:
-                                l10n?.adminCmsCategoryLabel ?? 'Category'),
+                                l10n.adminCmsCategoryLabel),
                         items: [
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(
-                                  l10n?.adminCmsNoCategory ?? 'No category')),
+                                  l10n.adminCmsNoCategory)),
                           ..._categories.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
@@ -528,13 +524,11 @@ class _AdminContentManagementScreenState
                       DropdownButtonFormField<int?>(
                         initialValue: selectedContentId,
                         decoration: InputDecoration(
-                            labelText: l10n?.adminCmsLinkedContentLabel ??
-                                'Linked content'),
+                            labelText: l10n.adminCmsLinkedContentLabel),
                         items: [
                           DropdownMenuItem<int?>(
                               value: null,
-                              child: Text(l10n?.adminCmsNoLinkedContent ??
-                                  'No linked content')),
+                              child: Text(l10n.adminCmsNoLinkedContent)),
                           ..._contents.map((content) => DropdownMenuItem<int?>(
                               value: content.id, child: Text(content.titleEn))),
                         ],
@@ -545,7 +539,7 @@ class _AdminContentManagementScreenState
                       DropdownButtonFormField<String>(
                         initialValue: selectedStatus,
                         decoration: InputDecoration(
-                            labelText: l10n?.adminCmsStatusLabel ?? 'Status'),
+                            labelText: l10n.adminCmsStatusLabel),
                         items: _statusOptions(l10n)
                             .map((item) => DropdownMenuItem(
                                 value: item.value, child: Text(item.label)))
@@ -557,34 +551,29 @@ class _AdminContentManagementScreenState
                       TextField(
                           controller: titleEn,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsTitleEnLabel ??
-                                  'English title')),
+                              labelText: l10n.adminCmsTitleEnLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: titleAr,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsTitleArLabel ??
-                                  'Arabic title')),
+                              labelText: l10n.adminCmsTitleArLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: descEn,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsDescriptionEnLabel ??
-                                  'English description')),
+                              labelText: l10n.adminCmsDescriptionEnLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: descAr,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsDescriptionArLabel ??
-                                  'Arabic description')),
+                              labelText: l10n.adminCmsDescriptionArLabel)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: questions,
                           minLines: 6,
                           maxLines: 12,
                           decoration: InputDecoration(
-                              labelText: l10n?.adminCmsQuestionsJsonLabel ??
-                                  'Questions JSON')),
+                              labelText: l10n.adminCmsQuestionsJsonLabel)),
                     ],
                   ),
                 ),
@@ -592,10 +581,10 @@ class _AdminContentManagementScreenState
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context, false),
-                    child: Text(l10n?.cancel ?? 'Cancel')),
+                    child: Text(l10n.cancel)),
                 FilledButton(
                     onPressed: () => Navigator.pop(context, true),
-                    child: Text(l10n?.save ?? 'Save')),
+                    child: Text(l10n.save)),
               ],
             ),
           ),
@@ -633,7 +622,7 @@ class _AdminContentManagementScreenState
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.content.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -643,19 +632,18 @@ class _AdminContentManagementScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n?.adminCmsTitle ?? 'Content management',
+          Text(l10n.adminCmsTitle,
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          Text(l10n?.adminCmsSubtitle ??
-              'Manage categories, educational content, and quizzes.'),
+          Text(l10n.adminCmsSubtitle),
           const SizedBox(height: 20),
           TabBar(
             controller: _tabs,
             isScrollable: true,
             tabs: [
-              Tab(text: l10n?.adminCmsCategoriesTab ?? 'Categories'),
-              Tab(text: l10n?.adminCmsContentsTab ?? 'Contents'),
-              Tab(text: l10n?.adminCmsQuizzesTab ?? 'Quizzes'),
+              Tab(text: l10n.adminCmsCategoriesTab),
+              Tab(text: l10n.adminCmsContentsTab),
+              Tab(text: l10n.adminCmsQuizzesTab),
             ],
           ),
           const SizedBox(height: 20),
@@ -686,7 +674,7 @@ class _AdminContentManagementScreenState
   }
 
   Widget _buildCategoriesTab(
-      BuildContext context, AppLocalizations? l10n, admin) {
+      BuildContext context, AppLocalizations l10n, admin) {
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
@@ -696,12 +684,12 @@ class _AdminContentManagementScreenState
           FilledButton.icon(
               onPressed: canCreate ? () => _saveCategory() : null,
               icon: const Icon(Icons.add),
-              label: Text(l10n?.adminCmsAddCategory ?? 'Add category')),
+              label: Text(l10n.adminCmsAddCategory)),
           const SizedBox(width: 12),
           OutlinedButton.icon(
               onPressed: _loadAll,
               icon: const Icon(Icons.refresh),
-              label: Text(l10n?.retry ?? 'Refresh')),
+              label: Text(l10n.retry)),
         ]),
         const SizedBox(height: 16),
         Expanded(
@@ -714,7 +702,7 @@ class _AdminContentManagementScreenState
                 child: ListTile(
                   title: Text(category.titleEn),
                   subtitle: Text(
-                      '${category.slug}\n${l10n?.adminCmsCategoryUsage ?? 'Content / quizzes'}: ${category.contentCount} / ${category.quizCount}'),
+                      '${category.slug}\n${l10n.adminCmsCategoryUsage}: ${category.contentCount} / ${category.quizCount}'),
                   isThreeLine: true,
                   trailing: Wrap(spacing: 8, children: [
                     IconButton(
@@ -737,7 +725,7 @@ class _AdminContentManagementScreenState
   }
 
   Widget _buildContentsTab(
-      BuildContext context, AppLocalizations? l10n, admin) {
+      BuildContext context, AppLocalizations l10n, admin) {
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canPublish = admin?.hasPermission('admin.content.publish') ?? false;
@@ -749,7 +737,7 @@ class _AdminContentManagementScreenState
           child: TextFormField(
             initialValue: _contentSearch,
             decoration: InputDecoration(
-                labelText: l10n?.adminCmsSearchLabel ?? 'Search'),
+                labelText: l10n.adminCmsSearchLabel),
             onFieldSubmitted: (value) {
               setState(() {
                 _contentSearch = value.trim();
@@ -764,11 +752,11 @@ class _AdminContentManagementScreenState
           child: DropdownButtonFormField<String>(
             initialValue: _contentStatus,
             decoration: InputDecoration(
-                labelText: l10n?.adminCmsStatusLabel ?? 'Status'),
+                labelText: l10n.adminCmsStatusLabel),
             items: [
               DropdownMenuItem(
                   value: '',
-                  child: Text(l10n?.adminCmsStatusAll ?? 'All statuses')),
+                  child: Text(l10n.adminCmsStatusAll)),
               ..._statusOptions(l10n).map((item) =>
                   DropdownMenuItem(value: item.value, child: Text(item.label))),
             ],
@@ -786,11 +774,11 @@ class _AdminContentManagementScreenState
           child: DropdownButtonFormField<int?>(
             initialValue: _contentCategoryId,
             decoration: InputDecoration(
-                labelText: l10n?.adminCmsCategoryLabel ?? 'Category'),
+                labelText: l10n.adminCmsCategoryLabel),
             items: [
               DropdownMenuItem<int?>(
                   value: null,
-                  child: Text(l10n?.adminCmsAllCategories ?? 'All categories')),
+                  child: Text(l10n.adminCmsAllCategories)),
               ..._categories.map((item) => DropdownMenuItem<int?>(
                   value: item.id, child: Text(item.titleEn))),
             ],
@@ -806,7 +794,7 @@ class _AdminContentManagementScreenState
         FilledButton.icon(
             onPressed: canCreate ? () => _saveContent() : null,
             icon: const Icon(Icons.add),
-            label: Text(l10n?.adminCmsAddContent ?? 'Add content')),
+            label: Text(l10n.adminCmsAddContent)),
       ]),
       const SizedBox(height: 16),
       Expanded(
@@ -836,35 +824,35 @@ class _AdminContentManagementScreenState
                       const SizedBox(height: 10),
                       Wrap(spacing: 12, children: [
                         Text(
-                            '${l10n?.adminCmsCategoryLabel ?? 'Category'}: ${content.category?.titleEn ?? '—'}'),
+                            '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? '—'}'),
                         Text(
-                            '${l10n?.adminCmsTypeLabel ?? 'Type'}: ${content.contentType}'),
+                            '${l10n.adminCmsTypeLabel}: ${content.contentType}'),
                         Text(
-                            '${l10n?.adminCmsLinkedQuizzes ?? 'Linked quizzes'}: ${content.quizCount}'),
+                            '${l10n.adminCmsLinkedQuizzes}: ${content.quizCount}'),
                       ]),
                       const SizedBox(height: 12),
                       Wrap(spacing: 8, runSpacing: 8, children: [
                         OutlinedButton(
                             onPressed: () => _previewContent(content),
                             child:
-                                Text(l10n?.adminCmsPreviewAction ?? 'Preview')),
+                                Text(l10n.adminCmsPreviewAction)),
                         OutlinedButton(
                             onPressed: canEdit
                                 ? () => _saveContent(content: content)
                                 : null,
-                            child: Text(l10n?.edit ?? 'Edit')),
+                            child: Text(l10n.edit)),
                         OutlinedButton(
                             onPressed: canPublish
                                 ? () => _togglePublish(content)
                                 : null,
                             child: Text(content.status == 'published'
-                                ? (l10n?.adminCmsUnpublishAction ?? 'Unpublish')
-                                : (l10n?.adminCmsPublishAction ?? 'Publish'))),
+                                ? l10n.adminCmsUnpublishAction
+                                : l10n.adminCmsPublishAction)),
                         OutlinedButton(
                             onPressed: canDelete
                                 ? () => _deleteContent(content)
                                 : null,
-                            child: Text(l10n?.delete ?? 'Delete')),
+                            child: Text(l10n.delete)),
                       ]),
                     ]),
               ),
@@ -874,15 +862,14 @@ class _AdminContentManagementScreenState
       ),
       const SizedBox(height: 12),
       _PaginationBar(
-        summary: l10n?.adminPaginationSummary(
+        summary: l10n.adminPaginationSummary(
                 (_contentPagination['page'] as int?) ?? _contentPage,
                 (_contentPagination['total_pages'] as int?) ?? 1,
-                (_contentPagination['total'] as int?) ?? _contents.length) ??
-            '',
+                (_contentPagination['total'] as int?) ?? _contents.length),
         hasPrevious: (_contentPagination['has_previous'] as bool?) ?? false,
         hasNext: (_contentPagination['has_next'] as bool?) ?? false,
-        previousLabel: l10n?.adminPaginationPrevious ?? 'Previous',
-        nextLabel: l10n?.adminPaginationNext ?? 'Next',
+        previousLabel: l10n.adminPaginationPrevious,
+        nextLabel: l10n.adminPaginationNext,
         onPrevious: () {
           setState(() => _contentPage -= 1);
           _loadAll();
@@ -895,7 +882,7 @@ class _AdminContentManagementScreenState
     ]);
   }
 
-  Widget _buildQuizzesTab(BuildContext context, AppLocalizations? l10n, admin) {
+  Widget _buildQuizzesTab(BuildContext context, AppLocalizations l10n, admin) {
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
@@ -906,11 +893,11 @@ class _AdminContentManagementScreenState
           child: DropdownButtonFormField<String>(
             initialValue: _quizStatus,
             decoration: InputDecoration(
-                labelText: l10n?.adminCmsStatusLabel ?? 'Status'),
+                labelText: l10n.adminCmsStatusLabel),
             items: [
               DropdownMenuItem(
                   value: '',
-                  child: Text(l10n?.adminCmsStatusAll ?? 'All statuses')),
+                  child: Text(l10n.adminCmsStatusAll)),
               ..._statusOptions(l10n).map((item) =>
                   DropdownMenuItem(value: item.value, child: Text(item.label))),
             ],
@@ -928,11 +915,11 @@ class _AdminContentManagementScreenState
           child: DropdownButtonFormField<int?>(
             initialValue: _quizCategoryId,
             decoration: InputDecoration(
-                labelText: l10n?.adminCmsCategoryLabel ?? 'Category'),
+                labelText: l10n.adminCmsCategoryLabel),
             items: [
               DropdownMenuItem<int?>(
                   value: null,
-                  child: Text(l10n?.adminCmsAllCategories ?? 'All categories')),
+                  child: Text(l10n.adminCmsAllCategories)),
               ..._categories.map((item) => DropdownMenuItem<int?>(
                   value: item.id, child: Text(item.titleEn))),
             ],
@@ -948,7 +935,7 @@ class _AdminContentManagementScreenState
         FilledButton.icon(
             onPressed: canCreate ? () => _saveQuiz() : null,
             icon: const Icon(Icons.add),
-            label: Text(l10n?.adminCmsAddQuiz ?? 'Add quiz')),
+            label: Text(l10n.adminCmsAddQuiz)),
       ]),
       const SizedBox(height: 16),
       Expanded(
@@ -961,7 +948,7 @@ class _AdminContentManagementScreenState
               child: ListTile(
                 title: Text(quiz.titleEn),
                 subtitle: Text(
-                    '${quiz.questionCount} ${l10n?.adminCmsQuestionsLabel ?? 'questions'} • ${quiz.category?.titleEn ?? '—'}'),
+                    '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel} ? ${quiz.category?.titleEn ?? l10n.notAvailable}'),
                 trailing: Wrap(spacing: 8, children: [
                   _CmsStatusChip(
                       label: _statusLabel(quiz.status, l10n),
@@ -980,15 +967,14 @@ class _AdminContentManagementScreenState
       ),
       const SizedBox(height: 12),
       _PaginationBar(
-        summary: l10n?.adminPaginationSummary(
+        summary: l10n.adminPaginationSummary(
                 (_quizPagination['page'] as int?) ?? _quizPage,
                 (_quizPagination['total_pages'] as int?) ?? 1,
-                (_quizPagination['total'] as int?) ?? _quizzes.length) ??
-            '',
+                (_quizPagination['total'] as int?) ?? _quizzes.length),
         hasPrevious: (_quizPagination['has_previous'] as bool?) ?? false,
         hasNext: (_quizPagination['has_next'] as bool?) ?? false,
-        previousLabel: l10n?.adminPaginationPrevious ?? 'Previous',
-        nextLabel: l10n?.adminPaginationNext ?? 'Next',
+        previousLabel: l10n.adminPaginationPrevious,
+        nextLabel: l10n.adminPaginationNext,
         onPrevious: () {
           setState(() => _quizPage -= 1);
           _loadAll();

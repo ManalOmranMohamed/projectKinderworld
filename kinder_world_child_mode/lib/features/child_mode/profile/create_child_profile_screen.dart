@@ -10,6 +10,10 @@ import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class CreateChildProfileScreen extends ConsumerStatefulWidget {
   const CreateChildProfileScreen({super.key});
 
@@ -349,7 +353,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           },
         ),
         title: Text(
-          'Create Child Profile',
+          AppLocalizations.of(context)!.createChildProfile,
           style: TextStyle(
             fontSize: AppConstants.fontSize,
             fontWeight: FontWeight.bold,
@@ -406,9 +410,9 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: const BorderSide(color: AppColors.primary),
                         ),
-                        child: const Text(
-                          'Back',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context)!.back,
+                          style: const TextStyle(
                             fontSize: AppConstants.fontSize,
                             color: AppColors.primary,
                           ),
@@ -428,7 +432,9 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
-                        _currentStep == 3 ? 'Create Profile' : 'Next',
+                        _currentStep == 3
+                            ? AppLocalizations.of(context)!.createChildProfile
+                            : AppLocalizations.of(context)!.next,
                         style: TextStyle(
                           fontSize: AppConstants.fontSize,
                           color: Theme.of(context).colorScheme.surface,
@@ -468,7 +474,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tell us about your child',
+            l10n.childProfileBasicInfoTitle,
             style: TextStyle(
               fontSize: AppConstants.largeFontSize,
               fontWeight: FontWeight.bold,
@@ -477,7 +483,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           ),
           const SizedBox(height: 8),
           Text(
-            'This helps us personalize their learning experience',
+            l10n.childProfileBasicInfoSubtitle,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -489,7 +495,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: 'Child\'s Name',
+              labelText: l10n.childNameLabel,
               labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -498,7 +504,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your child\'s name';
+                return l10n.pleaseEnterChildName;
               }
               return null;
             },
@@ -536,7 +542,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           
           // Age selector
           Text(
-            'Age',
+            l10n.childAge,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               fontWeight: FontWeight.w600,
@@ -551,7 +557,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             children: List.generate(7, (index) {
               final age = index + 5; // Ages 5-12
               return ChoiceChip(
-                label: Text('$age years'),
+                label: Text(l10n.yearsOld(age)),
                 selected: _selectedAge == age,
                 onSelected: (selected) {
                   setState(() {
@@ -567,13 +573,14 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
   }
 
   Widget _buildAvatarStep() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Choose an avatar',
+            l10n.childProfileAvatarTitle,
             style: TextStyle(
               fontSize: AppConstants.largeFontSize,
               fontWeight: FontWeight.bold,
@@ -582,7 +589,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           ),
           const SizedBox(height: 8),
           Text(
-            'Pick a fun character to represent your child',
+            l10n.childProfileAvatarSubtitle,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -650,13 +657,14 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
   }
 
   Widget _buildInterestsStep() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'What are your child\'s interests?',
+            l10n.childProfileInterestsTitle,
             style: TextStyle(
               fontSize: AppConstants.largeFontSize,
               fontWeight: FontWeight.bold,
@@ -665,7 +673,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           ),
           const SizedBox(height: 8),
           Text(
-            'Select up to 5 interests (optional)',
+            l10n.childProfileInterestsSubtitle,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -721,13 +729,14 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
   }
 
   Widget _buildPicturePasswordStep() {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Create a picture password',
+            l10n.childProfilePicturePasswordTitle,
             style: TextStyle(
               fontSize: AppConstants.largeFontSize,
               fontWeight: FontWeight.bold,
@@ -736,7 +745,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
           ),
           const SizedBox(height: 8),
           Text(
-            'Select 3 pictures your child will remember',
+            l10n.childProfilePicturePasswordSubtitle,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               color: Theme.of(context).colorScheme.onSurfaceVariant,

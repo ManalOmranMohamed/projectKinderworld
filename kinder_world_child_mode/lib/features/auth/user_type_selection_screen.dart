@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -100,9 +101,9 @@ class _UserTypeSelectionScreenState
     Future.delayed(const Duration(milliseconds: 180), () {
       if (!mounted) return;
       if (userType == 'parent') {
-        context.go('/parent/login');
+        context.push('/parent/login');
       } else {
-        context.go('/child/login');
+        context.push('/child/login');
       }
     });
   }
@@ -114,10 +115,16 @@ class _UserTypeSelectionScreenState
     final textTheme = context.text;
     final childTheme = context.childTheme;
 
-    return Scaffold(
-      backgroundColor: auth.pageBackground,
-      body: SafeArea(
-        child: Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await SystemNavigator.pop();
+      },
+      child: Scaffold(
+        backgroundColor: auth.pageBackground,
+        body: SafeArea(
+          child: Column(
           children: [
             // ── Header ──
             FadeTransition(
@@ -132,7 +139,7 @@ class _UserTypeSelectionScreenState
                       Row(
                         children: [
                           _CircleBackButton(
-                            onTap: () => context.go('/welcome'),
+                            onTap: () => SystemNavigator.pop(),
                           ),
                         ],
                       ),
@@ -255,6 +262,7 @@ class _UserTypeSelectionScreenState
           ],
         ),
       ),
+    ),
     );
   }
 }

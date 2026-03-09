@@ -138,7 +138,7 @@ class _LanguageSelectionScreenState
                   // Continue button
                   AuthPrimaryButton(
                     label: l10n.continueText,
-                    onPressed: () => context.go(Routes.onboarding),
+                    onPressed: () => context.push(Routes.onboarding),
                   ),
 
                   const SizedBox(height: 32),

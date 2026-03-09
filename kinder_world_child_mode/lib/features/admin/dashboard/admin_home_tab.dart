@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminHomeTab extends ConsumerWidget {
   const AdminHomeTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -37,7 +41,7 @@ class AdminHomeTab extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${l10n?.adminDashboardWelcome ?? 'Welcome back'}, ${admin?.name ?? admin?.email ?? 'Admin'}!',
+                  '${l10n.adminDashboardWelcome}, ${admin?.name ?? admin?.email ?? l10n.adminRoleSupportAdmin}!',
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
@@ -45,8 +49,7 @@ class AdminHomeTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  l10n?.adminDashboardSubtitle ??
-                      "Here's what's happening in Kinder World",
+                  l10n.adminDashboardSubtitle,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onPrimary.withValues(alpha: 0.85),
                   ),
@@ -80,7 +83,7 @@ class AdminHomeTab extends ConsumerWidget {
 
           // ── Stats grid ──────────────────────────────────────────────────
           Text(
-            l10n?.adminSidebarOverview ?? 'Overview',
+            l10n.adminSidebarOverview,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -96,28 +99,28 @@ class AdminHomeTab extends ConsumerWidget {
             children: [
               _StatCard(
                 icon: Icons.people_outline,
-                label: l10n?.adminSidebarUsers ?? 'Users',
+                label: l10n.adminSidebarUsers,
                 value: '—',
                 color: colorScheme.primaryContainer,
                 iconColor: colorScheme.onPrimaryContainer,
               ),
               _StatCard(
                 icon: Icons.child_care_outlined,
-                label: l10n?.adminSidebarChildren ?? 'Children',
+                label: l10n.adminSidebarChildren,
                 value: '—',
                 color: colorScheme.secondaryContainer,
                 iconColor: colorScheme.onSecondaryContainer,
               ),
               _StatCard(
                 icon: Icons.subscriptions_outlined,
-                label: l10n?.adminSidebarSubscriptions ?? 'Subscriptions',
+                label: l10n.adminSidebarSubscriptions,
                 value: '—',
                 color: colorScheme.tertiaryContainer,
                 iconColor: colorScheme.onTertiaryContainer,
               ),
               _StatCard(
                 icon: Icons.support_agent_outlined,
-                label: l10n?.adminSidebarSupport ?? 'Support',
+                label: l10n.adminSidebarSupport,
                 value: '—',
                 color: colorScheme.errorContainer,
                 iconColor: colorScheme.onErrorContainer,
@@ -130,7 +133,7 @@ class AdminHomeTab extends ConsumerWidget {
           // ── Permissions summary ─────────────────────────────────────────
           if (admin?.permissions.isNotEmpty == true) ...[
             Text(
-              l10n?.adminDashboardPermissionsTitle ?? 'Your permissions',
+              l10n.adminDashboardPermissionsTitle,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

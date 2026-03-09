@@ -41,14 +41,6 @@ class KinderWorldApp extends ConsumerStatefulWidget {
 
 class _KinderWorldAppState extends ConsumerState<KinderWorldApp> {
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      ref.read(localeProvider.notifier).loadSavedLocale();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final themeSettings = ref.watch(themeControllerProvider);
@@ -111,29 +103,30 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
     _subscription = ref.listenManual<AsyncValue<ConnectivityResult>>(
       connectivityProvider,
       (previous, next) {
-      final result = next.asData?.value;
-      if (result == null) return;
+        final result = next.asData?.value;
+        if (result == null) return;
 
-      final router = GoRouter.of(context);
-      final location = router.routerDelegate.currentConfiguration.uri.toString();
-      final onNoInternet = location == Routes.noInternet;
-      final isOffline = result == ConnectivityResult.none;
+        final router = GoRouter.of(context);
+        final location =
+            router.routerDelegate.currentConfiguration.uri.toString();
+        final onNoInternet = location == Routes.noInternet;
+        final isOffline = result == ConnectivityResult.none;
 
-      if (isOffline && !_isOffline) {
-        _isOffline = true;
-        if (!onNoInternet) {
-          _lastLocation = location;
-          router.go(Routes.noInternet);
+        if (isOffline && !_isOffline) {
+          _isOffline = true;
+          if (!onNoInternet) {
+            _lastLocation = location;
+            router.go(Routes.noInternet);
+          }
+          return;
         }
-        return;
-      }
 
-      if (!isOffline && _isOffline) {
-        _isOffline = false;
-        if (onNoInternet) {
-          router.go(_lastLocation ?? Routes.welcome);
+        if (!isOffline && _isOffline) {
+          _isOffline = false;
+          if (onNoInternet) {
+            router.go(_lastLocation ?? Routes.welcome);
+          }
         }
-      }
       },
     );
   }

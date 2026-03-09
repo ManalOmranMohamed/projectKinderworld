@@ -639,7 +639,6 @@ class AuthRepository {
       
       if (token == null || token.isEmpty) return false;
 
-      // TODO: Implement actual token validation with API
       // For now, just check if token exists
       return true;
     } catch (e) {

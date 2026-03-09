@@ -105,25 +105,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                           height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        l10n.welcomeSubtitle,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF6B7280),
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 18),
 
                       // Feature grid
                       _FeatureGrid(l10n: l10n),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 26),
 
                       // Get Started button
                       GradientButton(
                         label: l10n.getStarted,
-                        onPressed: () => context.go('/select-user-type'),
+                        onPressed: () => context.push('/select-user-type'),
                         gradientColors: const [
                           Color(0xFF1565C0),
                           Color(0xFF42A5F5),
@@ -140,7 +131,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                       // Login link
                       Center(
                         child: TextButton(
-                          onPressed: () => context.go('/parent/login'),
+                          onPressed: () => context.push('/parent/login'),
                           child: RichText(
                             text: TextSpan(
                               style: const TextStyle(fontSize: 14),
@@ -350,16 +341,25 @@ class _FeatureGrid extends StatelessWidget {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.55,
-      children: features
-          .map((f) => _FeatureCard(item: f))
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 380;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: features.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: compact ? 132 : 122,
+          ),
+          itemBuilder: (context, index) => _FeatureCard(
+            item: features[index],
+            compact: compact,
+          ),
+        );
+      },
     );
   }
 }
@@ -382,12 +382,18 @@ class _FeatureItem {
 
 class _FeatureCard extends StatelessWidget {
   final _FeatureItem item;
-  const _FeatureCard({required this.item});
+  final bool compact;
+  const _FeatureCard({required this.item, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+      ),
       decoration: BoxDecoration(
         color: item.color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(18),
@@ -397,12 +403,12 @@ class _FeatureCard extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: compact ? 42 : 44,
+            height: compact ? 42 : 44,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: item.gradientColors,
@@ -418,26 +424,29 @@ class _FeatureCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(item.icon, size: 20, color: Colors.white),
+            child: Icon(item.icon, size: compact ? 20 : 22, color: Colors.white),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 10 : 10),
           Text(
             item.label,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: compact ? 11.5 : 12.5,
               fontWeight: FontWeight.w700,
               color: item.color,
+              height: 1.15,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             item.description,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
-              height: 1.3,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: compact ? 9.8 : 10.5,
+              color: const Color(0xFF9CA3AF),
+              height: 1.22,
             ),
-            maxLines: 2,
+            maxLines: compact ? 3 : 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],

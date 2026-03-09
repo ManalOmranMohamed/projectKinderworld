@@ -8,6 +8,10 @@ import 'package:kinder_world/features/admin/management/admin_management_reposito
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/router.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminChildrenScreen extends ConsumerStatefulWidget {
   const AdminChildrenScreen({super.key});
 
@@ -66,35 +70,35 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
   }
 
   Future<void> _showEditDialog(AdminChildRecord child) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final nameController = TextEditingController(text: child.name);
     final ageController = TextEditingController(text: child.age?.toString() ?? '');
     final avatarController = TextEditingController(text: child.avatar ?? '');
     final saved = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n?.adminChildrenEditTitle ?? 'Edit child'),
+        title: Text(l10n.adminChildrenEditTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
               decoration: InputDecoration(
-                labelText: l10n?.adminChildrenNameField ?? 'Name',
+                labelText: l10n.adminChildrenNameField,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: ageController,
               decoration: InputDecoration(
-                labelText: l10n?.adminChildrenAgeField ?? 'Age',
+                labelText: l10n.adminChildrenAgeField,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: avatarController,
               decoration: InputDecoration(
-                labelText: l10n?.adminChildrenAvatarField ?? 'Avatar',
+                labelText: l10n.adminChildrenAvatarField,
               ),
             ),
           ],
@@ -102,11 +106,11 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n?.cancel ?? 'Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n?.save ?? 'Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -121,28 +125,28 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
         );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n?.adminChildrenUpdatedMessage ?? 'Child updated successfully')),
+      SnackBar(content: Text(l10n.adminChildrenUpdatedMessage)),
     );
     await _loadChildren();
   }
 
   Future<void> _deactivate(AdminChildRecord child) async {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(l10n?.adminChildrenDeactivateTitle ?? 'Deactivate child'),
+            title: Text(l10n.adminChildrenDeactivateTitle),
             content: Text(
-              l10n?.adminChildrenDeactivateConfirm ?? 'Deactivate this child profile?',
+              l10n.adminChildrenDeactivateConfirm,
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(l10n?.cancel ?? 'Cancel'),
+                child: Text(l10n.cancel),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text(l10n?.adminChildrenDeactivateAction ?? 'Deactivate'),
+                child: Text(l10n.adminChildrenDeactivateAction),
               ),
             ],
           ),
@@ -153,14 +157,14 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
     await ref.read(adminManagementRepositoryProvider).deactivateChild(child.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n?.adminChildrenDeactivatedMessage ?? 'Child deactivated successfully')),
+      SnackBar(content: Text(l10n.adminChildrenDeactivatedMessage)),
     );
     await _loadChildren();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.children.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -172,11 +176,11 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminChildrenTitle ?? 'Children management',
+            l10n.adminChildrenTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
-          Text(l10n?.adminChildrenSubtitle ?? 'Inspect and maintain child profiles.'),
+          Text(l10n.adminChildrenSubtitle),
           const SizedBox(height: 24),
           Row(
             children: [
@@ -184,7 +188,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                 child: TextField(
                   controller: _parentIdController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminChildrenParentFilter ?? 'Parent ID',
+                    labelText: l10n.adminChildrenParentFilter,
                   ),
                   onSubmitted: (_) {
                     _page = 1;
@@ -197,7 +201,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                 child: TextField(
                   controller: _ageController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminChildrenAgeFilter ?? 'Age',
+                    labelText: l10n.adminChildrenAgeFilter,
                   ),
                   onSubmitted: (_) {
                     _page = 1;
@@ -211,20 +215,20 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                 child: DropdownButtonFormField<bool?>(
                   initialValue: _active,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminChildrenStatusFilter ?? 'Status',
+                    labelText: l10n.adminChildrenStatusFilter,
                   ),
                   items: [
                     DropdownMenuItem(
                       value: null,
-                      child: Text(l10n?.adminUsersStatusAll ?? 'All'),
+                      child: Text(l10n.adminUsersStatusAll),
                     ),
                     DropdownMenuItem(
                       value: true,
-                      child: Text(l10n?.adminUsersStatusActive ?? 'Active'),
+                      child: Text(l10n.adminUsersStatusActive),
                     ),
                     DropdownMenuItem(
                       value: false,
-                      child: Text(l10n?.adminUsersStatusDisabled ?? 'Disabled'),
+                      child: Text(l10n.adminUsersStatusDisabled),
                     ),
                   ],
                   onChanged: (value) {
@@ -240,7 +244,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
               FilledButton.icon(
                 onPressed: _loadChildren,
                 icon: const Icon(Icons.refresh),
-                label: Text(l10n?.retry ?? 'Retry'),
+                label: Text(l10n.retry),
               ),
             ],
           ),
@@ -263,11 +267,11 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text(l10n?.adminChildrenNameColumn ?? 'Name')),
-                    DataColumn(label: Text(l10n?.adminChildrenParentColumn ?? 'Parent')),
-                    DataColumn(label: Text(l10n?.adminChildrenAgeColumn ?? 'Age')),
-                    DataColumn(label: Text(l10n?.adminChildrenStatusColumn ?? 'Status')),
-                    DataColumn(label: Text(l10n?.adminChildrenActionsColumn ?? 'Actions')),
+                    DataColumn(label: Text(l10n.adminChildrenNameColumn)),
+                    DataColumn(label: Text(l10n.adminChildrenParentColumn)),
+                    DataColumn(label: Text(l10n.adminChildrenAgeColumn)),
+                    DataColumn(label: Text(l10n.adminChildrenStatusColumn)),
+                    DataColumn(label: Text(l10n.adminChildrenActionsColumn)),
                   ],
                   rows: _children
                       .map(
@@ -280,8 +284,8 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                               Chip(
                                 label: Text(
                                   child.isActive
-                                      ? (l10n?.adminUsersStatusActive ?? 'Active')
-                                      : (l10n?.adminUsersStatusDisabled ?? 'Disabled'),
+                                      ? (l10n.adminUsersStatusActive)
+                                      : (l10n.adminUsersStatusDisabled),
                                 ),
                               ),
                             ),
@@ -291,15 +295,15 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                                 children: [
                                   TextButton(
                                     onPressed: () => context.go('${Routes.adminChildren}/${child.id}'),
-                                    child: Text(l10n?.adminUsersViewAction ?? 'View'),
+                                    child: Text(l10n.adminUsersViewAction),
                                   ),
                                   TextButton(
                                     onPressed: () => _showEditDialog(child),
-                                    child: Text(l10n?.edit ?? 'Edit'),
+                                    child: Text(l10n.edit),
                                   ),
                                   TextButton(
                                     onPressed: child.isActive ? () => _deactivate(child) : null,
-                                    child: Text(l10n?.adminChildrenDeactivateAction ?? 'Deactivate'),
+                                    child: Text(l10n.adminChildrenDeactivateAction),
                                   ),
                                 ],
                               ),
@@ -316,12 +320,11 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n?.adminPaginationSummary(
+                l10n.adminPaginationSummary(
                       (_pagination['page'] as int?) ?? _page,
                       (_pagination['total_pages'] as int?) ?? 1,
                       (_pagination['total'] as int?) ?? _children.length,
-                    ) ??
-                    'Page ${(_pagination['page'] as int?) ?? _page}',
+                    ),
               ),
               Row(
                 children: [
@@ -332,7 +335,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                             _loadChildren();
                           }
                         : null,
-                    child: Text(l10n?.adminPaginationPrevious ?? 'Previous'),
+                    child: Text(l10n.adminPaginationPrevious),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -342,7 +345,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                             _loadChildren();
                           }
                         : null,
-                    child: Text(l10n?.adminPaginationNext ?? 'Next'),
+                    child: Text(l10n.adminPaginationNext),
                   ),
                 ],
               ),

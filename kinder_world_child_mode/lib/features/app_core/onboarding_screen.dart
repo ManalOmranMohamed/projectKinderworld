@@ -118,7 +118,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         curve: Curves.easeInOutCubic,
       );
     } else {
-      context.go(Routes.welcome);
+      context.push(Routes.welcome);
     }
   }
 
@@ -260,7 +260,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     ),
                     // Skip button
                     TextButton(
-                      onPressed: () => context.go(Routes.welcome),
+                      onPressed: () => context.push(Routes.welcome),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(

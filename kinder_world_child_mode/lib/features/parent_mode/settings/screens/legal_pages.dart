@@ -2,16 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
+
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
 
 class ParentTermsScreen extends StatelessWidget {
   const ParentTermsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const _ParentLegalPage(
-      title: 'Terms of Service',
+    final l10n = AppLocalizations.of(context)!;
+    return _ParentLegalPage(
+      title: l10n.legalTermsTitle,
       endpoint: '/legal/terms',
-      placeholder: 'Terms will be available soon.',
+      placeholder: l10n.legalTermsPlaceholder,
       style: _LegalPageStyle.terms,
     );
   }
@@ -22,10 +28,11 @@ class ParentPrivacyPolicyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _ParentLegalPage(
-      title: 'Privacy Policy',
+    final l10n = AppLocalizations.of(context)!;
+    return _ParentLegalPage(
+      title: l10n.legalPrivacyTitle,
       endpoint: '/legal/privacy',
-      placeholder: 'Privacy policy details are coming soon.',
+      placeholder: l10n.legalPrivacyPlaceholder,
       style: _LegalPageStyle.privacy,
     );
   }
@@ -36,10 +43,11 @@ class ParentCoppaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _ParentLegalPage(
-      title: 'COPPA & Children\'s Privacy',
+    final l10n = AppLocalizations.of(context)!;
+    return _ParentLegalPage(
+      title: l10n.legalCoppaTitle,
       endpoint: '/legal/coppa',
-      placeholder: 'COPPA compliance information will be posted shortly.',
+      placeholder: l10n.legalCoppaPlaceholder,
       style: _LegalPageStyle.coppa,
     );
   }
@@ -62,7 +70,7 @@ class _ParentLegalPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final config = style.config();
+    final config = style.config(AppLocalizations.of(context)!);
 
     return Scaffold(
       backgroundColor: config.baseBackground,
@@ -171,58 +179,67 @@ class _LegalStyleConfig {
 }
 
 extension _LegalStyleConfigExt on _LegalPageStyle {
-  _LegalStyleConfig config() {
+  _LegalStyleConfig config(AppLocalizations l10n) {
     switch (this) {
       case _LegalPageStyle.terms:
-        return const _LegalStyleConfig(
-          baseBackground: Color(0xFFF8F4EF),
-          accent: Color(0xFF9A3F1C),
-          heroGradient: LinearGradient(
-            colors: [Color(0xFFFFE2CF), Color(0xFFF6D1C1)],
+        return _LegalStyleConfig(
+          baseBackground: const Color(0xFFF8F4EF),
+          accent: const Color(0xFF9A3F1C),
+          heroGradient: const LinearGradient(
+            colors: [
+              Color(0xFFFFE2CF),
+              Color(0xFFF6D1C1)
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           heroIcon: Icons.rule,
-          heroTitle: 'Clear, simple rules',
-          heroSubtitle: 'How we keep Kinder World safe and friendly.',
-          sectionTitle: 'Your Agreement',
+          heroTitle: l10n.legalTermsHeroTitle,
+          heroSubtitle: l10n.legalTermsHeroSubtitle,
+          sectionTitle: l10n.legalTermsSectionTitle,
           sectionIcon: Icons.fact_check,
           footerIcon: Icons.verified_user,
-          footerText: 'We protect your family and explain things clearly.',
+          footerText: l10n.legalTermsFooterText,
         );
       case _LegalPageStyle.privacy:
-        return const _LegalStyleConfig(
-          baseBackground: Color(0xFFF3F8FF),
-          accent: Color(0xFF1F6FEB),
-          heroGradient: LinearGradient(
-            colors: [Color(0xFFDDEBFF), Color(0xFFCDE0FF)],
+        return _LegalStyleConfig(
+          baseBackground: const Color(0xFFF3F8FF),
+          accent: const Color(0xFF1F6FEB),
+          heroGradient: const LinearGradient(
+            colors: [
+              Color(0xFFDDEBFF),
+              Color(0xFFCDE0FF)
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           heroIcon: Icons.shield_moon,
-          heroTitle: 'Your data, your control',
-          heroSubtitle: 'We collect only what we need to help your child grow.',
-          sectionTitle: 'Privacy Details',
+          heroTitle: l10n.legalPrivacyHeroTitle,
+          heroSubtitle: l10n.legalPrivacyHeroSubtitle,
+          sectionTitle: l10n.legalPrivacySectionTitle,
           sectionIcon: Icons.lock_outline,
           footerIcon: Icons.visibility_outlined,
-          footerText: 'Transparent data use, always.',
+          footerText: l10n.legalPrivacyFooterText,
         );
       case _LegalPageStyle.coppa:
-        return const _LegalStyleConfig(
-          baseBackground: Color(0xFFF4FFF6),
-          accent: Color(0xFF2E7D32),
-          heroGradient: LinearGradient(
-            colors: [Color(0xFFD7F5DD), Color(0xFFC5EED0)],
+        return _LegalStyleConfig(
+          baseBackground: const Color(0xFFF4FFF6),
+          accent: const Color(0xFF2E7D32),
+          heroGradient: const LinearGradient(
+            colors: [
+              Color(0xFFD7F5DD),
+              Color(0xFFC5EED0)
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           heroIcon: Icons.child_friendly,
-          heroTitle: 'Children first',
-          heroSubtitle: 'Built for kids with extra care and protection.',
-          sectionTitle: 'COPPA Compliance',
+          heroTitle: l10n.legalCoppaHeroTitle,
+          heroSubtitle: l10n.legalCoppaHeroSubtitle,
+          sectionTitle: l10n.legalCoppaSectionTitle,
           sectionIcon: Icons.policy_outlined,
           footerIcon: Icons.family_restroom,
-          footerText: 'Parents stay in control and kids stay safe.',
+          footerText: l10n.legalCoppaFooterText,
         );
     }
   }
@@ -386,7 +403,7 @@ class _EmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'No content yet',
+          AppLocalizations.of(context)!.legalNoContent,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),

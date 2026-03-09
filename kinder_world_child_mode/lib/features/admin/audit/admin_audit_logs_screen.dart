@@ -6,6 +6,10 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminAuditLogsScreen extends ConsumerStatefulWidget {
   const AdminAuditLogsScreen({super.key});
 
@@ -69,7 +73,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.audit.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -81,11 +85,11 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminAuditTitle ?? 'Audit logs',
+            l10n.adminAuditTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
-          Text(l10n?.adminAuditSubtitle ?? 'Review sensitive admin actions and trace system changes.'),
+          Text(l10n.adminAuditSubtitle),
           const SizedBox(height: 24),
           Wrap(
             spacing: 12,
@@ -96,7 +100,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 child: TextField(
                   controller: _adminIdController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminAuditAdminFilter ?? 'Admin ID',
+                    labelText: l10n.adminAuditAdminFilter,
                   ),
                 ),
               ),
@@ -105,7 +109,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 child: TextField(
                   controller: _actionController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminAuditActionFilter ?? 'Action',
+                    labelText: l10n.adminAuditActionFilter,
                   ),
                 ),
               ),
@@ -114,7 +118,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 child: TextField(
                   controller: _dateFromController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminAuditDateFromFilter ?? 'Date from',
+                    labelText: l10n.adminAuditDateFromFilter,
                   ),
                 ),
               ),
@@ -123,7 +127,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 child: TextField(
                   controller: _dateToController,
                   decoration: InputDecoration(
-                    labelText: l10n?.adminAuditDateToFilter ?? 'Date to',
+                    labelText: l10n.adminAuditDateToFilter,
                   ),
                 ),
               ),
@@ -133,7 +137,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                   _loadLogs();
                 },
                 icon: const Icon(Icons.search),
-                label: Text(l10n?.adminAuditApplyFilters ?? 'Apply filters'),
+                label: Text(l10n.adminAuditApplyFilters),
               ),
             ],
           ),
@@ -156,11 +160,11 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text(l10n?.adminAuditActionColumn ?? 'Action')),
-                    DataColumn(label: Text(l10n?.adminAuditEntityColumn ?? 'Entity')),
-                    DataColumn(label: Text(l10n?.adminAuditAdminColumn ?? 'Admin')),
-                    DataColumn(label: Text(l10n?.adminAuditTimeColumn ?? 'Timestamp')),
-                    DataColumn(label: Text(l10n?.adminAuditNetworkColumn ?? 'IP / Agent')),
+                    DataColumn(label: Text(l10n.adminAuditActionColumn)),
+                    DataColumn(label: Text(l10n.adminAuditEntityColumn)),
+                    DataColumn(label: Text(l10n.adminAuditAdminColumn)),
+                    DataColumn(label: Text(l10n.adminAuditTimeColumn)),
+                    DataColumn(label: Text(l10n.adminAuditNetworkColumn)),
                   ],
                   rows: _logs
                       .map(
@@ -192,12 +196,11 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n?.adminPaginationSummary(
+                l10n.adminPaginationSummary(
                       (_pagination['page'] as int?) ?? _page,
                       (_pagination['total_pages'] as int?) ?? 1,
                       (_pagination['total'] as int?) ?? _logs.length,
-                    ) ??
-                    'Page ${(_pagination['page'] as int?) ?? _page}',
+                    ),
               ),
               Row(
                 children: [
@@ -208,7 +211,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                             _loadLogs();
                           }
                         : null,
-                    child: Text(l10n?.adminPaginationPrevious ?? 'Previous'),
+                    child: Text(l10n.adminPaginationPrevious),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
@@ -218,7 +221,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                             _loadLogs();
                           }
                         : null,
-                    child: Text(l10n?.adminPaginationNext ?? 'Next'),
+                    child: Text(l10n.adminPaginationNext),
                   ),
                 ],
               ),

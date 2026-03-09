@@ -41,6 +41,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
+  String get notAvailable => 'Not available';
+
+  @override
   String get connectionError => 'Connection error. Please try again.';
 
   @override
@@ -4050,6 +4053,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminAdminsRoleDescriptionField => 'Role description';
 
   @override
+  String adminRoleStats(int permissionCount, int adminCount) =>
+      '$permissionCount permissions • $adminCount admins';
+
+  @override
   String get adminAdminsRoleCreatedMessage => 'Role created successfully';
 
   @override
@@ -4087,4 +4094,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminAdminsEditAction => 'Edit admin';
+
+  @override
+  String get inactiveLabel => 'Inactive';
+
+  @override
+  String get alertLabel => 'Alert';
+
+  @override
+  String get childProfileBasicInfoTitle => 'Tell us about your child';
+
+  @override
+  String get childProfileBasicInfoSubtitle =>
+      'This helps us personalize their learning experience';
+
+  @override
+  String get childProfileAvatarTitle => 'Choose an avatar';
+
+  @override
+  String get childProfileAvatarSubtitle =>
+      'Pick a fun character to represent your child';
+
+  @override
+  String get childProfileInterestsTitle => 'What are your child\'s interests?';
+
+  @override
+  String get childProfileInterestsSubtitle =>
+      'Select up to 5 interests (optional)';
+
+  @override
+  String get childProfilePicturePasswordTitle => 'Create a picture password';
+
+  @override
+  String get childProfilePicturePasswordSubtitle =>
+      'Select 3 pictures your child will remember';
+
+  @override
+  String get pleaseEnterChildName => 'Please enter your child\'s name';
+
+  @override
+  String get legalTermsHeroTitle => 'Clear, simple rules';
+
+  @override
+  String get legalTermsHeroSubtitle =>
+      'How we keep Kinder World safe and friendly.';
+
+  @override
+  String get legalTermsSectionTitle => 'Your Agreement';
+
+  @override
+  String get legalTermsFooterText =>
+      'We protect your family and explain things clearly.';
+
+  @override
+  String get legalPrivacyHeroTitle => 'Your data, your control';
+
+  @override
+  String get legalPrivacyHeroSubtitle =>
+      'We collect only what we need to help your child grow.';
+
+  @override
+  String get legalPrivacySectionTitle => 'Privacy Details';
+
+  @override
+  String get legalPrivacyFooterText => 'Transparent data use, always.';
+
+  @override
+  String get legalCoppaHeroTitle => 'Children first';
+
+  @override
+  String get legalCoppaHeroSubtitle =>
+      'Built for kids with extra care and protection.';
+
+  @override
+  String get legalCoppaSectionTitle => 'COPPA Compliance';
+
+  @override
+  String get legalCoppaFooterText =>
+      'Parents stay in control and kids stay safe.';
 }

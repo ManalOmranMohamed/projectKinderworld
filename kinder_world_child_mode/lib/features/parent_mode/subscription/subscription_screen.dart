@@ -9,6 +9,10 @@ import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
 
@@ -41,6 +45,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     required bool requiresPayment,
   }) async {
     if (_isProcessing) return;
+    final l10n = AppLocalizations.of(context)!;
     setState(() {
       _isProcessing = true;
       _processingTier = tier;
@@ -59,7 +64,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             .activateSubscription(tier);
         if (!activated) {
           messenger.showSnackBar(
-            const SnackBar(content: Text('Failed to activate subscription.')),
+            SnackBar(content: Text(l10n.subscriptionActivationFailed)),
           );
           return;
         }
@@ -69,8 +74,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
-            content: Text(
-                '${_planTitle(tier, AppLocalizations.of(context)!)} activated.')),
+          content: Text(
+            l10n.planActivated(
+              _planTitle(tier, l10n),
+            ),
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -222,9 +231,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
               _buildPlanCard(
                 currentPlan: plan,
-                title: 'Free',
+                title: l10n.adminPlanFree,
                 price: '\$0',
-                priceLabel: 'forever',
+                priceLabel: l10n.foreverLabel,
                 subtitle: l10n.basicFeaturesOnly,
                 features: [
                   l10n.limitedActivities,
@@ -239,9 +248,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
 
               _buildPlanCard(
                 currentPlan: plan,
-                title: 'Family',
+                title: l10n.familyPlanLabel,
                 price: '\$9.99',
-                priceLabel: '/ month',
+                priceLabel: l10n.perMonthLabel,
                 subtitle: l10n.bestForFamilies,
                 features: [
                   l10n.unlimitedActivities,

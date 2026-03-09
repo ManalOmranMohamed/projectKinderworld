@@ -142,6 +142,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
   }
 
   void _showError(String message) {
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -149,7 +150,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
             const Icon(Icons.error_outline_rounded,
                 color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Expanded(child: Text(message)),
+            Expanded(child: Text(_localizeErrorMessage(message, l10n))),
           ],
         ),
         backgroundColor: AppColors.error,
@@ -158,6 +159,18 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
+  }
+
+  String _localizeErrorMessage(String message, AppLocalizations l10n) {
+    final normalized = message.toLowerCase();
+    if (normalized.contains('connection refused') ||
+        normalized.contains('connection errored') ||
+        normalized.contains('socketexception') ||
+        normalized.contains('failed host lookup') ||
+        normalized.contains('connection error')) {
+      return l10n.connectionError;
+    }
+    return message;
   }
 
   @override

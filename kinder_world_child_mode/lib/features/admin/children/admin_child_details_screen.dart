@@ -6,6 +6,10 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminChildDetailsScreen extends ConsumerStatefulWidget {
   const AdminChildDetailsScreen({
     super.key,
@@ -59,7 +63,7 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     if (!(admin?.hasPermission('admin.children.view') ?? false)) {
       return const AdminPermissionPlaceholder();
@@ -68,7 +72,7 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null || _child == null) {
-      return Center(child: Text(_error ?? 'Failed to load child'));
+      return Center(child: Text(_error ?? l10n.error));
     }
 
     final summary = Map<String, dynamic>.from(_progress?['summary'] as Map? ?? const {});
@@ -89,7 +93,7 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n?.adminChildrenDetailTitle(_child!.name) ?? 'Child details',
+            l10n.adminChildrenDetailTitle(_child!.name),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 20),
@@ -98,25 +102,25 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
             runSpacing: 16,
             children: [
               _CardBlock(
-                title: l10n?.adminChildrenOverviewCard ?? 'Overview',
+                title: l10n.adminChildrenOverviewCard,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${l10n?.adminChildrenNameField ?? 'Name'}: ${_child!.name}'),
-                    Text('${l10n?.adminChildrenAgeColumn ?? 'Age'}: ${_child!.age ?? '—'}'),
-                    Text('${l10n?.adminChildrenParentColumn ?? 'Parent'}: ${_child!.parent?['email'] ?? _child!.parentId}'),
-                    Text('${l10n?.adminChildrenStatusColumn ?? 'Status'}: ${_child!.isActive ? (l10n?.adminUsersStatusActive ?? 'Active') : (l10n?.adminUsersStatusDisabled ?? 'Disabled')}'),
+                    Text('${l10n.adminChildrenNameField}: ${_child!.name}'),
+                    Text('${l10n.adminChildrenAgeColumn}: ${_child!.age ?? '—'}'),
+                    Text('${l10n.adminChildrenParentColumn}: ${_child!.parent?['email'] ?? _child!.parentId}'),
+                    Text('${l10n.adminChildrenStatusColumn}: ${_child!.isActive ? l10n.adminUsersStatusActive : l10n.adminUsersStatusDisabled}'),
                   ],
                 ),
               ),
               _CardBlock(
-                title: l10n?.adminChildrenProgressCard ?? 'Progress',
+                title: l10n.adminChildrenProgressCard,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${l10n?.adminChildrenProgressDaysMetric ?? 'Days since created'}: ${summary['days_since_profile_created'] ?? 0}'),
-                    Text('${l10n?.adminChildrenProgressEventsMetric ?? 'Audit events'}: ${summary['audit_events'] ?? 0}'),
-                    Text('${l10n?.adminUsersLastUpdatedMetric ?? 'Last updated'}: ${summary['last_updated_at'] ?? _child!.updatedAt ?? '—'}'),
+                    Text('${l10n.adminChildrenProgressDaysMetric}: ${summary['days_since_profile_created'] ?? 0}'),
+                    Text('${l10n.adminChildrenProgressEventsMetric}: ${summary['audit_events'] ?? 0}'),
+                    Text('${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _child!.updatedAt ?? '—'}'),
                   ],
                 ),
               ),
@@ -124,7 +128,7 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
           ),
           const SizedBox(height: 24),
           _CardBlock(
-            title: l10n?.adminChildrenMilestonesSection ?? 'Milestones',
+            title: l10n.adminChildrenMilestonesSection,
             child: Column(
               children: milestones
                   .map(
@@ -140,7 +144,7 @@ class _AdminChildDetailsScreenState extends ConsumerState<AdminChildDetailsScree
           ),
           const SizedBox(height: 24),
           _CardBlock(
-            title: l10n?.adminChildrenActivitySection ?? 'Activity log',
+            title: l10n.adminChildrenActivitySection,
             child: Column(
               children: entries
                   .map(

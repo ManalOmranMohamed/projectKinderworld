@@ -46,140 +46,143 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── Logo / Header ──────────────────────────────────────
-                  _AdminHeader(l10n: l10n, colorScheme: colorScheme),
-                  const SizedBox(height: 40),
-
-                  // ── Form card ─────────────────────────────────────────
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !mounted) return;
+        context.go(Routes.selectUserType);
+      },
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: IconButton(
+                        onPressed: () => context.go(Routes.selectUserType),
+                        tooltip: l10n?.goBack ?? 'Back',
+                        icon: const Icon(Icons.arrow_back_rounded),
+                      ),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Email
-                            TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              autocorrect: false,
-                              decoration: InputDecoration(
-                                labelText: l10n?.adminEmail ?? 'Admin Email',
-                                prefixIcon: const Icon(Icons.email_outlined),
-                                border: const OutlineInputBorder(),
-                              ),
-                              validator: (v) {
-                                if (v == null || v.trim().isEmpty) {
-                                  return l10n?.adminEmailRequired ??
-                                      'Email is required';
-                                }
-                                if (!v.contains('@')) {
-                                  return l10n?.adminEmailInvalid ??
-                                      'Enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Password
-                            TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              decoration: InputDecoration(
-                                labelText:
-                                    l10n?.adminPassword ?? 'Admin Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_outlined
-                                        : Icons.visibility_off_outlined,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
+                    const SizedBox(height: 12),
+                    _AdminHeader(l10n: l10n, colorScheme: colorScheme),
+                    const SizedBox(height: 40),
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                autocorrect: false,
+                                decoration: InputDecoration(
+                                  labelText: l10n?.adminEmail ?? 'Admin Email',
+                                  prefixIcon: const Icon(Icons.email_outlined),
+                                  border: const OutlineInputBorder(),
                                 ),
+                                validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
+                                    return l10n?.adminEmailRequired ??
+                                        'Email is required';
+                                  }
+                                  if (!v.contains('@')) {
+                                    return l10n?.adminEmailInvalid ??
+                                        'Enter a valid email';
+                                  }
+                                  return null;
+                                },
                               ),
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return l10n?.adminPasswordRequired ??
-                                      'Password is required';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Error message
-                            if (authState.errorMessage != null) ...[
-                              const SizedBox(height: 8),
-                              _ErrorBanner(message: authState.errorMessage!),
-                            ],
-
-                            const SizedBox(height: 24),
-
-                            // Submit button
-                            FilledButton(
-                              onPressed: authState.isLoading ? null : _submit,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: authState.isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(
-                                      l10n?.adminSignIn ?? 'Sign In',
-                                      style: const TextStyle(fontSize: 16),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                textInputAction: TextInputAction.done,
+                                onFieldSubmitted: (_) => _submit(),
+                                decoration: InputDecoration(
+                                  labelText:
+                                      l10n?.adminPassword ?? 'Admin Password',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  border: const OutlineInputBorder(),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
                                     ),
-                            ),
-                          ],
+                                    onPressed: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
+                                  ),
+                                ),
+                                validator: (v) {
+                                  if (v == null || v.isEmpty) {
+                                    return l10n?.adminPasswordRequired ??
+                                        'Password is required';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              if (authState.errorMessage != null) ...[
+                                const SizedBox(height: 8),
+                                _ErrorBanner(message: authState.errorMessage!),
+                              ],
+                              const SizedBox(height: 24),
+                              FilledButton(
+                                onPressed: authState.isLoading ? null : _submit,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: authState.isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        l10n?.adminSignIn ?? 'Sign In',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Footer note ───────────────────────────────────────
-                  Text(
-                    l10n?.adminLoginFooter ??
-                        'Kinder World Admin Portal — authorised access only',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n?.adminLoginFooter ??
+                          'Kinder World Admin Portal - authorised access only',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -188,8 +191,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     );
   }
 }
-
-// ─────────────────────────── Sub-widgets ─────────────────────────────────────
 
 class _AdminHeader extends StatelessWidget {
   const _AdminHeader({required this.l10n, required this.colorScheme});
@@ -251,8 +252,11 @@ class _ErrorBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline,
-              color: colorScheme.onErrorContainer, size: 18),
+          Icon(
+            Icons.error_outline,
+            color: colorScheme.onErrorContainer,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

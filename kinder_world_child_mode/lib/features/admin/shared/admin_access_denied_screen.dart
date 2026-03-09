@@ -5,19 +5,23 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class AdminAccessDeniedScreen extends ConsumerWidget {
   const AdminAccessDeniedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(l10n?.adminAccessDenied ?? 'Access Denied'),
+        title: Text(l10n.adminAccessDenied),
         backgroundColor: colorScheme.surface,
         elevation: 0,
       ),
@@ -42,7 +46,7 @@ class AdminAccessDeniedScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                l10n?.adminPermissionDenied ?? 'Permission Denied',
+                l10n.adminPermissionDenied,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -51,9 +55,7 @@ class AdminAccessDeniedScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                l10n?.adminPermissionDeniedMessage ??
-                    'You do not have permission to access this section. '
-                        'Contact your system administrator.',
+                l10n.adminPermissionDeniedMessage,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -63,7 +65,7 @@ class AdminAccessDeniedScreen extends ConsumerWidget {
               FilledButton.icon(
                 onPressed: () => context.go(Routes.adminDashboard),
                 icon: const Icon(Icons.dashboard_outlined),
-                label: Text(l10n?.adminDashboard ?? 'Admin Dashboard'),
+                label: Text(l10n.adminDashboard),
               ),
               const SizedBox(height: 12),
               TextButton.icon(
@@ -72,7 +74,7 @@ class AdminAccessDeniedScreen extends ConsumerWidget {
                   if (context.mounted) context.go(Routes.adminLogin);
                 },
                 icon: const Icon(Icons.logout),
-                label: Text(l10n?.adminLogout ?? 'Logout'),
+                label: Text(l10n.adminLogout),
               ),
             ],
           ),

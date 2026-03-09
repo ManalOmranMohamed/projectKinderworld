@@ -15,72 +15,83 @@ class ColoringGalleryScreen extends StatefulWidget {
 }
 
 class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
-  String _selectedLevel = 'all';
+  String _selectedLevel = 'All';
   final Map<String, ColoringProgressData> _progressBySvgPath = {};
   final Map<String, SvgColoringTemplate> _templateBySvgPath = {};
 
   static const List<String> _levels = [
-    'all',
-    'beginner',
-    'intermediate',
-    'advanced',
+    'All',
+    'Beginner',
+    'Intermediate',
+    'Advanced',
   ];
 
   static const List<Map<String, String>> _items = [
     {
+      'title': 'Coloring Page 1',
       'image': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
       'svg': 'assets/images/coloring/kids_coloring_final_v4_1.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 2',
       'image': 'assets/images/coloring/house_coloring_fixed.svg',
       'svg': 'assets/images/coloring/house_coloring_fixed.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 3',
       'image': 'assets/images/coloring/fish_coloring_v2.svg',
       'svg': 'assets/images/coloring/fish_coloring_v2.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 4',
       'image': 'assets/images/coloring/butterfly_coloring.svg',
       'svg': 'assets/images/coloring/butterfly_coloring.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 5',
       'image': 'assets/images/coloring/apple_coloring.svg',
       'svg': 'assets/images/coloring/apple_coloring.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 6',
       'image': 'assets/images/coloring/rabbit2_coloring.svg',
       'svg': 'assets/images/coloring/rabbit2_coloring.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 7',
       'image': 'assets/images/coloring/coloring_bw_fixed.svg',
       'svg': 'assets/images/coloring/coloring_bw_fixed.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 8',
       'image': 'assets/images/coloring/bird_coloring.svg',
       'svg': 'assets/images/coloring/bird_coloring.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 9',
       'image': 'assets/images/coloring/new_coloring.svg',
       'svg': 'assets/images/coloring/new_coloring.svg',
-      'level': 'beginner',
+      'level': 'Beginner',
     },
     {
+      'title': 'Coloring Page 10',
       'image': 'assets/images/coloring/coloring3.svg',
-      'svg': 'assets/images/coloring/coloring3.svg',
-      'level': 'beginner',
+       'svg': 'assets/images/coloring/coloring3.svg',
+      'level': 'Beginner',
     },
+    
   ];
 
   List<Map<String, String>> get _filteredItems {
-    if (_selectedLevel == 'all') return _items;
+    if (_selectedLevel == 'All') return _items;
     return _items.where((item) => item['level'] == _selectedLevel).toList();
   }
 
@@ -188,9 +199,13 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                               ),
                             ],
                           ),
-                          child: Center(
+                            child: Center(
                             child: Text(
-                              _levelLabel(level, l10n),
+                              level == 'All' ? l10n.all
+                                : level == 'Beginner' ? l10n.beginner
+                                : level == 'Intermediate' ? l10n.intermediate
+                                : level == 'Advanced' ? l10n.advanced
+                                : level,
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Comic Sans MS',
@@ -246,9 +261,8 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           final svgPath = item['svg']!;
                           final progress = _progressBySvgPath[svgPath];
                           final template = _templateBySvgPath[svgPath];
-                          final title = l10n.coloringPageN(index + 1);
                           return _ColoringItemCard(
-                            title: title,
+                            title: l10n.coloringPageN(index + 1),
                             imagePath: item['image']!,
                             previewTemplate: template,
                             previewColors:
@@ -259,7 +273,7 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => ColoringPageScreen(
                                     svgAssetPath: item['svg']!,
-                                    title: title,
+                                    title: item['title']!,
                                   ),
                                 ),
                               );
@@ -275,16 +289,6 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
         ],
       ),
     );
-  }
-
-  String _levelLabel(String level, AppLocalizations l10n) {
-    return switch (level) {
-      'all' => l10n.all,
-      'beginner' => l10n.beginner,
-      'intermediate' => l10n.intermediate,
-      'advanced' => l10n.advanced,
-      _ => level,
-    };
   }
 }
 
@@ -435,23 +439,28 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                         ),
                         if (widget.isCompleted) ...[
                           const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.wb_sunny_rounded,
-                                size: 18,
-                                color: Color(0xFFFFB300),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                AppLocalizations.of(context)!.greatJob,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2E7D32),
-                                  fontFamily: 'Comic Sans MS',
-                                ),
-                              ),
-                            ],
+                          Builder(
+                            builder: (ctx) {
+                              final l10n = AppLocalizations.of(ctx)!;
+                              return Row(
+                                children: [
+                                  const Icon(
+                                    Icons.wb_sunny_rounded,
+                                    size: 18,
+                                    color: Color(0xFFFFB300),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n.greatJob,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF2E7D32),
+                                      fontFamily: 'Comic Sans MS',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                         const SizedBox(height: 8),
@@ -472,13 +481,18 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                               ),
                             ],
                           ),
-                          child: Text(
-                            AppLocalizations.of(context)!.tapToColor,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Comic Sans MS',
-                            ),
+                          child: Builder(
+                            builder: (ctx) {
+                              final l10n = AppLocalizations.of(ctx)!;
+                              return Text(
+                                l10n.tapToColor,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'Comic Sans MS',
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ],

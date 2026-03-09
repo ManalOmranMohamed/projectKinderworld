@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
-import 'package:kinder_world/features/admin/audit/admin_audit_logs_screen.dart';
 import 'package:kinder_world/features/admin/admins/admin_admin_management_screen.dart';
+import 'package:kinder_world/features/admin/audit/admin_audit_logs_screen.dart';
+import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/children/admin_child_details_screen.dart';
 import 'package:kinder_world/features/admin/children/admin_children_screen.dart';
 import 'package:kinder_world/features/admin/content/admin_content_management_screen.dart';
@@ -12,17 +12,16 @@ import 'package:kinder_world/features/admin/dashboard/admin_home_tab.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_sidebar.dart';
 import 'package:kinder_world/features/admin/reports/admin_analytics_screen.dart';
 import 'package:kinder_world/features/admin/settings/admin_system_settings_screen.dart';
-import 'package:kinder_world/features/admin/support/admin_support_tickets_screen.dart';
 import 'package:kinder_world/features/admin/subscriptions/admin_subscriptions_screen.dart';
+import 'package:kinder_world/features/admin/support/admin_support_tickets_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_user_details_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_users_screen.dart';
 import 'package:kinder_world/router.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
-  /// The active sub-route path, used to highlight the correct sidebar item.
-  final String? activePath;
-
   const AdminDashboardScreen({super.key, this.activePath});
+
+  final String? activePath;
 
   @override
   ConsumerState<AdminDashboardScreen> createState() =>
@@ -41,67 +40,73 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Session expired — redirect to login
     if (authState.status == AdminAuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) context.go(Routes.adminLogin);
       });
     }
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: colorScheme.surfaceContainerLowest,
-
-      // ── App bar ─────────────────────────────────────────────────────────
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          tooltip: l10n?.adminMenuTooltip ?? 'Menu',
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.admin_panel_settings_outlined,
-              color: colorScheme.primary,
-              size: 22,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !mounted) return;
+        context.go(Routes.selectUserType);
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          backgroundColor: colorScheme.surface,
+          elevation: 0,
+          scrolledUnderElevation: 1,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => context.go(Routes.selectUserType),
+            tooltip: l10n?.goBack ?? 'Back',
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.admin_panel_settings_outlined,
+                color: colorScheme.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n?.adminDashboard ?? 'Admin Dashboard',
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              tooltip: l10n?.adminMenuTooltip ?? 'Menu',
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_outlined),
+              tooltip: l10n?.adminRefreshTooltip ?? 'Refresh',
+              onPressed: () =>
+                  ref.read(adminAuthProvider.notifier).refreshProfile(),
+            ),
+            _AdminAvatarButton(
+              onLogout: () => _handleLogout(context, l10n),
             ),
             const SizedBox(width: 8),
-            Text(
-              l10n?.adminDashboard ?? 'Admin Dashboard',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
           ],
         ),
-        actions: [
-          // Refresh profile
-          IconButton(
-            icon: const Icon(Icons.refresh_outlined),
-            tooltip: l10n?.adminRefreshTooltip ?? 'Refresh',
-            onPressed: () =>
-                ref.read(adminAuthProvider.notifier).refreshProfile(),
-          ),
-          // Admin avatar / logout shortcut
-          _AdminAvatarButton(
-            onLogout: () => _handleLogout(context, l10n),
-          ),
-          const SizedBox(width: 8),
-        ],
+        drawer: AdminSidebar(
+          selectedRoute: _selectedRoute,
+          onClose: () => _scaffoldKey.currentState?.closeDrawer(),
+        ),
+        body: _buildBody(),
       ),
-
-      // ── Drawer (sidebar) ────────────────────────────────────────────────
-      drawer: AdminSidebar(
-        selectedRoute: _selectedRoute,
-        onClose: () => _scaffoldKey.currentState?.closeDrawer(),
-      ),
-
-      // ── Body ────────────────────────────────────────────────────────────
-      body: _buildBody(),
     );
   }
 
@@ -114,36 +119,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         return AdminUserDetailsScreen(userId: id);
       }
     }
-    if (path == Routes.adminUsers) {
-      return const AdminUsersScreen();
-    }
+    if (path == Routes.adminUsers) return const AdminUsersScreen();
+
     if (path.startsWith('${Routes.adminChildren}/')) {
       final id = int.tryParse(path.split('/').last);
       if (id != null) {
         return AdminChildDetailsScreen(childId: id);
       }
     }
-    if (path == Routes.adminChildren) {
-      return const AdminChildrenScreen();
-    }
-    if (path == Routes.adminContent) {
-      return const AdminContentManagementScreen();
-    }
-    if (path == Routes.adminReports) {
-      return const AdminAnalyticsScreen();
-    }
-    if (path == Routes.adminSupport) {
-      return const AdminSupportTicketsScreen();
-    }
+    if (path == Routes.adminChildren) return const AdminChildrenScreen();
+    if (path == Routes.adminContent) return const AdminContentManagementScreen();
+    if (path == Routes.adminReports) return const AdminAnalyticsScreen();
+    if (path == Routes.adminSupport) return const AdminSupportTicketsScreen();
     if (path == Routes.adminSubscriptions) {
       return const AdminSubscriptionsScreen();
     }
-    if (path == Routes.adminAdmins) {
-      return const AdminAdminManagementScreen();
-    }
-    if (path == Routes.adminAudit) {
-      return const AdminAuditLogsScreen();
-    }
+    if (path == Routes.adminAdmins) return const AdminAdminManagementScreen();
+    if (path == Routes.adminAudit) return const AdminAuditLogsScreen();
     if (path == Routes.adminSettings) {
       return const AdminSystemSettingsScreen();
     }
@@ -151,7 +143,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }
 
   Future<void> _handleLogout(
-      BuildContext context, AppLocalizations? l10n) async {
+    BuildContext context,
+    AppLocalizations? l10n,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -179,8 +173,6 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     }
   }
 }
-
-// ─────────────────────────── Avatar button ───────────────────────────────────
 
 class _AdminAvatarButton extends ConsumerWidget {
   const _AdminAvatarButton({required this.onLogout});

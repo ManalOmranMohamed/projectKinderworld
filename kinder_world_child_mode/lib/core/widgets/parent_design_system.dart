@@ -4,11 +4,16 @@
 // Used across Dashboard, Settings, Reports, Controls, and Notifications.
 
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESIGN TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
 
 class ParentColors {
   ParentColors._();
@@ -441,26 +446,27 @@ class ParentStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final parent = context.parentTheme;
+    final l10n = AppLocalizations.of(context)!;
     final (color, dot, text) = switch (status) {
       ParentBadgeStatus.active => (
           parent.primary,
           parent.primary,
-          label ?? 'Active',
+          label ?? l10n.activeLabel,
         ),
       ParentBadgeStatus.inactive => (
           context.colors.outline,
           context.colors.outline,
-          label ?? 'Inactive',
+          label ?? l10n.inactiveLabel,
         ),
       ParentBadgeStatus.alert => (
           parent.warning,
           parent.warning,
-          label ?? 'Alert',
+          label ?? l10n.alertLabel,
         ),
       ParentBadgeStatus.premium => (
           parent.reward,
           parent.reward,
-          label ?? 'Premium',
+          label ?? l10n.planPremium,
         ),
     };
 

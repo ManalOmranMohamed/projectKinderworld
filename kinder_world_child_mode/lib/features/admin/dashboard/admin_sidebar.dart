@@ -7,9 +7,13 @@ import 'package:kinder_world/router.dart';
 
 // ─────────────────────────── Sidebar item model ──────────────────────────────
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class _SidebarItem {
   final IconData icon;
-  final String Function(AppLocalizations? l10n) label;
+  final String Function(AppLocalizations l10n) label;
   final String route;
   final String? requiredPermission;
 
@@ -36,60 +40,60 @@ class AdminSidebar extends ConsumerWidget {
   static final List<_SidebarItem> _items = [
     _SidebarItem(
       icon: Icons.dashboard_outlined,
-      label: (l) => l?.adminSidebarOverview ?? 'Overview',
+      label: (l) => l.adminSidebarOverview,
       route: Routes.adminDashboard,
     ),
     _SidebarItem(
       icon: Icons.people_outline,
-      label: (l) => l?.adminSidebarUsers ?? 'Users',
+      label: (l) => l.adminSidebarUsers,
       route: Routes.adminUsers,
       requiredPermission: 'admin.users.view',
     ),
     _SidebarItem(
       icon: Icons.child_care_outlined,
-      label: (l) => l?.adminSidebarChildren ?? 'Children',
+      label: (l) => l.adminSidebarChildren,
       route: Routes.adminChildren,
       requiredPermission: 'admin.children.view',
     ),
     _SidebarItem(
       icon: Icons.library_books_outlined,
-      label: (l) => l?.adminSidebarContent ?? 'Content',
+      label: (l) => l.adminSidebarContent,
       route: Routes.adminContent,
       requiredPermission: 'admin.content.view',
     ),
     _SidebarItem(
       icon: Icons.bar_chart_outlined,
-      label: (l) => l?.adminSidebarReports ?? 'Reports',
+      label: (l) => l.adminSidebarReports,
       route: Routes.adminReports,
       requiredPermission: 'admin.analytics.view',
     ),
     _SidebarItem(
       icon: Icons.support_agent_outlined,
-      label: (l) => l?.adminSidebarSupport ?? 'Support',
+      label: (l) => l.adminSidebarSupport,
       route: Routes.adminSupport,
       requiredPermission: 'admin.support.view',
     ),
     _SidebarItem(
       icon: Icons.subscriptions_outlined,
-      label: (l) => l?.adminSidebarSubscriptions ?? 'Subscriptions',
+      label: (l) => l.adminSidebarSubscriptions,
       route: Routes.adminSubscriptions,
       requiredPermission: 'admin.subscription.view',
     ),
     _SidebarItem(
       icon: Icons.admin_panel_settings_outlined,
-      label: (l) => l?.adminSidebarAdmins ?? 'Admins',
+      label: (l) => l.adminSidebarAdmins,
       route: Routes.adminAdmins,
       requiredPermission: 'admin.admins.manage',
     ),
     _SidebarItem(
       icon: Icons.history_outlined,
-      label: (l) => l?.adminSidebarAudit ?? 'Audit Log',
+      label: (l) => l.adminSidebarAudit,
       route: Routes.adminAudit,
       requiredPermission: 'admin.audit.view',
     ),
     _SidebarItem(
       icon: Icons.settings_outlined,
-      label: (l) => l?.adminSidebarSettings ?? 'Settings',
+      label: (l) => l.adminSidebarSettings,
       route: Routes.adminSettings,
       requiredPermission: 'admin.settings.edit',
     ),
@@ -97,7 +101,7 @@ class AdminSidebar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final admin = ref.watch(currentAdminProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -138,7 +142,7 @@ class AdminSidebar extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              l10n?.adminDashboard ?? 'Admin Dashboard',
+                              l10n.adminDashboard,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: colorScheme.onPrimaryContainer,
@@ -250,7 +254,7 @@ class AdminSidebar extends ConsumerWidget {
                 color: colorScheme.error,
               ),
               title: Text(
-                l10n?.adminLogout ?? 'Logout',
+                l10n.adminLogout,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.error,
                   fontWeight: FontWeight.w500,
@@ -268,24 +272,23 @@ class AdminSidebar extends ConsumerWidget {
   Future<void> _confirmLogout(
     BuildContext context,
     WidgetRef ref,
-    AppLocalizations? l10n,
+    AppLocalizations l10n,
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n?.adminLogout ?? 'Logout'),
+        title: Text(l10n.adminLogout),
         content: Text(
-          l10n?.adminLogoutConfirm ??
-              'Are you sure you want to log out of the admin portal?',
+          l10n.adminLogoutConfirm,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n?.cancel ?? 'Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n?.adminLogout ?? 'Logout'),
+            child: Text(l10n.adminLogout),
           ),
         ],
       ),

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 
+/// IMPORTANT:
+/// All UI text must use AppLocalizations.
+/// Hardcoded strings are NOT allowed.
+
 class PremiumBadge extends StatelessWidget {
   final String? label;
 
@@ -8,9 +12,9 @@ class PremiumBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final text = label ?? l10n?.planPremium ?? 'Premium';
+    final text = label ?? l10n.planPremium;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
