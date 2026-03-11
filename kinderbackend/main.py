@@ -1,7 +1,6 @@
 import os
 from typing import Optional, List
 import logging
-import logging.handlers
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Header
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
@@ -21,7 +20,7 @@ from auth import hash_password, verify_password, create_access_token, create_ref
 from deps import decode_bearer, get_db, get_current_user
 from plan_service import PLAN_FREE, PLAN_LIMITS, get_user_plan
 from serializers import child_to_json, user_to_json
-from rate_limit import auth_rate_limit, api_rate_limit
+from rate_limit import auth_rate_limit
 from routers.auth import router as auth_router
 from routers.notifications import router as notifications_router
 from routers.privacy import router as privacy_router
@@ -50,13 +49,15 @@ from routers.admin_users import router as admin_users_router
 import admin_models  # noqa: F401
 
 # Configure logging
+_log_handlers = [logging.StreamHandler()]
+_log_file = os.getenv("APP_LOG_FILE")
+if _log_file:
+    _log_handlers.insert(0, logging.FileHandler(_log_file))
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
+    handlers=_log_handlers,
 )
 
 logger = logging.getLogger(__name__)

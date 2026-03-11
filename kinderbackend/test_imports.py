@@ -9,13 +9,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-demo-testing-only")
 os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")
 os.environ.setdefault("ADMIN_SEED_SECRET", "demo-seed-secret")
 
-print("=" * 60)
-print("KINDERWORLD BACKEND — IMPORT VALIDATION")
-print("=" * 60)
-
-errors = []
-
-modules = [
+MODULES = [
     ("database", "database"),
     ("models", "models"),
     ("auth", "auth"),
@@ -49,20 +43,36 @@ modules = [
     ("main", "main"),
 ]
 
-for label, mod in modules:
-    try:
-        __import__(mod)
-        print(f"  [OK]  {label}")
-    except Exception as e:
-        print(f"  [FAIL] {label}: {e}")
-        errors.append((label, str(e)))
 
-print()
-if errors:
-    print(f"RESULT: {len(errors)} IMPORT ERROR(S) FOUND")
-    for label, err in errors:
-        print(f"  - {label}: {err}")
-    sys.exit(1)
-else:
-    print(f"RESULT: ALL {len(modules)} MODULES IMPORTED SUCCESSFULLY")
-    sys.exit(0)
+def run_import_validation() -> int:
+    print("=" * 60)
+    print("KINDERWORLD BACKEND IMPORT VALIDATION")
+    print("=" * 60)
+
+    errors = []
+
+    for label, module_name in MODULES:
+        try:
+            __import__(module_name)
+            print(f"  [OK]  {label}")
+        except Exception as exc:
+            print(f"  [FAIL] {label}: {exc}")
+            errors.append((label, str(exc)))
+
+    print()
+    if errors:
+        print(f"RESULT: {len(errors)} IMPORT ERROR(S) FOUND")
+        for label, err in errors:
+            print(f"  - {label}: {err}")
+        return 1
+
+    print(f"RESULT: ALL {len(MODULES)} MODULES IMPORTED SUCCESSFULLY")
+    return 0
+
+
+def test_all_modules_import() -> None:
+    assert run_import_validation() == 0
+
+
+if __name__ == "__main__":
+    sys.exit(run_import_validation())

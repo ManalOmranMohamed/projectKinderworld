@@ -1,9 +1,8 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
-from deps import get_current_user, require_feature
+from deps import require_feature
 from models import User
-from plan_service import feature_enabled, get_user_plan
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["features"])

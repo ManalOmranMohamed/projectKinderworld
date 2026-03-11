@@ -256,9 +256,9 @@ class TestChangePasswordErrors:
         )
         
         assert response.status_code == 422
-        # Validation error from Pydantic (happens before our custom validator)
         detail = response.json()["detail"]
-        assert isinstance(detail, list)
+        assert isinstance(detail, str)
+        assert "at least 8 characters" in detail
     
     def test_weak_password_snake_case(
         self,
@@ -277,9 +277,9 @@ class TestChangePasswordErrors:
         )
         
         assert response.status_code == 422
-        # Validation error from Pydantic (happens before our custom validator)
         detail = response.json()["detail"]
-        assert isinstance(detail, list)
+        assert isinstance(detail, str)
+        assert "at least 8 characters" in detail
 
 
 # ============================================================================

@@ -34,7 +34,8 @@ def db(test_db):
     session = SessionLocal(bind=connection)
     yield session
     session.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 
 
@@ -54,7 +55,7 @@ def test_register_normalizes_email(client: TestClient, db):
         "/auth/register",
         json={
             "name": "Case User",
-            "email": "Case.User@Example.COM",
+            "email": "Case.User@Gmail.COM",
             "password": "Password123!",
             "confirmPassword": "Password123!",
         },
@@ -63,7 +64,7 @@ def test_register_normalizes_email(client: TestClient, db):
     assert response.status_code == 200
     user = db.query(User).filter(User.name == "Case User").first()
     assert user is not None
-    assert user.email == "case.user@example.com"
+    assert user.email == "case.user@gmail.com"
 
 
 def test_login_accepts_uppercase_email(client: TestClient):
@@ -71,7 +72,7 @@ def test_login_accepts_uppercase_email(client: TestClient):
         "/auth/register",
         json={
             "name": "Login Case",
-            "email": "Login.Case@Example.COM",
+            "email": "Login.Case@Gmail.COM",
             "password": "Password123!",
             "confirmPassword": "Password123!",
         },
@@ -81,7 +82,7 @@ def test_login_accepts_uppercase_email(client: TestClient):
     response = client.post(
         "/auth/login",
         json={
-            "email": "LOGIN.CASE@EXAMPLE.COM",
+            "email": "LOGIN.CASE@GMAIL.COM",
             "password": "Password123!",
         },
     )

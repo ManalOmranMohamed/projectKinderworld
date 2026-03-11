@@ -8,8 +8,6 @@ from deps import get_db, get_current_user
 from models import User
 from plan_service import (
     PLAN_FREE,
-    PLAN_PREMIUM,
-    PLAN_FAMILY_PLUS,
     get_plan_catalog,
     get_plan_features,
     get_plan_limits,

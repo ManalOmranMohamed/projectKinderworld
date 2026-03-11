@@ -10,12 +10,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
-from datetime import datetime
 
 # Import your app components
 from main import app
 from database import Base, SessionLocal
-from models import User, ChildProfile
+from models import User
 from auth import hash_password, verify_password, create_access_token
 from plan_service import PLAN_FREE, PLAN_PREMIUM, PLAN_FAMILY_PLUS
 
@@ -43,7 +42,8 @@ def db(test_db):
     yield session
 
     session.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 
 

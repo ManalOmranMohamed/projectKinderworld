@@ -5,7 +5,6 @@ Admin tokens carry an extra claim  token_type = "admin"  so they can NEVER
 be accepted by the parent/child auth dependency (get_current_user) and vice-versa.
 """
 from datetime import datetime, timedelta
-from typing import Optional
 
 from jose import jwt
 

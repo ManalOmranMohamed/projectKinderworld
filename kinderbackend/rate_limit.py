@@ -6,7 +6,7 @@ For production, consider Redis-based rate limiting.
 """
 import time
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict
 from fastapi import HTTPException, Request
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 

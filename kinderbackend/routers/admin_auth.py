@@ -9,7 +9,6 @@ Endpoints:
 """
 import logging
 from datetime import datetime
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError, jwt
