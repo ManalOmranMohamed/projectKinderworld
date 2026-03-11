@@ -1,268 +1,311 @@
-﻿# 🌈 Kinder World - Graduation Project
+# Kinder World
 
-🎓 **Kinder World** is a full-stack graduation project that provides a safe, engaging, and educational digital environment for children aged **5 to 12**.
+## Overview
 
-It combines:
-- 📱 A cross-platform Flutter application for children and parents
-- ⚙️ A FastAPI backend for authentication, child management, subscription logic, and core APIs
+**Kinder World** is a graduation project that combines:
 
----
+- a Flutter application for child, parent, and admin-facing flows
+- a FastAPI backend for authentication, profile management, settings, subscriptions, and admin APIs
 
-## ✨ Project Vision
+The repository is an active prototype rather than a finished production system. Some parts are fully connected to the backend and database, while other parts are still UI-first, locally simulated, or backed by static demo data.
 
-Kinder World is designed to support learning through play while giving parents meaningful visibility and control.
+## Current Status
 
-The platform focuses on:
-- 🧠 Interactive learning experiences
-- 👨‍👩‍👧 Parent-child role separation
-- 🔐 Secure account and session workflows
-- 📊 Progress-aware parent tools
-- 🧩 Feature access based on subscription tiers
+### Implemented and present in the codebase
 
----
+- Parent registration, login, logout, profile update, and password change
+- Child profile creation, listing, update, deletion, child login, and picture-password change
+- Parent features backed by persistent API endpoints:
+  - privacy settings
+  - parental controls
+  - support ticket submission
+  - billing method CRUD
+  - subscription state and plan selection
+  - notification listing and read actions
+- Admin backend with:
+  - dedicated admin authentication
+  - RBAC roles and permissions
+  - audit logging
+  - user, child, support, subscription, analytics, content, settings, and admin management routers
+- Flutter app structure for:
+  - onboarding and authentication
+  - child mode
+  - parent dashboard and settings
+  - admin portal routing and screens
+  - Arabic and English localization
+  - Android, iOS, and Web project targets
+- Alembic migration setup for backend schema management
+- Automated tests for Flutter admin flow and backend API coverage
 
-## 🏗️ Repository Structure
+### Implemented but still demo-oriented or partial
+
+- `AI Buddy` in the Flutter app is **not connected to an AI service**. It generates replies locally inside the app using simulated logic.
+- Subscription selection is **demo mode**. `/subscription/select` activates plans immediately and returns a `mock_session_*` value instead of using a real payment gateway.
+- Billing portal endpoints exist but currently return `501 Not Implemented`.
+- Several feature-gated backend endpoints return fixed demo payloads rather than real analytics or AI output, such as:
+  - `/reports/basic`
+  - `/reports/advanced`
+  - `/notifications/basic`
+  - `/notifications/smart`
+  - `/parental-controls/basic`
+  - `/parental-controls/advanced`
+  - `/ai/insights`
+  - `/downloads/offline`
+  - `/support/priority`
+- Some app sections are UI-complete but still use local/static content rather than CMS-driven backend content, especially in child learning and play flows.
+- Some legal/help/about content is still placeholder text from the backend or localization files.
+- Billing management screen in Flutter is present, but the screen itself states that billing management is coming soon.
+
+## Repository Structure
 
 ```text
 Graduation Project/
-├─ kinder_world_child_mode/      # Flutter app (child + parent interfaces)
-│  ├─ lib/
-│  ├─ assets/
-│  ├─ android/ ios/ web/
-│  ├─ windows/ macos/ linux/
-│  └─ pubspec.yaml
-└─ kinderbackend/                # FastAPI backend
-   ├─ routers/
-   ├─ main.py
-   ├─ models.py
-   ├─ deps.py
-   ├─ auth.py
-   ├─ database.py
-   └─ plan_service.py
+├─ README.md
+├─ kinderbackend/                 # FastAPI backend
+│  ├─ alembic/
+│  ├─ routers/
+│  ├─ main.py
+│  ├─ models.py
+│  ├─ admin_models.py
+│  ├─ database.py
+│  ├─ db_migrations.py
+│  ├─ requirements.txt
+│  ├─ .env.example
+│  └─ test_*.py
+└─ kinder_world_child_mode/       # Flutter app
+   ├─ lib/
+   ├─ assets/
+   ├─ test/
+   ├─ android/
+   ├─ ios/
+   ├─ web/
+   └─ pubspec.yaml
 ```
 
----
+## Main Application Areas
 
-## 🧱 System Architecture
+### Flutter Application
 
-### 📱 Mobile Application (Flutter)
+The Flutter project is organized by feature area:
 
-The mobile app follows a modular feature-oriented structure:
-- `lib/core`: shared infrastructure (routing, localization, storage, networking, theme)
-- `lib/features`: domain screens and flows for child mode, parent mode, auth, and system pages
+- `lib/features/auth`: parent/child login, registration, and forgot-password flows
+- `lib/features/child_mode`: home, learn, play, AI Buddy, profile, paywall
+- `lib/features/parent_mode`: dashboard, child management, reports, controls, notifications, settings, subscription
+- `lib/features/admin`: admin login, dashboard shell, users, children, content, reports, subscriptions, admins, audit, support, settings
+- `lib/core`: providers, repositories, services, models, theme, localization, storage, networking
 
-Key architectural points:
-- 🧭 Role-based route guarding (Parent / Child)
-- 💾 Persistent local + secure storage usage
-- 🪝 Riverpod-based state management
-- 🔌 Service/repository separation for maintainability
+### Backend Service
 
-### ⚙️ Backend Service (FastAPI)
+The FastAPI backend provides:
 
-The backend provides REST APIs for operational platform workflows:
-- Authentication and token lifecycle
-- Child profile lifecycle
-- Plan and feature gating
-- Parent controls, privacy, notifications, and support endpoints
+- parent and child auth flows
+- child profile management
+- subscription and plan logic
+- privacy and parental control settings
+- notifications and support tickets
+- billing method management
+- admin authentication and RBAC-protected admin endpoints
 
-Core service behavior:
-- 🔑 JWT access + refresh token strategy
-- 🛡️ Password hashing via bcrypt
-- 🧠 Centralized plan/feature logic
-- 🗄️ SQLite-based persistence layer
+## Technology Stack
 
----
+### Frontend
 
-## 🚀 Functional Capabilities
-
-### 👦 Child Experience
-
-- Picture-password child login flow
-- Child navigation with dedicated tabs:
-  - 🏠 Home
-  - 📚 Learn
-  - 🎮 Play
-  - 🤖 AI Buddy
-  - 🙋 Profile
-- Lesson and quiz-style educational flows
-- Interactive content categories for fun + learning
-
-### 👩‍👧 Parent Experience
-
-- Parent registration and login
-- Child profile management (add, update, delete)
-- Parent dashboard with activity/progress views
-- Parent modules:
-  - 📈 Reports
-  - 🧰 Parental Controls
-  - 🔔 Notifications
-  - ⚙️ Settings
-  - 💳 Subscription screens
-- 🌍 Multi-language and theme settings
-
-### 🤖 AI Buddy
-
-- Conversational child-facing UI integrated in app navigation
-- Quick actions for guided interaction
-- Local simulated response logic in current implementation
-
-### 🧩 Backend Domain Coverage
-
-- Auth endpoints for parent accounts and token refresh
-- Child registration/login and picture-password update
-- Child profile CRUD with age validation
-- Subscription plan management and selection
-- Feature-gated routes by plan entitlement
-- Notification listing/read operations
-- Privacy settings read/update
-- Parental controls read/update
-- Billing method management
-- Support contact ticket submission
-
----
-
-## 🛠️ Technology Stack
-
-### 📱 Flutter Stack
-
-- Flutter (Dart)
+- Flutter
+- Dart
 - Riverpod
 - GoRouter
 - Dio
-- Connectivity Plus
-- Freezed + JSON Serializable
-- Flutter Secure Storage
 - Hive
+- Flutter Secure Storage
+- Freezed / JSON Serializable
 - FL Chart
-- Lottie
 
-### ⚙️ Backend Stack
+### Backend
 
 - Python
 - FastAPI
 - SQLAlchemy
+- Alembic
 - Pydantic
-- SQLite
-- python-jose (JWT)
-- bcrypt
+- SQLite by default
+- PostgreSQL support through `DATABASE_URL`
+- JWT authentication with `python-jose`
 
----
+## Local Setup
 
-## 🌐 API Surface (Summary)
+### 1. Backend Setup
 
-- **Authentication**: `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/me`, `/auth/logout`, `/auth/change-password`
-- **Child Auth**: `/auth/child/register`, `/auth/child/login`, `/auth/child/change-password`
-- **Child Profiles**: `/children`, `/children/{child_id}`
-- **Subscriptions**: `/subscription`, `/subscription/me`, `/subscription/upgrade`, `/subscription/cancel`, `/subscription/select`, `/plans`
-- **Feature Routes**: `/reports/basic`, `/reports/advanced`, `/notifications/basic`, `/notifications/smart`, `/ai/insights`, `/downloads/offline`, `/support/priority`
-- **Privacy**: `/privacy/settings`
-- **Parental Controls**: `/parental-controls/settings`
-- **Billing Methods**: `/billing/methods`
-- **Support**: `/support/contact`
+From [`kinderbackend`](/c:/Graduation%20Project/kinderbackend):
 
----
-
-## ▶️ Local Development Setup
-
-### 1) Backend Setup
-
-From `kinderbackend`:
-
-```bash
+```powershell
 python -m venv .venv
-# Windows
 .venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-pip install fastapi uvicorn sqlalchemy pydantic email-validator python-jose bcrypt pytest
-uvicorn main:app --reload
+pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-Backend default URL:
+### Environment Notes
 
-`http://127.0.0.1:8000`
+- If `DATABASE_URL` is not set, the backend falls back to a local SQLite database at `kinderbackend/kinder.db`.
+- The sample `.env.example` is written for PostgreSQL. If you want to use SQLite locally, leave `DATABASE_URL` unset in `.env`.
+- `main.py` loads environment variables automatically from `.env`.
 
-### 2) Flutter Setup
+### Database Migration
 
-From `kinder_world_child_mode`:
+The backend checks the schema on startup and fails if required tables are missing. Run migrations before starting the server:
 
-```bash
+```powershell
+python -m alembic upgrade head
+```
+
+### Run the API
+
+```powershell
+python -m uvicorn main:app --reload
+```
+
+Default local API URL:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Optional: Seed an Admin Account
+
+Admin seeding is disabled by default in `.env.example`. If you enable it:
+
+- set `ENABLE_ADMIN_SEED_ENDPOINT=true`
+- set `ADMIN_SEED_SECRET`
+- set `ADMIN_SEED_PASSWORD`
+
+Then call:
+
+```text
+POST /admin/seed?secret=YOUR_SECRET
+```
+
+This seeds roles, permissions, and a default super admin.
+
+### 2. Flutter Setup
+
+From [`kinder_world_child_mode`](/c:/Graduation%20Project/kinder_world_child_mode):
+
+```powershell
 flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
 flutter run --dart-define=API_BASE_URL=http://127.0.0.1:8000
 ```
 
----
+### Notes
 
-## 🧪 Testing
+- The app uses `API_BASE_URL` via `--dart-define`.
+- The fallback API URL currently hardcoded in the app points to a local network IP, so overriding it during local development is strongly recommended.
+- Generated model files are already committed. If models change, regenerate them with:
+
+```powershell
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+## Testing
 
 ### Backend
 
-From `kinderbackend`:
+From [`kinderbackend`](/c:/Graduation%20Project/kinderbackend):
 
-```bash
-pytest
+```powershell
+python -m pytest
 ```
+
+Backend test files currently present:
+
+- `test_auth_and_features.py`
+- `test_change_password_compat.py`
+- `test_email_and_subscription.py`
+- `test_imports.py`
 
 ### Flutter
 
-From `kinder_world_child_mode`:
+From [`kinder_world_child_mode`](/c:/Graduation%20Project/kinder_world_child_mode):
 
-```bash
+```powershell
 flutter test
 ```
 
----
+Flutter test files currently present:
 
-## 💎 Subscription and Access Model
+- `test/widget_test.dart`
+- `test/admin_flow_test.dart`
 
-The platform currently supports three plan tiers:
-- `FREE`
-- `PREMIUM`
-- `FAMILY_PLUS`
+### Verification During README Rewrite
 
-Feature availability is resolved through centralized plan flags, and route access is enforced by dependency-based feature checks.
+- `flutter test` ran successfully in the current workspace.
+- Backend tests did not run cleanly in the current local environment because `httpx` was missing from the active virtual environment during collection. This should be resolved after a clean `pip install -r requirements.txt`.
 
----
+## Backend API Areas
 
-## 🌍 Localization and UI Configuration
+The backend currently exposes routes in these areas:
 
-The client supports:
-- Arabic and English localization resources
-- Theme-aware UI behavior through centralized providers
-- Role-aware routing and session coordination
+- authentication: parent auth, child auth, logout, profile update, password change
+- children: create, list, update, delete
+- subscription: plan catalog, current plan, upgrade, cancel, select, activate, billing portal placeholder
+- notifications: list, mark one read, mark all read
+- privacy: get and update settings
+- parental controls: get and update settings
+- billing methods: list, add, delete
+- support: contact support
+- content/legal/help: basic informational endpoints
+- admin: auth, users, children, support, subscriptions, analytics, CMS, settings, audit, admins, seed
 
----
+## What Is Actually Persistent Today
 
-## 🗃️ Data Layer
+These backend-backed areas write to the database:
 
-SQLite is used as the default backend persistence engine.
+- parent accounts
+- child profiles
+- privacy settings
+- parental controls
+- support tickets
+- billing methods
+- notifications read state
+- admin users, roles, permissions, and audit logs
 
-SQLAlchemy models cover:
-- Users
-- Child profiles
-- Parental controls
-- Privacy settings
-- Notifications
-- Support tickets
-- Billing methods
+These areas exist but are currently not production-complete:
 
----
+- AI companion features
+- payment processing
+- billing portal
+- advanced analytics
+- smart notifications
+- offline download management
+- dynamic legal/CMS content rollout in the mobile app
 
-## 🎓 Graduation Project Scope
+## Current Limitations
 
-Kinder World represents a complete, runnable educational platform prototype with:
-- A full mobile front end
-- A functional backend service
-- Authenticated parent/child flows
-- Child management workflows
-- Plan-aware feature control
+- `AI Buddy` is simulated in the Flutter app and does not call any AI model or external AI API.
+- Subscription upgrades are demo-only and do not process real payments.
+- Some premium feature endpoints return static sample data instead of real analytics.
+- Child learning and play content is largely asset-driven and hardcoded in the app UI.
+- Billing management is not finished end-to-end.
+- Some legal, privacy, and help text is still placeholder content.
+- No production deployment configuration is documented in this repository yet.
+- The current repository does not include a frontend `.env.example`; API configuration is passed through `--dart-define`.
 
-It is structured for demonstration, extension, and academic evaluation as a graduation-level software project.
+## Future Improvements
 
----
+- Integrate a real AI service for `AI Buddy` with safety controls suitable for children.
+- Replace mock subscription activation with a real payment provider and billing portal.
+- Move more child content from hardcoded/local UI structures to backend-managed content.
+- Expand real analytics and reporting instead of static demo responses.
+- Complete legal/help/CMS content management and connect it cleanly to the mobile app.
+- Add broader automated test coverage for parent flows, child flows, and admin backend endpoints.
+- Document deployment for production-like environments.
 
-## ❤️ Closing Note
+## Graduation Project Positioning
 
-Built for children, guided by parents, and engineered as a serious graduation project.
+In its current form, **Kinder World** is best described as a substantial graduation-project prototype with:
+
+- a real multi-role application structure
+- a working backend with database persistence for core account and settings flows
+- an admin architecture with RBAC and audit logging
+- a mobile app that demonstrates child, parent, and admin user journeys
+
+It should not be described as a fully production-ready platform yet, especially for AI, billing, analytics, and dynamic content delivery.
