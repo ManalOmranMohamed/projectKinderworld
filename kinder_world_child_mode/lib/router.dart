@@ -15,6 +15,7 @@ import 'package:kinder_world/features/app_core/onboarding_screen.dart';
 import 'package:kinder_world/features/app_core/welcome_screen.dart';
 
 import 'package:kinder_world/features/auth/user_type_selection_screen.dart';
+import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:kinder_world/features/auth/parent_login_screen.dart';
 import 'package:kinder_world/features/auth/parent_register_screen.dart';
 import 'package:kinder_world/features/auth/parent_forgot_password_screen.dart';
@@ -30,6 +31,8 @@ import 'package:kinder_world/features/child_mode/play/play_screen.dart';
 import 'package:kinder_world/features/child_mode/play/category_screen.dart';
 import 'package:kinder_world/features/child_mode/ai_buddy/ai_buddy_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
+import 'package:kinder_world/features/child_mode/profile/achievements_screen.dart';
+import 'package:kinder_world/features/child_mode/store/reward_store_screen.dart';
 
 import 'package:kinder_world/features/parent_mode/dashboard/parent_dashboard_screen.dart';
 import 'package:kinder_world/features/parent_mode/child_management/child_management_screen.dart';
@@ -42,6 +45,8 @@ import 'package:kinder_world/features/parent_mode/settings/screens/change_passwo
 import 'package:kinder_world/features/parent_mode/settings/screens/theme_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/language_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/privacy_settings_screen.dart';
+import 'package:kinder_world/features/parent_mode/settings/screens/accessibility_settings_screen.dart';
+import 'package:kinder_world/features/parent_mode/auth/parent_pin_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/help_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/contact_us_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/about_screen.dart';
@@ -49,6 +54,7 @@ import 'package:kinder_world/features/parent_mode/settings/screens/legal_pages.d
 import 'package:kinder_world/features/parent_mode/subscription/subscription_screen.dart';
 import 'package:kinder_world/features/parent_mode/subscription/billing_management_screen.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notifications_screen.dart';
+import 'package:kinder_world/features/parent_mode/safety/safety_dashboard_screen.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 
 import 'package:kinder_world/features/system_pages/no_internet_screen.dart';
@@ -81,10 +87,13 @@ class Routes {
   static const childPlay = '/child/play';
   static const childAiBuddy = '/child/ai-buddy';
   static const childProfile = '/child/profile';
+  static const childAchievements = '/child/achievements';
+  static const childStore = '/child/store';
   static const childActivityOfDay = '/child/home/activity-of-day';
 
   // Parent
   static const parentDashboard = '/parent/dashboard';
+  static const parentPin = '/parent/pin';
   static const parentChildManagement = '/parent/child-management';
   static const parentChildProfile = '/parent/child-profile';
   static const parentReports = '/parent/reports';
@@ -93,6 +102,7 @@ class Routes {
   static const parentSubscription = '/parent/subscription';
   static const parentBilling = '/parent/billing';
   static const parentNotifications = '/parent/notifications';
+  static const parentSafetyDashboard = '/parent/safety-dashboard';
   static const parentDataSync = '/parent/data-sync';
 
   // Parent Settings sub-routes
@@ -104,6 +114,7 @@ class Routes {
   static const parentHelp = '/parent/help';
   static const parentContactUs = '/parent/contact-us';
   static const parentAbout = '/parent/about';
+  static const parentAccessibility = '/parent/accessibility';
   static const parentTerms = '/parent/legal/terms';
   static const parentPrivacyPolicy = '/parent/legal/privacy';
   static const parentCoppa = '/parent/legal/coppa';
@@ -169,6 +180,18 @@ bool _isParentAuthRoute(String path) {
 
 bool _isAnyChildRoute(String path) => path.startsWith('/child/');
 bool _isAnyParentRoute(String path) => path.startsWith('/parent/');
+bool _isParentPinProtectedRoute(String path) {
+  return path == Routes.parentSettings ||
+      path == Routes.parentChildManagement ||
+      path == Routes.parentControls ||
+      path == Routes.parentSubscription ||
+      path == Routes.parentBilling ||
+      path == Routes.parentSafetyDashboard ||
+      path == Routes.parentPrivacySettings ||
+      path == Routes.parentProfile ||
+      path == Routes.parentChangePassword ||
+      path == Routes.parentAccessibility;
+}
 
 class _RouterRefreshListenable extends ChangeNotifier {
   _RouterRefreshListenable(this.ref) {
@@ -197,7 +220,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: Routes.splash,
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     refreshListenable: refreshListenable,
 
     // Important: keep redirect logic strict + stable to avoid loops.
@@ -277,6 +300,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (userRole == 'parent') {
         // Block child area
         if (_isAnyChildRoute(path)) return Routes.parentDashboard;
+        if (path == Routes.parentPin) return null;
+        if (_isParentPinProtectedRoute(path)) {
+          final isParentPinVerified = await secureStorage.isParentPinVerified();
+          if (!isParentPinVerified) {
+            final redirectTarget = Uri.encodeComponent(path);
+            return '${Routes.parentPin}?redirect=$redirectTarget';
+          }
+        }
         // Parent can access /parent/* freely
         if (_isAnyParentRoute(path)) return null;
         // Unknown route outside parent scope -> go dashboard
@@ -348,6 +379,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.childForgotPassword,
         builder: (context, state) => const ChildForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.childAchievements,
+        builder: (context, state) => const AchievementsScreen(),
+      ),
+      GoRoute(
+        path: Routes.childStore,
+        builder: (context, state) => const RewardStoreScreen(),
       ),
 
       // Child Mode Routes with Bottom Navigation (Shell)
@@ -437,6 +476,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ParentDashboardScreen(),
       ),
       GoRoute(
+        path: Routes.parentPin,
+        builder: (context, state) => ParentPinScreen(
+          redirectPath: state.uri.queryParameters['redirect'],
+          mode: ParentPinFlowMode.values.firstWhere(
+            (value) => value.name == state.uri.queryParameters['mode'],
+            orElse: () => ParentPinFlowMode.auto,
+          ),
+        ),
+      ),
+      GoRoute(
         path: Routes.parentChildManagement,
         builder: (context, state) => const ChildManagementScreen(),
       ),
@@ -512,6 +561,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ParentAboutScreen(),
       ),
       GoRoute(
+        path: Routes.parentAccessibility,
+        builder: (context, state) => const AccessibilitySettingsScreen(),
+      ),
+      GoRoute(
         path: Routes.parentTerms,
         builder: (context, state) => const ParentTermsScreen(),
       ),
@@ -534,6 +587,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.parentNotifications,
         builder: (context, state) => const ParentNotificationsScreen(),
+      ),
+      GoRoute(
+        path: Routes.parentSafetyDashboard,
+        builder: (context, state) => const SafetyDashboardScreen(),
       ),
       GoRoute(
         path: Routes.parentDataSync,

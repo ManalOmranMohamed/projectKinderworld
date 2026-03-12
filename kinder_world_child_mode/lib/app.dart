@@ -4,14 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart'
     as custom_localizations;
+import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
+import 'package:kinder_world/core/providers/accessibility_provider.dart';
+import 'package:kinder_world/core/widgets/gamification_widgets.dart';
 
 // Providers
 final secureStorageProvider = Provider<SecureStorage>((ref) {
@@ -39,19 +43,44 @@ class KinderWorldApp extends ConsumerStatefulWidget {
 }
 
 class _KinderWorldAppState extends ConsumerState<KinderWorldApp> {
+  late final ProviderSubscription<GoRouter> _routerSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    final navigationController = ref.read(appNavigationControllerProvider);
+    navigationController.attach(ref.read(routerProvider));
+    _routerSubscription = ref.listenManual<GoRouter>(
+      routerProvider,
+      (_, next) => navigationController.attach(next),
+    );
+  }
+
+  @override
+  void dispose() {
+    _routerSubscription.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
     final themeSettings = ref.watch(themeControllerProvider);
     final palette = ref.watch(themePaletteProvider);
+    final accessibility = ref.watch(accessibilityProvider);
+    final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) =>
           custom_localizations.AppLocalizations.of(context)?.appTitle ??
           'Kinder World',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme(palette: palette),
-      darkTheme: AppTheme.darkTheme(palette: palette),
+      theme: accessibility.highContrastEnabled
+          ? AppTheme.highContrastLightTheme(palette: palette)
+          : AppTheme.lightTheme(palette: palette),
+      darkTheme: accessibility.highContrastEnabled
+          ? AppTheme.highContrastDarkTheme(palette: palette)
+          : AppTheme.darkTheme(palette: palette),
       themeMode: themeSettings.mode,
       themeAnimationCurve: Curves.easeInOutCubic,
       themeAnimationDuration: const Duration(milliseconds: 250),
@@ -66,16 +95,34 @@ class _KinderWorldAppState extends ConsumerState<KinderWorldApp> {
         Locale('ar'),
       ],
       locale: locale,
-      routerConfig: ref.watch(routerProvider),
+      routerConfig: router,
 
       // Builder for app-level configurations
       builder: (context, child) {
         // Force text direction based on locale
         final isRTL = locale.languageCode == 'ar';
 
+        // Apply large font scaling when accessibility large font is enabled
+        Widget content = child!;
+        if (accessibility.largeFontEnabled) {
+          content = MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              textScaler: const TextScaler.linear(1.3),
+            ),
+            child: content,
+          );
+        }
+
         return Directionality(
           textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-          child: _ConnectivityGuard(child: child!),
+          child: AppNavigationBackHandler(
+            // GamificationRewardListener listens for pending rewards
+            // (LevelUp / AchievementUnlocked) and shows overlay dialogs/banners
+            // on top of whatever screen is currently active.
+            child: GamificationRewardListener(
+              child: _ConnectivityGuard(child: content),
+            ),
+          ),
         );
       },
     );
