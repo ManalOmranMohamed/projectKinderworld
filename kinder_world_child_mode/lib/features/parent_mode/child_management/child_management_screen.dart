@@ -17,6 +17,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
 import 'package:kinder_world/core/services/children_cache_service.dart';
+import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
@@ -150,31 +151,6 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   String? _cachedParentId;
   OverlayEntry? _topMessageEntry;
 
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return [];
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final raw = data['id'] ?? data['child_id'] ?? data['childId'];
-    return raw?.toString();
-  }
-
   int _parseInt(dynamic value, int fallback) {
     if (value is int) return value;
     if (value is double) return value.round();
@@ -281,7 +257,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     String? parentEmail,
     ChildProfile? existing,
   }) {
-    final childId = _parseChildId(data);
+    final childId = parseChildId(data);
     if (childId == null || childId.isEmpty) return null;
 
     final now = DateTime.now();
@@ -345,10 +321,10 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     if (data is Map) {
       final child = data['child'];
       if (child is Map) {
-        return _parseChildId(Map<String, dynamic>.from(child)) ??
-            _parseChildId(Map<String, dynamic>.from(data));
+        return parseChildId(Map<String, dynamic>.from(child)) ??
+            parseChildId(Map<String, dynamic>.from(data));
       }
-      return _parseChildId(Map<String, dynamic>.from(data));
+      return parseChildId(Map<String, dynamic>.from(data));
     }
     return null;
   }

@@ -6,58 +6,10 @@ Run with: pytest test_auth_and_features.py -v
 """
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
-
-# Import your app components
-from main import app
-from database import Base, SessionLocal
 from models import User
 from auth import hash_password, verify_password, create_access_token
 from plan_service import PLAN_FREE, PLAN_PREMIUM, PLAN_FAMILY_PLUS
-
-
-# Setup test database
-@pytest.fixture(scope="session")
-def test_db():
-    """Create an in-memory SQLite database for testing."""
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    """Create a new database session for each test."""
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-
-    yield session
-
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    """Override get_db dependency for testing."""
-    def override_get_db():
-        return db
-
-    from deps import get_db
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 # Test User Fixtures
@@ -137,7 +89,7 @@ def family_plus_user_token(family_plus_user):
 class TestChangePasswordSuccess:
     """Test successful password change scenarios."""
 
-    def test_change_password_valid(self, client: TestClient, free_user: User, free_user_token: str, db: Session):
+    def test_change_password_valid(self, client, free_user: User, free_user_token: str, db: Session):
         """Test successful password change with valid credentials."""
         response = client.post(
             "/auth/change-password",
@@ -159,7 +111,7 @@ class TestChangePasswordSuccess:
         assert verify_password("NewPass456!", free_user.password_hash)
         assert not verify_password("CurrentPass123!", free_user.password_hash)
 
-    def test_change_password_with_complex_characters(self, client: TestClient, free_user: User, free_user_token: str, db: Session):
+    def test_change_password_with_complex_characters(self, client, free_user: User, free_user_token: str, db: Session):
         """Test password change with complex special characters."""
         response = client.post(
             "/auth/change-password",
@@ -179,7 +131,7 @@ class TestChangePasswordSuccess:
 class TestChangePasswordValidation:
     """Test password validation rules."""
 
-    def test_change_password_too_short(self, client: TestClient, free_user_token: str):
+    def test_change_password_too_short(self, client, free_user_token: str):
         """Test rejection of too-short password (< 8 chars)."""
         response = client.post(
             "/auth/change-password",
@@ -194,7 +146,7 @@ class TestChangePasswordValidation:
         assert response.status_code == 422
         assert "at least 8 characters" in response.json()["detail"]
 
-    def test_change_password_no_uppercase(self, client: TestClient, free_user_token: str):
+    def test_change_password_no_uppercase(self, client, free_user_token: str):
         """Test rejection of password without uppercase letter."""
         response = client.post(
             "/auth/change-password",
@@ -209,7 +161,7 @@ class TestChangePasswordValidation:
         assert response.status_code == 422
         assert "uppercase letter" in response.json()["detail"]
 
-    def test_change_password_no_digit(self, client: TestClient, free_user_token: str):
+    def test_change_password_no_digit(self, client, free_user_token: str):
         """Test rejection of password without digit."""
         response = client.post(
             "/auth/change-password",
@@ -224,7 +176,7 @@ class TestChangePasswordValidation:
         assert response.status_code == 422
         assert "digit" in response.json()["detail"]
 
-    def test_change_password_no_special_char(self, client: TestClient, free_user_token: str):
+    def test_change_password_no_special_char(self, client, free_user_token: str):
         """Test rejection of password without special character."""
         response = client.post(
             "/auth/change-password",
@@ -243,7 +195,7 @@ class TestChangePasswordValidation:
 class TestChangePasswordErrors:
     """Test error handling in change password endpoint."""
 
-    def test_change_password_wrong_current(self, client: TestClient, free_user_token: str):
+    def test_change_password_wrong_current(self, client, free_user_token: str):
         """Test with incorrect current password."""
         response = client.post(
             "/auth/change-password",
@@ -258,7 +210,7 @@ class TestChangePasswordErrors:
         assert response.status_code == 401
         assert "Current password is incorrect" in response.json()["detail"]
 
-    def test_change_password_mismatch(self, client: TestClient, free_user_token: str):
+    def test_change_password_mismatch(self, client, free_user_token: str):
         """Test password confirmation mismatch."""
         response = client.post(
             "/auth/change-password",
@@ -273,7 +225,7 @@ class TestChangePasswordErrors:
         assert response.status_code == 400
         assert "do not match" in response.json()["detail"]
 
-    def test_change_password_missing_token(self, client: TestClient):
+    def test_change_password_missing_token(self, client):
         """Test without authentication token."""
         response = client.post(
             "/auth/change-password",
@@ -286,7 +238,7 @@ class TestChangePasswordErrors:
 
         assert response.status_code == 401
 
-    def test_change_password_invalid_token(self, client: TestClient):
+    def test_change_password_invalid_token(self, client):
         """Test with invalid token."""
         response = client.post(
             "/auth/change-password",
@@ -308,7 +260,7 @@ class TestChangePasswordErrors:
 class TestFreeUserFeatures:
     """Test feature access for FREE plan users."""
 
-    def test_free_user_can_access_basic_reports(self, client: TestClient, free_user_token: str):
+    def test_free_user_can_access_basic_reports(self, client, free_user_token: str):
         """FREE user CAN access basic_reports."""
         response = client.get(
             "/reports/basic",
@@ -317,7 +269,7 @@ class TestFreeUserFeatures:
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
 
-    def test_free_user_can_access_basic_notifications(self, client: TestClient, free_user_token: str):
+    def test_free_user_can_access_basic_notifications(self, client, free_user_token: str):
         """FREE user CAN access basic_notifications."""
         response = client.get(
             "/notifications/basic",
@@ -326,7 +278,7 @@ class TestFreeUserFeatures:
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
 
-    def test_free_user_can_access_basic_parental_controls(self, client: TestClient, free_user_token: str):
+    def test_free_user_can_access_basic_parental_controls(self, client, free_user_token: str):
         """FREE user CAN access basic_parental_controls."""
         response = client.get(
             "/parental-controls/basic",
@@ -335,7 +287,7 @@ class TestFreeUserFeatures:
         assert response.status_code == 200
         assert response.json()["access_level"] == "basic"
 
-    def test_free_user_cannot_access_advanced_reports(self, client: TestClient, free_user_token: str):
+    def test_free_user_cannot_access_advanced_reports(self, client, free_user_token: str):
         """FREE user CANNOT access advanced_reports."""
         response = client.get(
             "/reports/advanced",
@@ -344,7 +296,7 @@ class TestFreeUserFeatures:
         assert response.status_code == 403
         assert response.json()["detail"]["code"] == "FEATURE_NOT_AVAILABLE"
 
-    def test_free_user_cannot_access_smart_notifications(self, client: TestClient, free_user_token: str):
+    def test_free_user_cannot_access_smart_notifications(self, client, free_user_token: str):
         """FREE user CANNOT access smart_notifications."""
         response = client.get(
             "/notifications/smart",
@@ -352,7 +304,7 @@ class TestFreeUserFeatures:
         )
         assert response.status_code == 403
 
-    def test_free_user_cannot_access_ai_insights(self, client: TestClient, free_user_token: str):
+    def test_free_user_cannot_access_ai_insights(self, client, free_user_token: str):
         """FREE user CANNOT access ai_insights."""
         response = client.get(
             "/ai/insights",
@@ -360,7 +312,7 @@ class TestFreeUserFeatures:
         )
         assert response.status_code == 403
 
-    def test_free_user_cannot_access_offline_downloads(self, client: TestClient, free_user_token: str):
+    def test_free_user_cannot_access_offline_downloads(self, client, free_user_token: str):
         """FREE user CANNOT access offline_downloads."""
         response = client.get(
             "/downloads/offline",
@@ -368,7 +320,7 @@ class TestFreeUserFeatures:
         )
         assert response.status_code == 403
 
-    def test_free_user_cannot_access_priority_support(self, client: TestClient, free_user_token: str):
+    def test_free_user_cannot_access_priority_support(self, client, free_user_token: str):
         """FREE user CANNOT access priority_support."""
         response = client.get(
             "/support/priority",
@@ -384,7 +336,7 @@ class TestFreeUserFeatures:
 class TestPremiumUserFeatures:
     """Test feature access for PREMIUM plan users."""
 
-    def test_premium_inherits_free_features(self, client: TestClient, premium_user_token: str):
+    def test_premium_inherits_free_features(self, client, premium_user_token: str):
         """PREMIUM user inherits all FREE tier features."""
         # Basic reports
         response = client.get("/reports/basic", headers={"Authorization": f"Bearer {premium_user_token}"})
@@ -398,7 +350,7 @@ class TestPremiumUserFeatures:
         response = client.get("/parental-controls/basic", headers={"Authorization": f"Bearer {premium_user_token}"})
         assert response.status_code == 200
 
-    def test_premium_user_can_access_advanced_reports(self, client: TestClient, premium_user_token: str):
+    def test_premium_user_can_access_advanced_reports(self, client, premium_user_token: str):
         """PREMIUM user CAN access advanced_reports."""
         response = client.get(
             "/reports/advanced",
@@ -407,7 +359,7 @@ class TestPremiumUserFeatures:
         assert response.status_code == 200
         assert response.json()["access_level"] == "advanced"
 
-    def test_premium_user_can_access_smart_notifications(self, client: TestClient, premium_user_token: str):
+    def test_premium_user_can_access_smart_notifications(self, client, premium_user_token: str):
         """PREMIUM user CAN access smart_notifications."""
         response = client.get(
             "/notifications/smart",
@@ -416,7 +368,7 @@ class TestPremiumUserFeatures:
         assert response.status_code == 200
         assert response.json()["access_level"] == "smart"
 
-    def test_premium_user_can_access_ai_insights(self, client: TestClient, premium_user_token: str):
+    def test_premium_user_can_access_ai_insights(self, client, premium_user_token: str):
         """PREMIUM user CAN access ai_insights."""
         response = client.get(
             "/ai/insights",
@@ -424,7 +376,7 @@ class TestPremiumUserFeatures:
         )
         assert response.status_code == 200
 
-    def test_premium_user_can_access_offline_downloads(self, client: TestClient, premium_user_token: str):
+    def test_premium_user_can_access_offline_downloads(self, client, premium_user_token: str):
         """PREMIUM user CAN access offline_downloads."""
         response = client.get(
             "/downloads/offline",
@@ -432,7 +384,7 @@ class TestPremiumUserFeatures:
         )
         assert response.status_code == 200
 
-    def test_premium_user_cannot_access_priority_support(self, client: TestClient, premium_user_token: str):
+    def test_premium_user_cannot_access_priority_support(self, client, premium_user_token: str):
         """PREMIUM user CANNOT access priority_support (FAMILY_PLUS only)."""
         response = client.get(
             "/support/priority",
@@ -448,7 +400,7 @@ class TestPremiumUserFeatures:
 class TestFamilyPlusUserFeatures:
     """Test feature access for FAMILY_PLUS plan users."""
 
-    def test_family_plus_has_all_features(self, client: TestClient, family_plus_user_token: str):
+    def test_family_plus_has_all_features(self, client, family_plus_user_token: str):
         """FAMILY_PLUS user has access to ALL features."""
         endpoints = [
             "/reports/basic",
@@ -477,9 +429,9 @@ class TestFamilyPlusUserFeatures:
 class TestIntegration:
     """Integration tests combining password change and feature access."""
 
-    def test_user_can_change_password_and_access_features(
+    def test_user_can_change_password_and_access_features_with_new_token(
         self,
-        client: TestClient,
+        client,
         free_user: User,
         free_user_token: str,
         db: Session
@@ -497,16 +449,31 @@ class TestIntegration:
         )
         assert response.status_code == 200
 
-        # Access feature should still work with same token
-        response = client.get(
+        # Old token should be revoked after password change.
+        revoked = client.get(
             "/reports/basic",
             headers={"Authorization": f"Bearer {free_user_token}"}
+        )
+        assert revoked.status_code == 401
+
+        login = client.post(
+            "/auth/login",
+            json={
+                "email": free_user.email,
+                "password": "NewPass456!",
+            },
+        )
+        assert login.status_code == 200
+
+        response = client.get(
+            "/reports/basic",
+            headers={"Authorization": f"Bearer {login.json()['access_token']}"},
         )
         assert response.status_code == 200
 
     def test_invalid_password_prevents_feature_access(
         self,
-        client: TestClient,
+        client,
         free_user_token: str
     ):
         """Invalid token prevents all feature access."""
@@ -524,7 +491,7 @@ class TestIntegration:
 class TestDatabasePersistence:
     """Test that changes persist correctly in database."""
 
-    def test_password_hash_persists_in_database(self, client: TestClient, free_user: User, free_user_token: str, db: Session):
+    def test_password_hash_persists_in_database(self, client, free_user: User, free_user_token: str, db: Session):
         """Verify password hash is actually stored in database."""
         # Change password
         response = client.post(

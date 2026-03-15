@@ -7,54 +7,13 @@ from __future__ import annotations
 
 import admin_models  # noqa: F401
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 
 from admin_auth import create_admin_access_token, create_admin_refresh_token
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
 from auth import create_access_token, hash_password, verify_password
-from database import Base, SessionLocal
-from main import app
 from models import ChildProfile, SupportTicket, User
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 from routers.admin_seed import PERMISSION_DEFS, ROLE_DEFS
-
-
-@pytest.fixture(scope="session")
-def test_db():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-    yield session
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    from deps import get_db
-
-    def override_get_db():
-        return db
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 def _seed_builtin_rbac(db) -> None:

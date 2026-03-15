@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,15 +8,17 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
+import 'package:kinder_world/features/auth/widgets/child_login_picture_password_picker.dart';
 import 'package:kinder_world/router.dart';
 
 class _AvatarOption {
@@ -211,84 +212,16 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
   }
 
   Future<List<ChildProfile>> _loadChildren() async {
-    final repo = ref.read(childRepositoryProvider);
-    final secureStorage = ref.read(secureStorageProvider);
     final requestId = ++_childrenRequestId;
-    final localChildren = await repo.getAllChildProfiles();
-    final childrenById = {
-      for (final child in localChildren) child.id: child,
-    };
-
-    final token = secureStorage.hasCachedAuthToken
-        ? secureStorage.cachedAuthToken
-        : await secureStorage.getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
-      return childrenById.values.toList();
-    }
-
-    final parentId = secureStorage.hasCachedUserId
-        ? secureStorage.cachedUserId
-        : await secureStorage.getParentId();
-    final parentEmail = secureStorage.hasCachedUserEmail
-        ? secureStorage.cachedUserEmail
-        : await secureStorage.getParentEmail();
-    unawaited(
-      _syncChildrenFromParentSession(
-        requestId: requestId,
-        initialChildren: childrenById,
-        parentId: parentId ?? 'local',
-        parentEmail: parentEmail,
-      ),
-    );
-
-    return childrenById.values.toList();
-  }
-
-  Future<void> _syncChildrenFromParentSession({
-    required int requestId,
-    required Map<String, ChildProfile> initialChildren,
-    required String parentId,
-    required String? parentEmail,
-  }) async {
-    final repo = ref.read(childRepositoryProvider);
-    final childrenById = Map<String, ChildProfile>.from(initialChildren);
-
-    try {
-      final response = await ref.read(networkServiceProvider).get<dynamic>(
-            '/children',
-          );
-      final apiChildren = _extractChildrenList(response.data);
-      final writeOperations = <Future<Object?>>[];
-      for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
-        if (childId == null || childId.isEmpty) continue;
-        final existing = childrenById[childId];
-        final merged = _mergeChildProfileFromApi(
-          childData,
-          existing: existing,
-          parentId: parentId,
-          parentEmail: parentEmail,
+    return ref.read(childProfilesViewServiceProvider).loadAllChildren(
+          defaultAvatar: _avatarOptions.first.id,
+          onRemoteSynced: (children) {
+            if (!mounted || requestId != _childrenRequestId) return;
+            setState(() {
+              _childrenFuture = Future<List<ChildProfile>>.value(children);
+            });
+          },
         );
-        if (merged == null) continue;
-        childrenById[childId] = merged;
-        writeOperations.add(
-          existing == null
-              ? repo.createChildProfile(merged)
-              : repo.updateChildProfile(merged),
-        );
-      }
-      if (writeOperations.isNotEmpty) {
-        await Future.wait(writeOperations);
-      }
-      if (!mounted || requestId != _childrenRequestId) return;
-      setState(() {
-        _childrenFuture = Future<List<ChildProfile>>.value(
-          childrenById.values.toList(growable: false),
-        );
-      });
-    } catch (_) {
-      // Keep the locally cached list when background sync fails.
-    }
   }
 
   void _refreshChildren() {
@@ -464,321 +397,24 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     return result == true;
   }
 
-  bool _samePictures(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
-
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return [];
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final raw = data['id'] ?? data['child_id'] ?? data['childId'];
-    return raw?.toString();
-  }
-
-  int _parseInt(dynamic value, int fallback) {
-    if (value is int) return value;
-    if (value is double) return value.round();
-    if (value is String) return int.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  DateTime _parseDate(dynamic value, DateTime fallback) {
-    if (value is DateTime) return value;
-    if (value is String) {
-      final parsed = DateTime.tryParse(value);
-      if (parsed != null) return parsed;
-    }
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return fallback;
-  }
-
-  DateTime? _parseNullableDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  List<String> _parseStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return const [];
-  }
-
-  List<String>? _parseNullableStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return null;
-  }
-
-  DateTime? _parseBirthDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  int _ageFromBirthDate(DateTime? birthDate) {
-    if (birthDate == null) return 0;
-    final now = DateTime.now();
-    var age = now.year - birthDate.year;
-    final hasHadBirthday = (now.month > birthDate.month) ||
-        (now.month == birthDate.month && now.day >= birthDate.day);
-    if (!hasHadBirthday) age -= 1;
-    return age.clamp(0, 120);
-  }
-
-  int _resolveAgeFromApi(Map<String, dynamic> data, ChildProfile? existing) {
-    // Prioritize existing age if it's valid
-    final existingAge = existing?.age ?? 0;
-    if (existingAge > 0) return existingAge;
-
-    final apiAge = _parseInt(data['age'], 0);
-    final birthDate = _parseBirthDate(
-      data['birthdate'] ??
-          data['birth_date'] ??
-          data['date_of_birth'] ??
-          data['dob'],
-    );
-    final computedAge = _ageFromBirthDate(birthDate);
-
-    if (kDebugMode) {
-      debugPrint(
-        'Child age resolve: apiAge=$apiAge, birthDate=$birthDate, computedAge=$computedAge, existing=$existingAge',
-      );
-    }
-
-    if (apiAge > 0) return apiAge;
-    if (computedAge > 0) return computedAge;
-    return 0;
-  }
-
-  ChildProfile? _mergeChildProfileFromApi(
-    Map<String, dynamic> data, {
-    ChildProfile? existing,
-    String? parentId,
-    String? parentEmail,
-  }) {
-    final childId = _parseChildId(data);
-    if (childId == null || childId.isEmpty) return null;
-
-    final now = DateTime.now();
-    final apiName = data['name']?.toString().trim();
-    final existingName = existing?.name;
-    // Don't use existing name if it's the same as the ID (default placeholder)
-    final hasRealName = existingName != null &&
-        existingName.isNotEmpty &&
-        existingName != childId &&
-        existingName.toLowerCase() != 'child';
-    final resolvedName = (apiName != null &&
-            apiName.isNotEmpty &&
-            apiName != childId &&
-            apiName.toLowerCase() != 'child')
-        ? apiName
-        : (hasRealName ? existingName : childId);
-    final age = _resolveAgeFromApi(data, existing);
-    final existingLevel = existing?.level ?? 0;
-    final level =
-        existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
-    final avatar = existing?.avatar ??
-        data['avatar']?.toString() ??
-        _avatarOptions.first.id;
-    final resolvedAvatarPath = existing?.avatarPath.isNotEmpty == true
-        ? existing!.avatarPath
-        : (avatar.isNotEmpty ? avatar : AppConstants.defaultChildAvatar);
-    final picturePassword = (existing?.picturePassword.isNotEmpty ?? false)
-        ? existing!.picturePassword
-        : _parseStringList(data['picture_password']);
-    final createdAt =
-        existing?.createdAt ?? _parseDate(data['created_at'], now);
-    final updatedAt = _parseDate(data['updated_at'], now);
-    final lastSession =
-        existing?.lastSession ?? _parseNullableDate(data['last_session']);
-
-    return ChildProfile(
-      id: childId,
-      name: resolvedName,
-      age: age,
-      avatar: avatar,
-      avatarPath: resolvedAvatarPath,
-      interests: existing?.interests ?? _parseStringList(data['interests']),
-      level: level,
-      xp: existing?.xp ?? _parseInt(data['xp'], 0),
-      streak: existing?.streak ?? _parseInt(data['streak'], 0),
-      favorites: existing?.favorites ?? _parseStringList(data['favorites']),
-      parentId: parentId ?? existing?.parentId ?? 'local',
-      parentEmail: existing?.parentEmail ??
-          parentEmail ??
-          data['parent_email']?.toString(),
-      picturePassword: picturePassword,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      lastSession: lastSession,
-      totalTimeSpent:
-          existing?.totalTimeSpent ?? _parseInt(data['total_time_spent'], 0),
-      activitiesCompleted: existing?.activitiesCompleted ??
-          _parseInt(data['activities_completed'], 0),
-      currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
-      learningStyle:
-          existing?.learningStyle ?? data['learning_style']?.toString(),
-      specialNeeds: existing?.specialNeeds ??
-          _parseNullableStringList(data['special_needs']),
-      accessibilityNeeds: existing?.accessibilityNeeds ??
-          _parseNullableStringList(data['accessibility_needs']),
-    );
-  }
-
-  List<ChildProfile> _dedupeChildren(List<ChildProfile> children) {
-    final seen = <String, ChildProfile>{};
-    for (final child in children) {
-      if (!seen.containsKey(child.id)) {
-        seen[child.id] = child;
-      }
-    }
-    return seen.values.toList();
-  }
-
   Future<ChildProfile?> _ensureLocalChildProfile(
     String childId,
     ChildProfile? childProfile, {
     String? fallbackName,
   }) async {
-    final repo = ref.read(childRepositoryProvider);
-    final existing = childProfile ?? await repo.getChildProfile(childId);
-    final selectedPassword = _selectedPictures.length == 3
-        ? List<String>.from(_selectedPictures)
-        : const <String>[];
-    final resolvedFallback =
-        (fallbackName != null && fallbackName.trim().isNotEmpty)
-            ? fallbackName.trim()
-            : null;
-    final isDefaultName = resolvedFallback != null &&
-        (resolvedFallback == childId || resolvedFallback == 'Child $childId');
-
-    if (existing != null) {
-      var updatedProfile = existing;
-      if ((existing.avatarPath.isEmpty) && (existing.avatar.isNotEmpty)) {
-        updatedProfile = updatedProfile.copyWith(
-          avatarPath: existing.avatar,
-          updatedAt: DateTime.now(),
+    final profile = await ref
+        .read(childProfilesViewServiceProvider)
+        .ensureLocalChildProfile(
+          childId: childId,
+          selectedPictures: _selectedPictures,
+          defaultAvatar: _avatarOptions.first.id,
+          childProfile: childProfile,
+          fallbackName: fallbackName,
         );
-      }
-      if (selectedPassword.isNotEmpty &&
-          !_samePictures(existing.picturePassword, selectedPassword)) {
-        updatedProfile = updatedProfile.copyWith(
-          picturePassword: selectedPassword,
-          updatedAt: DateTime.now(),
-        );
-      }
-      if (resolvedFallback != null &&
-          !isDefaultName &&
-          existing.name != resolvedFallback) {
-        updatedProfile = updatedProfile.copyWith(
-          name: resolvedFallback,
-          updatedAt: DateTime.now(),
-        );
-      }
-      if (updatedProfile != existing) {
-        final saved = await repo.updateChildProfile(updatedProfile);
-        if (saved != null) {
-          _refreshChildren();
-          return saved;
-        }
-      }
-      return updatedProfile;
-    }
-
-    final now = DateTime.now();
-
-    // Ensure we have a valid name - use childId as fallback if needed
-    String finalName;
-    if (childProfile != null &&
-        childProfile.name.isNotEmpty &&
-        childProfile.name != childId &&
-        childProfile.name.toLowerCase() != 'child') {
-      finalName = childProfile.name;
-    } else if (!isDefaultName &&
-        resolvedFallback != null &&
-        resolvedFallback.toLowerCase() != 'child') {
-      finalName = resolvedFallback;
-    } else {
-      // Use child ID as a final fallback to allow login
-      finalName = childId;
-    }
-
-    final newProfile = ChildProfile(
-      id: childId,
-      name: finalName,
-      age: childProfile?.age ?? 0,
-      avatar: childProfile?.avatar ?? _avatarOptions.first.id,
-      avatarPath: childProfile?.avatarPath.isNotEmpty == true
-          ? childProfile!.avatarPath
-          : (childProfile?.avatar ?? _avatarOptions.first.id),
-      interests: childProfile?.interests ?? const [],
-      level: childProfile?.level ?? 1,
-      xp: childProfile?.xp ?? 0,
-      streak: childProfile?.streak ?? 0,
-      favorites: childProfile?.favorites ?? const [],
-      parentId: childProfile?.parentId ?? 'local',
-      parentEmail: childProfile?.parentEmail,
-      picturePassword: selectedPassword,
-      createdAt: childProfile?.createdAt ?? now,
-      updatedAt: now,
-      lastSession: childProfile?.lastSession,
-      totalTimeSpent: childProfile?.totalTimeSpent ?? 0,
-      activitiesCompleted: childProfile?.activitiesCompleted ?? 0,
-      currentMood: childProfile?.currentMood,
-      learningStyle: childProfile?.learningStyle,
-      specialNeeds: childProfile?.specialNeeds,
-      accessibilityNeeds: childProfile?.accessibilityNeeds,
-    );
-
-    final created = await repo.createChildProfile(newProfile);
-    if (created != null) {
+    if (profile != null) {
       _refreshChildren();
     }
-    return created;
+    return profile;
   }
 
   Future<void> _loginWithChildId({
@@ -1338,7 +974,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         elevation: 0,
         leading: _isLoading
             ? const SizedBox.shrink()
-            : const AppBackButton(
+            : AppBackButton(
                 fallback: Routes.selectUserType,
                 icon: Icons.arrow_back,
                 iconSize: 24,
@@ -1386,8 +1022,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                     return _buildErrorState(l10n);
                   }
 
-                  final children =
-                      _dedupeChildren(snapshot.data ?? const <ChildProfile>[]);
+                  final children = ref
+                      .read(childProfilesViewServiceProvider)
+                      .dedupeChildren(snapshot.data ?? const <ChildProfile>[]);
                   return _buildLoginFlow(l10n, children);
                 },
               ),
@@ -1531,7 +1168,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 24),
-        _buildPicturePasswordPicker(l10n),
+        ChildLoginPicturePasswordPicker(
+          l10n: l10n,
+          selectedPictures: _selectedPictures,
+          pictureOptions: _pictureOptions,
+          onTogglePicture: _togglePicture,
+        ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
@@ -1680,7 +1322,12 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        _buildPicturePasswordPicker(l10n),
+        ChildLoginPicturePasswordPicker(
+          l10n: l10n,
+          selectedPictures: _selectedPictures,
+          pictureOptions: _pictureOptions,
+          onTogglePicture: _togglePicture,
+        ),
         const SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
@@ -1719,67 +1366,6 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 _isLoading ? null : () => context.go('/child/forgot-password'),
             child: Text(l10n.forgotPassword),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPicturePasswordPicker(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.selectPicturePassword,
-          style: TextStyle(
-            fontSize: AppConstants.fontSize,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        PicturePasswordRow(
-          picturePassword: _selectedPictures,
-          size: 20,
-          showPlaceholders: true,
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: _pictureOptions.length,
-          itemBuilder: (context, index) {
-            final option = _pictureOptions[index];
-            final isSelected = _selectedPictures.contains(option.id);
-            final optionColor = resolvePicturePasswordColor(context, option);
-            return InkWell(
-              onTap: () => _togglePicture(option.id),
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? optionColor.withValues(alpha: 0.2)
-                      : Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected
-                        ? optionColor
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    width: 2,
-                  ),
-                ),
-                child: Icon(
-                  option.icon,
-                  size: 28,
-                  color: optionColor,
-                ),
-              ),
-            );
-          },
         ),
       ],
     );

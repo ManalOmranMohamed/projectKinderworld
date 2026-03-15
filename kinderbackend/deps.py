@@ -15,6 +15,13 @@ from models import User
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False, bearerFormat="JWT")
 
+
+def _coerce_token_version(raw_token_version: object) -> int | None:
+    try:
+        return int(raw_token_version)
+    except (TypeError, ValueError):
+        return None
+
 def get_db():
     db = SessionLocal()
     try:
@@ -55,15 +62,20 @@ def get_current_user(
         if token_type == "child_session":
             raise unauthorized("Invalid token type")
         user_id = payload.get("sub")
+        token_version = _coerce_token_version(payload.get("token_version"))
     except JWTError:
         raise unauthorized("Invalid token")
 
     if not user_id:
         raise unauthorized("Invalid token payload")
+    if token_version is None:
+        raise unauthorized("Token has been revoked")
 
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise not_found("User not found")
+    if token_version != int(user.token_version or 0):
+        raise unauthorized("Token has been revoked")
     return user
 
 

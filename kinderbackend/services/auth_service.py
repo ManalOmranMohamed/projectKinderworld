@@ -39,7 +39,7 @@ class AuthService:
         normalized_email = normalize_email(payload.email)
         validate_email_domain(normalized_email)
 
-        if payload.password != payload.confirmPassword:
+        if payload.password != payload.confirm_password:
             raise HTTPException(status_code=400, detail="Passwords do not match")
 
         if db.query(User).filter(func.lower(User.email) == normalized_email).first():
@@ -61,7 +61,7 @@ class AuthService:
         db.refresh(user)
 
         return {
-            "access_token": create_access_token(str(user.id)),
+            "access_token": create_access_token(str(user.id), user.token_version),
             "refresh_token": create_refresh_token(str(user.id), user.token_version),
             "token_type": "bearer",
             "user": user_to_json(user),
@@ -80,7 +80,7 @@ class AuthService:
         db.refresh(user)
 
         return {
-            "access_token": create_access_token(str(user.id)),
+            "access_token": create_access_token(str(user.id), user.token_version),
             "refresh_token": create_refresh_token(str(user.id), user.token_version),
             "token_type": "bearer",
             "user": user_to_json(user),
@@ -100,7 +100,10 @@ class AuthService:
         if int(token_version) != int(getattr(user, "token_version", 0)):
             raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-        return {"access_token": create_access_token(str(user_id)), "token_type": "bearer"}
+        return {
+            "access_token": create_access_token(str(user_id), user.token_version),
+            "token_type": "bearer",
+        }
 
     def update_profile(self, *, payload: Any, db: Session, user: User) -> dict:
         try:
@@ -125,14 +128,14 @@ class AuthService:
         logger.debug("Change password request from user %s", user_id)
 
         try:
-            if not verify_password(payload.currentPassword, user.password_hash):
+            if not verify_password(payload.current_password, user.password_hash):
                 logger.warning("Invalid current password attempt for user %s", user_id)
                 raise HTTPException(
                     status_code=401,
                     detail="Current password is incorrect",
                 )
 
-            is_valid, error_msg = core_validate_password_policy(payload.newPassword)
+            is_valid, error_msg = core_validate_password_policy(payload.new_password)
             if not is_valid:
                 logger.debug(
                     "Password policy validation failed for user %s: %s",
@@ -141,14 +144,14 @@ class AuthService:
                 )
                 raise HTTPException(status_code=422, detail=error_msg)
 
-            if payload.newPassword != payload.confirmPassword:
+            if payload.new_password != payload.confirm_password:
                 logger.debug("Password confirmation mismatch for user %s", user_id)
                 raise HTTPException(
                     status_code=400,
                     detail="New password and confirmation do not match",
                 )
 
-            user.password_hash = hash_password(payload.newPassword)
+            user.password_hash = hash_password(payload.new_password)
             user.token_version = (user.token_version or 0) + 1
             db.add(user)
             db.commit()

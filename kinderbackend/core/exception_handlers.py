@@ -11,6 +11,19 @@ from core.errors import AppException
 logger = logging.getLogger(__name__)
 
 
+def _normalize_validation_errors(errors: list[dict]) -> list[dict]:
+    def _normalize(value):
+        if isinstance(value, dict):
+            return {str(key): _normalize(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [_normalize(item) for item in value]
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        return str(value)
+
+    return [_normalize(error) for error in errors]
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     def _request_id_headers(request: Request) -> dict[str, str]:
         request_id = getattr(request.state, "request_id", None)
@@ -38,9 +51,10 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def request_validation_handler(request: Request, exc: RequestValidationError):
+        normalized_errors = _normalize_validation_errors(exc.errors())
         return JSONResponse(
             status_code=422,
-            content={"detail": exc.errors()},
+            content={"detail": normalized_errors},
             headers=_request_id_headers(request),
         )
 

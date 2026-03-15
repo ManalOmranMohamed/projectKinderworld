@@ -45,9 +45,13 @@ def decode_token(token: str) -> dict:
         raise JWTError("No decode secrets configured")
     raise last_error
 
-def create_access_token(user_id: str, token_version: Optional[int] = None) -> str:
-    extra_claims = {"token_version": token_version} if token_version is not None else None
-    return create_token(user_id, minutes=60, extra_claims=extra_claims)
+def create_access_token(user_id: str, token_version: Optional[int] = 0) -> str:
+    resolved_token_version = 0 if token_version is None else int(token_version)
+    return create_token(
+        user_id,
+        minutes=60,
+        extra_claims={"token_version": resolved_token_version},
+    )
 
 def create_refresh_token(user_id: str, token_version: int = 0) -> str:
     return create_token(user_id, minutes=60 * 24 * 7, extra_claims={"token_version": token_version})  # 7 days

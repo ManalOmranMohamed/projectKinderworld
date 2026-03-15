@@ -8,6 +8,7 @@ import 'package:kinder_world/core/providers/cache_provider.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 
@@ -99,7 +100,7 @@ class ChildrenCacheService {
       final apiChildren = await _childrenApi.fetchChildren();
       final writeOperations = <Future<Object?>>[];
       for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
+        final childId = parseChildId(childData);
         if (childId == null || childId.isEmpty) continue;
         final existing = localById[childId];
         final merged = _mergeChildProfileFromApi(
@@ -175,11 +176,6 @@ class ChildrenCacheService {
       key: parentId,
       removePayload: false,
     );
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final raw = data['id'] ?? data['child_id'] ?? data['childId'];
-    return raw?.toString();
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -271,7 +267,7 @@ class ChildrenCacheService {
     String? parentId,
     String? parentEmail,
   }) {
-    final childId = _parseChildId(data);
+    final childId = parseChildId(data);
     if (childId == null || childId.isEmpty) return null;
 
     final now = DateTime.now();

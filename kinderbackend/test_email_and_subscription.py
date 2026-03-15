@@ -5,53 +5,13 @@ Run with: pytest test_email_and_subscription.py -v
 """
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 
 from auth import create_access_token, hash_password
-from database import Base, SessionLocal
-from main import app
 from models import User
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 
 
-@pytest.fixture(scope="session")
-def test_db():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-    yield session
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    def override_get_db():
-        return db
-
-    from deps import get_db
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-
-def test_register_normalizes_email(client: TestClient, db):
+def test_register_normalizes_email(client, db):
     response = client.post(
         "/auth/register",
         json={
@@ -68,7 +28,7 @@ def test_register_normalizes_email(client: TestClient, db):
     assert user.email == "case.user@gmail.com"
 
 
-def test_register_accepts_non_gmail_when_no_allowlist(client: TestClient, db):
+def test_register_accepts_non_gmail_when_no_allowlist(client, db):
     response = client.post(
         "/auth/register",
         json={
@@ -85,7 +45,7 @@ def test_register_accepts_non_gmail_when_no_allowlist(client: TestClient, db):
     assert user.email == "person@yahoo.com"
 
 
-def test_register_respects_email_allowlist_policy(client: TestClient, monkeypatch):
+def test_register_respects_email_allowlist_policy(client, monkeypatch):
     monkeypatch.setenv("EMAIL_DOMAIN_ALLOWLIST", "example.com")
     monkeypatch.delenv("EMAIL_DOMAIN_DENYLIST", raising=False)
 
@@ -113,7 +73,7 @@ def test_register_respects_email_allowlist_policy(client: TestClient, monkeypatc
     assert allowed.status_code == 200
 
 
-def test_login_accepts_uppercase_email(client: TestClient):
+def test_login_accepts_uppercase_email(client):
     register = client.post(
         "/auth/register",
         json={
@@ -136,7 +96,7 @@ def test_login_accepts_uppercase_email(client: TestClient):
     assert "access_token" in response.json()
 
 
-def test_subscription_endpoints(client: TestClient, db):
+def test_subscription_endpoints(client, db):
     user = User(
         email="sub@example.com",
         password_hash=hash_password("Password123!"),

@@ -142,6 +142,11 @@ Future<ProviderContainer> _pumpApp(
   return container;
 }
 
+Future<void> _pumpRouter(WidgetTester tester, [Duration duration = const Duration(milliseconds: 350)]) async {
+  await tester.pump();
+  await tester.pump(duration);
+}
+
 void main() {
   testWidgets('admin login screen renders and submits successfully', (
     WidgetTester tester,
@@ -151,7 +156,7 @@ void main() {
     final router = container.read(routerProvider);
 
     router.go(Routes.adminLogin);
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester);
 
     expect(find.byType(AdminLoginScreen), findsOneWidget);
     expect(find.text('Admin Portal'), findsOneWidget);
@@ -161,7 +166,7 @@ void main() {
         find.byType(TextFormField).at(0), 'admin@kinderworld.app');
     await tester.enterText(find.byType(TextFormField).at(1), 'Admin@123456');
     await tester.tap(find.text('Sign In'));
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
 
     expect(repo.lastLoginEmail, 'admin@kinderworld.app');
     expect(repo.lastLoginPassword, 'Admin@123456');
@@ -178,7 +183,7 @@ void main() {
     final router = container.read(routerProvider);
 
     router.go(Routes.adminDashboard);
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
 
     expect(find.byType(AdminLoginScreen), findsOneWidget);
     expect(
@@ -201,7 +206,7 @@ void main() {
     router.go(Routes.adminDashboard);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 20));
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
 
     expect(find.byType(AdminDashboardScreen), findsOneWidget);
     expect(router.routerDelegate.currentConfiguration.uri.path,
@@ -218,7 +223,7 @@ void main() {
     final router = container.read(routerProvider);
 
     router.go(Routes.adminDashboard);
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
 
     expect(find.byType(AdminDashboardScreen), findsOneWidget);
     expect(find.text('Admin Dashboard'), findsWidgets);
@@ -235,9 +240,10 @@ void main() {
     final router = container.read(routerProvider);
 
     router.go(Routes.adminDashboard);
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
     await tester.tap(find.byTooltip('Menu'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
     final drawerFinder = find.byType(Drawer);
 
@@ -271,13 +277,15 @@ void main() {
     final router = container.read(routerProvider);
 
     router.go(Routes.adminDashboard);
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
     await tester.tap(find.byTooltip('Menu'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text('Logout'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.widgetWithText(FilledButton, 'Logout'));
-    await tester.pumpAndSettle();
+    await _pumpRouter(tester, const Duration(milliseconds: 600));
 
     expect(repo.logoutCalled, isTrue);
     expect(find.byType(AdminLoginScreen), findsOneWidget);

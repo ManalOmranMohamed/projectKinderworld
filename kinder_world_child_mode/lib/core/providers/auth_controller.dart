@@ -50,7 +50,6 @@ class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
   final Logger _logger;
   final AppNavigationController _navigationController;
-  static const String _premiumEmail = 'w@w.w';
 
   AuthController({
     required AuthRepository authRepository,
@@ -91,9 +90,8 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final normalizedEmail = email.trim().toLowerCase();
       final user = await _authRepository.loginParent(
-        email: normalizedEmail,
+        email: email.trim().toLowerCase(),
         password: password,
       );
 
@@ -103,7 +101,6 @@ class AuthController extends StateNotifier<AuthState> {
           isAuthenticated: true,
           isLoading: false,
         );
-        await _applyPremiumOverride(normalizedEmail);
         _logger.d('Parent login successful: ${user.id}');
         return true;
       } else {
@@ -139,10 +136,9 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final normalizedEmail = email.trim().toLowerCase();
       final user = await _authRepository.registerParent(
         name: name,
-        email: normalizedEmail,
+        email: email.trim().toLowerCase(),
         password: password,
         confirmPassword: confirmPassword,
       );
@@ -153,7 +149,6 @@ class AuthController extends StateNotifier<AuthState> {
           isAuthenticated: true,
           isLoading: false,
         );
-        await _applyPremiumOverride(normalizedEmail);
         _logger.d('Parent registration successful: ${user.id}');
         return true;
       } else {
@@ -430,11 +425,6 @@ class AuthController extends StateNotifier<AuthState> {
         await setPremiumStatus(true);
         break;
     }
-  }
-
-  Future<void> _applyPremiumOverride(String email) async {
-    final normalized = email.trim().toLowerCase();
-    await setPremiumStatus(normalized == _premiumEmail);
   }
 }
 

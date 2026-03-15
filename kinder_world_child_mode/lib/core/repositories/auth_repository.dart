@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
@@ -110,6 +112,8 @@ class AuthRepository {
     await _secureStorage.saveUserId(user.id);
     await _secureStorage.saveUserRole(user.role);
     await _secureStorage.saveUserEmail(user.email);
+    await _secureStorage.clearChildSession();
+    await _secureStorage.clearParentPinVerification();
 
     return user;
   }
@@ -335,6 +339,26 @@ class AuthRepository {
     return e.message;
   }
 
+  bool _tokenLooksExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return false;
+      final normalized = base64Url.normalize(parts[1]);
+      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
+      if (payload is! Map<String, dynamic>) return false;
+      final exp = payload['exp'];
+      final expSeconds = exp is int ? exp : int.tryParse(exp?.toString() ?? '');
+      if (expSeconds == null) return false;
+      final expiresAt = DateTime.fromMillisecondsSinceEpoch(
+        expSeconds * 1000,
+        isUtc: true,
+      );
+      return expiresAt.isBefore(DateTime.now().toUtc());
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ==================== CHILD AUTHENTICATION ====================
 
   /// Login child via picture password
@@ -379,6 +403,9 @@ class AuthRepository {
         isActive: true,
       );
 
+      await _secureStorage.deleteRefreshToken();
+      await _secureStorage.deleteUserEmail();
+      await _secureStorage.clearParentPinVerification();
       await _secureStorage.saveAuthToken('child_session_$childId');
       await _secureStorage.saveUserId(childId);
       await _secureStorage.saveUserRole(UserRoles.child);
@@ -831,9 +858,9 @@ class AuthRepository {
       final token = await _secureStorage.getAuthToken();
 
       if (token == null || token.isEmpty) return false;
+      if (token.startsWith('child_session_')) return true;
 
-      // For now, just check if token exists
-      return true;
+      return !_tokenLooksExpired(token);
     } catch (e) {
       _logger.e('Error validating token: $e');
       return false;

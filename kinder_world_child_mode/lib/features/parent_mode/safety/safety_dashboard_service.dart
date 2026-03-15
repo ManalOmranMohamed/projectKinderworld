@@ -14,6 +14,7 @@ import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/repositories/progress_repository.dart';
 import 'package:kinder_world/core/services/privacy_service.dart';
 import 'package:kinder_world/core/services/support_service.dart';
+import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:kinder_world/core/providers/support_controller.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_entry.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_service.dart';
@@ -304,7 +305,7 @@ class SafetyDashboardService {
     try {
       final response =
           await _ref.read(networkServiceProvider).get<dynamic>('/children');
-      final rawChildren = _extractChildrenList(response.data);
+      final rawChildren = extractChildrenList(response.data);
       for (final data in rawChildren) {
         final child = _mergeChildProfile(
           data,
@@ -325,26 +326,6 @@ class SafetyDashboardService {
     }
 
     return childrenById.values.toList();
-  }
-
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return const [];
   }
 
   ChildProfile? _mergeChildProfile(

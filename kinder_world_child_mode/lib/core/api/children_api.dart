@@ -1,4 +1,5 @@
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/utils/children_api_parsing.dart';
 
 class ChildrenApi {
   const ChildrenApi(this._network);
@@ -7,7 +8,7 @@ class ChildrenApi {
 
   Future<List<Map<String, dynamic>>> fetchChildren() async {
     final response = await _network.get<dynamic>('/children');
-    return _extractChildrenList(response.data);
+    return extractChildrenList(response.data);
   }
 
   Future<Map<String, dynamic>> createChild({
@@ -57,25 +58,5 @@ class ChildrenApi {
       '/children/${int.tryParse(childId) ?? childId}',
     );
     return Map<String, dynamic>.from(response.data ?? const {});
-  }
-
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return const [];
   }
 }

@@ -1,14 +1,13 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
-import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/services/child_profiles_view_service.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/app.dart';
@@ -94,280 +93,28 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     });
   }
 
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return [];
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final id = data['id'] ?? data['child_id'] ?? data['childId'];
-    if (id == null) return null;
-    return id.toString();
-  }
-
-  int _parseInt(dynamic value, int fallback) {
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  DateTime _parseDate(dynamic value, DateTime fallback) {
-    if (value == null) return fallback;
-    if (value is DateTime) return value;
-    if (value is String) {
-      final parsed = DateTime.tryParse(value);
-      return parsed ?? fallback;
-    }
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return fallback;
-  }
-
-  DateTime? _parseNullableDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  DateTime? _parseBirthDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  int _ageFromBirthDate(DateTime? birthDate) {
-    if (birthDate == null) return 0;
-    final now = DateTime.now();
-    var age = now.year - birthDate.year;
-    final hasHadBirthday = (now.month > birthDate.month) ||
-        (now.month == birthDate.month && now.day >= birthDate.day);
-    if (!hasHadBirthday) age -= 1;
-    return age.clamp(0, 120);
-  }
-
-  int _resolveAgeFromApi(Map<String, dynamic> data, ChildProfile? existing) {
-    final apiAge = _parseInt(data['age'], 0);
-    final birthDate = _parseBirthDate(
-      data['birthdate'] ??
-          data['birth_date'] ??
-          data['date_of_birth'] ??
-          data['dob'],
-    );
-    final computedAge = _ageFromBirthDate(birthDate);
-
-    if (kDebugMode) {
-      debugPrint(
-        'Child age resolve: apiAge=$apiAge, birthDate=$birthDate, computedAge=$computedAge, existing=${existing?.age}',
-      );
-    }
-
-    if (apiAge > 0) return apiAge;
-    if (computedAge > 0) return computedAge;
-    return existing?.age ?? 0;
-  }
-
-  List<String> _parseStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return const [];
-  }
-
-  List<String>? _parseNullableStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return null;
-  }
-
-  ChildProfile? _mergeChildProfileFromApi(
-    Map<String, dynamic> data, {
-    ChildProfile? existing,
-    required String parentId,
-    String? parentEmail,
-  }) {
-    final childId = _parseChildId(data);
-    if (childId == null || childId.isEmpty) return null;
-
-    final now = DateTime.now();
-    final apiName = data['name']?.toString().trim();
-    final resolvedName = (apiName != null && apiName.isNotEmpty)
-        ? apiName
-        : (existing?.name ?? childId);
-    final age = _resolveAgeFromApi(data, existing);
-    final existingLevel = existing?.level ?? 0;
-    final level =
-        existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
-    final avatar = existing?.avatar ?? data['avatar']?.toString() ?? 'avatar_1';
-    final resolvedAvatarPath = existing?.avatarPath.isNotEmpty == true
-        ? existing!.avatarPath
-        : (avatar.startsWith('assets/')
-            ? avatar
-            : AppConstants.defaultChildAvatar);
-    final picturePassword = (existing?.picturePassword.isNotEmpty ?? false)
-        ? existing!.picturePassword
-        : _parseStringList(data['picture_password']);
-    final createdAt =
-        existing?.createdAt ?? _parseDate(data['created_at'], now);
-    final updatedAt = _parseDate(data['updated_at'], now);
-    final lastSession =
-        existing?.lastSession ?? _parseNullableDate(data['last_session']);
-
-    return ChildProfile(
-      id: childId,
-      name: resolvedName,
-      age: age,
-      avatar: avatar,
-      avatarPath: resolvedAvatarPath,
-      interests: existing?.interests ?? _parseStringList(data['interests']),
-      level: level,
-      xp: existing?.xp ?? _parseInt(data['xp'], 0),
-      streak: existing?.streak ?? _parseInt(data['streak'], 0),
-      favorites: existing?.favorites ?? _parseStringList(data['favorites']),
-      parentId: parentId,
-      parentEmail: existing?.parentEmail ??
-          parentEmail ??
-          data['parent_email']?.toString(),
-      picturePassword: picturePassword,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      lastSession: lastSession,
-      totalTimeSpent:
-          existing?.totalTimeSpent ?? _parseInt(data['total_time_spent'], 0),
-      activitiesCompleted: existing?.activitiesCompleted ??
-          _parseInt(data['activities_completed'], 0),
-      currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
-      learningStyle:
-          existing?.learningStyle ?? data['learning_style']?.toString(),
-      specialNeeds: existing?.specialNeeds ??
-          _parseNullableStringList(data['special_needs']),
-      accessibilityNeeds: existing?.accessibilityNeeds ??
-          _parseNullableStringList(data['accessibility_needs']),
-    );
-  }
-
   Future<List<ChildProfile>> _loadChildrenForParent(String parentId) async {
-    final repo = ref.read(childRepositoryProvider);
     final secureStorage = ref.read(secureStorageProvider);
     final requestId = ++_childrenRequestId;
     final parentEmail = secureStorage.hasCachedUserEmail
         ? secureStorage.cachedUserEmail
         : await secureStorage.getParentEmail();
-    if (parentEmail != null && parentEmail.isNotEmpty) {
-      await repo.linkChildrenToParent(
-        parentId: parentId,
-        parentEmail: parentEmail,
-      );
-    }
-    final localChildren = await repo.getChildProfilesForParent(parentId);
-    final childrenById = {
-      for (final child in localChildren) child.id: child,
-    };
-
-    final token = secureStorage.hasCachedAuthToken
-        ? secureStorage.cachedAuthToken
-        : await secureStorage.getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
-      return childrenById.values.toList();
-    }
-
-    unawaited(
-      _syncRemoteChildrenForParent(
-        requestId: requestId,
-        parentId: parentId,
-        parentEmail: parentEmail,
-        initialChildren: childrenById,
-      ),
-    );
-
-    return childrenById.values.toList();
-  }
-
-  Future<void> _syncRemoteChildrenForParent({
-    required int requestId,
-    required String parentId,
-    required String? parentEmail,
-    required Map<String, ChildProfile> initialChildren,
-  }) async {
-    final repo = ref.read(childRepositoryProvider);
-    final childrenById = Map<String, ChildProfile>.from(initialChildren);
-
-    try {
-      final response = await ref.read(networkServiceProvider).get<dynamic>(
-            '/children',
-          );
-      final apiChildren = _extractChildrenList(response.data);
-      final writeOperations = <Future<Object?>>[];
-      for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
-        if (childId == null || childId.isEmpty) continue;
-        final existing = childrenById[childId];
-        final merged = _mergeChildProfileFromApi(
-          childData,
+    return ref.read(childProfilesViewServiceProvider).loadParentChildren(
           parentId: parentId,
           parentEmail: parentEmail,
-          existing: existing,
+          onRemoteSynced: (children) {
+            if (!mounted ||
+                requestId != _childrenRequestId ||
+                _cachedParentId != parentId) {
+              return;
+            }
+            setState(() {
+              _childrenFuture = Future<List<ChildProfile>>.value(children);
+              _recentActivitiesFuture = null;
+              _recentActivitiesKey = null;
+            });
+          },
         );
-        if (merged == null) continue;
-        childrenById[childId] = merged;
-        writeOperations.add(
-          existing == null
-              ? repo.createChildProfile(merged)
-              : repo.updateChildProfile(merged),
-        );
-      }
-      if (writeOperations.isNotEmpty) {
-        await Future.wait(writeOperations);
-      }
-      if (!mounted ||
-          requestId != _childrenRequestId ||
-          _cachedParentId != parentId) {
-        return;
-      }
-      setState(() {
-        _childrenFuture = Future<List<ChildProfile>>.value(
-          childrenById.values.toList(growable: false),
-        );
-        _recentActivitiesFuture = null;
-        _recentActivitiesKey = null;
-      });
-    } catch (_) {
-      // Keep showing the local snapshot when the remote sync fails.
-    }
   }
 
   Future<List<ProgressRecord>> _recentActivitiesForChildren(

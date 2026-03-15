@@ -1,5 +1,5 @@
 ﻿from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
@@ -26,15 +26,22 @@ class ProfileUpdate(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    currentPassword: str = Field(..., min_length=1, alias="current_password")
-    newPassword: str = Field(
-        ...,
-        alias="new_password",
-        description="Must contain uppercase, digit, and special character",
-    )
-    confirmPassword: str = Field(..., alias="confirm_password")
-
     model_config = ConfigDict(populate_by_name=True)
+
+    current_password: str = Field(
+        ...,
+        min_length=1,
+        validation_alias=AliasChoices("current_password", "currentPassword"),
+    )
+    new_password: str = Field(
+        ...,
+        description="Must contain uppercase, digit, and special character",
+        validation_alias=AliasChoices("new_password", "newPassword"),
+    )
+    confirm_password: str = Field(
+        ...,
+        validation_alias=AliasChoices("confirm_password", "confirmPassword"),
+    )
 
 
 class ChangePasswordResponse(BaseModel):

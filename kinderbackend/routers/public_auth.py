@@ -23,13 +23,14 @@ from services.child_service import (
 )
 
 router = APIRouter()
+auth_rate_limit_check = Depends(auth_rate_limit())
 
 
 @router.post("/auth/register")
 def register(
     payload: RegisterIn,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = auth_rate_limit_check,
 ):
     return register_parent(payload, db)
 
@@ -38,7 +39,7 @@ def register(
 def login(
     payload: LoginIn,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = auth_rate_limit_check,
 ):
     return login_parent(payload, db)
 
@@ -47,7 +48,7 @@ def login(
 def refresh(
     payload: RefreshIn,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = auth_rate_limit_check,
 ):
     return refresh_parent_access_token(payload, db)
 
@@ -56,7 +57,7 @@ def refresh(
 def child_register(
     payload: ChildRegisterIn,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = auth_rate_limit_check,
 ):
     return register_child(payload, db)
 
@@ -66,7 +67,7 @@ def child_login(
     payload: ChildLoginIn,
     request: Request,
     db: Session = Depends(get_db),
-    rate_limit_check: None = Depends(auth_rate_limit),
+    rate_limit_check: None = auth_rate_limit_check,
 ):
     client_ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("User-Agent")

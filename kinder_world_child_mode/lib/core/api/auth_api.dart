@@ -59,7 +59,7 @@ class AuthApi {
         'name': name,
         'email': email.trim().toLowerCase(),
         'password': password,
-        'confirmPassword': confirmPassword,
+        'confirm_password': confirmPassword,
       },
     );
     return _toSessionPayload(response.data);
@@ -103,9 +103,9 @@ class AuthApi {
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/change-password',
       data: {
-        'currentPassword': currentPassword,
-        'newPassword': newPassword,
-        'confirmPassword': confirmPassword,
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
       },
     );
     return Map<String, dynamic>.from(response.data ?? const {});

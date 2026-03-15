@@ -198,6 +198,19 @@ class ChildService:
         parent = db.query(User).filter(User.id == int(parent_id)).first()
         if not parent:
             raise not_found("Parent not found")
+        token = authorization.replace("Bearer ", "").strip() if authorization else ""
+        try:
+            payload = decode_token(token)
+        except JWTError:
+            raise unauthorized("Invalid token")
+
+        try:
+            token_version = int(payload.get("token_version"))
+        except (TypeError, ValueError):
+            raise unauthorized("Token has been revoked")
+
+        if token_version != int(parent.token_version or 0):
+            raise unauthorized("Token has been revoked")
         return parent
 
     def enforce_child_limit(self, *, parent: User, db: Session) -> None:
@@ -541,12 +554,12 @@ class ChildService:
             raise unauthorized("Invalid credentials")
 
         stored = child.picture_password or []
-        if stored != payload.currentPicturePassword:
+        if stored != payload.current_picture_password:
             raise unauthorized("Current picture password is incorrect")
 
-        validate_picture_password_length(payload.newPicturePassword, length=3)
+        validate_picture_password_length(payload.new_picture_password, length=3)
 
-        child.picture_password = payload.newPicturePassword
+        child.picture_password = payload.new_picture_password
         child.updated_at = datetime.utcnow()
         db.add(child)
         db.commit()

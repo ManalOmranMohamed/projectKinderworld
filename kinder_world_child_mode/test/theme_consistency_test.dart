@@ -2,16 +2,113 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kinder_world/core/models/admin_analytics_overview.dart';
+import 'package:kinder_world/core/models/admin_audit_log.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/admin_subscription_models.dart';
+import 'package:kinder_world/core/models/admin_support_ticket.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
+import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_home_tab.dart';
+import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/app_core/onboarding_screen.dart';
 import 'package:kinder_world/features/app_core/welcome_screen.dart';
+import 'package:logger/logger.dart';
+
+class _TestSecureStorage extends SecureStorage {
+  @override
+  Future<String?> getAuthToken() async => null;
+
+  @override
+  Future<String?> getUserRole() async => null;
+
+  @override
+  Future<String?> getChildSession() async => null;
+}
+
+class _FakeAdminManagementRepository extends AdminManagementRepository {
+  _FakeAdminManagementRepository()
+      : super(
+          network: NetworkService(
+            secureStorage: _TestSecureStorage(),
+            logger: Logger(),
+          ),
+          storage: _TestSecureStorage(),
+        );
+
+  @override
+  Future<AdminAnalyticsOverview> fetchAnalyticsOverview() async {
+    return const AdminAnalyticsOverview(
+      kpis: {
+        'total_users': 4,
+        'active_children': 2,
+        'open_tickets': 0,
+      },
+      subscriptionsByPlan: {},
+      paidSubscriptions: 1,
+      freeSubscriptions: 3,
+      usageSummary: {},
+      recentTickets: [],
+    );
+  }
+
+  @override
+  Future<AdminPagedResponse<AdminAuditLog>> fetchAuditLogs({
+    String adminId = '',
+    String action = '',
+    String dateFrom = '',
+    String dateTo = '',
+    int page = 1,
+  }) async {
+    return const AdminPagedResponse<AdminAuditLog>(items: [], pagination: {});
+  }
+
+  @override
+  Future<AdminPagedResponse<AdminSupportTicket>> fetchSupportTickets({
+    String status = 'all',
+    String category = '',
+    int page = 1,
+  }) async {
+    return const AdminPagedResponse<AdminSupportTicket>(
+      items: [],
+      pagination: {},
+    );
+  }
+
+  @override
+  Future<AdminPagedResponse<AdminSubscriptionRecord>> fetchSubscriptions({
+    String search = '',
+    String status = '',
+    String plan = '',
+    int page = 1,
+  }) async {
+    return const AdminPagedResponse<AdminSubscriptionRecord>(
+      items: [],
+      pagination: {},
+    );
+  }
+
+  @override
+  Future<AdminPagedResponse<AdminCmsContent>> fetchContents({
+    String search = '',
+    String status = 'all',
+    int? categoryId,
+    String contentType = '',
+    int page = 1,
+  }) async {
+    return const AdminPagedResponse<AdminCmsContent>(
+      items: [],
+      pagination: {},
+    );
+  }
+}
 
 Future<void> _pumpWithTheme(
   WidgetTester tester, {
@@ -128,6 +225,8 @@ void main() {
       theme: theme,
       overrides: [
         currentAdminProvider.overrideWithValue(admin),
+        adminManagementRepositoryProvider
+            .overrideWithValue(_FakeAdminManagementRepository()),
       ],
       child: const Scaffold(body: AdminHomeTab()),
     );

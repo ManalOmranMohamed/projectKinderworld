@@ -1,76 +1,16 @@
 from __future__ import annotations
 
 import admin_models  # noqa: F401
-from fastapi.testclient import TestClient
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 
-from auth import create_access_token, hash_password
-from database import Base, SessionLocal
-from main import app
-from models import SupportTicket, User
+from auth import hash_password
+from models import SupportTicket
 
 
-@pytest.fixture(scope="session")
-def test_db():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-    yield session
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    from deps import get_db
-
-    def override_get_db():
-        return db
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
-
-
-def _create_parent(db, email: str = "pin.parent@gmail.com") -> User:
-    user = User(
-        email=email,
-        password_hash=hash_password("Password123!"),
-        name="Pin Parent",
-        role="parent",
-        is_active=True,
-        plan="FREE",
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-def _headers(user: User) -> dict[str, str]:
-    token = create_access_token(str(user.id), getattr(user, "token_version", 0))
-    return {"Authorization": f"Bearer {token}"}
-
-
-def test_parent_pin_status_set_verify_change_and_reset_request(client: TestClient, db):
-    user = _create_parent(db)
-    headers = _headers(user)
+def test_parent_pin_status_set_verify_change_and_reset_request(
+    client, db, create_parent, auth_headers
+):
+    user = create_parent(email="pin.parent@gmail.com", name="Pin Parent", plan="FREE")
+    headers = auth_headers(user)
 
     status_before = client.get("/auth/parent-pin/status", headers=headers)
     assert status_before.status_code == 200
@@ -145,13 +85,15 @@ def test_parent_pin_status_set_verify_change_and_reset_request(client: TestClien
     assert ticket.subject == "Parent PIN reset request"
 
 
-def test_parent_pin_lockout_after_repeated_failures(client: TestClient, db):
-    user = _create_parent(db, email="lock.parent@gmail.com")
+def test_parent_pin_lockout_after_repeated_failures(
+    client, db, create_parent, auth_headers
+):
+    user = create_parent(email="lock.parent@gmail.com", name="Pin Parent", plan="FREE")
     user.parent_pin_hash = hash_password("2468")
     db.add(user)
     db.commit()
     db.refresh(user)
-    headers = _headers(user)
+    headers = auth_headers(user)
 
     for _ in range(4):
         response = client.post(

@@ -7,51 +7,10 @@ from __future__ import annotations
 
 import admin_models  # noqa: F401
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 
 from auth import create_access_token, create_refresh_token, hash_password
-from database import Base, SessionLocal
-from main import app
 from models import Notification, PrivacySetting, SupportTicket, User
 from plan_service import PLAN_FAMILY_PLUS, PLAN_FREE, PLAN_PREMIUM
-
-
-@pytest.fixture(scope="session")
-def test_db():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-    yield session
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    from deps import get_db
-
-    def override_get_db():
-        return db
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 def _auth_header(user: User) -> dict[str, str]:
@@ -109,7 +68,7 @@ def _create_notification(db, *, user_id: int, title: str, is_read: bool = False)
         ("get", "/subscription/me", None),
     ],
 )
-def test_parent_protected_endpoints_require_auth(client: TestClient, method: str, path: str, payload: dict | None):
+def test_parent_protected_endpoints_require_auth(client, method: str, path: str, payload: dict | None):
     if payload is None:
         response = getattr(client, method)(path)
     else:
@@ -117,7 +76,7 @@ def test_parent_protected_endpoints_require_auth(client: TestClient, method: str
     assert response.status_code == 401
 
 
-def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client: TestClient, db):
+def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client, db):
     register = client.post(
         "/auth/register",
         json={
@@ -165,7 +124,7 @@ def test_parent_register_login_refresh_and_logout_revokes_refresh_token(client: 
     assert user.token_version == 1
 
 
-def test_free_plan_child_limit_is_enforced(client: TestClient, db):
+def test_free_plan_child_limit_is_enforced(client, db):
     parent = _create_parent(db, email="free.parent@gmail.com", plan=PLAN_FREE)
     headers = _auth_header(parent)
 

@@ -61,6 +61,21 @@ class SecureStorage {
   bool _parentPinVerifiedCache = false;
   bool _hasParentPinVerifiedCache = false;
 
+  void _clearSessionCaches() {
+    _authTokenCache = null;
+    _hasAuthTokenCache = true;
+    _userIdCache = null;
+    _hasUserIdCache = true;
+    _userEmailCache = null;
+    _hasUserEmailCache = true;
+    _userRoleCache = null;
+    _hasUserRoleCache = true;
+    _childSessionCache = null;
+    _hasChildSessionCache = true;
+    _parentPinVerifiedCache = false;
+    _hasParentPinVerifiedCache = true;
+  }
+
   bool get hasCachedSessionSnapshot =>
       _hasAuthTokenCache &&
       _hasUserIdCache &&
@@ -603,7 +618,8 @@ class SecureStorage {
 
   Future<bool> saveAdminPermissions(List<String> permissions) async {
     try {
-      await _storage.write(key: _keyAdminPermissions, value: permissions.join(','));
+      await _storage.write(
+          key: _keyAdminPermissions, value: permissions.join(','));
       return true;
     } catch (e) {
       return false;
@@ -640,14 +656,7 @@ class SecureStorage {
   Future<bool> clearAll() async {
     try {
       await _storage.deleteAll();
-      _authTokenCache = null;
-      _hasAuthTokenCache = true;
-      _userRoleCache = null;
-      _hasUserRoleCache = true;
-      _childSessionCache = null;
-      _hasChildSessionCache = true;
-      _parentPinVerifiedCache = false;
-      _hasParentPinVerifiedCache = true;
+      _clearSessionCaches();
       return true;
     } catch (e) {
       return false;
@@ -666,15 +675,8 @@ class SecureStorage {
       await _storage.delete(key: _keyUserEmail);
       await _storage.delete(key: _keyChildSession);
       await _storage.delete(key: _keyParentPinVerified);
-      _authTokenCache = null;
-      _hasAuthTokenCache = true;
-      _userRoleCache = null;
-      _hasUserRoleCache = true;
-      _childSessionCache = null;
-      _hasChildSessionCache = true;
-      _parentPinVerifiedCache = false;
-      _hasParentPinVerifiedCache = true;
-      
+      _clearSessionCaches();
+
       // Preserve: child profiles, plan type, theme settings, privacy settings
       // These are accessible without authentication
       return true;

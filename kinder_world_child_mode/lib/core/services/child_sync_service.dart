@@ -4,6 +4,7 @@ import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:logger/logger.dart';
 
 class ChildSyncService {
@@ -34,7 +35,7 @@ class ChildSyncService {
 
       final apiChildren = await _childrenApi.fetchChildren();
       for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
+        final childId = parseChildId(childData);
         if (childId == null || childId.isEmpty) continue;
         final existing = await _childRepository.getChildProfile(childId);
         final merged = _mergeChildProfileFromApi(
@@ -53,11 +54,6 @@ class ChildSyncService {
     } catch (e) {
       _logger.e('Error syncing children: $e');
     }
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final raw = data['id'] ?? data['child_id'] ?? data['childId'];
-    return raw?.toString();
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -153,7 +149,7 @@ class ChildSyncService {
     String? parentId,
     String? parentEmail,
   }) {
-    final childId = _parseChildId(data);
+    final childId = parseChildId(data);
     if (childId == null || childId.isEmpty) return null;
 
     final now = DateTime.now();

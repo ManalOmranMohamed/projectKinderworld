@@ -1,52 +1,10 @@
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 from datetime import datetime, timedelta, timezone
 
 import admin_models  # noqa: F401
-import pytest
 
-from auth import create_access_token, hash_password
-from database import Base, SessionLocal
-from main import app
+from auth import hash_password
 from models import ChildActivityEvent, ChildProfile, ChildSessionLog, Notification, PaymentMethod, SupportTicket, User
 from plan_service import PLAN_FREE, PLAN_PREMIUM
-
-
-@pytest.fixture(scope="session")
-def test_db():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    return engine
-
-
-@pytest.fixture
-def db(test_db):
-    connection = test_db.connect()
-    transaction = connection.begin()
-    session = SessionLocal(bind=connection)
-    yield session
-    session.close()
-    if transaction.is_active:
-        transaction.rollback()
-    connection.close()
-
-
-@pytest.fixture
-def client(db):
-    from deps import get_db
-
-    def override_get_db():
-        return db
-
-    app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as test_client:
-        yield test_client
-    app.dependency_overrides.clear()
 
 
 def _create_parent(db, *, email: str, plan: str) -> User:
@@ -64,12 +22,7 @@ def _create_parent(db, *, email: str, plan: str) -> User:
     return user
 
 
-def _headers(user: User) -> dict[str, str]:
-    token = create_access_token(str(user.id), getattr(user, "token_version", 0))
-    return {"Authorization": f"Bearer {token}"}
-
-
-def test_basic_reports_returns_dynamic_parent_summary(client: TestClient, db):
+def test_basic_reports_returns_dynamic_parent_summary(client, db, auth_headers):
     parent = _create_parent(db, email="reports-basic@example.com", plan=PLAN_FREE)
     db.add_all(
         [
@@ -110,7 +63,7 @@ def test_basic_reports_returns_dynamic_parent_summary(client: TestClient, db):
     )
     db.commit()
 
-    response = client.get("/reports/basic", headers=_headers(parent))
+    response = client.get("/reports/basic", headers=auth_headers(parent))
 
     assert response.status_code == 200
     payload = response.json()
@@ -126,7 +79,7 @@ def test_basic_reports_returns_dynamic_parent_summary(client: TestClient, db):
     assert payload["summary"]["screen_time_minutes_7d"] == 0
 
 
-def test_advanced_reports_returns_dynamic_profile_metadata(client: TestClient, db):
+def test_advanced_reports_returns_dynamic_profile_metadata(client, db, auth_headers):
     parent = _create_parent(db, email="reports-advanced@example.com", plan=PLAN_PREMIUM)
     db.add_all(
         [
@@ -150,7 +103,7 @@ def test_advanced_reports_returns_dynamic_profile_metadata(client: TestClient, d
     )
     db.commit()
 
-    response = client.get("/reports/advanced", headers=_headers(parent))
+    response = client.get("/reports/advanced", headers=auth_headers(parent))
 
     assert response.status_code == 200
     payload = response.json()
@@ -163,7 +116,7 @@ def test_advanced_reports_returns_dynamic_profile_metadata(client: TestClient, d
     assert reports["data_availability"]["activities"] is False
 
 
-def test_reports_with_recorded_analytics_data(client: TestClient, db):
+def test_reports_with_recorded_analytics_data(client, db, auth_headers):
     parent = _create_parent(db, email="reports-analytics@example.com", plan=PLAN_PREMIUM)
     child = ChildProfile(
         parent_id=parent.id,
@@ -189,7 +142,7 @@ def test_reports_with_recorded_analytics_data(client: TestClient, db):
             "started_at": start.isoformat().replace("+00:00", "Z"),
             "ended_at": end.isoformat().replace("+00:00", "Z"),
         },
-        headers=_headers(parent),
+        headers=auth_headers(parent),
     )
     assert session_resp.status_code == 200
 
@@ -202,7 +155,7 @@ def test_reports_with_recorded_analytics_data(client: TestClient, db):
             "activity_name": "Numbers",
             "occurred_at": (start + timedelta(minutes=10)).isoformat().replace("+00:00", "Z"),
         },
-        headers=_headers(parent),
+        headers=auth_headers(parent),
     )
     assert lesson_resp.status_code == 200
 
@@ -214,7 +167,7 @@ def test_reports_with_recorded_analytics_data(client: TestClient, db):
             "mood_value": 4,
             "occurred_at": (start + timedelta(minutes=12)).isoformat().replace("+00:00", "Z"),
         },
-        headers=_headers(parent),
+        headers=auth_headers(parent),
     )
     assert mood_resp.status_code == 200
 
@@ -226,11 +179,11 @@ def test_reports_with_recorded_analytics_data(client: TestClient, db):
             "achievement_key": "first_lesson",
             "occurred_at": (start + timedelta(minutes=15)).isoformat().replace("+00:00", "Z"),
         },
-        headers=_headers(parent),
+        headers=auth_headers(parent),
     )
     assert achievement_resp.status_code == 200
 
-    basic = client.get("/reports/basic", headers=_headers(parent))
+    basic = client.get("/reports/basic", headers=auth_headers(parent))
     assert basic.status_code == 200
     basic_payload = basic.json()
     assert basic_payload["data_availability"]["screen_time"] is True
@@ -239,7 +192,7 @@ def test_reports_with_recorded_analytics_data(client: TestClient, db):
     assert basic_payload["summary"]["screen_time_minutes_7d"] >= 20
     assert basic_payload["summary"]["lessons_completed_7d"] >= 1
 
-    advanced = client.get("/reports/advanced", headers=_headers(parent))
+    advanced = client.get("/reports/advanced", headers=auth_headers(parent))
     assert advanced.status_code == 200
     reports = advanced.json()["reports"]
     assert reports["data_availability"]["mood_trends"] is True
