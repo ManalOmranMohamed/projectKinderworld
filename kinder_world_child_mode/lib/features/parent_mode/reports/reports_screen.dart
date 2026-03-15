@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
-import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
-import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/services/children_cache_service.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
@@ -38,10 +37,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   ChildProfile? _selectedChild;
   Future<List<ChildProfile>>? _childrenFuture;
   Future<ChildReportData>? _reportFuture;
-  String? _cachedParentId;
   bool _isResolvingParent = true;
   String? _reportKey;
-  int _childrenRequestId = 0;
   final Map<String, ChildReportData> _reportCache = <String, ChildReportData>{};
 
   @override
@@ -52,11 +49,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   void _resolveParentContext() {
     final secureStorage = ref.read(secureStorageProvider);
-    final cachedParentId = secureStorage.hasCachedUserId
-        ? secureStorage.cachedUserId
-        : null;
+    final cachedParentId =
+        secureStorage.hasCachedUserId ? secureStorage.cachedUserId : null;
     if (cachedParentId != null && cachedParentId.isNotEmpty) {
-      _cachedParentId = cachedParentId;
       _childrenFuture = _loadChildrenForParent(cachedParentId);
       _isResolvingParent = false;
       return;
@@ -66,7 +61,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       final parentId = await secureStorage.getParentId();
       if (!mounted) return;
       setState(() {
-        _cachedParentId = parentId;
         _childrenFuture =
             parentId == null ? null : _loadChildrenForParent(parentId);
         _isResolvingParent = false;
@@ -74,173 +68,17 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     });
   }
 
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return [];
-  }
-
-  String? _parseChildId(Map<String, dynamic> data) {
-    final raw = data['id'] ?? data['child_id'] ?? data['childId'];
-    return raw?.toString();
-  }
-
-  int _parseInt(dynamic value, int fallback) {
-    if (value is int) return value;
-    if (value is double) return value.round();
-    if (value is String) return int.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  DateTime _parseDate(dynamic value, DateTime fallback) {
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  ChildProfile? _mergeChildProfileFromApi(
-    Map<String, dynamic> data, {
-    required String parentId,
-    String? parentEmail,
-    ChildProfile? existing,
-  }) {
-    final childId = _parseChildId(data);
-    if (childId == null || childId.isEmpty) return null;
-
-    final now = DateTime.now();
-    final apiName = data['name']?.toString().trim();
-    final resolvedName =
-        (apiName != null && apiName.isNotEmpty) ? apiName : (existing?.name ?? childId);
-
-    return ChildProfile(
-      id: childId,
-      name: resolvedName,
-      age: _parseInt(data['age'], existing?.age ?? 0),
-      avatar: existing?.avatar ??
-          data['avatar']?.toString() ??
-          AppConstants.defaultChildAvatar,
-      interests: existing?.interests ?? const [],
-      level: existing?.level ?? 1,
-      xp: existing?.xp ?? 0,
-      streak: existing?.streak ?? 0,
-      favorites: existing?.favorites ?? const [],
-      parentId: parentId,
-      parentEmail: existing?.parentEmail ?? parentEmail,
-      picturePassword: existing?.picturePassword ?? const [],
-      createdAt: existing?.createdAt ?? _parseDate(data['created_at'], now),
-      updatedAt: _parseDate(data['updated_at'], now),
-      lastSession: existing?.lastSession,
-      totalTimeSpent: existing?.totalTimeSpent ?? 0,
-      activitiesCompleted: existing?.activitiesCompleted ?? 0,
-      currentMood: existing?.currentMood,
-      learningStyle: existing?.learningStyle,
-      specialNeeds: existing?.specialNeeds,
-      accessibilityNeeds: existing?.accessibilityNeeds,
-      avatarPath: existing?.avatarPath ?? AppConstants.defaultChildAvatar,
-    );
-  }
-
   Future<List<ChildProfile>> _loadChildrenForParent(String parentId) async {
-    final repo = ref.read(childRepositoryProvider);
+    final cacheService = ref.read(childrenCacheServiceProvider);
     final secureStorage = ref.read(secureStorageProvider);
-    final requestId = ++_childrenRequestId;
     final parentEmail = secureStorage.hasCachedUserEmail
         ? secureStorage.cachedUserEmail
         : await secureStorage.getParentEmail();
-    if (parentEmail != null && parentEmail.isNotEmpty) {
-      await repo.linkChildrenToParent(
-        parentId: parentId,
-        parentEmail: parentEmail,
-      );
-    }
-
-    final localChildren = await repo.getChildProfilesForParent(parentId);
-    final childrenById = {for (final child in localChildren) child.id: child};
-
-    final token = secureStorage.hasCachedAuthToken
-        ? secureStorage.cachedAuthToken
-        : await secureStorage.getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
-      return childrenById.values.toList();
-    }
-
-    unawaited(
-      _syncRemoteChildrenForParent(
-        requestId: requestId,
-        parentId: parentId,
-        parentEmail: parentEmail,
-        initialChildren: childrenById,
-      ),
+    final result = await cacheService.loadChildrenForParent(
+      parentId,
+      parentEmail: parentEmail,
     );
-
-    return childrenById.values.toList();
-  }
-
-  Future<void> _syncRemoteChildrenForParent({
-    required int requestId,
-    required String parentId,
-    required String? parentEmail,
-    required Map<String, ChildProfile> initialChildren,
-  }) async {
-    final repo = ref.read(childRepositoryProvider);
-    final childrenById = Map<String, ChildProfile>.from(initialChildren);
-
-    try {
-      final response =
-          await ref.read(networkServiceProvider).get<dynamic>('/children');
-      final apiChildren = _extractChildrenList(response.data);
-      final writeOperations = <Future<Object?>>[];
-      for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
-        if (childId == null || childId.isEmpty) continue;
-        final existing = childrenById[childId];
-        final merged = _mergeChildProfileFromApi(
-          childData,
-          parentId: parentId,
-          parentEmail: parentEmail,
-          existing: existing,
-        );
-        if (merged == null) continue;
-        childrenById[childId] = merged;
-        writeOperations.add(
-          existing == null
-              ? repo.createChildProfile(merged)
-              : repo.updateChildProfile(merged),
-        );
-      }
-      if (writeOperations.isNotEmpty) {
-        await Future.wait(writeOperations);
-      }
-      if (!mounted ||
-          requestId != _childrenRequestId ||
-          _cachedParentId != parentId) {
-        return;
-      }
-      setState(() {
-        _childrenFuture = Future<List<ChildProfile>>.value(
-          childrenById.values.toList(growable: false),
-        );
-        _reportFuture = null;
-        _reportKey = null;
-        _reportCache.clear();
-      });
-    } catch (_) {
-      // Keep the local children snapshot if the remote sync is unavailable.
-    }
+    return result.children;
   }
 
   String _reportCacheKey(String childId, ReportPeriod period) {
@@ -311,7 +149,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   radius: 20,
                 ),
                 title: Text(child.name),
-                subtitle: Text('${AppLocalizations.of(context)!.childAge} ${child.age}'),
+                subtitle: Text(
+                    '${AppLocalizations.of(context)!.childAge} ${child.age}'),
                 trailing: _selectedChild?.id == child.id
                     ? Icon(
                         Icons.check_rounded,
@@ -334,8 +173,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final plan =
-        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final plan = ref.watch(planInfoProvider).asData?.value ??
+        PlanInfo.fromTier(PlanTier.free);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -362,149 +201,160 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     title: l10n.error,
                     subtitle: l10n.tryAgain,
                   )
-            : FutureBuilder<List<ChildProfile>>(
-                future: _childrenFuture,
-                builder: (context, childrenSnapshot) {
-                  if (childrenSnapshot.connectionState == ConnectionState.waiting &&
-                      childrenSnapshot.data == null) {
-                    return Center(
-                      child: CircularProgressIndicator(color: colors.primary),
-                    );
-                  }
-
-                  final children = childrenSnapshot.data ?? const <ChildProfile>[];
-                  if (children.isEmpty) {
-                    return ParentEmptyState(
-                      icon: Icons.bar_chart_rounded,
-                      title: l10n.noChildSelected,
-                      subtitle: l10n.addChildToViewReports,
-                    );
-                  }
-
-                  final initialChild = widget.initialChildId != null
-                      ? children.firstWhere(
-                          (child) => child.id == widget.initialChildId,
-                          orElse: () => children.first,
-                        )
-                      : children.first;
-                  final selectedChild = children.firstWhere(
-                    (child) => child.id == _selectedChild?.id,
-                    orElse: () => _selectedChild ?? initialChild,
-                  );
-                  _selectedChild = selectedChild;
-
-                  return FutureBuilder<ChildReportData>(
-                    future: _reportFutureFor(selectedChild),
-                    builder: (context, reportSnapshot) {
-                      if (reportSnapshot.connectionState == ConnectionState.waiting &&
-                          reportSnapshot.data == null) {
+                : FutureBuilder<List<ChildProfile>>(
+                    future: _childrenFuture,
+                    builder: (context, childrenSnapshot) {
+                      if (childrenSnapshot.connectionState ==
+                              ConnectionState.waiting &&
+                          childrenSnapshot.data == null) {
                         return Center(
-                          child: CircularProgressIndicator(color: colors.primary),
+                          child:
+                              CircularProgressIndicator(color: colors.primary),
                         );
                       }
 
-                      final report = reportSnapshot.data;
-                      if (report == null) {
+                      final children =
+                          childrenSnapshot.data ?? const <ChildProfile>[];
+                      if (children.isEmpty) {
                         return ParentEmptyState(
-                          icon: Icons.insert_chart_outlined_rounded,
-                          title: l10n.error,
-                          subtitle: l10n.tryAgain,
+                          icon: Icons.bar_chart_rounded,
+                          title: l10n.noChildSelected,
+                          subtitle: l10n.addChildToViewReports,
                         );
                       }
 
-                      return SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.learningProgressReports,
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            l10n.trackChildDevelopment,
-                            style: TextStyle(color: colors.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 16),
-                          const PlanStatusBanner(),
-                          const SizedBox(height: 16),
-                          ParentCard(
-                            onTap: () => _showChildSelection(children),
-                            child: Row(
+                      final initialChild = widget.initialChildId != null
+                          ? children.firstWhere(
+                              (child) => child.id == widget.initialChildId,
+                              orElse: () => children.first,
+                            )
+                          : children.first;
+                      final selectedChild = children.firstWhere(
+                        (child) => child.id == _selectedChild?.id,
+                        orElse: () => _selectedChild ?? initialChild,
+                      );
+                      _selectedChild = selectedChild;
+
+                      return FutureBuilder<ChildReportData>(
+                        future: _reportFutureFor(selectedChild),
+                        builder: (context, reportSnapshot) {
+                          if (reportSnapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              reportSnapshot.data == null) {
+                            return Center(
+                              child: CircularProgressIndicator(
+                                  color: colors.primary),
+                            );
+                          }
+
+                          final report = reportSnapshot.data;
+                          if (report == null) {
+                            return ParentEmptyState(
+                              icon: Icons.insert_chart_outlined_rounded,
+                              title: l10n.error,
+                              subtitle: l10n.tryAgain,
+                            );
+                          }
+
+                          return SingleChildScrollView(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                AvatarView(
-                                  avatarId: selectedChild.avatar,
-                                  avatarPath: selectedChild.avatarPath,
-                                  radius: 24,
+                                Text(
+                                  l10n.learningProgressReports,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                const SizedBox(height: 6),
+                                Text(
+                                  l10n.trackChildDevelopment,
+                                  style:
+                                      TextStyle(color: colors.onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 16),
+                                const PlanStatusBanner(),
+                                const SizedBox(height: 16),
+                                ParentCard(
+                                  onTap: () => _showChildSelection(children),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        selectedChild.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 16,
+                                      AvatarView(
+                                        avatarId: selectedChild.avatar,
+                                        avatarPath: selectedChild.avatarPath,
+                                        radius: 24,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              selectedChild.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${l10n.childAge} ${selectedChild.age} • ${l10n.level} ${selectedChild.level}',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: colors.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${l10n.childAge} ${selectedChild.age} • ${l10n.level} ${selectedChild.level}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: colors.onSurfaceVariant,
-                                        ),
+                                      Icon(
+                                        Icons.expand_more_rounded,
+                                        color: colors.onSurfaceVariant,
                                       ),
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.expand_more_rounded,
-                                  color: colors.onSurfaceVariant,
-                                ),
+                                const SizedBox(height: 16),
+                                _buildPeriodSelector(context),
+                                const SizedBox(height: 16),
+                                _buildSourceBanner(context, report),
+                                const SizedBox(height: 16),
+                                _buildSummaryGrid(context, report),
+                                const SizedBox(height: 16),
+                                _buildProgressCard(context, report),
+                                const SizedBox(height: 16),
+                                _buildGamificationSnapshot(
+                                    context, selectedChild.id),
+                                const SizedBox(height: 16),
+                                MoodReportSection(childId: selectedChild.id),
+                                const SizedBox(height: 16),
+                                _buildDailyTrendCard(context, report),
+                                const SizedBox(height: 16),
+                                _buildRecentSessionsCard(context, report),
+                                const SizedBox(height: 16),
+                                if (plan.hasAdvancedReports) ...[
+                                  _buildAdvancedInsightsCard(context, report),
+                                  const SizedBox(height: 16),
+                                ] else ...[
+                                  PremiumSectionUpsell(
+                                    title: l10n.activityBreakdown,
+                                    description: l10n.advancedReportsLabel,
+                                    showBadge: true,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildPeriodSelector(context),
-                          const SizedBox(height: 16),
-                          _buildSourceBanner(context, report),
-                          const SizedBox(height: 16),
-                          _buildSummaryGrid(context, report),
-                          const SizedBox(height: 16),
-                          _buildProgressCard(context, report),
-                          const SizedBox(height: 16),
-                          _buildGamificationSnapshot(context, selectedChild.id),
-                          const SizedBox(height: 16),
-                          MoodReportSection(childId: selectedChild.id),
-                          const SizedBox(height: 16),
-                          _buildDailyTrendCard(context, report),
-                          const SizedBox(height: 16),
-                          _buildRecentSessionsCard(context, report),
-                          const SizedBox(height: 16),
-                          if (plan.hasAdvancedReports) ...[
-                            _buildAdvancedInsightsCard(context, report),
-                            const SizedBox(height: 16),
-                          ] else ...[
-                            PremiumSectionUpsell(
-                              title: l10n.activityBreakdown,
-                              description: l10n.advancedReportsLabel,
-                              showBadge: true,
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
-                );
-                },
-              ),
+                          );
+                        },
+                      );
+                    },
+                  ),
       ),
     );
   }
@@ -776,9 +626,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         color: context.rewardColor,
       ),
       ParentStatCard(
-        value: report.averageScore > 0
-            ? '${report.averageScore.round()}%'
-            : '—',
+        value:
+            report.averageScore > 0 ? '${report.averageScore.round()}%' : '—',
         label: l10n.avgScoreLabel,
         icon: Icons.star_rounded,
         color: parent.reward,
@@ -847,7 +696,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final info = context.infoColor;
     final maxValue = points.fold<int>(
       1,
-      (max, point) => point.activitiesCompleted > max ? point.activitiesCompleted : max,
+      (max, point) =>
+          point.activitiesCompleted > max ? point.activitiesCompleted : max,
     );
     return ParentCard(
       child: Column(
@@ -903,7 +753,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildRecentSessionsCard(BuildContext context, ChildReportData report) {
+  Widget _buildRecentSessionsCard(
+      BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
     final parent = context.parentTheme;
     if (report.recentSessions.isEmpty) {
@@ -953,7 +804,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                           '${_contentTypeLabel(l10n, session.contentType)} • ${session.durationMinutes} min • ${session.score}%',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -968,7 +820,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildAdvancedInsightsCard(BuildContext context, ChildReportData report) {
+  Widget _buildAdvancedInsightsCard(
+      BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
     final parent = context.parentTheme;
     final moodEntries = report.moodCounts.entries.toList()

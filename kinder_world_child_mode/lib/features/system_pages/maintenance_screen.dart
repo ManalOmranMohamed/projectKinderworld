@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
 import 'package:kinder_world/router.dart';
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
@@ -48,9 +50,9 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final warningColor = context.warningColor;
-    final successColor = context.successColor;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    final l10n = AppLocalizations.of(context)!;
+
+    return SystemPageLayout(
       appBar: AppBar(
         automaticallyImplyLeading: true,
         leading: const AppBackButton(
@@ -59,161 +61,143 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           iconSize: 24,
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated Gear Icon
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Transform.rotate(
-                    angle: _rotationAnimation.value,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: warningColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Icon(
-                    Icons.build,
-                    size: 60,
-                    color: warningColor,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-
-              // Title
-              Text(
-                AppLocalizations.of(context)!.maintenanceTitle,
-                style: textTheme.titleLarge?.copyWith(
-                  fontSize: AppConstants.largeFontSize * 1.2,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              Text(
-                AppLocalizations.of(context)!.maintenanceDescription,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: AppConstants.fontSize,
-                  color: colors.onSurfaceVariant,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Estimated Time
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.outlineVariant),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.estimatedCompletion,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontSize: AppConstants.fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      AppLocalizations.of(context)!.maintenanceEtaDuration,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: warningColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      AppLocalizations.of(context)!.maintenanceEtaWindow,
-                      style: textTheme.bodySmall?.copyWith(
-                        fontSize: 14,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // What's New
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: colors.outlineVariant),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.maintenanceWhatsComing,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontSize: AppConstants.fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildFeatureItem(Icons.star,
-                        AppLocalizations.of(context)!.maintenanceFeatureAi),
-                    const SizedBox(height: 12),
-                    _buildFeatureItem(Icons.games,
-                        AppLocalizations.of(context)!.maintenanceFeatureGames),
-                    const SizedBox(height: 12),
-                    _buildFeatureItem(Icons.security,
-                        AppLocalizations.of(context)!.maintenanceFeatureSafety),
-                    const SizedBox(height: 12),
-                    _buildFeatureItem(
-                        Icons.speed,
-                        AppLocalizations.of(context)!
-                            .maintenanceFeaturePerformance),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Social Media Links
-              Text(
-                AppLocalizations.of(context)!.followUsForUpdates,
-                style: textTheme.bodySmall?.copyWith(
-                  fontSize: 14,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildSocialIcon(Icons.facebook, colors.primary),
-                  const SizedBox(width: 16),
-                  _buildSocialIcon(Icons.email, colors.error),
-                  const SizedBox(width: 16),
-                  _buildSocialIcon(Icons.web, successColor),
-                ],
-              ),
-              const SizedBox(height: 40),
-            ],
+      illustration: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: _rotationAnimation.value,
+            child: child,
+          );
+        },
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: warningColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
+          ),
+          child: Icon(
+            Icons.build,
+            size: 60,
+            color: warningColor,
           ),
         ),
       ),
+      title: l10n.maintenanceTitle,
+      subtitle: l10n.maintenanceDescription,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SystemInfoCard(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              children: [
+                Text(
+                  l10n.estimatedCompletion,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  l10n.maintenanceEtaDuration,
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: warningColor,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  l10n.maintenanceEtaWindow,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SystemInfoCard(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.maintenanceWhatsComing,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                _buildFeatureItem(
+                  Icons.star,
+                  l10n.maintenanceFeatureAi,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildFeatureItem(
+                  Icons.games,
+                  l10n.maintenanceFeatureGames,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildFeatureItem(
+                  Icons.security,
+                  l10n.maintenanceFeatureSafety,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildFeatureItem(
+                  Icons.speed,
+                  l10n.maintenanceFeaturePerformance,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Center(
+            child: Text(
+              l10n.followUsForUpdates,
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSocialIcon(Icons.facebook, colors.primary),
+              const SizedBox(width: AppSpacing.lg),
+              _buildSocialIcon(Icons.email, colors.error),
+              const SizedBox(width: AppSpacing.lg),
+              _buildSocialIcon(Icons.web, context.successColor),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: FilledButton.icon(
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/welcome');
+              }
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(
+              l10n.tryAgain,
+              style: textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.onPrimary,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -228,7 +212,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           height: 32,
           decoration: BoxDecoration(
             color: successColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Icon(
             icon,
@@ -236,12 +220,13 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
             color: successColor,
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          text,
-          style: textTheme.bodyMedium?.copyWith(
-            fontSize: AppConstants.fontSize,
-            color: colors.onSurfaceVariant,
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            text,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -254,16 +239,16 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
       height: 48,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: IconButton(
         icon: Icon(icon, color: color),
         onPressed: () {
-          // Placeholder for social media links
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  AppLocalizations.of(context)!.openingLink(icon.toString())),
+                AppLocalizations.of(context)!.openingLink(icon.toString()),
+              ),
               backgroundColor: color,
             ),
           );

@@ -54,6 +54,8 @@ class AchievementsScreen extends ConsumerWidget {
               children: [
                 const GamificationSummaryBar(),
                 const SizedBox(height: 16),
+                _StreakMilestoneCard(streak: state.streak),
+                const SizedBox(height: 16),
                 _SectionTitle(
                   title: l10n.badges,
                   subtitle: 'Collect badges and shine!',
@@ -253,5 +255,70 @@ class _LockedAchievementCard extends StatelessWidget {
       'achievementFirstBadgeTitle': 'First Badge Earned!',
     };
     return titles[key] ?? key;
+  }
+}
+
+class _StreakMilestoneCard extends StatelessWidget {
+  const _StreakMilestoneCard({required this.streak});
+
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final childTheme = context.childTheme;
+    final nextMilestone = streak < 3
+        ? 3
+        : streak < 7
+            ? 7
+            : streak < 30
+                ? 30
+                : null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: childTheme.streak.withValues(alpha: 0.11),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: childTheme.streak.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          const StreakCounter(streak: 0, compact: true),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.streak,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  nextMilestone == null
+                      ? l10n.streakOnFire(streak)
+                      : l10n.unlockWithStreak(nextMilestone),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '$streak',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: childTheme.streak,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

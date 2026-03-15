@@ -18,6 +18,7 @@ from admin_utils import (
     serialize_quiz,
     write_audit_log,
 )
+from core.admin_security import require_sensitive_action_confirmation
 from deps import get_db
 from models import ContentCategory, ContentItem, Quiz
 
@@ -442,6 +443,7 @@ def delete_category(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.delete")),
 ):
+    require_sensitive_action_confirmation(request, action="category.delete")
     category = _get_category_or_404(category_id, db)
     active_contents = [item for item in (category.contents or []) if item.deleted_at is None]
     active_quizzes = [item for item in (category.quizzes or []) if item.deleted_at is None]
@@ -665,6 +667,7 @@ def publish_content(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.publish")),
 ):
+    require_sensitive_action_confirmation(request, action="content.publish")
     content = _get_content_or_404(content_id, db)
     _validate_publishable_content(
         title_en=content.title_en,
@@ -702,6 +705,7 @@ def unpublish_content(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.publish")),
 ):
+    require_sensitive_action_confirmation(request, action="content.unpublish")
     content = _get_content_or_404(content_id, db)
     before = serialize_content_item(content, include_quizzes=True)
     content.status = "draft"
@@ -732,6 +736,7 @@ def delete_content(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.delete")),
 ):
+    require_sensitive_action_confirmation(request, action="content.delete")
     content = _get_content_or_404(content_id, db)
     before = serialize_content_item(content, include_quizzes=True)
     content.deleted_at = datetime.utcnow()
@@ -900,6 +905,7 @@ def delete_quiz(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.delete")),
 ):
+    require_sensitive_action_confirmation(request, action="quiz.delete")
     quiz = _get_quiz_or_404(quiz_id, db)
     before = serialize_quiz(quiz)
     quiz.deleted_at = datetime.utcnow()

@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, unused_element
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
@@ -15,6 +15,8 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
+import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
+import 'package:kinder_world/core/services/children_cache_service.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
@@ -245,6 +247,13 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     return age.clamp(0, 120);
   }
 
+  bool _isOfflineDioError(DioException e) {
+    return e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout;
+  }
+
   int _resolveAgeFromApi(Map<String, dynamic> data, ChildProfile? existing) {
     final apiAge = _parseInt(data['age'], 0);
     final birthDate = _parseBirthDate(
@@ -345,54 +354,13 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   }
 
   Future<List<ChildProfile>> _loadChildrenForParent(String parentId) async {
-    final repo = ref.read(childRepositoryProvider);
     final parentEmail = await ref.read(secureStorageProvider).getParentEmail();
-    if (parentEmail != null && parentEmail.isNotEmpty) {
-      await repo.linkChildrenToParent(
-        parentId: parentId,
-        parentEmail: parentEmail,
-      );
-    }
-    final localChildren = await repo.getChildProfilesForParent(parentId);
-    final childrenById = {
-      for (final child in localChildren) child.id: child,
-    };
-
-    final token = await ref.read(secureStorageProvider).getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
-      return childrenById.values.toList();
-    }
-
-    final resolvedParentEmail = parentEmail;
-    try {
-      final response = await ref.read(networkServiceProvider).get<dynamic>(
-            '/children',
-          );
-      final apiChildren = _extractChildrenList(response.data);
-      for (final childData in apiChildren) {
-        final childId = _parseChildId(childData);
-        if (childId == null || childId.isEmpty) continue;
-        final existing =
-            await repo.getChildProfile(childId) ?? childrenById[childId];
-        final merged = _mergeChildProfileFromApi(
-          childData,
-          parentId: parentId,
-          parentEmail: resolvedParentEmail,
-          existing: existing,
-        );
-        if (merged == null) continue;
-        childrenById[childId] = merged;
-        if (existing == null) {
-          await repo.createChildProfile(merged);
-        } else {
-          await repo.updateChildProfile(merged);
-        }
-      }
-    } catch (_) {
-      return childrenById.values.toList();
-    }
-
-    return childrenById.values.toList();
+    final result =
+        await ref.read(childrenCacheServiceProvider).loadChildrenForParent(
+              parentId,
+              parentEmail: parentEmail,
+            );
+    return result.children;
   }
 
   Future<void> _refreshChildren() async {
@@ -523,11 +491,12 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                             final deleted =
                                 await repo.deleteChildProfile(child.id);
                             if (!mounted) return;
-                            if (mounted) {
-                              // ignore: use_build_context_synchronously
-                              Navigator.of(dialogContext).pop();
-                            }
+                            if (!dialogContext.mounted) return;
+                            Navigator.of(dialogContext).pop();
                             if (deleted) {
+                              await ref
+                                  .read(childrenCacheServiceProvider)
+                                  .markChildrenMutated(_cachedParentId ?? '');
                               _showTopMessage(
                                 l10n.deleteChildSuccess,
                                 isError: false,
@@ -544,14 +513,41 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                               _refreshChildren();
                             }
                           } on DioException catch (e) {
-                            final statusCode = e.response?.statusCode;
-                            if (statusCode == 403 ||
-                                statusCode == 409 ||
-                                statusCode == 500) {
-                              _showTopMessage(l10n.deleteChildFailed);
-                            } else {
-                              _showTopMessage(l10n.deleteChildFailed);
+                            if (_isOfflineDioError(e)) {
+                              final queue =
+                                  ref.read(deferredOperationsQueueProvider);
+                              await queue.enqueueHttpOperation(
+                                method: 'DELETE',
+                                path: '/children/${child.id}',
+                              );
+                              final repo = ref.read(childRepositoryProvider);
+                              final deleted =
+                                  await repo.deleteChildProfile(child.id);
+                              if (!mounted) return;
+                              if (!dialogContext.mounted) return;
+                              Navigator.of(dialogContext).pop();
+                              if (deleted) {
+                                await ref
+                                    .read(childrenCacheServiceProvider)
+                                    .markChildrenMutated(_cachedParentId ?? '');
+                                _showTopMessage(
+                                  'Deleted offline. Will sync when online.',
+                                  isError: false,
+                                );
+                              } else {
+                                _showTopMessage(l10n.deleteChildFailed);
+                              }
+                              if (_cachedParentId != null) {
+                                setState(() {
+                                  _childrenFuture =
+                                      _loadChildrenForParent(_cachedParentId!);
+                                });
+                              } else {
+                                _refreshChildren();
+                              }
+                              return;
                             }
+                            _showTopMessage(l10n.deleteChildFailed);
                             setDialogState(() {
                               isDeleting = false;
                             });
@@ -965,8 +961,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       height: 64,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? optionColor
-                                                .withValues(alpha: 0.2)
+                                            ? optionColor.withValues(alpha: 0.2)
                                             : Theme.of(context)
                                                 .colorScheme
                                                 .surface,
@@ -1103,6 +1098,10 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                   if (!mounted) return;
 
                                   if (saved != null) {
+                                    await ref
+                                        .read(childrenCacheServiceProvider)
+                                        .markChildrenMutated(
+                                            parentId ?? 'local');
                                     messenger.showSnackBar(
                                       SnackBar(
                                         content: Text(l10n.childProfileAdded),

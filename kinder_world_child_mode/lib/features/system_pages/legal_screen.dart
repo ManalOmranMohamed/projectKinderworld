@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/providers/cache_provider.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/app.dart';
@@ -20,14 +21,58 @@ class LegalScreen extends ConsumerStatefulWidget {
 
 class _LegalScreenState extends ConsumerState<LegalScreen> {
   late Future<Map<String, dynamic>> _contentFuture;
+  bool _showingCachedContent = false;
+  bool _cachedHintShown = false;
 
   @override
   void initState() {
     super.initState();
-    _contentFuture = ref
-        .read(networkServiceProvider)
-        .get<Map<String, dynamic>>(_getEndpoint(widget.type))
-        .then((value) => value.data ?? {});
+    _contentFuture = _loadLegalContent();
+  }
+
+  Future<Map<String, dynamic>> _loadLegalContent({
+    bool forceRefresh = false,
+  }) async {
+    const staleAfter = Duration(days: 7);
+    final cacheStore = ref.read(appCacheStoreProvider);
+    final snapshot = cacheStore.snapshot(
+      scope: 'legal_content',
+      key: widget.type,
+      staleAfter: staleAfter,
+    );
+
+    if (!forceRefresh && snapshot.hasData && !snapshot.isStale) {
+      _showingCachedContent = true;
+      _cachedHintShown = false;
+      return cacheStore.readMap(scope: 'legal_content', key: widget.type) ?? {};
+    }
+
+    try {
+      final data = (await ref
+                  .read(networkServiceProvider)
+                  .get<Map<String, dynamic>>(_getEndpoint(widget.type)))
+              .data ??
+          {};
+      await cacheStore.storeMap(
+        scope: 'legal_content',
+        key: widget.type,
+        payload: data,
+      );
+      _showingCachedContent = false;
+      _cachedHintShown = false;
+      return data;
+    } catch (_) {
+      final cached =
+          cacheStore.readMap(scope: 'legal_content', key: widget.type);
+      if (cached != null) {
+        _showingCachedContent = true;
+        _cachedHintShown = false;
+        return cached;
+      }
+      _showingCachedContent = false;
+      _cachedHintShown = false;
+      return {};
+    }
   }
 
   @override
@@ -55,10 +100,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
             onPressed: () {
               // Re-fetch on manual refresh
               setState(() {
-                _contentFuture = ref
-                    .read(networkServiceProvider)
-                    .get<Map<String, dynamic>>(_getEndpoint(widget.type))
-                    .then((value) => value.data ?? {});
+                _contentFuture = _loadLegalContent(forceRefresh: true);
               });
             },
           ),
@@ -70,6 +112,20 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
+            }
+            if (_showingCachedContent && !_cachedHintShown) {
+              _cachedHintShown = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    behavior: SnackBarBehavior.floating,
+                    content: Text(
+                      AppLocalizations.of(context)!.offlineMode,
+                    ),
+                  ),
+                );
+              });
             }
             final body = snapshot.data?['body']?.toString();
             if (body == null || body.isEmpty) {

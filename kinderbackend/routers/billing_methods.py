@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -19,7 +21,7 @@ def list_methods(
 ):
     methods = (
         db.query(PaymentMethod)
-        .filter(PaymentMethod.user_id == user.id)
+        .filter(PaymentMethod.user_id == user.id, PaymentMethod.deleted_at.is_(None))
         .order_by(PaymentMethod.created_at.desc())
         .all()
     )
@@ -52,11 +54,16 @@ def delete_method(
 ):
     method = (
         db.query(PaymentMethod)
-        .filter(PaymentMethod.id == method_id, PaymentMethod.user_id == user.id)
+        .filter(
+            PaymentMethod.id == method_id,
+            PaymentMethod.user_id == user.id,
+            PaymentMethod.deleted_at.is_(None),
+        )
         .first()
     )
     if not method:
         raise HTTPException(status_code=404, detail="Payment method not found")
-    db.delete(method)
+    method.deleted_at = datetime.utcnow()
+    db.add(method)
     db.commit()
     return {"success": True}

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
+import 'package:kinder_world/router.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -37,10 +38,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     _heroSlide = Tween<Offset>(
       begin: const Offset(0, -0.15),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
     _contentFade = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -51,10 +54,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     _contentSlide = Tween<Offset>(
       begin: const Offset(0, 0.15),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
+      ),
+    );
 
     _controller.forward();
   }
@@ -77,7 +82,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
-          // ── Hero Header ──
           FadeTransition(
             opacity: _heroFade,
             child: SlideTransition(
@@ -85,101 +89,95 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               child: _HeroHeader(screenHeight: size.height),
             ),
           ),
-
-          // ── Scrollable content ──
           Expanded(
             child: FadeTransition(
               opacity: _contentFade,
               child: SlideTransition(
                 position: _contentSlide,
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        l10n.welcomeTitle,
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: colors.onSurface,
-                          letterSpacing: -0.8,
-                          height: 1.1,
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.welcomeTitle,
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: colors.onSurface,
+                            letterSpacing: -0.8,
+                            height: 1.1,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.welcomeSubtitle,
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontSize: 16,
-                          color: colors.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.welcomeSubtitle,
+                          style: textTheme.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            color: colors.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 28),
-
-                      // Feature grid
-                      _FeatureGrid(l10n: l10n),
-                      const SizedBox(height: 32),
-
-                      // Get Started button
-                      GradientButton(
-                        label: l10n.getStarted,
-                        onPressed: () => context.push('/select-user-type'),
-                        gradientColors: [
-                          colors.primary,
-                          Color.lerp(colors.primary, colors.secondary, 0.45)!,
-                        ],
-                        height: 58,
-                        icon: Icon(
-                          Icons.rocket_launch_rounded,
-                          color: colors.onPrimary,
-                          size: 18,
+                        const SizedBox(height: 18),
+                        _FeatureGrid(l10n: l10n),
+                        const SizedBox(height: 28),
+                        GradientButton(
+                          label: l10n.getStarted,
+                          onPressed: () => context.go(Routes.selectUserType),
+                          gradientColors: [
+                            colors.primary,
+                            Color.lerp(colors.primary, colors.secondary, 0.45)!,
+                          ],
+                          height: 58,
+                          icon: Icon(
+                            Icons.rocket_launch_rounded,
+                            color: colors.onPrimary,
+                            size: 18,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Login link
-                      Center(
-                        child: TextButton(
-                          onPressed: () => context.push('/parent/login'),
-                          child: RichText(
-                            text: TextSpan(
-                              style: textTheme.bodyMedium?.copyWith(fontSize: 14),
-                              children: [
-                                TextSpan(
-                                  text: l10n.alreadyHaveAccount,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colors.onSurfaceVariant,
+                        const SizedBox(height: 14),
+                        Center(
+                          child: TextButton(
+                            onPressed: () => context.push(Routes.parentLogin),
+                            child: RichText(
+                              text: TextSpan(
+                                style: textTheme.bodyMedium
+                                    ?.copyWith(fontSize: 14),
+                                children: [
+                                  TextSpan(
+                                    text: l10n.alreadyHaveAccount,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                    ),
                                   ),
-                                ),
-                                TextSpan(
-                                  text: l10n.login,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: colors.primary,
-                                    fontWeight: FontWeight.w700,
+                                  TextSpan(
+                                    text: l10n.login,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      // COPPA note
-                      Center(
-                        child: Text(
-                          l10n.coppaGdprNote,
-                          style: textTheme.bodySmall?.copyWith(
-                            fontSize: 12,
-                            color: colors.onSurfaceVariant,
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Text(
+                            l10n.coppaGdprNote,
+                            style: textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -191,9 +189,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Hero Header — gradient area with logo + tagline
-// ─────────────────────────────────────────────────────────────────────────────
 class _HeroHeader extends StatelessWidget {
   final double screenHeight;
   const _HeroHeader({required this.screenHeight});
@@ -222,7 +217,6 @@ class _HeroHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Decorative circles
           Positioned(
             top: -30,
             right: -30,
@@ -247,13 +241,11 @@ class _HeroHeader extends StatelessWidget {
               ),
             ),
           ),
-          // Content
           SafeArea(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo container
                   Container(
                     width: 80,
                     height: 80,
@@ -318,9 +310,6 @@ class _HeroHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Feature Grid — 2×2 cards
-// ─────────────────────────────────────────────────────────────────────────────
 class _FeatureGrid extends StatelessWidget {
   final AppLocalizations l10n;
   const _FeatureGrid({required this.l10n});
@@ -427,10 +416,10 @@ class _FeatureCard extends StatelessWidget {
             : colors.onSurface;
     return Container(
       padding: EdgeInsets.fromLTRB(
-        compact ? 12 : 14,
         compact ? 10 : 12,
-        compact ? 12 : 14,
+        compact ? 8 : 10,
         compact ? 10 : 12,
+        compact ? 8 : 10,
       ),
       decoration: BoxDecoration(
         color: item.color.withValues(alpha: 0.06),
@@ -445,8 +434,8 @@ class _FeatureCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
-            width: compact ? 42 : 44,
-            height: compact ? 42 : 44,
+            width: compact ? 40 : 42,
+            height: compact ? 40 : 42,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: item.gradientColors,
@@ -462,29 +451,29 @@ class _FeatureCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(item.icon, size: compact ? 20 : 22, color: iconColor),
+            child: Icon(item.icon, size: compact ? 18 : 20, color: iconColor),
           ),
-          SizedBox(height: compact ? 10 : 10),
+          const SizedBox(height: 8),
           Text(
             item.label,
             textAlign: TextAlign.center,
             style: theme.textTheme.labelLarge?.copyWith(
-              fontSize: compact ? 11.5 : 12.5,
+              fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.w700,
               color: item.color,
               height: 1.15,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             item.description,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(
-              fontSize: compact ? 9.8 : 10.5,
+              fontSize: compact ? 9.4 : 10,
               color: colors.onSurfaceVariant,
-              height: 1.22,
+              height: 1.15,
             ),
-            maxLines: compact ? 3 : 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ],

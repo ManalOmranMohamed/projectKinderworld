@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/app.dart';
 import 'package:kinder_world/router.dart';
 
-class DataSyncScreen extends StatefulWidget {
+class DataSyncScreen extends ConsumerStatefulWidget {
   const DataSyncScreen({super.key});
 
   @override
-  State<DataSyncScreen> createState() => _DataSyncScreenState();
+  ConsumerState<DataSyncScreen> createState() => _DataSyncScreenState();
 }
 
-class _DataSyncScreenState extends State<DataSyncScreen>
+class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
     with SingleTickerProviderStateMixin {
   bool _isSyncing = false;
   double _syncProgress = 0.0;
   String? _syncStatusKey = 'syncReady';
+  int _pendingOperations = 0;
 
   late AnimationController _controller;
   late Animation<double> _rotationAnimation;
@@ -37,6 +42,7 @@ class _DataSyncScreenState extends State<DataSyncScreen>
       parent: _controller,
       curve: Curves.linear,
     ));
+    _loadPendingOperations();
   }
 
   @override
@@ -66,6 +72,15 @@ class _DataSyncScreenState extends State<DataSyncScreen>
     }
   }
 
+  Future<void> _loadPendingOperations() async {
+    final queue = ref.read(deferredOperationsQueueProvider);
+    final count = await queue.pendingCount();
+    if (!mounted) return;
+    setState(() {
+      _pendingOperations = count;
+    });
+  }
+
   Future<void> _startSync() async {
     setState(() {
       _isSyncing = true;
@@ -74,29 +89,33 @@ class _DataSyncScreenState extends State<DataSyncScreen>
     });
 
     _controller.repeat();
+    final queue = ref.read(deferredOperationsQueueProvider);
+    final network = ref.read(networkServiceProvider);
+    final progressController = ref.read(progressControllerProvider.notifier);
 
-    // Simulate sync process without making the UI feel blocked.
-    for (int i = 0; i <= 100; i += 10) {
-      await Future.delayed(const Duration(milliseconds: 90));
-
-      if (mounted) {
-        setState(() {
-          _syncProgress = i / 100;
-
-          if (i < 30) {
-            _syncStatusKey = 'syncingChildProfiles';
-          } else if (i < 60) {
-            _syncStatusKey = 'syncingProgressData';
-          } else if (i < 90) {
-            _syncStatusKey = 'syncingActivities';
-          } else {
-            _syncStatusKey = 'syncFinalizing';
-          }
-        });
-      }
+    if (mounted) {
+      setState(() {
+        _syncProgress = 0.2;
+        _syncStatusKey = 'syncingProgressData';
+      });
     }
+    await progressController.syncWithServer();
 
-    await Future.delayed(const Duration(milliseconds: 180));
+    if (mounted) {
+      setState(() {
+        _syncProgress = 0.65;
+        _syncStatusKey = 'syncingActivities';
+      });
+    }
+    await queue.processPending(network);
+
+    if (mounted) {
+      setState(() {
+        _syncProgress = 0.92;
+        _syncStatusKey = 'syncFinalizing';
+      });
+    }
+    await _loadPendingOperations();
 
     if (mounted) {
       setState(() {
@@ -228,15 +247,18 @@ class _DataSyncScreenState extends State<DataSyncScreen>
                       icon: Icons.analytics,
                       label:
                           AppLocalizations.of(context)!.syncProgressDataLabel,
-                      value: AppLocalizations.of(context)!.activitiesCount(15),
+                      value: AppLocalizations.of(context)!
+                          .activitiesCount(_pendingOperations),
                       isSynced: true,
                     ),
                     const SizedBox(height: 16),
                     _SyncDetailItem(
                       icon: Icons.settings,
                       label: AppLocalizations.of(context)!.syncSettingsLabel,
-                      value: AppLocalizations.of(context)!.syncedLabel,
-                      isSynced: true,
+                      value: _pendingOperations == 0
+                          ? AppLocalizations.of(context)!.syncedLabel
+                          : '$_pendingOperations pending',
+                      isSynced: _pendingOperations == 0,
                     ),
                     const SizedBox(height: 16),
                     _SyncDetailItem(

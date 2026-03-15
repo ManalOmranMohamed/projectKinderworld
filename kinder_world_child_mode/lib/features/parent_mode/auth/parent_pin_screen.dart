@@ -238,141 +238,152 @@ class _ParentPinScreenState extends ConsumerState<ParentPinScreen>
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              const Icon(
-                Icons.lock_person_rounded,
-                size: 72,
-                color: AppColors.primary,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _titleFor(l10n),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _subtitleFor(l10n),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 32),
-              AnimatedBuilder(
-                animation: _shakeAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(
-                      _shakeAnimation.value * 12 * (1 - _shakeAnimation.value),
-                      0,
-                    ),
-                    child: child,
-                  );
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    return Container(
-                      width: 18,
-                      height: 18,
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _enteredDigits.length > index
-                            ? colors.primary
-                            : colors.surfaceContainerHighest,
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (pinState.error != null)
-                Text(
-                  pinState.error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.error,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth = (constraints.maxWidth - 32) / 3;
+            final itemHeight = itemWidth / 1.18;
+            final keypadHeight = (itemHeight * 4) + (16 * 3);
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  const Icon(
+                    Icons.lock_person_rounded,
+                    size: 72,
+                    color: AppColors.primary,
                   ),
-                ),
-              if (isLocked)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Text(
-                    l10n.parentPinLockedUntil(
-                      _formatLockedUntil(pinState.lockedUntil!),
-                    ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _titleFor(l10n),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.18,
-                  ),
-                  itemCount: 12,
-                  itemBuilder: (context, index) {
-                    if (index == 9) return const SizedBox();
-                    if (index == 10) {
-                      return _NumberButton(
-                        number: '0',
-                        onPressed: () => _onNumberPressed('0'),
-                      );
-                    }
-                    if (index == 11) {
-                      return _NumberButton(
-                        icon: Icons.backspace_outlined,
-                        onPressed: _onBackspacePressed,
-                      );
-                    }
-                    final number = (index + 1).toString();
-                    return _NumberButton(
-                      number: number,
-                      onPressed: () => _onNumberPressed(number),
-                    );
-                  },
-                ),
-              ),
-              if (_effectiveMode != ParentPinFlowMode.setup)
-                TextButton(
-                  onPressed: pinState.isLoading ? null : _requestReset,
-                  child: Text(
-                    l10n.forgotPin,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                   ),
-                ),
-              if (pinState.isLoading) ...[
-                const SizedBox(height: 8),
-                const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ],
-            ],
-          ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _subtitleFor(l10n),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 32),
+                  AnimatedBuilder(
+                    animation: _shakeAnimation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(
+                          _shakeAnimation.value *
+                              12 *
+                              (1 - _shakeAnimation.value),
+                          0,
+                        ),
+                        child: child,
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(4, (index) {
+                        return Container(
+                          width: 18,
+                          height: 18,
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _enteredDigits.length > index
+                                ? colors.primary
+                                : colors.surfaceContainerHighest,
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (pinState.error != null)
+                    Text(
+                      pinState.error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  if (isLocked)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        l10n.parentPinLockedUntil(
+                          _formatLockedUntil(pinState.lockedUntil!),
+                        ),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.error,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: keypadHeight,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.18,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, index) {
+                        if (index == 9) return const SizedBox();
+                        if (index == 10) {
+                          return _NumberButton(
+                            number: '0',
+                            onPressed: () => _onNumberPressed('0'),
+                          );
+                        }
+                        if (index == 11) {
+                          return _NumberButton(
+                            icon: Icons.backspace_outlined,
+                            onPressed: _onBackspacePressed,
+                          );
+                        }
+                        final number = (index + 1).toString();
+                        return _NumberButton(
+                          number: number,
+                          onPressed: () => _onNumberPressed(number),
+                        );
+                      },
+                    ),
+                  ),
+                  if (_effectiveMode != ParentPinFlowMode.setup)
+                    TextButton(
+                      onPressed: pinState.isLoading ? null : _requestReset,
+                      child: Text(
+                        l10n.forgotPin,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ),
+                  if (pinState.isLoading) ...[
+                    const SizedBox(height: 8),
+                    const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

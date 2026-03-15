@@ -20,6 +20,7 @@ import 'package:kinder_world/core/widgets/plan_guard.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/dashboard_theme_switch.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/router.dart';
 
 class ParentDashboardScreen extends ConsumerStatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -569,6 +570,10 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
                                       ),
                                     ),
                                     const SizedBox(height: 24),
+                                    _buildAttentionAlerts(children),
+                                    const SizedBox(height: 24),
+                                    _buildQuickActions(),
+                                    const SizedBox(height: 24),
                                     // Children Overview
                                     _buildChildrenOverview(children),
                                     const SizedBox(height: 24),
@@ -628,6 +633,262 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     );
   }
 
+  Widget _buildAttentionAlerts(List<ChildProfile> children) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final parentTheme = context.parentTheme;
+
+    return FutureBuilder<List<ProgressRecord>>(
+      future: _recentActivitiesForChildren(children),
+      builder: (context, snapshot) {
+        final records = snapshot.data ?? const <ProgressRecord>[];
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
+
+        final alerts = <_DashboardAlertItem>[];
+        final latestByChild = <String, DateTime>{};
+        final todayMinutesByChild = <String, int>{};
+
+        for (final record in records) {
+          final existing = latestByChild[record.childId];
+          if (existing == null || record.date.isAfter(existing)) {
+            latestByChild[record.childId] = record.date;
+          }
+          if (!record.date.isBefore(todayStart)) {
+            todayMinutesByChild[record.childId] =
+                (todayMinutesByChild[record.childId] ?? 0) + record.duration;
+          }
+        }
+
+        for (final child in children) {
+          final todayMinutes = todayMinutesByChild[child.id] ?? 0;
+          if (todayMinutes > AppConstants.defaultDailyLimit) {
+            alerts.add(
+              _DashboardAlertItem(
+                message: l10n.notificationScreenTime(
+                  child.name,
+                  (todayMinutes / 60).ceil(),
+                ),
+                icon: Icons.timer_off_outlined,
+                color: parentTheme.warning,
+                onTap: () => context.go(Routes.parentControls),
+              ),
+            );
+          }
+
+          final latest = latestByChild[child.id] ?? child.lastSession;
+          if (latest == null) {
+            alerts.add(
+              _DashboardAlertItem(
+                message: l10n.notificationInactive(child.name, 2),
+                icon: Icons.bedtime_outlined,
+                color: parentTheme.info,
+                onTap: () => context.go(Routes.parentReports),
+              ),
+            );
+            continue;
+          }
+
+          final inactiveDays = now.difference(latest).inDays;
+          if (inactiveDays >= 2) {
+            alerts.add(
+              _DashboardAlertItem(
+                message: l10n.notificationInactive(child.name, inactiveDays),
+                icon: Icons.schedule_outlined,
+                color: parentTheme.info,
+                onTap: () => context.go(Routes.parentReports),
+              ),
+            );
+          }
+        }
+
+        final displayAlerts = alerts.take(3).toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ParentSectionHeader(
+              title: l10n.notifications,
+              subtitle: l10n.notificationsSubtitle,
+              actionLabel: l10n.viewAll,
+              onAction: () => context.go(Routes.parentNotifications),
+            ),
+            const SizedBox(height: 12),
+            if (displayAlerts.isEmpty)
+              ParentCard(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: parentTheme.success,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.noActiveAlerts,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ParentCard(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(
+                  children: List.generate(displayAlerts.length, (index) {
+                    final item = displayAlerts[index];
+                    return Column(
+                      children: [
+                        ListTile(
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 0,
+                          ),
+                          leading: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: item.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(item.icon, size: 18, color: item.color),
+                          ),
+                          title: Text(
+                            item.message,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: colors.onSurfaceVariant,
+                          ),
+                          onTap: item.onTap,
+                        ),
+                        if (index != displayAlerts.length - 1)
+                          Divider(
+                            height: 1,
+                            indent: 52,
+                            color: colors.outlineVariant.withValues(alpha: 0.4),
+                          ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickActions() {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ParentSectionHeader(
+          title: l10n.quickActions,
+          subtitle: l10n.parentDashboardSubtitle,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _buildQuickActionTile(
+              icon: Icons.child_care_outlined,
+              label: l10n.childManagement,
+              subtitle: l10n.manageChildProfiles,
+              onTap: () => context.go(Routes.parentChildManagement),
+            ),
+            _buildQuickActionTile(
+              icon: Icons.bar_chart_rounded,
+              label: l10n.reports,
+              subtitle: l10n.reportsAndAnalytics,
+              onTap: () => context.go(Routes.parentReports),
+            ),
+            _buildQuickActionTile(
+              icon: Icons.shield_outlined,
+              label: l10n.safetyDashboard,
+              subtitle: l10n.safetyDashboardSubtitle,
+              onTap: () => context.go(Routes.parentSafetyDashboard),
+            ),
+            _buildQuickActionTile(
+              icon: Icons.timer_outlined,
+              label: l10n.dailyLimit,
+              subtitle: l10n.screenTimeLimits,
+              onTap: () => context.go(Routes.parentControls),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionTile({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final width = MediaQuery.sizeOf(context).width;
+    final cardWidth = width < 420 ? width - 32 : (width - 42) / 2;
+    final colors = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: cardWidth,
+      child: ParentCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: colors.primary),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildChildrenOverview(List<ChildProfile> children) {
     final l10n = AppLocalizations.of(context)!;
     if (children.isEmpty) {
@@ -661,7 +922,7 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   Widget _buildChildCard(BuildContext context, ChildProfile child) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final ageLabel = child.age > 0 ? l10n.yearsOld(child.age) : '—';
+    final ageLabel = child.age > 0 ? l10n.yearsOld(child.age) : '-';
     final xpFraction = child.xpProgress.clamp(0.0, 1.0);
 
     return Padding(
@@ -831,56 +1092,121 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     final itemWidth =
         compact ? (availableWidth - 12) / 2 : (availableWidth - 24) / 3;
 
-    final totalTime = children.fold<int>(0, (s, c) => s + c.totalTimeSpent);
-    final totalActivities =
-        children.fold<int>(0, (s, c) => s + c.activitiesCompleted);
-    final avgXp = (children.fold<int>(0, (s, c) => s + c.xp) ~/
-        children.length.clamp(1, 9999));
+    return FutureBuilder<List<ProgressRecord>>(
+      future: _recentActivitiesForChildren(children),
+      builder: (context, snapshot) {
+        final records = snapshot.data ?? const <ProgressRecord>[];
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
+        final yesterdayStart = todayStart.subtract(const Duration(days: 1));
+        final weekStart = todayStart.subtract(const Duration(days: 6));
+        final prevWeekStart = weekStart.subtract(const Duration(days: 7));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ParentSectionHeader(
-          title: l10n.todayOverviewTitle,
-          subtitle: l10n.aggregatedAcrossChildren,
-        ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
+        final todayRecords =
+            records.where((record) => !record.date.isBefore(todayStart));
+        final yesterdayRecords = records.where((record) =>
+            !record.date.isBefore(yesterdayStart) &&
+            record.date.isBefore(todayStart));
+        final thisWeekRecords = records.where((record) =>
+            !record.date.isBefore(weekStart) && !record.date.isAfter(now));
+        final prevWeekRecords = records.where((record) =>
+            !record.date.isBefore(prevWeekStart) &&
+            record.date.isBefore(weekStart));
+
+        final profileMinutes =
+            children.fold<int>(0, (sum, child) => sum + child.totalTimeSpent);
+        final profileActivities = children.fold<int>(
+          0,
+          (sum, child) => sum + child.activitiesCompleted,
+        );
+        final avgXp = (children.fold<int>(0, (sum, child) => sum + child.xp) ~/
+            children.length.clamp(1, 9999));
+
+        final todayMinutes = records.isEmpty
+            ? profileMinutes
+            : todayRecords.fold<int>(0, (sum, record) => sum + record.duration);
+        final todayCompleted = records.isEmpty
+            ? profileActivities
+            : todayRecords
+                .where(
+                  (record) =>
+                      record.completionStatus == CompletionStatus.completed,
+                )
+                .length;
+        final weekCompleted = thisWeekRecords
+            .where(
+              (record) => record.completionStatus == CompletionStatus.completed,
+            )
+            .length;
+
+        final yesterdayMinutes = yesterdayRecords.fold<int>(
+            0, (sum, record) => sum + record.duration);
+        final yesterdayCompleted = yesterdayRecords
+            .where(
+              (record) => record.completionStatus == CompletionStatus.completed,
+            )
+            .length;
+        final previousWeekCompleted = prevWeekRecords
+            .where(
+              (record) => record.completionStatus == CompletionStatus.completed,
+            )
+            .length;
+
+        final minutesTrend = _percentageTrend(todayMinutes, yesterdayMinutes);
+        final activityTrend = _signedTrend(todayCompleted - yesterdayCompleted);
+        final weeklyTrend = _signedTrend(weekCompleted - previousWeekCompleted);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: itemWidth,
-              child: ParentStatCard(
-                value: '$totalTime',
-                label: l10n.minutesLabel,
-                icon: Icons.timer_outlined,
-                color: parentTheme.info,
-                trend: '+12%',
-              ),
+            ParentSectionHeader(
+              title: l10n.todayOverviewTitle,
+              subtitle: l10n.aggregatedAcrossChildren,
             ),
-            SizedBox(
-              width: itemWidth,
-              child: ParentStatCard(
-                value: '$totalActivities',
-                label: l10n.activities,
-                icon: Icons.check_circle_outline_rounded,
-                color: parentTheme.primary,
-                trend: '+5',
-              ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: ParentStatCard(
-                value: '$avgXp',
-                label: l10n.avgXpLabel,
-                icon: Icons.star_outline_rounded,
-                color: childTheme.xp,
-              ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                SizedBox(
+                  width: itemWidth,
+                  child: ParentStatCard(
+                    value: '$todayMinutes',
+                    label: l10n.minutesLabel,
+                    icon: Icons.timer_outlined,
+                    color: parentTheme.info,
+                    trend: minutesTrend,
+                    trendUp: todayMinutes >= yesterdayMinutes,
+                  ),
+                ),
+                SizedBox(
+                  width: itemWidth,
+                  child: ParentStatCard(
+                    value: '$todayCompleted',
+                    label: l10n.activities,
+                    icon: Icons.check_circle_outline_rounded,
+                    color: parentTheme.primary,
+                    trend: activityTrend,
+                    trendUp: todayCompleted >= yesterdayCompleted,
+                  ),
+                ),
+                SizedBox(
+                  width: itemWidth,
+                  child: ParentStatCard(
+                    value: records.isEmpty ? '$avgXp' : '$weekCompleted',
+                    label:
+                        records.isEmpty ? l10n.avgXpLabel : l10n.weeklyActivity,
+                    icon: Icons.star_outline_rounded,
+                    color: childTheme.xp,
+                    trend: records.isEmpty ? null : weeklyTrend,
+                    trendUp: weekCompleted >= previousWeekCompleted,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -965,7 +1291,9 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
   String _generateInsightMessage(List<ChildProfile> children) {
     if (children.isEmpty) return '';
     final l10n = AppLocalizations.of(context)!;
-    final names = children.map((c) => c.name).join(' و ');
+    final joiner =
+        Localizations.localeOf(context).languageCode == 'ar' ? ' و ' : ', ';
+    final names = children.map((c) => c.name).join(joiner);
     final totalActivities =
         children.fold<int>(0, (sum, child) => sum + child.activitiesCompleted);
 
@@ -1042,27 +1370,20 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     // Sort by date, most recent first
     allRecords.sort((a, b) => b.date.compareTo(a.date));
 
-    return allRecords.take(10).toList();
+    return allRecords;
   }
 
   String _formatTimeAgo(DateTime date) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inDays > 0) {
-      return isArabic
-          ? 'منذ ${difference.inDays} يوم'
-          : '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+      return '${difference.inDays}d';
     } else if (difference.inHours > 0) {
-      return isArabic
-          ? 'منذ ${difference.inHours} ساعة'
-          : '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+      return '${difference.inHours}h';
     } else if (difference.inMinutes > 0) {
-      return isArabic
-          ? 'منذ ${difference.inMinutes} دقيقة'
-          : '${difference.inMinutes} ${l10n.minutesAgo}';
+      return '${difference.inMinutes} ${l10n.minutesAgo}';
     }
     return l10n.justNow;
   }
@@ -1115,14 +1436,42 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
     );
   }
 
+  List<int> _activitiesPerWeekDay(List<ProgressRecord> records) {
+    final now = DateTime.now();
+    final weekStart = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final counts = List<int>.filled(7, 0);
+
+    for (final record in records) {
+      if (record.completionStatus != CompletionStatus.completed) continue;
+      if (record.date.isBefore(weekStart)) continue;
+      final weekdayIndex = record.date.weekday - 1;
+      if (weekdayIndex >= 0 && weekdayIndex < counts.length) {
+        counts[weekdayIndex] += 1;
+      }
+    }
+    return counts;
+  }
+
+  String? _percentageTrend(int current, int previous) {
+    if (previous <= 0) return null;
+    final delta = ((current - previous) / previous) * 100;
+    final rounded = delta.abs().round();
+    final prefix = delta >= 0 ? '+' : '-';
+    return '$prefix$rounded%';
+  }
+
+  String? _signedTrend(int delta) {
+    if (delta == 0) return null;
+    return delta > 0 ? '+$delta' : '$delta';
+  }
+
   Widget _buildWeeklyProgressChart(List<ChildProfile> children) {
     if (children.isEmpty) return const SizedBox();
 
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    // Placeholder data — replace with real progress records in production
-    const weekData = [3, 5, 2, 4, 6, 3, 2];
     final days = [
       l10n.weekdayMon,
       l10n.weekdayTue,
@@ -1133,81 +1482,130 @@ class _ParentDashboardScreenState extends ConsumerState<ParentDashboardScreen>
       l10n.weekdaySun,
     ];
 
-    return ParentCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ParentSectionHeader(
-            title: l10n.weeklyActivity,
-            subtitle: l10n.activitiesCompletedPerDay,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 180,
-            child: BarChart(
-              BarChartData(
-                barTouchData: BarTouchData(enabled: true),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: colors.outlineVariant.withValues(alpha: 0.4),
-                    strokeWidth: 1,
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      getTitlesWidget: (value, _) {
-                        final i = value.toInt();
-                        if (i < 0 || i >= days.length) return const SizedBox();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            days[i],
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      },
+    return FutureBuilder<List<ProgressRecord>>(
+      future: _recentActivitiesForChildren(children),
+      builder: (context, snapshot) {
+        final records = snapshot.data ?? const <ProgressRecord>[];
+        final weekData = _activitiesPerWeekDay(records);
+        final hasAnyData = weekData.any((value) => value > 0);
+
+        return ParentCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ParentSectionHeader(
+                title: l10n.weeklyActivity,
+                subtitle: l10n.activitiesCompletedPerDay,
+              ),
+              const SizedBox(height: 20),
+              if (!hasAnyData)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: colors.onSurfaceVariant,
+                      size: 18,
                     ),
-                  ),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: weekData.asMap().entries.map((e) {
-                  final isToday = e.key == DateTime.now().weekday - 1;
-                  return BarChartGroupData(
-                    x: e.key,
-                    barRods: [
-                      BarChartRodData(
-                        toY: e.value.toDouble(),
-                        color: isToday
-                            ? colors.primary
-                            : colors.primary.withValues(alpha: 0.35),
-                        width: 18,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(6),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.noRecentActivities,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+                    ),
+                  ],
+                )
+              else
+                SizedBox(
+                  height: 180,
+                  child: BarChart(
+                    BarChartData(
+                      barTouchData: BarTouchData(enabled: true),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (_) => FlLine(
+                          color: colors.outlineVariant.withValues(alpha: 0.4),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 28,
+                            getTitlesWidget: (value, _) {
+                              final i = value.toInt();
+                              if (i < 0 || i >= days.length) {
+                                return const SizedBox();
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  days[i],
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colors.onSurfaceVariant,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      barGroups: weekData.asMap().entries.map((e) {
+                        final isToday = e.key == DateTime.now().weekday - 1;
+                        return BarChartGroupData(
+                          x: e.key,
+                          barRods: [
+                            BarChartRodData(
+                              toY: e.value.toDouble(),
+                              color: isToday
+                                  ? colors.primary
+                                  : colors.primary.withValues(alpha: 0.35),
+                              width: 18,
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(6),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+}
+
+class _DashboardAlertItem {
+  const _DashboardAlertItem({
+    required this.message,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  final String message;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
 }

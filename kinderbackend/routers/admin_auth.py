@@ -1,33 +1,32 @@
 """
-Admin authentication router — fully separate from parent/child auth.
+Admin authentication router - fully separate from parent/child auth.
 
 Endpoints:
-  POST /admin/auth/login    — email + password → access + refresh tokens
-  POST /admin/auth/refresh  — refresh token → new access token
-  POST /admin/auth/logout   — invalidate refresh tokens (bump token_version)
-  GET  /admin/auth/me       — return current admin profile + roles + permissions
+  POST /admin/auth/login    - email + password -> access + refresh tokens
+  POST /admin/auth/refresh  - refresh token -> new access token
+  POST /admin/auth/logout   - invalidate refresh tokens (bump token_version)
+  GET  /admin/auth/me       - return current admin profile + roles + permissions
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from jose import JWTError, jwt
+from jose import JWTError
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
-from auth import SECRET_KEY, ALGORITHM, verify_password
 from admin_auth import ADMIN_TOKEN_TYPE, create_admin_access_token, create_admin_refresh_token
 from admin_deps import get_current_admin
-from admin_utils import write_audit_log
-from rate_limit import auth_rate_limit
+from admin_utils import build_admin_payload, write_audit_log
+from auth import decode_token, verify_password
+from core.settings import settings
 from deps import get_db
+from rate_limit import auth_rate_limit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/auth", tags=["Admin Auth"])
 
-
-# ─────────────────────────── Pydantic schemas ────────────────────────────────
 
 class AdminLoginRequest(BaseModel):
     email: EmailStr
@@ -50,43 +49,6 @@ class AdminLoginResponse(BaseModel):
     admin: dict
 
 
-# ─────────────────────────── Helper ──────────────────────────────────────────
-
-def _build_admin_payload(admin, db: Session) -> dict:
-    """
-    Serialize an AdminUser to a safe dict including resolved roles and permissions.
-    """
-    from admin_models import AdminUserRole, Role, RolePermission, Permission
-
-    role_rows = (
-        db.query(Role.name)
-        .join(AdminUserRole, AdminUserRole.role_id == Role.id)
-        .filter(AdminUserRole.admin_user_id == admin.id)
-        .all()
-    )
-    perm_rows = (
-        db.query(Permission.name)
-        .join(RolePermission, RolePermission.permission_id == Permission.id)
-        .join(Role, Role.id == RolePermission.role_id)
-        .join(AdminUserRole, AdminUserRole.role_id == Role.id)
-        .filter(AdminUserRole.admin_user_id == admin.id)
-        .all()
-    )
-
-    return {
-        "id": admin.id,
-        "email": admin.email,
-        "name": admin.name,
-        "is_active": admin.is_active,
-        "roles": [r.name for r in role_rows],
-        "permissions": [p.name for p in perm_rows],
-        "created_at": admin.created_at.isoformat() if admin.created_at else None,
-        "updated_at": admin.updated_at.isoformat() if admin.updated_at else None,
-    }
-
-
-# ─────────────────────────── Endpoints ───────────────────────────────────────
-
 @router.post("/login", response_model=AdminLoginResponse, summary="Admin login")
 def admin_login(
     payload: AdminLoginRequest,
@@ -105,20 +67,100 @@ def admin_login(
 
     email = payload.email.strip().lower()
     admin = db.query(AdminUser).filter(AdminUser.email == email).first()
+    now = datetime.utcnow()
+    client_host = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    if admin and admin.locked_until and admin.locked_until > now:
+        write_audit_log(
+            db=db,
+            request=request,
+            admin=admin,
+            action="admin_auth.login_locked",
+            entity_type="admin_user",
+            entity_id=admin.id,
+            before_json=None,
+            after_json={
+                "email": email,
+                "locked_until": admin.locked_until.isoformat(),
+                "failed_login_attempts": int(admin.failed_login_attempts or 0),
+            },
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail={
+                "code": "ADMIN_TEMP_LOCKED",
+                "message": "Too many failed login attempts. Try again later.",
+                "locked_until": admin.locked_until.isoformat(),
+            },
+        )
 
     # Constant-time-ish: always call verify_password even on miss
     password_ok = verify_password(payload.password, admin.password_hash) if admin else False
 
     if not admin or not password_ok:
         logger.warning("Failed admin login attempt for email: %s", email)
+        failure_entity_type = "admin_auth"
+        failure_entity_id = email
+
+        if admin is not None:
+            admin.failed_login_attempts = int(admin.failed_login_attempts or 0) + 1
+            admin.last_failed_login_at = now
+            admin.last_failed_login_ip = client_host
+            admin.last_failed_login_user_agent = user_agent
+
+            if admin.failed_login_attempts >= settings.admin_suspicious_failed_threshold:
+                admin.suspicious_access_count = int(admin.suspicious_access_count or 0) + 1
+                admin.is_flagged_suspicious = True
+
+            if admin.failed_login_attempts >= settings.admin_auth_max_failed_attempts:
+                admin.locked_until = now + timedelta(minutes=settings.admin_auth_lockout_minutes)
+
+            admin.updated_at = now
+            db.add(admin)
+            failure_entity_type = "admin_user"
+            failure_entity_id = str(admin.id)
+
+        write_audit_log(
+            db=db,
+            request=request,
+            admin=admin,
+            action="admin_auth.login_failed",
+            entity_type=failure_entity_type,
+            entity_id=failure_entity_id,
+            before_json=None,
+            after_json={
+                "email": email,
+                "ip_address": client_host,
+                "user_agent": user_agent,
+                "failed_login_attempts": int(getattr(admin, "failed_login_attempts", 0) or 0),
+                "locked_until": (
+                    admin.locked_until.isoformat()
+                    if admin is not None and admin.locked_until
+                    else None
+                ),
+            },
+        )
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
         )
 
-    # Disabled check — after credential verification to avoid timing oracle
     if not admin.is_active:
         logger.warning("Disabled admin login attempt: %s (id=%s)", admin.email, admin.id)
+        write_audit_log(
+            db=db,
+            request=request,
+            admin=admin,
+            action="admin_auth.login_disabled",
+            entity_type="admin_user",
+            entity_id=admin.id,
+            before_json=None,
+            after_json={"id": admin.id, "email": admin.email, "is_active": admin.is_active},
+        )
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -127,7 +169,17 @@ def admin_login(
             },
         )
 
-    admin.updated_at = datetime.utcnow()
+    suspicious_ip_change = bool(admin.last_login_ip and client_host and admin.last_login_ip != client_host)
+    if suspicious_ip_change:
+        admin.suspicious_access_count = int(admin.suspicious_access_count or 0) + 1
+        admin.is_flagged_suspicious = True
+
+    admin.last_login_at = now
+    admin.last_login_ip = client_host
+    admin.last_login_user_agent = user_agent
+    admin.failed_login_attempts = 0
+    admin.locked_until = None
+    admin.updated_at = now
     db.add(admin)
     db.commit()
     db.refresh(admin)
@@ -143,6 +195,22 @@ def admin_login(
         before_json=None,
         after_json={"id": admin.id, "email": admin.email, "is_active": admin.is_active},
     )
+    if suspicious_ip_change:
+        write_audit_log(
+            db=db,
+            request=request,
+            admin=admin,
+            action="admin_auth.suspicious_ip_change",
+            entity_type="admin_user",
+            entity_id=admin.id,
+            before_json=None,
+            after_json={
+                "id": admin.id,
+                "email": admin.email,
+                "last_login_ip": admin.last_login_ip,
+                "suspicious_access_count": int(admin.suspicious_access_count or 0),
+            },
+        )
     db.commit()
     db.refresh(admin)
 
@@ -150,7 +218,7 @@ def admin_login(
         "access_token": create_admin_access_token(admin.id, admin.token_version),
         "refresh_token": create_admin_refresh_token(admin.id, admin.token_version),
         "token_type": "bearer",
-        "admin": _build_admin_payload(admin, db),
+        "admin": build_admin_payload(admin, db),
     }
 
 
@@ -166,7 +234,7 @@ def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db), r
     from admin_models import AdminUser
 
     try:
-        decoded = jwt.decode(payload.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        decoded = decode_token(payload.refresh_token)
     except JWTError as exc:
         logger.warning("Admin refresh token decode failed: %s", exc)
         raise HTTPException(
@@ -206,7 +274,6 @@ def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db), r
             detail="Invalid refresh token payload",
         )
 
-    # token_version mismatch means the admin has logged out — token is revoked
     if stored_version_value != int(admin.token_version or 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -228,7 +295,7 @@ def admin_refresh(payload: AdminRefreshRequest, db: Session = Depends(get_db), r
     }
 
 
-@router.post("/logout", summary="Admin logout — invalidates refresh tokens")
+@router.post("/logout", summary="Admin logout - invalidates refresh tokens")
 def admin_logout(
     request: Request,
     admin=Depends(get_current_admin),
@@ -267,4 +334,4 @@ def admin_me(
     Return the authenticated admin's profile, roles, and permissions.
     Disabled admins are blocked by get_current_admin before reaching here.
     """
-    return {"admin": _build_admin_payload(admin, db)}
+    return {"admin": build_admin_payload(admin, db)}

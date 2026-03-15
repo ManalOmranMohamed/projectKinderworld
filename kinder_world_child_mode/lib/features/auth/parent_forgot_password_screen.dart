@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
 class ParentForgotPasswordScreen extends StatefulWidget {
@@ -44,16 +45,6 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
     _emailController.dispose();
     _animController.dispose();
     super.dispose();
-  }
-
-  bool _isAllowedEmail(String value) {
-    final email = value.trim().toLowerCase();
-    if (!email.contains('@')) return false;
-    final domain = email.split('@').last;
-    return domain == 'gmail.com' ||
-        domain == 'outlook.com' ||
-        domain == 'hotmail.com' ||
-        domain == 'live.com';
   }
 
   Future<void> _sendReset() async {
@@ -279,7 +270,7 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                 if (value == null || value.isEmpty) {
                   return l10n.emailValidationEmpty;
                 }
-                if (!_isAllowedEmail(value)) {
+                if (!isValidEmailFormat(value)) {
                   return l10n.emailValidationInvalid;
                 }
                 return null;

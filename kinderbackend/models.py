@@ -1,4 +1,18 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Date, func, ForeignKey, JSON, text, true, false
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    Date,
+    func,
+    ForeignKey,
+    JSON,
+    text,
+    true,
+    false,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -43,8 +57,212 @@ class ChildProfile(Base):
     age = Column(Integer, nullable=True)
     avatar = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False, server_default=true())
+    deleted_at = Column(DateTime, nullable=True, index=True)
 
     parent = relationship("User", back_populates="children")
+    activity_events = relationship("ChildActivityEvent", back_populates="child", cascade="all, delete-orphan")
+    session_logs = relationship("ChildSessionLog", back_populates="child", cascade="all, delete-orphan")
+    parental_control_setting = relationship(
+        "ChildParentalControlSetting",
+        back_populates="child",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    activity_sessions = relationship("ActivitySession", back_populates="child", cascade="all, delete-orphan")
+    lesson_progress_records = relationship("LessonProgress", back_populates="child", cascade="all, delete-orphan")
+    mood_entries = relationship("ChildMoodEntry", back_populates="child", cascade="all, delete-orphan")
+    reward_redemptions = relationship("RewardRedemption", back_populates="child", cascade="all, delete-orphan")
+    screen_time_logs = relationship("ScreenTimeLog", back_populates="child", cascade="all, delete-orphan")
+    ai_interactions = relationship("AiInteraction", back_populates="child", cascade="all, delete-orphan")
+    daily_activity_summaries = relationship(
+        "ChildDailyActivitySummary",
+        back_populates="child",
+        cascade="all, delete-orphan",
+    )
+
+
+class ChildSessionLog(Base):
+    __tablename__ = "child_session_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    source = Column(String, nullable=False, default="app", server_default=text("'app'"))
+    started_at = Column(DateTime, nullable=False, index=True)
+    ended_at = Column(DateTime, nullable=False, index=True)
+    duration_seconds = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    metadata_json = Column(JSON, nullable=True)
+    retention_expires_at = Column(DateTime, nullable=True, index=True)
+    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="session_logs")
+
+
+class ChildActivityEvent(Base):
+    __tablename__ = "child_activity_events"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String, nullable=False, index=True)
+    occurred_at = Column(DateTime, nullable=False, index=True)
+    source = Column(String, nullable=False, default="app", server_default=text("'app'"))
+    activity_name = Column(String, nullable=True)
+    lesson_id = Column(String, nullable=True)
+    mood_value = Column(Integer, nullable=True)
+    achievement_key = Column(String, nullable=True)
+    points = Column(Integer, nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    retention_expires_at = Column(DateTime, nullable=True, index=True)
+    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="activity_events")
+
+
+class ActivitySession(Base):
+    __tablename__ = "activity_sessions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    activity_type = Column(String, nullable=False, index=True)
+    source = Column(String, nullable=False, default="app", server_default=text("'app'"), index=True)
+    context = Column(String, nullable=True)
+    session_key = Column(String, nullable=True, index=True)
+    status = Column(String, nullable=False, default="active", server_default=text("'active'"), index=True)
+    started_at = Column(DateTime, nullable=False, index=True)
+    ended_at = Column(DateTime, nullable=True, index=True)
+    duration_seconds = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    metadata_json = Column(JSON, nullable=True)
+    retention_expires_at = Column(DateTime, nullable=True, index=True)
+    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="activity_sessions")
+
+
+class LessonProgress(Base):
+    __tablename__ = "lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("child_id", "lesson_id", name="uq_lesson_progress_child_lesson"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    lesson_id = Column(String, nullable=False, index=True)
+    status = Column(String, nullable=False, default="not_started", server_default=text("'not_started'"), index=True)
+    progress_percent = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    attempt_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    score = Column(Integer, nullable=True)
+    started_at = Column(DateTime, nullable=True)
+    last_activity_at = Column(DateTime, nullable=True, index=True)
+    completed_at = Column(DateTime, nullable=True, index=True)
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="lesson_progress_records")
+
+
+class ChildMoodEntry(Base):
+    __tablename__ = "child_mood_entries"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    mood_category = Column(String, nullable=False, index=True)
+    mood_value = Column(Integer, nullable=True)
+    note = Column(String, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    recorded_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="mood_entries")
+
+
+class RewardRedemption(Base):
+    __tablename__ = "reward_redemptions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    reward_id = Column(String, nullable=True, index=True)
+    reward_name = Column(String, nullable=False)
+    points_spent = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    status = Column(String, nullable=False, default="pending", server_default=text("'pending'"), index=True)
+    requested_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    redeemed_at = Column(DateTime, nullable=True, index=True)
+    fulfilled_at = Column(DateTime, nullable=True, index=True)
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="reward_redemptions")
+
+
+class ScreenTimeLog(Base):
+    __tablename__ = "screen_time_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    usage_date = Column(Date, nullable=False, index=True)
+    minutes_used = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    source = Column(String, nullable=False, default="app", server_default=text("'app'"), index=True)
+    device_id = Column(String, nullable=True, index=True)
+    category = Column(String, nullable=True, index=True)
+    session_key = Column(String, nullable=True, index=True)
+    logged_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    metadata_json = Column(JSON, nullable=True)
+    retention_expires_at = Column(DateTime, nullable=True, index=True)
+    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="screen_time_logs")
+
+
+class AiInteraction(Base):
+    __tablename__ = "ai_interactions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    interaction_type = Column(String, nullable=False, index=True)
+    intent = Column(String, nullable=True, index=True)
+    input_preview = Column(String, nullable=True)
+    response_category = Column(String, nullable=True)
+    safety_status = Column(String, nullable=False, default="unknown", server_default=text("'unknown'"), index=True)
+    source = Column(String, nullable=False, default="ai_buddy", server_default=text("'ai_buddy'"), index=True)
+    safety_flags_json = Column(JSON, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    occurred_at = Column(DateTime, nullable=False, server_default=func.now(), index=True)
+    retention_expires_at = Column(DateTime, nullable=True, index=True)
+    archived_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="ai_interactions")
+
+
+class ChildDailyActivitySummary(Base):
+    __tablename__ = "child_daily_activity_summaries"
+    __table_args__ = (
+        UniqueConstraint("child_id", "summary_date", name="uq_child_daily_activity_summary"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    summary_date = Column(Date, nullable=False, index=True)
+    screen_time_minutes = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    activities_completed = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    lessons_completed = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    mood_entries = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    achievements_unlocked = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    ai_interactions_count = Column(Integer, nullable=False, default=0, server_default=text("0"))
+    data_source = Column(String, nullable=False, default="realtime", server_default=text("'realtime'"))
+    last_event_at = Column(DateTime, nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    archived_at = Column(DateTime, nullable=True, index=True)
+
+    child = relationship("ChildProfile", back_populates="daily_activity_summaries")
 
 
 class Notification(Base):
@@ -226,10 +444,97 @@ class ParentalControl(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class ChildParentalControlSetting(Base):
+    __tablename__ = "child_parental_control_settings"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    parent_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id = Column(Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+
+    daily_limit_enabled = Column(Boolean, default=True, nullable=False, server_default=true())
+    daily_limit_minutes = Column(Integer, default=120, nullable=False, server_default=text("120"))
+    break_reminders_enabled = Column(Boolean, default=True, nullable=False, server_default=true())
+    age_appropriate_only = Column(Boolean, default=True, nullable=False, server_default=true())
+    require_approval = Column(Boolean, default=False, nullable=False, server_default=false())
+    sleep_mode = Column(Boolean, default=True, nullable=False, server_default=true())
+    bedtime_start = Column(String, nullable=True)
+    bedtime_end = Column(String, nullable=True)
+    emergency_lock = Column(Boolean, default=False, nullable=False, server_default=false())
+
+    enforcement_mode = Column(String, nullable=False, default="monitor", server_default=text("'monitor'"))
+    device_status = Column(String, nullable=False, default="unknown", server_default=text("'unknown'"))
+    pending_changes = Column(Boolean, default=True, nullable=False, server_default=true())
+    last_synced_at = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    child = relationship("ChildProfile", back_populates="parental_control_setting")
+    schedule_rules = relationship("ChildScheduleRule", back_populates="setting", cascade="all, delete-orphan")
+    blocked_apps = relationship("ChildBlockedApp", back_populates="setting", cascade="all, delete-orphan")
+    blocked_sites = relationship("ChildBlockedSite", back_populates="setting", cascade="all, delete-orphan")
+
+
+class ChildScheduleRule(Base):
+    __tablename__ = "child_schedule_rules"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    setting_id = Column(
+        Integer,
+        ForeignKey("child_parental_control_settings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    day_of_week = Column(Integer, nullable=False, index=True)  # 0=Mon ... 6=Sun
+    start_time = Column(String, nullable=False)  # HH:MM
+    end_time = Column(String, nullable=False)  # HH:MM
+    is_allowed = Column(Boolean, default=True, nullable=False, server_default=true())
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    setting = relationship("ChildParentalControlSetting", back_populates="schedule_rules")
+
+
+class ChildBlockedApp(Base):
+    __tablename__ = "child_blocked_apps"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    setting_id = Column(
+        Integer,
+        ForeignKey("child_parental_control_settings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    app_identifier = Column(String, nullable=False, index=True)
+    app_name = Column(String, nullable=True)
+    reason = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    setting = relationship("ChildParentalControlSetting", back_populates="blocked_apps")
+
+
+class ChildBlockedSite(Base):
+    __tablename__ = "child_blocked_sites"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    setting_id = Column(
+        Integer,
+        ForeignKey("child_parental_control_settings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    domain = Column(String, nullable=False, index=True)
+    label = Column(String, nullable=True)
+    reason = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    setting = relationship("ChildParentalControlSetting", back_populates="blocked_sites")
+
+
 class PaymentMethod(Base):
     __tablename__ = "payment_methods"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     label = Column(String, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

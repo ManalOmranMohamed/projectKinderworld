@@ -40,7 +40,11 @@ def get_analytics_overview(
     last_7_days_start = datetime.combine(date.today() - timedelta(days=6), time.min)
 
     total_users = db.query(User).count()
-    active_children = db.query(ChildProfile).filter(ChildProfile.is_active.is_(True)).count()
+    active_children = (
+        db.query(ChildProfile)
+        .filter(ChildProfile.is_active.is_(True), ChildProfile.deleted_at.is_(None))
+        .count()
+    )
     activities_today = db.query(Notification).filter(Notification.created_at >= today_start).count()
     open_tickets = db.query(SupportTicket).filter(SupportTicket.status != "closed").count()
 
@@ -56,7 +60,14 @@ def get_analytics_overview(
 
     usage_summary = {
         "new_users_last_7_days": db.query(User).filter(User.created_at >= last_7_days_start).count(),
-        "new_children_last_7_days": db.query(ChildProfile).filter(ChildProfile.created_at >= last_7_days_start).count(),
+        "new_children_last_7_days": (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.created_at >= last_7_days_start,
+                ChildProfile.deleted_at.is_(None),
+            )
+            .count()
+        ),
         "tickets_last_7_days": db.query(SupportTicket).filter(SupportTicket.created_at >= last_7_days_start).count(),
         "activities_last_7_days": db.query(Notification).filter(Notification.created_at >= last_7_days_start).count(),
     }
@@ -124,7 +135,10 @@ def get_analytics_usage(
 
     for created_at, count in (
         db.query(func.date(ChildProfile.created_at), func.count(ChildProfile.id))
-        .filter(ChildProfile.created_at >= start_dt)
+        .filter(
+            ChildProfile.created_at >= start_dt,
+            ChildProfile.deleted_at.is_(None),
+        )
         .group_by(func.date(ChildProfile.created_at))
         .all()
     ):

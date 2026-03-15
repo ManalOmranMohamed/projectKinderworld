@@ -16,6 +16,7 @@ from admin_utils import (
     write_audit_log,
 )
 from auth import hash_password
+from core.admin_security import require_sensitive_action_confirmation
 from deps import get_db
 from models import User
 
@@ -148,6 +149,7 @@ def disable_admin_user(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.users.ban")),
 ):
+    require_sensitive_action_confirmation(request, action="user.disable")
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user)
     user.is_active = False
@@ -176,6 +178,7 @@ def enable_admin_user(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.users.ban")),
 ):
+    require_sensitive_action_confirmation(request, action="user.enable")
     user = _get_user_or_404(user_id, db)
     before = serialize_user_detail(user)
     user.is_active = True
@@ -204,6 +207,7 @@ def reset_admin_user_password(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.users.edit")),
 ):
+    require_sensitive_action_confirmation(request, action="user.reset_password")
     user = _get_user_or_404(user_id, db)
     temp_password = payload.new_password or "Temp@123456"
     before = {"id": user.id, "email": user.email}

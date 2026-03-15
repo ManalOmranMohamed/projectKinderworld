@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
@@ -7,8 +8,11 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/router.dart';
 
 class LessonFlowScreen extends ConsumerStatefulWidget {
@@ -57,6 +61,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   void _nextStep() {
     if (_currentStep < 4) {
+      HapticFeedback.selectionClick();
       setState(() {
         _currentStep++;
       });
@@ -81,7 +86,9 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
       _isCompleting = true;
     });
 
-    await ref.read(progressControllerProvider.notifier).recordActivityCompletion(
+    await ref
+        .read(progressControllerProvider.notifier)
+        .recordActivityCompletion(
           childId: childProfile.id,
           activityId: 'lesson_${widget.lessonId}',
           score: 100,
@@ -91,6 +98,15 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
           completionStatus: CompletionStatus.completed,
           moodAfter: childProfile.currentMood,
         );
+
+    await ref.read(gamificationStateProvider.notifier).recordActivity(
+          childId: childProfile.id,
+          type: ActivityType.lesson,
+          category: _categoryForLesson(widget.lessonId),
+          score: 100,
+          awardXp: false,
+        );
+    HapticFeedback.lightImpact();
 
     if (mounted) {
       context.go('/child/home');
@@ -121,15 +137,19 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
               value: _progressAnimation.value,
               backgroundColor:
                   Theme.of(context).colorScheme.surfaceContainerHighest,
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(context.successColor),
+              valueColor: AlwaysStoppedAnimation<Color>(context.successColor),
             );
           },
         ),
         actions: [
-          TextButton(
+          TextButton.icon(
             onPressed: _nextStep,
-            child: Text(
+            style: TextButton.styleFrom(minimumSize: const Size(82, 48)),
+            icon: Icon(
+              _currentStep == 4 ? Icons.check_circle : Icons.arrow_forward,
+              size: 18,
+            ),
+            label: Text(
               _currentStep == 4 ? l10n.lessonFinish : l10n.next,
               style: TextStyle(
                 fontSize: 16,
@@ -141,7 +161,26 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
         ],
       ),
       body: SafeArea(
-        child: _buildCurrentStep(context, lesson),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(24, 8, 24, 0),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  '${_currentStep + 1}/5',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: _buildCurrentStep(context, lesson),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -179,7 +218,8 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
             ),
             child: Icon(
@@ -229,26 +269,12 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             ],
           ),
           const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _nextStep,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                l10n.startLearning,
-                style: TextStyle(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
-              ),
-            ),
+          ChildPrimaryActionButton(
+            label: l10n.startLearning,
+            icon: Icons.play_arrow_rounded,
+            onPressed: _nextStep,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.surface,
           ),
         ],
       ),
@@ -307,7 +333,10 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -580,26 +609,13 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             ),
           ),
           const SizedBox(height: 48),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: _completeLesson,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.successColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                l10n.continueText,
-                style: TextStyle(
-                  fontSize: AppConstants.fontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
-              ),
-            ),
+          ChildPrimaryActionButton(
+            label: l10n.continueText,
+            icon: Icons.arrow_forward_rounded,
+            onPressed: _completeLesson,
+            backgroundColor: context.successColor,
+            foregroundColor: Theme.of(context).colorScheme.surface,
+            isBusy: _isCompleting,
           ),
         ],
       ),
@@ -619,6 +635,15 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
       'difficulty': l10n.beginner,
       'content': l10n.lessonContentFallback,
     };
+  }
+
+  String _categoryForLesson(String lessonId) {
+    if (lessonId.startsWith('math_') ||
+        lessonId.startsWith('sci_') ||
+        lessonId.startsWith('read_')) {
+      return 'educational';
+    }
+    return 'skillful';
   }
 }
 
@@ -676,51 +701,55 @@ class _AnswerOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-              : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+    return Semantics(
+      button: true,
+      label: text,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.surfaceContainerHighest,
-            width: isSelected ? 2 : 1,
+                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
+                child: isSelected
+                    ? Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.surface,
+                      )
+                    : null,
               ),
-              child: isSelected
-                  ? Icon(
-                      Icons.check,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.surface,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface,
+              const SizedBox(width: 12),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -769,5 +798,3 @@ class _ResultItem extends StatelessWidget {
     );
   }
 }
-
-

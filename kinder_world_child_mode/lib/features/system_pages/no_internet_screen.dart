@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
 
 class NoInternetScreen extends ConsumerStatefulWidget {
   const NoInternetScreen({super.key});
@@ -57,141 +58,92 @@ class _NoInternetScreenState extends ConsumerState<NoInternetScreen>
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _fadeController,
-          builder: (context, child) => Opacity(
-            opacity: _fadeAnimation.value,
-            child: Transform.translate(
-              offset: Offset(0, _slideAnimation.value),
-              child: child,
-            ),
+
+    return AnimatedBuilder(
+      animation: _fadeController,
+      builder: (context, child) => Opacity(
+        opacity: _fadeAnimation.value,
+        child: Transform.translate(
+          offset: Offset(0, _slideAnimation.value),
+          child: child,
+        ),
+      ),
+      child: SystemPageLayout(
+        illustration: AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) => Transform.scale(
+            scale: _pulseAnimation.value,
+            child: child,
           ),
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.pagePadding,
-                vertical: AppSpacing.xxl,
+          child: _NoInternetIllustration(colors: colors),
+        ),
+        title: l10n.noInternetConnection,
+        subtitle: l10n.pleaseTryAgain,
+        body: _ConnectionTips(colors: colors, textTheme: textTheme),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton.icon(
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/welcome');
+                }
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+              label: Text(
+                l10n.tryAgain,
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.onPrimary,
+                ),
               ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 400),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // ── Illustration ──────────────────────────────────────
-                    AnimatedBuilder(
-                      animation: _pulseAnimation,
-                      builder: (context, child) => Transform.scale(
-                        scale: _pulseAnimation.value,
-                        child: child,
-                      ),
-                      child: _NoInternetIllustration(colors: colors),
-                    ),
-                    const SizedBox(height: AppSpacing.xxxl),
-
-                    // ── Title ─────────────────────────────────────────────
-                    Text(
-                      l10n.noInternetConnection,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                        color: colors.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // ── Subtitle ──────────────────────────────────────────
-                    Text(
-                      l10n.pleaseTryAgain,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        height: 1.6,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSpacing.xxxl),
-
-                    // ── Tips ──────────────────────────────────────────────
-                    _ConnectionTips(colors: colors, textTheme: textTheme),
-                    const SizedBox(height: AppSpacing.xxxl),
-
-                    // ── Primary Action ────────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          if (context.canPop()) {
-                            context.pop();
-                          }
-                        },
-                        icon: const Icon(Icons.refresh_rounded, size: 20),
-                        label: Text(
-                          l10n.tryAgain,
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colors.onPrimary,
-                          ),
-                        ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.button),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // ── Secondary Action ──────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          if (context.canPop()) {
-                            context.pop();
-                          } else {
-                            context.go('/welcome');
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.onSurfaceVariant,
-                          side: BorderSide(
-                            color: colors.outlineVariant,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.button),
-                          ),
-                        ),
-                        child: Text(
-                          l10n.cancel,
-                          style: textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
                 ),
               ),
             ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/welcome');
+                }
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.onSurfaceVariant,
+                side: BorderSide(
+                  color: colors.outlineVariant,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                ),
+              ),
+              child: Text(
+                l10n.cancel,
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Illustration Widget
-// ─────────────────────────────────────────────────────────────────────────────
 class _NoInternetIllustration extends StatelessWidget {
   final ColorScheme colors;
 
@@ -205,7 +157,6 @@ class _NoInternetIllustration extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer ring
           Container(
             width: 180,
             height: 180,
@@ -214,7 +165,6 @@ class _NoInternetIllustration extends StatelessWidget {
               color: colors.errorContainer.withValues(alpha: 0.15),
             ),
           ),
-          // Middle ring
           Container(
             width: 130,
             height: 130,
@@ -223,7 +173,6 @@ class _NoInternetIllustration extends StatelessWidget {
               color: colors.errorContainer.withValues(alpha: 0.25),
             ),
           ),
-          // Inner icon container
           Container(
             width: 88,
             height: 88,
@@ -237,7 +186,6 @@ class _NoInternetIllustration extends StatelessWidget {
               color: colors.error,
             ),
           ),
-          // Signal arcs (decorative)
           Positioned(
             top: 16,
             right: 20,
@@ -253,9 +201,6 @@ class _NoInternetIllustration extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Connection Tips
-// ─────────────────────────────────────────────────────────────────────────────
 class _ConnectionTips extends StatelessWidget {
   final ColorScheme colors;
   final TextTheme textTheme;
@@ -265,15 +210,7 @@ class _ConnectionTips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
+    return SystemInfoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

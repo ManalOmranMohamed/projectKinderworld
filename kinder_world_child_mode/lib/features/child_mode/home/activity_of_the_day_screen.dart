@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 
 class ActivityOfTheDayScreen extends ConsumerStatefulWidget {
   const ActivityOfTheDayScreen({super.key});
@@ -26,8 +30,10 @@ class _ActivityOfTheDayScreenState
     final childProfile = ref.read(childSessionControllerProvider).childProfile;
     if (childProfile == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.noActiveChildSession)),
+        showChildFeedbackSnackBar(
+          context,
+          l10n.noActiveChildSession,
+          success: false,
         );
       }
       return;
@@ -48,6 +54,16 @@ class _ActivityOfTheDayScreenState
           notes: l10n.activityOfTheDay,
         );
 
+    if (record != null) {
+      await ref.read(gamificationStateProvider.notifier).recordActivity(
+            childId: childProfile.id,
+            type: ActivityType.activity,
+            category: 'behavioral',
+            score: 100,
+            awardXp: false,
+          );
+    }
+
     if (!mounted) return;
 
     setState(() {
@@ -56,13 +72,11 @@ class _ActivityOfTheDayScreenState
     });
 
     if (record != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.xpBonusEarned)),
-      );
+      HapticFeedback.lightImpact();
+      showChildFeedbackSnackBar(context, l10n.xpBonusEarned);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.tryAgain)),
-      );
+      HapticFeedback.heavyImpact();
+      showChildFeedbackSnackBar(context, l10n.tryAgain, success: false);
     }
   }
 
@@ -215,41 +229,32 @@ class _ActivityOfTheDayScreenState
                 ),
               ),
               const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saving
-                      ? null
-                      : () {
-                          if (!_started) {
-                            setState(() => _started = true);
-                          } else {
-                            _completeActivity();
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        _completed ? AppColors.success : colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    _completed
-                        ? l10n.activityOfDayCompletedCta
-                        : _started
-                            ? (_saving
-                                ? l10n.loading
-                                : l10n.activityOfDayFinishCta)
-                            : l10n.activityOfDayStartCta,
-                    style: const TextStyle(
-                      fontSize: AppConstants.fontSize,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              ChildPrimaryActionButton(
+                label: _completed
+                    ? l10n.activityOfDayCompletedCta
+                    : _started
+                        ? (_saving ? l10n.loading : l10n.activityOfDayFinishCta)
+                        : l10n.activityOfDayStartCta,
+                semanticLabel: _completed
+                    ? l10n.activityOfDayCompletedCta
+                    : (_started
+                        ? l10n.activityOfDayFinishCta
+                        : l10n.activityOfDayStartCta),
+                icon: _completed
+                    ? Icons.check_circle
+                    : (_started ? Icons.flag : Icons.play_arrow_rounded),
+                isBusy: _saving,
+                backgroundColor:
+                    _completed ? AppColors.success : colors.primary,
+                foregroundColor: colors.onPrimary,
+                onPressed: () {
+                  if (!_started) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _started = true);
+                  } else {
+                    _completeActivity();
+                  }
+                },
               ),
             ],
           ),
@@ -267,56 +272,59 @@ class _ActivityOfTheDayScreenState
     required Color color,
   }) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.surfaceContainerHighest),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+    return Semantics(
+      label: '$index. $title. $subtitle',
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.surfaceContainerHighest),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$index. $title',
-                  style: TextStyle(
-                    fontSize: AppConstants.fontSize,
-                    fontWeight: FontWeight.w600,
-                    color: colors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$index. $title',
+                    style: TextStyle(
+                      fontSize: AppConstants.fontSize,
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

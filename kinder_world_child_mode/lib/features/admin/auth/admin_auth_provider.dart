@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_repository.dart';
@@ -45,9 +46,9 @@ class AdminAuthState {
 // ─────────────────────────── Repository provider ─────────────────────────────
 
 final adminAuthRepositoryProvider = Provider<AdminAuthRepository>((ref) {
-  final network = ref.watch(networkServiceProvider);
+  final adminApi = ref.watch(adminApiProvider);
   final storage = ref.watch(secureStorageProvider);
-  return AdminAuthRepository(network: network, storage: storage);
+  return AdminAuthRepository(adminApi: adminApi, storage: storage);
 });
 
 // ─────────────────────────── Notifier ────────────────────────────────────────

@@ -163,54 +163,59 @@ class _NavItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isSelected ? colors.primary : colors.onSurfaceVariant;
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              padding: EdgeInsets.symmetric(
-                horizontal:
-                    isSelected ? (isCompact ? 10 : 14) : (isCompact ? 6 : 8),
-                vertical: isCompact ? 4 : 5,
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: item.label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding: EdgeInsets.symmetric(
+                  horizontal:
+                      isSelected ? (isCompact ? 10 : 14) : (isCompact ? 6 : 8),
+                  vertical: isCompact ? 4 : 5,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colors.primary.withValues(alpha: 0.12)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(item.icon, size: isCompact ? 20 : 22, color: color),
               ),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? colors.primary.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(item.icon, size: isCompact ? 20 : 22, color: color),
-            ),
-            SizedBox(height: isCompact ? 2 : 3),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: Center(
-                  child: AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 220),
-                    style: TextStyle(
-                      fontSize: isCompact ? 8.5 : 10,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: color,
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        item.label,
-                        maxLines: 1,
-                        textAlign: TextAlign.center,
+              SizedBox(height: isCompact ? 2 : 3),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 220),
+                      style: TextStyle(
+                        fontSize: isCompact ? 8.5 : 10,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: color,
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

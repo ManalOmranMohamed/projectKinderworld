@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_analytics_overview.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
@@ -40,9 +41,11 @@ class _TestSecureStorage extends SecureStorage {
 class _FakeAdminAuthRepository extends AdminAuthRepository {
   _FakeAdminAuthRepository(this.admin)
       : super(
-          network: NetworkService(
-            secureStorage: _TestSecureStorage(),
-            logger: Logger(),
+          adminApi: AdminApi(
+            NetworkService(
+              secureStorage: _TestSecureStorage(),
+              logger: Logger(),
+            ),
           ),
           storage: _TestSecureStorage(),
         );

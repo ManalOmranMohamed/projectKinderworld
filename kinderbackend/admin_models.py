@@ -24,6 +24,16 @@ class AdminUser(Base):
     is_active = Column(Boolean, default=True, nullable=False, server_default=true())
     # Bump token_version on logout to invalidate all existing refresh tokens
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    last_login_at = Column(DateTime, nullable=True)
+    last_login_ip = Column(String, nullable=True)
+    last_login_user_agent = Column(String, nullable=True)
+    last_failed_login_at = Column(DateTime, nullable=True)
+    last_failed_login_ip = Column(String, nullable=True)
+    last_failed_login_user_agent = Column(String, nullable=True)
+    failed_login_attempts = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    suspicious_access_count = Column(Integer, default=0, nullable=False, server_default=text("0"))
+    is_flagged_suspicious = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    locked_until = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 

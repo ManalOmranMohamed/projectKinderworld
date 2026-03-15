@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
@@ -33,9 +34,11 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
     this.restoreDelay = Duration.zero,
     this.loginAdmin,
   }) : super(
-          network: NetworkService(
-            secureStorage: _TestSecureStorage(),
-            logger: Logger(),
+          adminApi: AdminApi(
+            NetworkService(
+              secureStorage: _TestSecureStorage(),
+              logger: Logger(),
+            ),
           ),
           storage: _TestSecureStorage(),
         );

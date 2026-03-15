@@ -7,9 +7,6 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Data model for each onboarding page
-// ─────────────────────────────────────────────────────────────────────────────
 class _OnboardingData {
   final String title;
   final String subtitle;
@@ -18,6 +15,7 @@ class _OnboardingData {
   final List<Color> Function(BuildContext context) gradientBuilder;
   final IconData decorIcon1;
   final IconData decorIcon2;
+  final List<String> highlights;
 
   const _OnboardingData({
     required this.title,
@@ -27,12 +25,10 @@ class _OnboardingData {
     required this.gradientBuilder,
     required this.decorIcon1,
     required this.decorIcon2,
+    required this.highlights,
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OnboardingScreen
-// ─────────────────────────────────────────────────────────────────────────────
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -63,10 +59,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     _contentSlide = Tween<Offset>(
       begin: const Offset(0, 0.12),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _contentController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _contentController,
+        curve: Curves.easeOut,
+      ),
+    );
     _contentController.forward();
   }
 
@@ -93,6 +91,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           },
           decorIcon1: Icons.star_rounded,
           decorIcon2: Icons.lightbulb_rounded,
+          highlights: [l10n.educational, l10n.interactiveLessons],
         ),
         _OnboardingData(
           title: l10n.play,
@@ -110,6 +109,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           },
           decorIcon1: Icons.emoji_events_rounded,
           decorIcon2: Icons.celebration_rounded,
+          highlights: [l10n.funGames, l10n.learnThroughPlay],
         ),
         _OnboardingData(
           title: l10n.onboardingGrow,
@@ -127,20 +127,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           },
           decorIcon1: Icons.trending_up_rounded,
           decorIcon2: Icons.workspace_premium_rounded,
+          highlights: [l10n.aiPowered, l10n.personalizedForChild],
         ),
       ];
 
   Future<void> _completeOnboarding() async {
     await ref.read(appLaunchProvider).completeOnboarding();
     if (!mounted) return;
-    context.go(Routes.selectUserType);
+    context.go(Routes.welcome);
   }
 
   void _nextPage() {
     final pages = _pages(AppLocalizations.of(context)!);
     if (_currentPage < pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 420),
         curve: Curves.easeInOutCubic,
       );
     } else {
@@ -168,7 +169,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // ── Animated full-screen gradient background ──
           AnimatedContainer(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOut,
@@ -181,8 +181,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── Decorative large circle top-right ──
           Positioned(
             top: -60,
             right: -60,
@@ -196,8 +194,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── Decorative medium circle bottom-left ──
           Positioned(
             bottom: 200,
             left: -50,
@@ -211,8 +207,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── Decorative small circle mid-right ──
           Positioned(
             top: 180,
             right: 20,
@@ -226,8 +220,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── Floating decor icons ──
           Positioned(
             top: 120,
             left: 30,
@@ -254,8 +246,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── PageView (visual area) ──
           PageView.builder(
             controller: _pageController,
             itemCount: pages.length,
@@ -263,22 +253,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             itemBuilder: (context, index) =>
                 _OnboardingPageView(data: pages[index]),
           ),
-
-          // ── Top bar: page indicator + skip ──
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Page indicator
                     SmoothPageIndicator(
                       controller: _pageController,
                       count: pages.length,
+                      onDotClicked: (index) {
+                        _pageController.animateToPage(
+                          index,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOut,
+                        );
+                      },
                       effect: ExpandingDotsEffect(
                         activeDotColor: colors.onPrimary,
                         dotColor: colors.onPrimary.withValues(alpha: 0.35),
@@ -288,13 +283,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         spacing: 5,
                       ),
                     ),
-                    // Skip button
                     TextButton(
                       onPressed: _completeOnboarding,
                       style: TextButton.styleFrom(
                         foregroundColor: colors.onPrimary,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
@@ -316,8 +312,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           ),
-
-          // ── Bottom CTA panel ──
           Positioned(
             bottom: 0,
             left: 0,
@@ -335,7 +329,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   ),
                 ],
               ),
-              padding: const EdgeInsets.fromLTRB(28, 28, 28, 0),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               child: SafeArea(
                 top: false,
                 child: FadeTransition(
@@ -346,7 +340,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Subtitle
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '${_currentPage + 1}/${pages.length}',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                pages[_currentPage].title,
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
                         Text(
                           pages[_currentPage].subtitle,
                           style: textTheme.headlineSmall?.copyWith(
@@ -356,20 +380,53 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             letterSpacing: -0.5,
                             height: 1.1,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 12),
-                        // Description
+                        const SizedBox(height: 10),
                         Text(
                           pages[_currentPage].description,
                           style: textTheme.bodyLarge?.copyWith(
-                            fontSize: 16,
+                            fontSize: 15,
                             color: colors.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
-                            height: 1.6,
+                            height: 1.5,
                           ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 32),
-                        // CTA button
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: pages[_currentPage]
+                              .highlights
+                              .map(
+                                (item) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: colors.outlineVariant
+                                          .withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    item,
+                                    style: textTheme.labelMedium?.copyWith(
+                                      color: colors.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                        const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -427,7 +484,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -441,9 +498,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _OnboardingPageView — the visual focus area for each page
-// ─────────────────────────────────────────────────────────────────────────────
 class _OnboardingPageView extends StatefulWidget {
   final _OnboardingData data;
   const _OnboardingPageView({required this.data});
@@ -485,11 +539,10 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
     return SafeArea(
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.only(top: 70, bottom: 260),
+        padding: const EdgeInsets.only(top: 70, bottom: 320),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // ── Main icon in layered circles ──
             FadeTransition(
               opacity: _fade,
               child: ScaleTransition(
@@ -497,7 +550,6 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Outer glow ring
                     Container(
                       width: 200,
                       height: 200,
@@ -506,7 +558,6 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                         color: colors.onPrimary.withValues(alpha: 0.08),
                       ),
                     ),
-                    // Middle ring
                     Container(
                       width: 160,
                       height: 160,
@@ -519,7 +570,6 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                         ),
                       ),
                     ),
-                    // Inner icon container
                     Container(
                       width: 120,
                       height: 120,
@@ -548,17 +598,16 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                 ),
               ),
             ),
-            const SizedBox(height: 32),
-            // ── Title ──
+            const SizedBox(height: 24),
             FadeTransition(
               opacity: _fade,
               child: Text(
                 widget.data.title,
                 style: theme.textTheme.displayMedium?.copyWith(
-                  fontSize: 48,
+                  fontSize: 44,
                   fontWeight: FontWeight.w900,
                   color: colors.onPrimary,
-                  letterSpacing: -2.0,
+                  letterSpacing: -1.8,
                   height: 1.0,
                   shadows: [
                     Shadow(

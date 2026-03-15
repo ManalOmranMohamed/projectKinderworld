@@ -51,6 +51,16 @@ def build_admin_payload(admin, db: Session) -> dict[str, Any]:
         "is_active": admin.is_active,
         "roles": sorted({r.name for r in role_rows}),
         "permissions": sorted({p.name for p in perm_rows}),
+        "last_login_at": admin.last_login_at.isoformat() if admin.last_login_at else None,
+        "last_login_ip": admin.last_login_ip,
+        "last_login_user_agent": admin.last_login_user_agent,
+        "last_failed_login_at": admin.last_failed_login_at.isoformat() if admin.last_failed_login_at else None,
+        "last_failed_login_ip": admin.last_failed_login_ip,
+        "last_failed_login_user_agent": admin.last_failed_login_user_agent,
+        "failed_login_attempts": int(admin.failed_login_attempts or 0),
+        "suspicious_access_count": int(admin.suspicious_access_count or 0),
+        "is_flagged_suspicious": bool(admin.is_flagged_suspicious),
+        "locked_until": admin.locked_until.isoformat() if admin.locked_until else None,
         "created_at": admin.created_at.isoformat() if admin.created_at else None,
         "updated_at": admin.updated_at.isoformat() if admin.updated_at else None,
     }
@@ -100,7 +110,11 @@ def serialize_admin_user(admin: AdminUser, db: Session) -> dict[str, Any]:
 
 def serialize_user_detail(user: User) -> dict[str, Any]:
     payload = user_to_json(user)
-    payload["children"] = [child_to_json(child) for child in (user.children or [])]
+    payload["children"] = [
+        child_to_json(child)
+        for child in (user.children or [])
+        if getattr(child, "deleted_at", None) is None
+    ]
     payload["child_count"] = len(payload["children"])
     return payload
 

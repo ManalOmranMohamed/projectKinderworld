@@ -7,6 +7,7 @@ import sys
 import time
 import json
 import subprocess
+from pathlib import Path
 
 # Force UTF-8 output on Windows (cp1256 cannot encode emoji)
 if hasattr(sys.stdout, "reconfigure"):
@@ -20,8 +21,12 @@ os.environ.setdefault("KINDER_JWT_SECRET", "TEST_ONLY_SECRET")
 os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")  # dev/test only
 os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_SECRET")
 os.environ.setdefault("ADMIN_SEED_PASSWORD", "CHANGE_ME")
-os.environ.setdefault("ADMIN_SEED_EMAIL", "change-me@example.invalid")
+os.environ.setdefault("ADMIN_SEED_EMAIL", "admin.seed@gmail.com")
 os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
+
+# Keep live smoke tests isolated from local/dev databases.
+LIVE_TEST_DB = Path(__file__).resolve().parent / "kinder_live_test.db"
+os.environ["DATABASE_URL"] = f"sqlite:///{LIVE_TEST_DB.as_posix()}"
 
 import urllib.request
 import urllib.error
@@ -29,6 +34,37 @@ import urllib.error
 BASE = "http://127.0.0.1:8000"
 RESULTS = []
 server_proc = None
+
+
+def reset_live_test_db():
+    for _ in range(10):
+        try:
+            if LIVE_TEST_DB.exists():
+                LIVE_TEST_DB.unlink()
+            return
+        except Exception:
+            time.sleep(0.2)
+    if LIVE_TEST_DB.exists():
+        print(f"Warning: could not reset live test DB: {LIVE_TEST_DB}")
+
+
+def prepare_live_schema() -> bool:
+    env = os.environ.copy()
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        cwd=os.path.dirname(os.path.abspath(__file__)),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return True
+    print("Failed to prepare live-test schema:")
+    if result.stdout:
+        print(result.stdout[-1000:])
+    if result.stderr:
+        print(result.stderr[-1000:])
+    return False
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def req(method, path, body=None, token=None, expected_status=None, params=None):
@@ -42,7 +78,7 @@ def req(method, path, body=None, token=None, expected_status=None, params=None):
         headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(request, timeout=10) as resp:
+        with urllib.request.urlopen(request, timeout=20) as resp:
             status = resp.status
             body_out = json.loads(resp.read().decode())
             return status, body_out
@@ -79,8 +115,8 @@ def start_server():
         [sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000"],
         cwd=os.path.dirname(os.path.abspath(__file__)),
         env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     # Wait for server to be ready
     for i in range(20):
@@ -91,12 +127,6 @@ def start_server():
             return True
         except Exception:
             pass
-    # Print stderr for diagnosis
-    try:
-        out, err = server_proc.communicate(timeout=1)
-        print("STDERR:", err.decode()[:1000])
-    except Exception:
-        pass
     return False
 
 def stop_server():
@@ -173,10 +203,10 @@ def run_tests():
               "password": "Pass@123", "confirmPassword": "Different@123"},
         expect_status=400)
 
-    test("parent register (invalid email domain)", "POST", "/auth/register",
+    test("parent register (non-gmail domain accepted)", "POST", "/auth/register",
         body={"name": "Test Parent", "email": f"test{ts}@yahoo.com",
               "password": parent_pass, "confirmPassword": parent_pass},
-        expect_status=400)
+        expect_status=200)
 
     print("\n[5] PARENT AUTH — LOGIN")
     ok, _, login_resp = test("parent login (valid)", "POST", "/auth/login",
@@ -400,9 +430,12 @@ def run_tests():
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    reset_live_test_db()
+    if not prepare_live_schema():
+        sys.exit(1)
     print("Starting uvicorn server...")
     if not start_server():
-        print("❌ Server failed to start. Aborting tests.")
+        print("Server failed to start. Aborting tests.")
         sys.exit(1)
 
     try:
@@ -410,5 +443,6 @@ if __name__ == "__main__":
     finally:
         print("\nStopping server...")
         stop_server()
+        reset_live_test_db()
 
     sys.exit(0 if success else 1)

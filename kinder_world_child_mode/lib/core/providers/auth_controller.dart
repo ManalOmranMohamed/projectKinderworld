@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/services/auth_service.dart';
@@ -66,17 +67,18 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> _initialize() async {
     _logger.d('Initializing auth controller');
     await _authRepository.clearParentPinVerification();
-    
+
     final storedIsAuthenticated = await _authRepository.isAuthenticated();
     final user = await _authRepository.getCurrentUser();
     final isAuthenticated = user != null && storedIsAuthenticated;
-    
+
     state = state.copyWith(
       isAuthenticated: isAuthenticated,
       user: user,
     );
-    
-    _logger.d('Auth initialized: authenticated=$isAuthenticated, user=${user?.id}');
+
+    _logger.d(
+        'Auth initialized: authenticated=$isAuthenticated, user=${user?.id}');
   }
 
   // ==================== PARENT AUTHENTICATION ====================
@@ -87,14 +89,14 @@ class AuthController extends StateNotifier<AuthState> {
     required String password,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final normalizedEmail = email.trim().toLowerCase();
       final user = await _authRepository.loginParent(
         email: normalizedEmail,
         password: password,
       );
-      
+
       if (user != null) {
         state = state.copyWith(
           user: user,
@@ -114,7 +116,7 @@ class AuthController extends StateNotifier<AuthState> {
     } on ParentAuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.message,
+        error: _formatParentAuthError(e),
       );
       return false;
     } catch (e) {
@@ -135,7 +137,7 @@ class AuthController extends StateNotifier<AuthState> {
     required String confirmPassword,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final normalizedEmail = email.trim().toLowerCase();
       final user = await _authRepository.registerParent(
@@ -144,7 +146,7 @@ class AuthController extends StateNotifier<AuthState> {
         password: password,
         confirmPassword: confirmPassword,
       );
-      
+
       if (user != null) {
         state = state.copyWith(
           user: user,
@@ -164,7 +166,7 @@ class AuthController extends StateNotifier<AuthState> {
     } on ParentAuthException catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.message,
+        error: _formatParentAuthError(e),
       );
       return false;
     } catch (e) {
@@ -186,21 +188,21 @@ class AuthController extends StateNotifier<AuthState> {
     required List<String> picturePassword,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final user = await _authRepository.loginChild(
         childId: childId,
         childName: childName,
         picturePassword: picturePassword,
       );
-      
+
       if (user != null) {
         state = state.copyWith(
           user: user,
           isAuthenticated: true,
           isLoading: false,
         );
-        
+
         _logger.d('Child login successful: ${user.id}');
         return true;
       } else {
@@ -279,18 +281,18 @@ class AuthController extends StateNotifier<AuthState> {
   /// Logout current user
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
-    
+
     try {
       await _authRepository.logout();
       _navigationController.clearHistory(seedLocation: '/select-user-type');
-      
+
       state = const AuthState(
         user: null,
         isAuthenticated: false,
         isLoading: false,
         error: null,
       );
-      
+
       _logger.d('User logged out successfully');
     } catch (e) {
       _logger.e('Error during logout: $e');
@@ -381,6 +383,14 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  String _formatParentAuthError(ParentAuthException e) {
+    final message = e.message.trim();
+    final statusCode = e.statusCode;
+    if (statusCode == null) return message;
+    if (message.isEmpty) return '[$statusCode] Request failed';
+    return '[$statusCode] $message';
+  }
+
   /// Validate token
   Future<bool> validateToken() async {
     try {
@@ -433,12 +443,12 @@ class AuthController extends StateNotifier<AuthState> {
 /// Main auth repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
-  final networkService = ref.watch(networkServiceProvider);
+  final authApi = ref.watch(authApiProvider);
   final logger = ref.watch(loggerProvider);
-  
+
   return AuthRepository(
     secureStorage: secureStorage,
-    networkService: networkService,
+    authApi: authApi,
     logger: logger,
   );
 });
@@ -446,23 +456,24 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 /// Auth service provider
 final authServiceProvider = Provider<AuthService>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
-  final networkService = ref.watch(networkServiceProvider);
+  final authApi = ref.watch(authApiProvider);
   final logger = ref.watch(loggerProvider);
-  
+
   return AuthService(
     repository: authRepository,
-    networkService: networkService,
+    authApi: authApi,
     logger: logger,
   );
 });
 
 /// Main auth controller provider - SINGLE SOURCE OF TRUTH
 /// Not autoDispose: auth state must persist across navigation to avoid re-initialization.
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AuthState>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
   final logger = ref.watch(loggerProvider);
   final navigationController = ref.watch(appNavigationControllerProvider);
-  
+
   return AuthController(
     authRepository: authRepository,
     logger: logger,

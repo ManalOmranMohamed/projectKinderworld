@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/models/support_ticket_record.dart';
+import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
 import 'package:kinder_world/core/services/support_service.dart';
 
 class SupportState {
@@ -174,9 +175,11 @@ class SupportController extends StateNotifier<SupportState> {
 
 final supportServiceProvider = Provider<SupportService>((ref) {
   final networkService = ref.watch(networkServiceProvider);
+  final deferredQueue = ref.watch(deferredOperationsQueueProvider);
   final logger = ref.watch(loggerProvider);
   return SupportService(
     networkService: networkService,
+    deferredQueue: deferredQueue,
     logger: logger,
   );
 });

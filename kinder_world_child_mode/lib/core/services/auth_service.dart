@@ -1,4 +1,4 @@
-import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:logger/logger.dart';
@@ -6,15 +6,15 @@ import 'package:logger/logger.dart';
 /// Service wrapper for authentication operations
 class AuthService {
   final AuthRepository _repository;
-  final NetworkService _networkService;
+  final AuthApi _authApi;
   final Logger _logger;
 
   AuthService({
     required AuthRepository repository,
-    required NetworkService networkService,
+    required AuthApi authApi,
     required Logger logger,
   })  : _repository = repository,
-        _networkService = networkService,
+        _authApi = authApi,
         _logger = logger;
 
   /// Get current user
@@ -25,14 +25,8 @@ class AuthService {
   /// Update parent profile
   Future<bool> updateProfile({required String name}) async {
     try {
-      final response = await _networkService.put<Map<String, dynamic>>(
-        '/auth/profile',
-        data: {
-          'name': name.trim(),
-        },
-      );
-
-      final success = response.data != null;
+      final response = await _authApi.updateProfile(name: name);
+      final success = response.isNotEmpty;
       if (success) {
         _logger.d('Profile updated successfully');
       }
@@ -50,17 +44,13 @@ class AuthService {
     required String confirmPassword,
   }) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/change-password',
-        data: {
-          'currentPassword': currentPassword,
-          'newPassword': newPassword,
-          'confirmPassword': confirmPassword,
-        },
+      final response = await _authApi.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
       );
 
-      final success =
-          response.data != null && response.data!['success'] == true;
+      final success = response['success'] == true;
       if (success) {
         _logger.d('Password changed successfully');
       }

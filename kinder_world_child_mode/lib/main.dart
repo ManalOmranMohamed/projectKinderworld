@@ -48,7 +48,15 @@ Future<void> main() async {
   // Set error handler
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    logger.e('Flutter Error: ${details.exceptionAsString()}');
+    logger.e(
+      'event=app.flutter_error error=${details.exceptionAsString()} '
+      'library=${details.library ?? "unknown"}',
+    );
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    logger.e('event=app.platform_error error=$error stack=$stack');
+    // Return true to mark it handled and keep app alive where possible.
+    return true;
   };
 
   runApp(

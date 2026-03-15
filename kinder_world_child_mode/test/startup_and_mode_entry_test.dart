@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
+import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
@@ -58,13 +60,16 @@ class _TestSecureStorage extends SecureStorage {
 
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository({
-    required super.secureStorage,
+    required SecureStorage storage,
     required this.hasPin,
   }) : super(
-          networkService: NetworkService(
-            secureStorage: secureStorage,
-            logger: Logger(),
+          authApi: AuthApi(
+            NetworkService(
+              secureStorage: storage,
+              logger: Logger(),
+            ),
           ),
+          secureStorage: storage,
           logger: Logger(),
         );
 
@@ -84,9 +89,11 @@ class _FakeAuthRepository extends AuthRepository {
 class _FakeAdminAuthRepository extends AdminAuthRepository {
   _FakeAdminAuthRepository()
       : super(
-          network: NetworkService(
-            secureStorage: _TestSecureStorage(),
-            logger: Logger(),
+          adminApi: AdminApi(
+            NetworkService(
+              secureStorage: _TestSecureStorage(),
+              logger: Logger(),
+            ),
           ),
           storage: _TestSecureStorage(),
         );
@@ -151,7 +158,12 @@ void main() {
     await _pumpPastSplash(tester);
 
     expect(
-      container.read(routerProvider).routerDelegate.currentConfiguration.uri.path,
+      container
+          .read(routerProvider)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path,
       Routes.language,
     );
     expect(find.byType(LanguageSelectionScreen), findsOneWidget);
@@ -169,7 +181,12 @@ void main() {
     await _pumpPastSplash(tester);
 
     expect(
-      container.read(routerProvider).routerDelegate.currentConfiguration.uri.path,
+      container
+          .read(routerProvider)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path,
       Routes.onboarding,
     );
     expect(find.byType(OnboardingScreen), findsOneWidget);
@@ -188,7 +205,12 @@ void main() {
     await _pumpPastSplash(tester);
 
     expect(
-      container.read(routerProvider).routerDelegate.currentConfiguration.uri.path,
+      container
+          .read(routerProvider)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .path,
       Routes.selectUserType,
     );
     expect(find.byType(UserTypeSelectionScreen), findsOneWidget);
@@ -203,7 +225,7 @@ void main() {
       parentPinVerified: false,
     );
     final authRepository = _FakeAuthRepository(
-      secureStorage: storage,
+      storage: storage,
       hasPin: true,
     );
     final container = await _pumpApp(

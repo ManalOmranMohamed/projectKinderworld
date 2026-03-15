@@ -19,8 +19,9 @@ from admin_utils import (
     write_audit_log,
 )
 from auth import hash_password
+from core.admin_rbac import ROLE_DEFS
+from core.admin_security import require_sensitive_action_confirmation
 from deps import get_db
-from routers.admin_seed import ROLE_DEFS
 
 from admin_models import AdminUser, AdminUserRole, Permission, Role, RolePermission
 
@@ -279,6 +280,7 @@ def disable_admin_user(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.admins.manage")),
 ):
+    require_sensitive_action_confirmation(request, action="admin_user.disable")
     item = _get_admin_user_or_404(admin_user_id, db)
     if item.id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot disable your own admin account")
@@ -312,6 +314,7 @@ def enable_admin_user(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.admins.manage")),
 ):
+    require_sensitive_action_confirmation(request, action="admin_user.enable")
     item = _get_admin_user_or_404(admin_user_id, db)
     before = serialize_admin_user(item, db)
     item.is_active = True
@@ -381,6 +384,7 @@ def remove_admin_role(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.admins.manage")),
 ):
+    require_sensitive_action_confirmation(request, action="admin_user.remove_role")
     item = _get_admin_user_or_404(admin_user_id, db)
     role = _get_role_or_404(payload.role_id, db)
     if item.id == admin.id:
@@ -424,6 +428,46 @@ def list_roles(
 ):
     items = _roles_query(db).order_by(Role.name.asc()).all()
     return {"items": [serialize_role(item) for item in items]}
+
+
+@router.get("/roles-matrix")
+def get_roles_matrix(
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.admins.manage")),
+):
+    roles = _roles_query(db).order_by(Role.name.asc()).all()
+    role_items = []
+    for role in roles:
+        assigned_permissions = sorted(
+            {
+                role_permission.permission.name
+                for role_permission in (role.role_permissions or [])
+                if role_permission.permission is not None
+            }
+        )
+        built_in_permissions = ROLE_DEFS.get(role.name, [])
+        role_items.append(
+            {
+                "id": role.id,
+                "name": role.name,
+                "is_built_in": role.name in BUILT_IN_ROLE_NAMES,
+                "description": role.description,
+                "admin_count": len(role.admin_user_roles or []),
+                "permission_count": len(assigned_permissions),
+                "permissions": assigned_permissions,
+                "expected_built_in_permissions": built_in_permissions,
+                "matches_built_in_matrix": (
+                    sorted(built_in_permissions) == assigned_permissions
+                    if role.name in BUILT_IN_ROLE_NAMES
+                    else None
+                ),
+            }
+        )
+    return {
+        "roles": role_items,
+        "built_in_roles": sorted(BUILT_IN_ROLE_NAMES),
+        "permissions_catalog_size": db.query(Permission).count(),
+    }
 
 
 @router.get("/roles/{role_id}")
@@ -536,6 +580,7 @@ def update_role_permissions(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.admins.manage")),
 ):
+    require_sensitive_action_confirmation(request, action="role.update_permissions")
     role = _get_role_or_404(role_id, db)
     before = serialize_role(role, include_permissions=True)
 

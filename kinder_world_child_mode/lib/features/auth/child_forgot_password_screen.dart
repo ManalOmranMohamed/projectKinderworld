@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
 class ChildForgotPasswordScreen extends StatefulWidget {
@@ -47,23 +48,13 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
     super.dispose();
   }
 
-  bool _isAllowedEmail(String value) {
-    final email = value.trim().toLowerCase();
-    if (!email.contains('@')) return false;
-    final domain = email.split('@').last;
-    return domain == 'gmail.com' ||
-        domain == 'outlook.com' ||
-        domain == 'hotmail.com' ||
-        domain == 'live.com';
-  }
-
   Future<void> _sendHelp(AppLocalizations l10n) async {
     if (_childIdController.text.trim().isEmpty) {
       _showError(l10n.childIdRequired);
       return;
     }
     if (_parentEmailController.text.trim().isEmpty ||
-        !_isAllowedEmail(_parentEmailController.text)) {
+        !isValidEmailFormat(_parentEmailController.text)) {
       _showError(l10n.parentEmailInvalid);
       return;
     }
@@ -330,7 +321,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
               if (value == null || value.trim().isEmpty) {
                 return l10n.parentEmailRequired;
               }
-              if (!_isAllowedEmail(value)) {
+              if (!isValidEmailFormat(value)) {
                 return l10n.parentEmailInvalid;
               }
               return null;
@@ -393,7 +384,8 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.arrow_back_rounded, size: 14, color: colors.primary),
+                  Icon(Icons.arrow_back_rounded,
+                      size: 14, color: colors.primary),
                   const SizedBox(width: 4),
                   Text(
                     l10n.backToChildLogin,
@@ -475,7 +467,8 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
             decoration: BoxDecoration(
               color: colors.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: auth.childLight.withValues(alpha: 0.45)),
+              border:
+                  Border.all(color: auth.childLight.withValues(alpha: 0.45)),
               boxShadow: [
                 BoxShadow(
                   color: auth.child.withValues(alpha: 0.06),

@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
 from admin_auth import create_admin_access_token, create_admin_refresh_token
-from admin_models import AdminUser, AdminUserRole, Permission, Role, RolePermission
+from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
 from auth import create_access_token, hash_password, verify_password
 from database import Base, SessionLocal
 from main import app
@@ -52,7 +52,8 @@ def client(db):
         return db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -422,3 +423,39 @@ def test_last_super_admin_protections_and_self_disable_guard(client: TestClient,
     )
     assert disable_last_super_admin.status_code == 400
     assert "last active super admin" in disable_last_super_admin.json()["detail"]
+
+
+def test_admin_failed_login_tracks_security_metadata_and_audit(client: TestClient, db):
+    _seed_builtin_rbac(db)
+    admin = _create_admin(db, email="audit.security@kinderworld.app", role_names=["super_admin"])
+
+    failed = client.post(
+        "/admin/auth/login",
+        json={"email": admin.email, "password": "WrongPass123!"},
+    )
+    assert failed.status_code == 401
+    assert failed.json()["detail"] == "Invalid email or password"
+
+    db.refresh(admin)
+    assert admin.failed_login_attempts == 1
+    assert admin.last_failed_login_at is not None
+
+    logs = (
+        db.query(AuditLog)
+        .filter(AuditLog.action == "admin_auth.login_failed", AuditLog.entity_type == "admin_user")
+        .all()
+    )
+    assert any(log.entity_id == str(admin.id) for log in logs)
+
+    success = client.post(
+        "/admin/auth/login",
+        json={"email": admin.email, "password": "AdminPass123!"},
+    )
+    assert success.status_code == 200
+
+    db.refresh(admin)
+    assert admin.failed_login_attempts == 0
+    assert admin.last_login_at is not None
+
+
+

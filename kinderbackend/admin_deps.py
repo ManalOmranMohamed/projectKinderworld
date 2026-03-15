@@ -17,10 +17,10 @@ from typing import Set
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+from jose import JWTError
 from sqlalchemy.orm import Session
 
-from auth import SECRET_KEY, ALGORITHM
+from auth import decode_token
 from admin_auth import ADMIN_TOKEN_TYPE
 from deps import get_db
 
@@ -57,7 +57,7 @@ def get_current_admin(
 
     token = creds.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = decode_token(token)
     except JWTError as exc:
         logger.warning("Admin JWT decode failed: %s", exc)
         raise HTTPException(

@@ -46,7 +46,8 @@ def client(db):
         return db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -297,3 +298,6 @@ def test_admin_support_filters_resolve_and_closed_reply_guard(client: TestClient
         headers=_admin_headers(admin),
     )
     assert invalid_filter.status_code == 422
+
+
+

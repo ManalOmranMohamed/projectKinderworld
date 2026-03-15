@@ -43,7 +43,8 @@ def client(db):
         return db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -179,3 +180,6 @@ def test_parent_pin_lockout_after_repeated_failures(client: TestClient, db):
         headers=headers,
     )
     assert even_correct_while_locked.status_code == 423
+
+
+

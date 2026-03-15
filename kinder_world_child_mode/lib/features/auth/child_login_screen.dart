@@ -14,6 +14,7 @@ import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
@@ -314,7 +315,9 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? Theme.of(context).colorScheme.error : context.successColor,
+                  color: isError
+                      ? Theme.of(context).colorScheme.error
+                      : context.successColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -863,13 +866,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     bool isSaving = false;
 
     bool isValidEmail(String value) {
-      final trimmed = value.trim().toLowerCase();
-      if (trimmed.isEmpty || !trimmed.contains('@')) return false;
-      final domain = trimmed.split('@').last;
-      return domain == 'gmail.com' ||
-          domain == 'outlook.com' ||
-          domain == 'hotmail.com' ||
-          domain == 'live.com';
+      return isValidEmailFormat(value);
     }
 
     void togglePicture(
@@ -1010,13 +1007,17 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? Theme.of(context).colorScheme.primary
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .primary
                                             .withValues(alpha: 0.2)
                                         : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: isSelected
-                                          ? Theme.of(context).colorScheme.primary
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
                                           : Theme.of(context)
                                               .colorScheme
                                               .surfaceContainerHighest,
@@ -1633,7 +1634,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              color:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -1839,7 +1841,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               avatarId: child.avatar,
               avatarPath: child.avatarPath,
               size: 64,
-              backgroundColor: context.childTheme.kindness.withValues(alpha: 0.2),
+              backgroundColor:
+                  context.childTheme.kindness.withValues(alpha: 0.2),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1911,9 +1914,13 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Theme.of(context).colorScheme.primary),
+                border:
+                    Border.all(color: Theme.of(context).colorScheme.primary),
               ),
               child: Icon(
                 Icons.add,

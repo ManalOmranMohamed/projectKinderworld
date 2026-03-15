@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from admin_deps import require_permission
 from admin_utils import build_pagination_payload, serialize_subscription_record, write_audit_log
+from core.admin_security import require_sensitive_action_confirmation
 from deps import get_db
 from models import User
 from notification_service import notify_subscription_changed
@@ -102,6 +103,7 @@ def override_subscription_plan(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.subscription.override")),
 ):
+    require_sensitive_action_confirmation(request, action="subscription.override_plan")
     user = _get_subscription_or_404(subscription_id, db)
     before = serialize_subscription_record(user)
     try:
@@ -143,6 +145,7 @@ def cancel_admin_subscription(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.subscription.override")),
 ):
+    require_sensitive_action_confirmation(request, action="subscription.cancel")
     user = _get_subscription_or_404(subscription_id, db)
     before = serialize_subscription_record(user)
     previous_plan = before["plan"]
@@ -179,6 +182,7 @@ def refund_admin_subscription(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.subscription.override")),
 ):
+    require_sensitive_action_confirmation(request, action="subscription.refund")
     user = _get_subscription_or_404(subscription_id, db)
     before = serialize_subscription_record(user)
     after = {

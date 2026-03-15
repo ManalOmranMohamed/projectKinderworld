@@ -10,7 +10,9 @@ import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
+import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/router.dart';
 import 'package:logger/logger.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
@@ -139,30 +141,34 @@ class _ConnectivityGuard extends ConsumerStatefulWidget {
 }
 
 class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
-  String? _lastLocation;
   bool _isOffline = false;
+  bool _didShowOfflineHint = false;
   late final ProviderSubscription<AsyncValue<ConnectivityResult>> _subscription;
 
   void _handleConnectivityChange(ConnectivityResult result) {
-    final router = ref.read(routerProvider);
-    final location = router.routerDelegate.currentConfiguration.uri.toString();
-    final onNoInternet = location == Routes.noInternet;
+    final logger = ref.read(loggerProvider);
     final isOffline = result == ConnectivityResult.none;
 
     if (isOffline && !_isOffline) {
       _isOffline = true;
-      if (!onNoInternet) {
-        _lastLocation = location;
-        router.go(Routes.noInternet);
-      }
+      _didShowOfflineHint = false;
+      logger.w('event=connectivity.offline_entered');
       return;
     }
 
     if (!isOffline && _isOffline) {
       _isOffline = false;
-      if (onNoInternet) {
-        router.go(_lastLocation ?? Routes.welcome);
-      }
+      logger
+          .i('event=connectivity.online_restored action=process_pending_sync');
+      Future<void>(() async {
+        final queue = ref.read(deferredOperationsQueueProvider);
+        final network = ref.read(networkServiceProvider);
+        final progressController =
+            ref.read(progressControllerProvider.notifier);
+        final processed = await queue.processPending(network);
+        await progressController.syncWithServer();
+        logger.i('event=connectivity.sync_complete processed=$processed');
+      });
     }
   }
 
@@ -190,6 +196,64 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
 
   @override
   Widget build(BuildContext context) {
-    return widget.child;
+    if (_isOffline && !_didShowOfflineHint) {
+      _didShowOfflineHint = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final l10n = custom_localizations.AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text(
+              l10n?.offlineMode ??
+                  'Offline mode. Some actions will sync when you reconnect.',
+            ),
+          ),
+        );
+      });
+    }
+
+    if (!_isOffline) {
+      return widget.child;
+    }
+
+    final colors = Theme.of(context).colorScheme;
+    final l10n = custom_localizations.AppLocalizations.of(context);
+    return Stack(
+      children: [
+        widget.child,
+        SafeArea(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              margin: const EdgeInsetsDirectional.fromSTEB(12, 8, 12, 0),
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 12, 8),
+              decoration: BoxDecoration(
+                color: colors.errorContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 18,
+                    color: colors.onErrorContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n?.offlineMode ?? 'Offline mode',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: colors.onErrorContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

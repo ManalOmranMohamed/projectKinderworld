@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
@@ -9,6 +11,7 @@ class NetworkService {
   final Connectivity _connectivity;
   final SecureStorage _secureStorage;
   final Logger _logger;
+  final Random _random = Random();
 
   NetworkService({
     Dio? dio,
@@ -38,10 +41,16 @@ class NetworkService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          final requestId = _resolveRequestId(options);
+          options.headers['X-Request-ID'] = requestId;
+          options.extra['requestId'] = requestId;
+          options.extra['startedAtMs'] = DateTime.now().millisecondsSinceEpoch;
+
           final authorizationHeaderKey =
               _findHeaderKey(options.headers, 'Authorization');
           if (authorizationHeaderKey != null) {
-            final explicitAuthorization = options.headers[authorizationHeaderKey];
+            final explicitAuthorization =
+                options.headers[authorizationHeaderKey];
             if (explicitAuthorization == null ||
                 explicitAuthorization.toString().trim().isEmpty) {
               options.headers.remove(authorizationHeaderKey);
@@ -54,16 +63,54 @@ class NetworkService {
               options.headers['Authorization'] = 'Bearer $token';
             }
           }
-          
-          _logger.d('Request: ${options.method} ${options.path}');
+
+          _logDebug(
+            'http.request.start',
+            fields: {
+              'request_id': requestId,
+              'method': options.method,
+              'path': options.path,
+              'retry': options.extra['retryCount'] ?? 0,
+            },
+          );
           handler.next(options);
         },
         onResponse: (response, handler) {
-          _logger.d('Response: ${response.statusCode} ${response.requestOptions.path}');
+          final requestId =
+              response.requestOptions.extra['requestId']?.toString() ??
+                  response.headers.value('X-Request-ID') ??
+                  'unknown';
+          final duration = _requestDurationMs(response.requestOptions);
+          _logForStatus(
+            response.statusCode ?? 0,
+            'http.request.end',
+            fields: {
+              'request_id': requestId,
+              'method': response.requestOptions.method,
+              'path': response.requestOptions.path,
+              'status_code': response.statusCode,
+              'duration_ms': duration,
+              'retry': response.requestOptions.extra['retryCount'] ?? 0,
+            },
+          );
           handler.next(response);
         },
         onError: (error, handler) {
-          _logger.e('Error: ${error.message}');
+          final requestId =
+              error.requestOptions.extra['requestId']?.toString() ?? 'unknown';
+          _logError(
+            'http.request.error',
+            fields: {
+              'request_id': requestId,
+              'method': error.requestOptions.method,
+              'path': error.requestOptions.path,
+              'status_code': error.response?.statusCode,
+              'error_type': error.type.name,
+              'message': error.message ?? 'unknown_error',
+              'retry': error.requestOptions.extra['retryCount'] ?? 0,
+              'duration_ms': _requestDurationMs(error.requestOptions),
+            },
+          );
           handler.next(error);
         },
       ),
@@ -85,6 +132,74 @@ class NetworkService {
       }
     }
     return null;
+  }
+
+  String _resolveRequestId(RequestOptions options) {
+    final existingHeader = _findHeaderKey(options.headers, 'X-Request-ID');
+    if (existingHeader != null) {
+      final value = options.headers[existingHeader]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+    final existingExtra = options.extra['requestId']?.toString().trim();
+    if (existingExtra != null && existingExtra.isNotEmpty) {
+      return existingExtra;
+    }
+    return '${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(1 << 20)}';
+  }
+
+  int? _requestDurationMs(RequestOptions options) {
+    final startedAt = options.extra['startedAtMs'];
+    final startedAtMs = startedAt is int
+        ? startedAt
+        : int.tryParse(startedAt?.toString() ?? '');
+    if (startedAtMs == null) return null;
+    return DateTime.now().millisecondsSinceEpoch - startedAtMs;
+  }
+
+  void _logDebug(String event, {required Map<String, Object?> fields}) {
+    _logger.d(_structured(event, fields));
+  }
+
+  void _logInfo(String event, {required Map<String, Object?> fields}) {
+    _logger.i(_structured(event, fields));
+  }
+
+  void _logWarning(String event, {required Map<String, Object?> fields}) {
+    _logger.w(_structured(event, fields));
+  }
+
+  void _logError(String event, {required Map<String, Object?> fields}) {
+    _logger.e(_structured(event, fields));
+  }
+
+  void _logForStatus(
+    int statusCode,
+    String event, {
+    required Map<String, Object?> fields,
+  }) {
+    if (statusCode >= 500) {
+      _logError(event, fields: fields);
+      return;
+    }
+    if (statusCode >= 400) {
+      _logWarning(event, fields: fields);
+      return;
+    }
+    _logInfo(event, fields: fields);
+  }
+
+  String _structured(String event, Map<String, Object?> fields) {
+    final parts = <String>['event=$event'];
+    for (final entry in fields.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      final safeValue = value.toString().replaceAll('\n', ' ').trim();
+      if (safeValue.isEmpty) continue;
+      parts.add('${entry.key}=$safeValue');
+    }
+    return parts.join(' ');
   }
 
   bool _shouldAttachAuthToken(String? token) {
@@ -236,11 +351,18 @@ class NetworkService {
   }
 
   void _handleDioError(DioException e) {
-    if (e.response != null) {
-      _logger.e('DioError: ${e.response?.statusCode} - ${e.response?.data}');
-    } else {
-      _logger.e('DioError: ${e.message}');
-    }
+    _logError(
+      'http.transport.error',
+      fields: {
+        'request_id':
+            e.requestOptions.extra['requestId']?.toString() ?? 'unknown',
+        'method': e.requestOptions.method,
+        'path': e.requestOptions.path,
+        'status_code': e.response?.statusCode,
+        'error_type': e.type.name,
+        'message': e.message ?? 'unknown_error',
+      },
+    );
   }
 
   // Cancel all requests
@@ -264,15 +386,20 @@ class RetryInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (_shouldRetry(err)) {
       final retryCount = err.requestOptions.extra['retryCount'] ?? 0;
-      
+
       if (retryCount < maxRetries) {
-        logger.d('Retrying request: ${err.requestOptions.path} (Attempt: ${retryCount + 1})');
-        
+        final requestId =
+            err.requestOptions.extra['requestId']?.toString() ?? 'unknown';
+        logger.w(
+          'event=http.retry.scheduled request_id=$requestId method=${err.requestOptions.method} '
+          'path=${err.requestOptions.path} attempt=${retryCount + 1} max_retries=$maxRetries',
+        );
+
         // Keep retries responsive so the app does not feel frozen on transient failures.
         await Future.delayed(
           Duration(milliseconds: 250 * (1 << retryCount)),
         );
-        
+
         // Clone request with incremented retry count
         final options = Options(
           method: err.requestOptions.method,
@@ -282,7 +409,7 @@ class RetryInterceptor extends Interceptor {
             'retryCount': retryCount + 1,
           },
         );
-        
+
         try {
           final response = await dio.request(
             err.requestOptions.path,
@@ -290,23 +417,28 @@ class RetryInterceptor extends Interceptor {
             queryParameters: err.requestOptions.queryParameters,
             options: options,
           );
-          
+          logger.i(
+            'event=http.retry.success request_id=$requestId method=${err.requestOptions.method} '
+            'path=${err.requestOptions.path} attempt=${retryCount + 1}',
+          );
           handler.resolve(response);
           return;
         } catch (e) {
-          logger.e('Retry failed: $e');
+          logger.e(
+            'event=http.retry.failed request_id=$requestId method=${err.requestOptions.method} '
+            'path=${err.requestOptions.path} attempt=${retryCount + 1} error=$e',
+          );
         }
       }
     }
-    
+
     handler.next(err);
   }
 
   bool _shouldRetry(DioException err) {
     return err.type == DioExceptionType.connectionTimeout ||
-           err.type == DioExceptionType.receiveTimeout ||
-           err.type == DioExceptionType.sendTimeout ||
-           (err.response?.statusCode != null && 
-            err.response!.statusCode! >= 500);
+        err.type == DioExceptionType.receiveTimeout ||
+        err.type == DioExceptionType.sendTimeout ||
+        (err.response?.statusCode != null && err.response!.statusCode! >= 500);
   }
 }

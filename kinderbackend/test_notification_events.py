@@ -46,7 +46,8 @@ def client(db):
         return db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -189,3 +190,6 @@ def test_subscription_changes_create_notifications_and_are_listed(client: TestCl
     assert payload["summary"]["unread_count"] == 3
     assert payload["notifications"][0]["type"] == "SUBSCRIPTION_UPDATED"
     assert payload["notifications"][0]["child_id"] is None
+
+
+

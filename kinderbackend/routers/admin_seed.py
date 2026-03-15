@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from auth import hash_password
+from core.admin_rbac import PERMISSION_DEFS, ROLE_DEFS
 from deps import get_db
 
 router = APIRouter(prefix="/admin", tags=["Admin Seed"])
@@ -31,60 +32,6 @@ SEED_SECRET = os.getenv("ADMIN_SEED_SECRET", "").strip()
 DEFAULT_ADMIN_EMAIL = os.getenv("ADMIN_SEED_EMAIL", "admin@kinderworld.app").strip()
 DEFAULT_ADMIN_PASSWORD = os.getenv("ADMIN_SEED_PASSWORD", "").strip()
 DEFAULT_ADMIN_NAME = os.getenv("ADMIN_SEED_NAME", "Super Admin").strip() or "Super Admin"
-
-PERMISSION_DEFS = [
-    ("admin.content.view", "View content categories, content items, and quizzes"),
-    ("admin.users.view", "View parent/child user accounts"),
-    ("admin.users.edit", "Edit parent/child user accounts"),
-    ("admin.users.ban", "Ban/unban parent/child user accounts"),
-    ("admin.children.view", "View child profiles"),
-    ("admin.children.edit", "Edit child profiles"),
-    ("admin.children.delete", "Delete child profiles"),
-    ("admin.content.create", "Create new content items"),
-    ("admin.content.edit", "Edit draft and review content items"),
-    ("admin.content.publish", "Publish or unpublish content"),
-    ("admin.content.delete", "Delete content items"),
-    ("admin.reports.view", "View usage reports and analytics"),
-    ("admin.analytics.view", "View analytics dashboards and usage summaries"),
-    ("admin.support.view", "View support tickets"),
-    ("admin.support.reply", "Reply to support tickets"),
-    ("admin.support.close", "Close support tickets"),
-    ("admin.subscription.view", "View subscription records"),
-    ("admin.subscription.override", "Override subscription status"),
-    ("admin.settings.edit", "Edit global app settings"),
-    ("admin.audit.view", "View audit logs"),
-    ("admin.admins.manage", "Create, edit, disable admin accounts"),
-]
-
-ROLE_DEFS = {
-    "super_admin": [name for name, _ in PERMISSION_DEFS],
-    "content_admin": [
-        "admin.content.view",
-        "admin.content.create",
-        "admin.content.edit",
-        "admin.content.publish",
-        "admin.content.delete",
-    ],
-    "support_admin": [
-        "admin.users.view",
-        "admin.children.view",
-        "admin.support.view",
-        "admin.support.reply",
-        "admin.support.close",
-    ],
-    "analytics_admin": [
-        "admin.users.view",
-        "admin.children.view",
-        "admin.analytics.view",
-        "admin.audit.view",
-    ],
-    "finance_admin": [
-        "admin.subscription.view",
-        "admin.subscription.override",
-        "admin.analytics.view",
-    ],
-}
-
 
 @router.post("/seed", summary="Seed admin roles, permissions, and default super admin")
 def seed_admin_system(secret: str, db: Session = Depends(get_db)):

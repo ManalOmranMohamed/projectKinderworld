@@ -48,8 +48,8 @@ final gamificationServiceProvider = Provider<GamificationService>((ref) {
 
 /// Loads and caches the full [GamificationState] for the currently active child.
 /// Auto-disposes when the child session ends.
-final gamificationStateProvider =
-    StateNotifierProvider.autoDispose<GamificationNotifier, GamificationNotifierState>(
+final gamificationStateProvider = StateNotifierProvider.autoDispose<
+    GamificationNotifier, GamificationNotifierState>(
   (ref) {
     final service = ref.watch(gamificationServiceProvider);
     final childId = ref.watch(currentChildIdProvider);
@@ -102,8 +102,7 @@ class GamificationNotifierState {
 // GAMIFICATION NOTIFIER
 // ─────────────────────────────────────────────────────────────────────────────
 
-class GamificationNotifier
-    extends StateNotifier<GamificationNotifierState> {
+class GamificationNotifier extends StateNotifier<GamificationNotifierState> {
   final GamificationService _service;
 
   GamificationNotifier({required GamificationService service})
@@ -138,6 +137,7 @@ class GamificationNotifier
     required ActivityType type,
     String? category,
     int score = 0,
+    bool awardXp = true,
   }) async {
     try {
       final result = await _service.recordActivity(
@@ -145,6 +145,7 @@ class GamificationNotifier
         type: type,
         category: category,
         score: score,
+        awardXp: awardXp,
       );
 
       // Reload state to reflect new XP/level/streak/achievements
@@ -190,7 +191,8 @@ class GamificationNotifier
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// The current child's [GamificationState], or null if not loaded.
-final currentGamificationStateProvider = Provider.autoDispose<GamificationState?>((ref) {
+final currentGamificationStateProvider =
+    Provider.autoDispose<GamificationState?>((ref) {
   return ref.watch(gamificationStateProvider).gamificationState;
 });
 
@@ -211,7 +213,8 @@ final earnedBadgesProvider = Provider.autoDispose<List<Badge>>((ref) {
 });
 
 /// The current child's unlocked achievements only.
-final unlockedAchievementsProvider = Provider.autoDispose<List<Achievement>>((ref) {
+final unlockedAchievementsProvider =
+    Provider.autoDispose<List<Achievement>>((ref) {
   final state = ref.watch(currentGamificationStateProvider);
   return state?.unlockedAchievements ?? [];
 });
@@ -255,8 +258,8 @@ final xpToNextLevelProvider = Provider.autoDispose<int>((ref) {
 });
 
 /// Gamification state for a *specific* child (used in parent reports).
-final childGamificationStateProvider =
-    FutureProvider.autoDispose.family<GamificationState, String>((ref, childId) async {
+final childGamificationStateProvider = FutureProvider.autoDispose
+    .family<GamificationState, String>((ref, childId) async {
   final service = ref.watch(gamificationServiceProvider);
   return service.loadState(childId);
 });

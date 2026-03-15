@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/admin_support_ticket.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/core/models/support_ticket_record.dart';
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/offline/deferred_operations_queue.dart';
 import 'package:kinder_world/core/providers/support_controller.dart';
 import 'package:kinder_world/core/services/support_service.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
@@ -15,6 +16,7 @@ import 'package:kinder_world/features/admin/management/admin_management_reposito
 import 'package:kinder_world/features/admin/support/admin_support_tickets_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/contact_us_screen.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _TestSecureStorage extends SecureStorage {
   @override
@@ -31,8 +33,9 @@ class _TestSecureStorage extends SecureStorage {
 }
 
 class _FakeSupportService extends SupportService {
-  _FakeSupportService()
-      : super(
+  _FakeSupportService({
+    required super.deferredQueue,
+  }) : super(
           networkService: NetworkService(
             secureStorage: _TestSecureStorage(),
             logger: Logger(),
@@ -207,10 +210,14 @@ class _FakeAdminManagementRepository extends AdminManagementRepository {
   }
 
   @override
-  Future<AdminSupportTicket> assignSupportTicket(int ticketId, {int? adminUserId}) async => ticket;
+  Future<AdminSupportTicket> assignSupportTicket(int ticketId,
+          {int? adminUserId}) async =>
+      ticket;
 
   @override
-  Future<AdminSupportTicket> replySupportTicket(int ticketId, String message) async => ticket;
+  Future<AdminSupportTicket> replySupportTicket(
+          int ticketId, String message) async =>
+      ticket;
 
   @override
   Future<AdminSupportTicket> closeSupportTicket(int ticketId) async => ticket;
@@ -248,9 +255,17 @@ Future<void> _pumpLocalizedApp(
 }
 
 void main() {
-  testWidgets('parent support screen sends categorized ticket and shows history',
+  testWidgets(
+      'parent support screen sends categorized ticket and shows history',
       (WidgetTester tester) async {
-    final supportService = _FakeSupportService();
+    SharedPreferences.setMockInitialValues(const {});
+    final preferences = await SharedPreferences.getInstance();
+    final supportService = _FakeSupportService(
+      deferredQueue: DeferredOperationsQueue(
+        preferences: preferences,
+        logger: Logger(),
+      ),
+    );
 
     await _pumpLocalizedApp(
       tester,
@@ -296,7 +311,11 @@ void main() {
       name: 'Support Admin',
       isActive: true,
       roles: ['support_admin'],
-      permissions: ['admin.support.view', 'admin.support.reply', 'admin.support.close'],
+      permissions: [
+        'admin.support.view',
+        'admin.support.reply',
+        'admin.support.close'
+      ],
     );
 
     await _pumpLocalizedApp(

@@ -1,23 +1,18 @@
-import os
 from datetime import datetime, timedelta
-from typing import Optional, Dict
-from jose import jwt
+from typing import Dict, Optional
+
 import bcrypt
-from dotenv import load_dotenv
-# Load environment variables from .env file
-load_dotenv()
+from jose import JWTError, jwt
 
-ALGORITHM = "HS256"
+from core.settings import settings
 
-SECRET_KEY = (
-    os.getenv("KINDER_JWT_SECRET")
-    or os.getenv("JWT_SECRET_KEY")
-    or os.getenv("SECRET_KEY")  # legacy fallback for existing deployments
-)
-if not SECRET_KEY:
-    raise ValueError(
-        "JWT secret not configured. Set KINDER_JWT_SECRET, JWT_SECRET_KEY, or SECRET_KEY environment variable."
-    )
+ALGORITHM = settings.jwt_algorithm
+SECRET_KEY = settings.jwt_active_secret
+
+
+def get_jwt_decode_secrets() -> list[str]:
+    # Active key first; previous keys allow staged secret rotation for token verification.
+    return [settings.jwt_active_secret, *settings.jwt_previous_secrets]
 
 def hash_password(password: str) -> str:
     hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -34,7 +29,21 @@ def create_token(subject: str, minutes: int, extra_claims: Optional[Dict] = None
     payload = {"sub": subject, "exp": expire}
     if extra_claims:
         payload.update(extra_claims)
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    headers = {"kid": settings.jwt_active_kid} if settings.jwt_active_kid else None
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM, headers=headers)
+
+
+def decode_token(token: str) -> dict:
+    last_error: JWTError | None = None
+    for secret in get_jwt_decode_secrets():
+        try:
+            return jwt.decode(token, secret, algorithms=[ALGORITHM])
+        except JWTError as exc:
+            last_error = exc
+            continue
+    if last_error is None:
+        raise JWTError("No decode secrets configured")
+    raise last_error
 
 def create_access_token(user_id: str, token_version: Optional[int] = None) -> str:
     extra_claims = {"token_version": token_version} if token_version is not None else None

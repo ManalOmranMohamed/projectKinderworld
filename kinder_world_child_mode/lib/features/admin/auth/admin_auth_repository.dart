@@ -1,9 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
-import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 
-/// Result wrapper for admin auth operations.
 class AdminAuthResult {
   final bool success;
   final String? error;
@@ -19,8 +18,11 @@ class AdminAuthResult {
     this.refreshToken,
   });
 
-  factory AdminAuthResult.ok(
-      {AdminUser? admin, String? accessToken, String? refreshToken}) {
+  factory AdminAuthResult.ok({
+    AdminUser? admin,
+    String? accessToken,
+    String? refreshToken,
+  }) {
     return AdminAuthResult(
       success: true,
       admin: admin,
@@ -34,39 +36,25 @@ class AdminAuthResult {
   }
 }
 
-/// Repository for all admin authentication API calls.
-/// Uses a dedicated Dio instance that injects the admin token (not the
-/// parent/child token) so the two auth flows never interfere.
 class AdminAuthRepository {
-  final NetworkService _network;
+  final AdminApi _adminApi;
   final SecureStorage _storage;
 
   AdminAuthRepository({
-    required NetworkService network,
+    required AdminApi adminApi,
     required SecureStorage storage,
-  })  : _network = network,
+  })  : _adminApi = adminApi,
         _storage = storage;
 
-  // ─────────────────────────── Login ───────────────────────────────────────
-
-  /// POST /admin/auth/login
-  /// Persists tokens + admin profile to secure storage on success.
   Future<AdminAuthResult> login({
     required String email,
     required String password,
   }) async {
     try {
-      final response = await _network.post(
-        '/admin/auth/login',
-        data: {'email': email.trim().toLowerCase(), 'password': password},
-        // Override Authorization header — do NOT send parent/child token here
-        options: Options(headers: {'Authorization': null}),
-      );
-
-      final body = response.data as Map<String, dynamic>;
+      final body = await _adminApi.login(email: email, password: password);
       final accessToken = body['access_token'] as String;
       final refreshToken = body['refresh_token'] as String;
-      final adminJson = body['admin'] as Map<String, dynamic>;
+      final adminJson = Map<String, dynamic>.from(body['admin'] as Map);
       final admin = AdminUser.fromJson(adminJson);
 
       await _persistSession(admin, accessToken, refreshToken);
@@ -83,10 +71,6 @@ class AdminAuthRepository {
     }
   }
 
-  // ─────────────────────────── Refresh ─────────────────────────────────────
-
-  /// POST /admin/auth/refresh
-  /// Exchanges the stored refresh token for a new access token.
   Future<AdminAuthResult> refreshToken() async {
     try {
       final storedRefresh = await _storage.getAdminRefreshToken();
@@ -94,13 +78,7 @@ class AdminAuthRepository {
         return AdminAuthResult.fail('No refresh token stored');
       }
 
-      final response = await _network.post(
-        '/admin/auth/refresh',
-        data: {'refresh_token': storedRefresh},
-        options: Options(headers: {'Authorization': null}),
-      );
-
-      final body = response.data as Map<String, dynamic>;
+      final body = await _adminApi.refresh(refreshToken: storedRefresh);
       final newAccessToken = body['access_token'] as String;
 
       await _storage.saveAdminToken(newAccessToken);
@@ -113,30 +91,19 @@ class AdminAuthRepository {
     }
   }
 
-  // ─────────────────────────── Logout ──────────────────────────────────────
-
-  /// POST /admin/auth/logout
-  /// Clears local session regardless of API result.
   Future<void> logout() async {
     try {
       final token = await _storage.getAdminToken();
       if (token != null && token.isNotEmpty) {
-        await _network.post(
-          '/admin/auth/logout',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+        await _adminApi.logout(accessToken: token);
       }
     } catch (_) {
-      // Best-effort — always clear local session
+      // Best-effort API call; local session is always cleared.
     } finally {
       await _storage.clearAdminSession();
     }
   }
 
-  // ─────────────────────────── Me ──────────────────────────────────────────
-
-  /// GET /admin/auth/me
-  /// Fetches the current admin profile and refreshes local storage.
   Future<AdminAuthResult> getMe() async {
     try {
       final token = await _storage.getAdminToken();
@@ -144,16 +111,10 @@ class AdminAuthRepository {
         return AdminAuthResult.fail('Not authenticated');
       }
 
-      final response = await _network.get(
-        '/admin/auth/me',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      final body = response.data as Map<String, dynamic>;
-      final adminJson = body['admin'] as Map<String, dynamic>;
+      final body = await _adminApi.me(accessToken: token);
+      final adminJson = Map<String, dynamic>.from(body['admin'] as Map);
       final admin = AdminUser.fromJson(adminJson);
 
-      // Refresh cached profile data
       await _storage.saveAdminName(admin.name);
       await _storage.saveAdminEmail(admin.email);
       await _storage.saveAdminRoles(admin.roles);
@@ -167,14 +128,11 @@ class AdminAuthRepository {
     }
   }
 
-  // ─────────────────────────── Session restore ─────────────────────────────
-
-  /// Restore admin session from secure storage (used on app start).
-  /// Returns null if no valid session is stored.
   Future<AdminUser?> restoreSession() async {
     try {
       final token = await _storage.getAdminToken();
       if (token == null || token.isEmpty) return null;
+
       final meResult = await getMe();
       if (meResult.success && meResult.admin != null) {
         return meResult.admin;
@@ -195,8 +153,6 @@ class AdminAuthRepository {
       return null;
     }
   }
-
-  // ─────────────────────────── Helpers ─────────────────────────────────────
 
   Future<void> _persistSession(
     AdminUser admin,

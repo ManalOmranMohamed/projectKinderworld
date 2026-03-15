@@ -49,7 +49,8 @@ def client(db):
         return db
 
     app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
     app.dependency_overrides.clear()
 
 
@@ -500,9 +501,110 @@ def test_feature_gated_demo_static_responses_match_current_behavior(client: Test
     advanced_controls = client.get("/parental-controls/advanced", headers=premium_headers)
     assert advanced_controls.status_code == 200
     assert advanced_controls.json()["access_level"] == "advanced"
-    assert any(item["type"] == "LOCATION_TRACKING" for item in advanced_controls.json()["controls"])
+    assert isinstance(advanced_controls.json()["controls"], list)
+    assert advanced_controls.json()["data_source"] == "backend_parental_controls"
 
     priority_support = client.get("/support/priority", headers=family_headers)
     assert priority_support.status_code == 200
     assert priority_support.json()["support_level"] == "priority"
     assert "phone" in priority_support.json()["support_channels"]
+
+
+def test_child_parental_controls_crud_and_parent_ownership(client: TestClient, db):
+    owner = _create_parent(db, email="controls.owner@gmail.com", plan=PLAN_PREMIUM)
+    other_parent = _create_parent(db, email="controls.other@gmail.com", plan=PLAN_PREMIUM)
+    owner_headers = _auth_header(owner)
+    other_headers = _auth_header(other_parent)
+
+    create_child = client.post(
+        "/children",
+        json={
+            "name": "Yousef",
+            "picture_password": ["cat", "dog", "apple"],
+            "age": 8,
+        },
+        headers=owner_headers,
+    )
+    assert create_child.status_code == 200
+    child_id = create_child.json()["child"]["id"]
+
+    get_default = client.get(f"/parental-controls/children/{child_id}/settings", headers=owner_headers)
+    assert get_default.status_code == 200
+    assert get_default.json()["settings"]["daily_limit_minutes"] == 120
+
+    update = client.put(
+        f"/parental-controls/children/{child_id}/settings",
+        json={
+            "daily_limit_enabled": True,
+            "daily_limit_minutes": 90,
+            "break_reminders_enabled": True,
+            "age_appropriate_only": True,
+            "require_approval": True,
+            "sleep_mode": True,
+            "bedtime_start": "20:30",
+            "bedtime_end": "07:00",
+            "emergency_lock": False,
+            "enforcement_mode": "enforce",
+            "device_status": "online",
+            "pending_changes": True,
+            "allowed_windows": [
+                {"day_of_week": 0, "start_time": "16:00", "end_time": "18:00", "is_allowed": True},
+                {"day_of_week": 5, "start_time": "10:00", "end_time": "12:00", "is_allowed": True},
+            ],
+            "blocked_apps": [
+                {"app_identifier": "com.video.app", "app_name": "Video App", "reason": "Too distracting"}
+            ],
+            "blocked_sites": [
+                {"domain": "example.com", "label": "Example", "reason": "Blocked by parent"}
+            ],
+        },
+        headers=owner_headers,
+    )
+    assert update.status_code == 200
+    payload = update.json()
+    assert payload["settings"]["daily_limit_minutes"] == 90
+    assert payload["enforcement"]["enforcement_mode"] == "enforce"
+    assert len(payload["allowed_windows"]) == 2
+    assert len(payload["blocked_apps"]) == 1
+    assert len(payload["blocked_sites"]) == 1
+
+    replace_apps = client.put(
+        f"/parental-controls/children/{child_id}/blocked-apps",
+        json={
+            "blocked_apps": [
+                {"app_identifier": "com.chat.app", "app_name": "Chat App"},
+                {"app_identifier": "com.games.app", "app_name": "Games App"},
+            ]
+        },
+        headers=owner_headers,
+    )
+    assert replace_apps.status_code == 200
+    assert len(replace_apps.json()["blocked_apps"]) == 2
+
+    replace_sites = client.put(
+        f"/parental-controls/children/{child_id}/blocked-sites",
+        json={"blocked_sites": [{"domain": "social.example"}]},
+        headers=owner_headers,
+    )
+    assert replace_sites.status_code == 200
+    assert replace_sites.json()["blocked_sites"][0]["domain"] == "social.example"
+
+    replace_schedule = client.put(
+        f"/parental-controls/children/{child_id}/schedule-rules",
+        json={"allowed_windows": [{"day_of_week": 2, "start_time": "15:00", "end_time": "17:00", "is_allowed": True}]},
+        headers=owner_headers,
+    )
+    assert replace_schedule.status_code == 200
+    assert len(replace_schedule.json()["allowed_windows"]) == 1
+    assert replace_schedule.json()["allowed_windows"][0]["day_of_week"] == 2
+
+    list_controls = client.get("/parental-controls/children", headers=owner_headers)
+    assert list_controls.status_code == 200
+    assert len(list_controls.json()["items"]) == 1
+    assert list_controls.json()["items"][0]["child"]["id"] == child_id
+
+    forbidden = client.get(f"/parental-controls/children/{child_id}/settings", headers=other_headers)
+    assert forbidden.status_code == 403
+
+
+

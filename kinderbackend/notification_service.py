@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from models import Notification, SupportTicket, User
+from services.notification_service import notification_service
 
 
 def create_notification(
@@ -12,17 +13,14 @@ def create_notification(
     body: str,
     child_id: int | None = None,
 ) -> Notification:
-    notification = Notification(
+    return notification_service.create_notification(
+        db,
         user_id=user_id,
-        child_id=child_id,
         type=type,
         title=title,
         body=body,
-        is_read=False,
+        child_id=child_id,
     )
-    db.add(notification)
-    db.flush()
-    return notification
 
 
 def notify_support_ticket_updated(
@@ -32,12 +30,9 @@ def notify_support_ticket_updated(
     title: str,
     body: str,
 ) -> Notification | None:
-    if ticket.user_id is None:
-        return None
-    return create_notification(
+    return notification_service.notify_support_ticket_updated(
         db,
-        user_id=ticket.user_id,
-        type="SUPPORT_TICKET_UPDATE",
+        ticket=ticket,
         title=title,
         body=body,
     )
@@ -51,12 +46,10 @@ def notify_subscription_changed(
     new_plan: str,
     source: str,
 ) -> Notification | None:
-    if old_plan == new_plan:
-        return None
-    return create_notification(
+    return notification_service.notify_subscription_changed(
         db,
-        user_id=user.id,
-        type="SUBSCRIPTION_UPDATED",
-        title="Subscription updated",
-        body=f"Your plan changed from {old_plan} to {new_plan} via {source}.",
+        user=user,
+        old_plan=old_plan,
+        new_plan=new_plan,
+        source=source,
     )

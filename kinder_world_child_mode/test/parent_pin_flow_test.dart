@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
+import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
@@ -55,18 +57,21 @@ class _TestSecureStorage extends SecureStorage {
 
 class _FakeAuthRepository extends AuthRepository {
   _FakeAuthRepository({
-    required super.secureStorage,
+    required SecureStorage storage,
     required this.hasPin,
-  })  : storage = secureStorage,
+  })  : _storage = storage,
         super(
-          networkService: NetworkService(
-            secureStorage: secureStorage,
-            logger: Logger(),
+          authApi: AuthApi(
+            NetworkService(
+              secureStorage: storage,
+              logger: Logger(),
+            ),
           ),
+          secureStorage: storage,
           logger: Logger(),
         );
 
-  final SecureStorage storage;
+  final SecureStorage _storage;
   bool hasPin;
   String currentPin = '2468';
 
@@ -81,14 +86,15 @@ class _FakeAuthRepository extends AuthRepository {
   }
 
   @override
-  Future<ParentPinActionResult> setParentPin(String pin, String confirmPin) async {
+  Future<ParentPinActionResult> setParentPin(
+      String pin, String confirmPin) async {
     if (pin != confirmPin) {
       return const ParentPinActionResult(success: false, error: 'PIN mismatch');
     }
     hasPin = true;
     currentPin = pin;
     await clearParentPinVerification();
-    await storage.saveParentPinVerified(true);
+    await _storage.saveParentPinVerified(true);
     return const ParentPinActionResult(
       success: true,
       message: 'Parent PIN created successfully',
@@ -98,9 +104,10 @@ class _FakeAuthRepository extends AuthRepository {
   @override
   Future<ParentPinActionResult> verifyParentPin(String enteredPin) async {
     if (enteredPin != currentPin) {
-      return const ParentPinActionResult(success: false, error: 'Incorrect PIN');
+      return const ParentPinActionResult(
+          success: false, error: 'Incorrect PIN');
     }
-    await storage.saveParentPinVerified(true);
+    await _storage.saveParentPinVerified(true);
     return const ParentPinActionResult(
       success: true,
       message: 'Parent PIN verified successfully',
@@ -120,7 +127,7 @@ class _FakeAuthRepository extends AuthRepository {
       );
     }
     this.currentPin = newPin;
-    await storage.saveParentPinVerified(true);
+    await _storage.saveParentPinVerified(true);
     return const ParentPinActionResult(
       success: true,
       message: 'Parent PIN changed successfully',
@@ -139,9 +146,11 @@ class _FakeAuthRepository extends AuthRepository {
 class _FakeAdminAuthRepository extends AdminAuthRepository {
   _FakeAdminAuthRepository()
       : super(
-          network: NetworkService(
-            secureStorage: _TestSecureStorage(),
-            logger: Logger(),
+          adminApi: AdminApi(
+            NetworkService(
+              secureStorage: _TestSecureStorage(),
+              logger: Logger(),
+            ),
           ),
           storage: _TestSecureStorage(),
         );
@@ -201,7 +210,7 @@ void main() {
       parentPinVerified: false,
     );
     final repo = _FakeAuthRepository(
-      secureStorage: storage,
+      storage: storage,
       hasPin: true,
     );
     final container = await _pumpApp(
@@ -231,7 +240,7 @@ void main() {
       parentPinVerified: false,
     );
     final repo = _FakeAuthRepository(
-      secureStorage: storage,
+      storage: storage,
       hasPin: false,
     );
     final container = await _pumpApp(
@@ -241,7 +250,8 @@ void main() {
     );
     final router = container.read(routerProvider);
 
-    router.go('${Routes.parentPin}?redirect=${Uri.encodeComponent(Routes.parentSettings)}');
+    router.go(
+        '${Routes.parentPin}?redirect=${Uri.encodeComponent(Routes.parentSettings)}');
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -267,7 +277,7 @@ void main() {
       parentPinVerified: false,
     );
     final repo = _FakeAuthRepository(
-      secureStorage: storage,
+      storage: storage,
       hasPin: true,
     );
     final container = await _pumpApp(
@@ -280,7 +290,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    final success = await container.read(parentPinProvider.notifier).verifyPin('1111');
+    final success =
+        await container.read(parentPinProvider.notifier).verifyPin('1111');
     await tester.pump(const Duration(milliseconds: 500));
 
     final pinState = container.read(parentPinProvider);

@@ -9,42 +9,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from main import app
 from models import User
 from auth import hash_password, verify_password, create_access_token
-from database import SessionLocal
-
-
-@pytest.fixture
-def db():
-    """Get database session."""
-    db = SessionLocal()
-    yield db
-    db.close()
-
-
-@pytest.fixture
-def client(db):
-    """Override get_db dependency."""
-    from deps import get_db
-    
-    def override_get_db():
-        return db
-    
-    app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def test_user(db: Session):
     """Create a test user."""
-    # Clean up any existing user with the same email
-    existing = db.query(User).filter(User.email == "test@example.com").first()
-    if existing:
-        db.delete(existing)
-        db.commit()
-    
     user = User(
         email="test@example.com",
         password_hash=hash_password("CurrentPass123!"),
@@ -56,12 +27,7 @@ def test_user(db: Session):
     db.add(user)
     db.commit()
     db.refresh(user)
-    
-    yield user
-    
-    # Cleanup after test
-    db.delete(user)
-    db.commit()
+    return user
 
 
 @pytest.fixture

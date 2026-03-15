@@ -16,6 +16,7 @@ from admin_utils import (
     serialize_child_detail,
     write_audit_log,
 )
+from core.admin_security import require_sensitive_action_confirmation
 from deps import get_db
 from models import ChildProfile, User
 
@@ -35,7 +36,7 @@ def _get_child_or_404(child_id: int, db: Session) -> ChildProfile:
         .options(
             joinedload(ChildProfile.parent).selectinload(User.notifications),
         )
-        .filter(ChildProfile.id == child_id)
+        .filter(ChildProfile.id == child_id, ChildProfile.deleted_at.is_(None))
         .first()
     )
     if not child:
@@ -48,12 +49,15 @@ def list_admin_children(
     parent_id: Optional[int] = Query(None),
     age: Optional[int] = Query(None),
     active: Optional[bool] = Query(None),
+    include_deleted: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.children.view")),
 ):
     query = db.query(ChildProfile).options(joinedload(ChildProfile.parent))
+    if not include_deleted:
+        query = query.filter(ChildProfile.deleted_at.is_(None))
 
     if parent_id is not None:
         query = query.filter(ChildProfile.parent_id == parent_id)
@@ -72,7 +76,12 @@ def list_admin_children(
     return {
         "items": [serialize_child_detail(child) for child in items],
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
-        "filters": {"parent_id": parent_id, "age": age, "active": active},
+        "filters": {
+            "parent_id": parent_id,
+            "age": age,
+            "active": active,
+            "include_deleted": include_deleted,
+        },
     }
 
 
@@ -130,6 +139,7 @@ def deactivate_admin_child(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.children.delete")),
 ):
+    require_sensitive_action_confirmation(request, action="child.deactivate")
     child = _get_child_or_404(child_id, db)
     before = serialize_child_detail(child)
     if hasattr(child, "is_active"):

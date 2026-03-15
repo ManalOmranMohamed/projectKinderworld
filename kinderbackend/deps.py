@@ -1,13 +1,14 @@
 from typing import Optional
 import logging
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+from jose import JWTError
 from sqlalchemy.orm import Session
 
 from admin_auth import ADMIN_TOKEN_TYPE
-from auth import ALGORITHM, SECRET_KEY
+from auth import decode_token
+from core.errors import http_error, not_found, unauthorized
 from database import SessionLocal
 from models import User
 
@@ -24,15 +25,18 @@ def get_db():
 
 def decode_bearer(authorization: Optional[str]) -> Optional[str]:
     if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Authentication required")
+        raise unauthorized("Authentication required")
     token = authorization.replace("Bearer ", "").strip()
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("token_type") == ADMIN_TOKEN_TYPE:
-            raise HTTPException(status_code=401, detail="Invalid token type")
+        payload = decode_token(token)
+        token_type = payload.get("token_type")
+        if token_type == ADMIN_TOKEN_TYPE:
+            raise unauthorized("Invalid token type")
+        if token_type == "child_session":
+            raise unauthorized("Invalid token type")
         return payload.get("sub")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise unauthorized("Invalid token")
 
 
 def get_current_user(
@@ -40,23 +44,26 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if creds is None or not creds.credentials:
-        raise HTTPException(status_code=401, detail="Authentication required")
+        raise unauthorized("Authentication required")
 
     token = creds.credentials
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("token_type") == ADMIN_TOKEN_TYPE:
-            raise HTTPException(status_code=401, detail="Invalid token type")
+        payload = decode_token(token)
+        token_type = payload.get("token_type")
+        if token_type == ADMIN_TOKEN_TYPE:
+            raise unauthorized("Invalid token type")
+        if token_type == "child_session":
+            raise unauthorized("Invalid token type")
         user_id = payload.get("sub")
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise unauthorized("Invalid token")
 
     if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid token payload")
+        raise unauthorized("Invalid token payload")
 
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise not_found("User not found")
     return user
 
 
@@ -86,11 +93,11 @@ def require_feature(feature_name: str):
             logger.warning(
                 f"Access denied to feature '{feature_name}' for user {user.id} on plan {plan}"
             )
-            raise HTTPException(
+            raise http_error(
                 status_code=403,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": f"Feature '{feature_name}' not available in {plan} plan",
+                message=f"Feature '{feature_name}' not available in {plan} plan",
+                code="FEATURE_NOT_AVAILABLE",
+                extra={
                     "feature": feature_name,
                     "current_plan": plan,
                     "hint": f"Upgrade to access {feature_name}",

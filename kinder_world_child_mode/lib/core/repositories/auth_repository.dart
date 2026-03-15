@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
-import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
 
@@ -70,15 +70,15 @@ class ParentPinActionResult {
 /// Repository for authentication operations
 class AuthRepository {
   final SecureStorage _secureStorage;
-  final NetworkService _networkService;
+  final AuthApi _authApi;
   final Logger _logger;
 
   AuthRepository({
     required SecureStorage secureStorage,
-    required NetworkService networkService,
+    required AuthApi authApi,
     required Logger logger,
   })  : _secureStorage = secureStorage,
-        _networkService = networkService,
+        _authApi = authApi,
         _logger = logger;
 
   User? _userFromJson(dynamic data) {
@@ -148,9 +148,7 @@ class AuthRepository {
         );
       }
 
-      final response = await _networkService.get<Map<String, dynamic>>('/auth/me');
-      final data = response.data;
-      if (data == null) return null;
+      final data = await _authApi.me();
       return _userFromJson(data['user']);
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
@@ -159,10 +157,7 @@ class AuthRepository {
         final refreshedToken = await refreshToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
           try {
-            final retryResponse =
-                await _networkService.get<Map<String, dynamic>>('/auth/me');
-            final retryData = retryResponse.data;
-            if (retryData == null) return null;
+            final retryData = await _authApi.me();
             return _userFromJson(retryData['user']);
           } on DioException catch (retryError) {
             _logger.e(
@@ -210,21 +205,18 @@ class AuthRepository {
         return null;
       }
 
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/login',
-        data: {
-          'email': normalizedEmail,
-          'password': password,
-        },
+      final payload = await _authApi.login(
+        email: normalizedEmail,
+        password: password,
       );
-
-      final data = response.data;
-      if (data == null) {
+      final data = payload.raw;
+      if (data.isEmpty) {
         _logger.e('Login failed: empty response');
         return null;
       }
 
-      final user = await _persistAuthFromResponse(Map<String, dynamic>.from(data));
+      final user =
+          await _persistAuthFromResponse(Map<String, dynamic>.from(data));
       if (user == null) {
         _logger.e('Login failed: invalid user data');
         return null;
@@ -233,10 +225,15 @@ class AuthRepository {
       _logger.d('Parent login successful: ${user.id}');
       return user;
     } on DioException catch (e) {
-      _logger.e('Parent login error: ${e.response?.statusCode} - ${e.response?.data}');
+      final statusCode = e.response?.statusCode;
+      final resolvedMessage =
+          _extractErrorMessage(e) ?? 'Login failed. Please try again.';
+      _logger.e(
+        'Parent login error: status=$statusCode message=$resolvedMessage body=${e.response?.data}',
+      );
       throw ParentAuthException(
-        message: _extractErrorMessage(e) ?? 'Invalid credentials',
-        statusCode: e.response?.statusCode,
+        message: resolvedMessage,
+        statusCode: statusCode,
       );
     } catch (e) {
       _logger.e('Parent login error: $e');
@@ -258,44 +255,58 @@ class AuthRepository {
       // Validation
       if (password != confirmPassword) {
         _logger.w('Registration failed: Passwords do not match');
-        return null;
+        throw const ParentAuthException(
+          message: 'Passwords do not match',
+          statusCode: 400,
+        );
       }
 
-      if (password.length < 6) {
+      if (password.length < 8) {
         _logger.w('Registration failed: Password too short');
-        return null;
+        throw const ParentAuthException(
+          message: 'Password must be at least 8 characters',
+          statusCode: 422,
+        );
       }
 
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/register',
-        data: {
-          'name': name,
-          'email': normalizedEmail,
-          'password': password,
-          'confirmPassword': confirmPassword,
-        },
+      final payload = await _authApi.register(
+        name: name,
+        email: normalizedEmail,
+        password: password,
+        confirmPassword: confirmPassword,
       );
-
-      final data = response.data;
-      if (data == null) {
+      final data = payload.raw;
+      if (data.isEmpty) {
         _logger.e('Registration failed: empty response');
-        return null;
+        throw const ParentAuthException(
+          message: 'Registration failed: empty server response',
+        );
       }
 
-      final user = await _persistAuthFromResponse(Map<String, dynamic>.from(data));
+      final user =
+          await _persistAuthFromResponse(Map<String, dynamic>.from(data));
       if (user == null) {
         _logger.e('Registration failed: invalid user data');
-        return null;
+        throw const ParentAuthException(
+          message: 'Registration failed: invalid user data',
+        );
       }
 
       _logger.d('Parent registration successful: ${user.id}');
       return user;
     } on DioException catch (e) {
-      _logger.e('Parent registration error: ${e.response?.statusCode} - ${e.response?.data}');
-      throw ParentAuthException(
-        message: _extractErrorMessage(e) ?? 'Registration failed',
-        statusCode: e.response?.statusCode,
+      final statusCode = e.response?.statusCode;
+      final resolvedMessage =
+          _extractErrorMessage(e) ?? 'Registration failed. Please try again.';
+      _logger.e(
+        'Parent registration error: status=$statusCode message=$resolvedMessage body=${e.response?.data}',
       );
+      throw ParentAuthException(
+        message: resolvedMessage,
+        statusCode: statusCode,
+      );
+    } on ParentAuthException {
+      rethrow;
     } catch (e) {
       _logger.e('Parent registration error: $e');
       return null;
@@ -309,6 +320,14 @@ class AuthRepository {
       if (detail is String && detail.isNotEmpty) return detail;
       if (detail is Map && detail['message'] != null) {
         return detail['message'].toString();
+      }
+      if (detail is List && detail.isNotEmpty) {
+        final first = detail.first;
+        if (first is Map) {
+          final msg = first['msg']?.toString();
+          if (msg != null && msg.isNotEmpty) return msg;
+        }
+        return detail.map((e) => e.toString()).join(', ');
       }
       if (data['message'] != null) return data['message'].toString();
     }
@@ -334,17 +353,13 @@ class AuthRepository {
         throw const ChildLoginException(statusCode: 422);
       }
 
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/child/login',
-        data: {
-          'child_id': int.tryParse(childId) ?? childId,
-          'name': childName.trim(),
-          'picture_password': picturePassword,
-        },
+      final payload = await _authApi.childLogin(
+        childId: childId,
+        name: childName,
+        picturePassword: picturePassword,
       );
-
-      final data = response.data;
-      final success = data != null && data['success'] == true;
+      final data = payload.raw;
+      final success = payload.success;
       if (!success) {
         _logger.w('Child login failed: Invalid credentials');
         throw const ChildLoginException(statusCode: 401);
@@ -372,7 +387,8 @@ class AuthRepository {
       _logger.d('Child login successful: ${childUser.id}');
       return childUser;
     } on DioException catch (e) {
-      _logger.e('Child login error: ${e.response?.statusCode} - ${e.response?.data}');
+      _logger.e(
+          'Child login error: ${e.response?.statusCode} - ${e.response?.data}');
       throw ChildLoginException(statusCode: e.response?.statusCode);
     } catch (e) {
       _logger.e('Child login error: $e');
@@ -401,19 +417,14 @@ class AuthRepository {
         throw const ChildRegisterException(statusCode: 422);
       }
 
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/child/register',
-        data: {
-          'name': trimmedName,
-          'picture_password': picturePassword,
-          'parent_email': trimmedEmail,
-          'age': age,
-          if (avatar != null) 'avatar': avatar,
-        },
+      final data = await _authApi.childRegister(
+        name: trimmedName,
+        picturePassword: picturePassword,
+        parentEmail: trimmedEmail,
+        age: age,
+        avatar: avatar,
       );
-
-      final data = response.data;
-      if (data == null) {
+      if (data.isEmpty) {
         _logger.e('Child register failed: empty response');
         return null;
       }
@@ -423,7 +434,8 @@ class AuthRepository {
 
       if (data['child'] is Map) {
         final childJson = Map<String, dynamic>.from(data['child']);
-        childId = childJson['id']?.toString() ?? childJson['child_id']?.toString();
+        childId =
+            childJson['id']?.toString() ?? childJson['child_id']?.toString();
         childName = childJson['name']?.toString();
       }
 
@@ -502,8 +514,7 @@ class AuthRepository {
       ]) {
         final nested = map[key];
         if (nested is Map) {
-          final name =
-              extractFromMap(Map<String, dynamic>.from(nested));
+          final name = extractFromMap(Map<String, dynamic>.from(nested));
           if (name != null) return name;
         }
       }
@@ -536,10 +547,7 @@ class AuthRepository {
 
   Future<ParentPinStatus> getParentPinStatus() async {
     try {
-      final response = await _networkService.get<Map<String, dynamic>>(
-        '/auth/parent-pin/status',
-      );
-      final data = response.data ?? const <String, dynamic>{};
+      final data = await _authApi.parentPinStatus();
 
       final status = ParentPinStatus(
         hasPin: data['has_pin'] == true,
@@ -580,19 +588,17 @@ class AuthRepository {
     }
   }
 
-  Future<ParentPinActionResult> setParentPin(String pin, String confirmPin) async {
+  Future<ParentPinActionResult> setParentPin(
+      String pin, String confirmPin) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/parent-pin/set',
-        data: {
-          'pin': pin,
-          'confirm_pin': confirmPin,
-        },
+      final response = await _authApi.parentPinSet(
+        pin: pin,
+        confirmPin: confirmPin,
       );
       await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: response.data?['success'] == true,
-        message: response.data?['message']?.toString(),
+        success: response['success'] == true,
+        message: response['message']?.toString(),
       );
     } on DioException catch (e) {
       return ParentPinActionResult(
@@ -610,14 +616,11 @@ class AuthRepository {
 
   Future<ParentPinActionResult> verifyParentPin(String enteredPin) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/parent-pin/verify',
-        data: {'pin': enteredPin},
-      );
+      final response = await _authApi.parentPinVerify(pin: enteredPin);
       await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: response.data?['success'] == true,
-        message: response.data?['message']?.toString(),
+        success: response['success'] == true,
+        message: response['message']?.toString(),
       );
     } on DioException catch (e) {
       final lockedUntil = _extractLockedUntil(e);
@@ -642,18 +645,15 @@ class AuthRepository {
     required String confirmPin,
   }) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/parent-pin/change',
-        data: {
-          'current_pin': currentPin,
-          'new_pin': newPin,
-          'confirm_pin': confirmPin,
-        },
+      final response = await _authApi.parentPinChange(
+        currentPin: currentPin,
+        newPin: newPin,
+        confirmPin: confirmPin,
       );
       await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: response.data?['success'] == true,
-        message: response.data?['message']?.toString(),
+        success: response['success'] == true,
+        message: response['message']?.toString(),
       );
     } on DioException catch (e) {
       return ParentPinActionResult(
@@ -671,15 +671,10 @@ class AuthRepository {
 
   Future<ParentPinActionResult> requestParentPinReset({String? note}) async {
     try {
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/parent-pin/reset-request',
-        data: {
-          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
-        },
-      );
+      final response = await _authApi.parentPinResetRequest(note: note);
       return ParentPinActionResult(
-        success: response.data?['success'] == true,
-        message: response.data?['message']?.toString(),
+        success: response['success'] == true,
+        message: response['message']?.toString(),
       );
     } on DioException catch (e) {
       return ParentPinActionResult(
@@ -812,13 +807,8 @@ class AuthRepository {
       final refreshToken = await _secureStorage.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) return null;
 
-      final response = await _networkService.post<Map<String, dynamic>>(
-        '/auth/refresh',
-        data: {'refresh_token': refreshToken},
-      );
-
-      final data = response.data;
-      final newToken = data?['access_token'];
+      final data = await _authApi.refresh(refreshToken: refreshToken);
+      final newToken = data['access_token'];
       if (newToken is String && newToken.isNotEmpty) {
         await _secureStorage.saveAuthToken(newToken);
         return newToken;
@@ -826,7 +816,8 @@ class AuthRepository {
 
       return null;
     } on DioException catch (e) {
-      _logger.e('Error refreshing token: ${e.response?.statusCode} - ${e.response?.data}');
+      _logger.e(
+          'Error refreshing token: ${e.response?.statusCode} - ${e.response?.data}');
       return null;
     } catch (e) {
       _logger.e('Error refreshing token: $e');
@@ -838,7 +829,7 @@ class AuthRepository {
   Future<bool> validateToken() async {
     try {
       final token = await _secureStorage.getAuthToken();
-      
+
       if (token == null || token.isEmpty) return false;
 
       // For now, just check if token exists

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/api/admin_api.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/network/network_service.dart';
@@ -18,9 +19,11 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
   _FakeAdminAuthRepository({
     this.restoredAdmin,
   }) : super(
-          network: NetworkService(
-            secureStorage: _TestSecureStorage(),
-            logger: Logger(),
+          adminApi: AdminApi(
+            NetworkService(
+              secureStorage: _TestSecureStorage(),
+              logger: Logger(),
+            ),
           ),
           storage: _TestSecureStorage(),
         );

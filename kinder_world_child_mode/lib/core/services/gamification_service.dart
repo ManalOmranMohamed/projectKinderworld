@@ -61,7 +61,7 @@ enum ActivityType {
   lesson,
   activity,
   quiz,
-  perfectQuiz,   // quiz with 100% score
+  perfectQuiz, // quiz with 100% score
   play,
   coloring,
   aiBuddy,
@@ -104,6 +104,7 @@ class GamificationService {
     required ActivityType type,
     String? category,
     int score = 0,
+    bool awardXp = true,
   }) async {
     try {
       // 1. Load current child profile
@@ -113,14 +114,20 @@ class GamificationService {
         return ActivityResult.empty(0, 1, 0);
       }
 
-      final oldXP    = child.xp;
+      final oldXP = child.xp;
       final oldLevel = child.level;
 
       // 2. Calculate XP to award
-      final xpToAward = _xpForActivity(type, score: score);
+      final xpToAward = awardXp ? _xpForActivity(type, score: score) : 0;
 
       // 3. Update streak
-      final streakResult = await _updateStreak(childId, child.streak);
+      final streakResult = awardXp
+          ? await _updateStreak(childId, child.streak)
+          : _StreakResult(
+              newStreak: child.streak,
+              streakUpdated: false,
+              bonusXP: 0,
+            );
       final newStreak = streakResult.newStreak;
       final streakBonusXP = streakResult.bonusXP;
 
@@ -131,8 +138,10 @@ class GamificationService {
       final leveledUp = newLevel > oldLevel;
 
       // 5. Persist XP + level + streak to ChildProfile
-      await _childRepo.addXP(childId, totalXPToAward);
-      if (streakResult.streakUpdated) {
+      if (awardXp && totalXPToAward > 0) {
+        await _childRepo.addXP(childId, totalXPToAward);
+      }
+      if (awardXp && streakResult.streakUpdated) {
         await _childRepo.updateStreak(childId);
       }
 
@@ -161,8 +170,8 @@ class GamificationService {
         isFirstActivity: activitiesCompleted == 1,
       );
 
-      final unlockResult = await _checkAndUnlockAchievements(
-          childId, achievementContext);
+      final unlockResult =
+          await _checkAndUnlockAchievements(childId, achievementContext);
 
       _logger.i(
         'GamificationService.recordActivity: child=$childId '
@@ -264,7 +273,8 @@ class GamificationService {
       }
     } catch (e) {
       _logger.e('GamificationService._updateStreak error: $e');
-      return _StreakResult(newStreak: currentStreak, streakUpdated: false, bonusXP: 0);
+      return _StreakResult(
+          newStreak: currentStreak, streakUpdated: false, bonusXP: 0);
     }
   }
 
@@ -280,10 +290,8 @@ class GamificationService {
     final newBadges = <Badge>[];
 
     final achievements = await _gamificationRepo.getAchievements(childId);
-    final lockedIds = achievements
-        .where((a) => !a.isUnlocked)
-        .map((a) => a.id)
-        .toSet();
+    final lockedIds =
+        achievements.where((a) => !a.isUnlocked).map((a) => a.id).toSet();
 
     // Helper: try to unlock an achievement
     Future<void> tryUnlock(String id) async {
@@ -315,13 +323,17 @@ class GamificationService {
     }
 
     // ── Streak milestones ─────────────────────────────────────────────────
-    if (ctx.streak >= 3)  await tryUnlock(AchievementIds.streak3);
-    if (ctx.streak >= 7)  await tryUnlock(AchievementIds.streak7);
+    if (ctx.streak >= 3) await tryUnlock(AchievementIds.streak3);
+    if (ctx.streak >= 7) await tryUnlock(AchievementIds.streak7);
     if (ctx.streak >= 30) await tryUnlock(AchievementIds.streak30);
 
     // ── Activity count milestones ─────────────────────────────────────────
-    if (ctx.activitiesCompleted >= 10) await tryUnlock(AchievementIds.activities10);
-    if (ctx.activitiesCompleted >= 50) await tryUnlock(AchievementIds.activities50);
+    if (ctx.activitiesCompleted >= 10) {
+      await tryUnlock(AchievementIds.activities10);
+    }
+    if (ctx.activitiesCompleted >= 50) {
+      await tryUnlock(AchievementIds.activities50);
+    }
 
     // ── Level milestone ───────────────────────────────────────────────────
     if (ctx.level >= 5) await tryUnlock(AchievementIds.level5);
@@ -338,7 +350,10 @@ class GamificationService {
 
     // ── Explorer (tried all 4 categories) ────────────────────────────────
     const requiredCategories = {
-      'educational', 'behavioral', 'skillful', 'entertaining'
+      'educational',
+      'behavioral',
+      'skillful',
+      'entertaining'
     };
     if (ctx.exploredCategories.containsAll(requiredCategories)) {
       await tryUnlock(AchievementIds.explorer);
@@ -387,8 +402,7 @@ class GamificationService {
   }
 
   /// Returns XP needed to reach the next level from current XP.
-  int xpToNextLevel(int currentXP) =>
-      LevelThresholds.xpToNextLevel(currentXP);
+  int xpToNextLevel(int currentXP) => LevelThresholds.xpToNextLevel(currentXP);
 
   /// Returns the level for a given XP total.
   int levelForXP(int xp) => LevelThresholds.levelForXP(xp);

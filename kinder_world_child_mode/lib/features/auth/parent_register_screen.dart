@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
@@ -83,16 +84,6 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
     super.dispose();
   }
 
-  bool _isAllowedEmail(String value) {
-    final email = value.trim().toLowerCase();
-    if (!email.contains('@')) return false;
-    final domain = email.split('@').last;
-    return domain == 'gmail.com' ||
-        domain == 'outlook.com' ||
-        domain == 'hotmail.com' ||
-        domain == 'live.com';
-  }
-
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -135,8 +126,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         );
         context.go('/parent/dashboard');
@@ -276,8 +266,8 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                               if (value == null || value.isEmpty) {
                                 return l10n.emailRequired;
                               }
-                              if (!_isAllowedEmail(value)) {
-                                return l10n.useAllowedEmail;
+                              if (!isValidEmailFormat(value)) {
+                                return l10n.invalidEmail;
                               }
                               return null;
                             },
@@ -383,7 +373,8 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                               onPressed: () => context.go('/parent/login'),
                               child: RichText(
                                 text: TextSpan(
-                                  style: textTheme.bodyMedium?.copyWith(fontSize: 14),
+                                  style: textTheme.bodyMedium
+                                      ?.copyWith(fontSize: 14),
                                   children: [
                                     TextSpan(
                                       text: l10n.alreadyHaveAccount,

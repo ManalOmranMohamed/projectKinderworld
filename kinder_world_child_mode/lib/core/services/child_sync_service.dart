@@ -1,24 +1,24 @@
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/api/children_api.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/user.dart';
-import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
 
 class ChildSyncService {
   final ChildRepository _childRepository;
-  final NetworkService _networkService;
+  final ChildrenApi _childrenApi;
   final SecureStorage _secureStorage;
   final Logger _logger;
 
   ChildSyncService({
     required ChildRepository childRepository,
-    required NetworkService networkService,
+    required ChildrenApi childrenApi,
     required SecureStorage secureStorage,
     required Logger logger,
   })  : _childRepository = childRepository,
-        _networkService = networkService,
+        _childrenApi = childrenApi,
         _secureStorage = secureStorage,
         _logger = logger;
 
@@ -32,8 +32,7 @@ class ChildSyncService {
       final parentId = await _secureStorage.getParentId();
       final parentEmail = await _secureStorage.getParentEmail();
 
-      final response = await _networkService.get<dynamic>('/children');
-      final apiChildren = _extractChildrenList(response.data);
+      final apiChildren = await _childrenApi.fetchChildren();
       for (final childData in apiChildren) {
         final childId = _parseChildId(childData);
         if (childId == null || childId.isEmpty) continue;
@@ -54,26 +53,6 @@ class ChildSyncService {
     } catch (e) {
       _logger.e('Error syncing children: $e');
     }
-  }
-
-  List<Map<String, dynamic>> _extractChildrenList(dynamic data) {
-    if (data is List) {
-      return data
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-    if (data is Map) {
-      final listData =
-          data['children'] ?? data['data'] ?? data['results'] ?? data['items'];
-      if (listData is List) {
-        return listData
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList();
-      }
-    }
-    return [];
   }
 
   String? _parseChildId(Map<String, dynamic> data) {
@@ -195,7 +174,8 @@ class ChildSyncService {
     final picturePassword = (existing?.picturePassword.isNotEmpty ?? false)
         ? existing!.picturePassword
         : _parseStringList(data['picture_password']);
-    final createdAt = existing?.createdAt ?? _parseDate(data['created_at'], now);
+    final createdAt =
+        existing?.createdAt ?? _parseDate(data['created_at'], now);
     final updatedAt = _parseDate(data['updated_at'], now);
     final lastSession =
         existing?.lastSession ?? _parseNullableDate(data['last_session']);
@@ -212,8 +192,9 @@ class ChildSyncService {
       streak: existing?.streak ?? _parseInt(data['streak'], 0),
       favorites: existing?.favorites ?? _parseStringList(data['favorites']),
       parentId: parentId ?? existing?.parentId ?? 'local',
-      parentEmail:
-          existing?.parentEmail ?? parentEmail ?? data['parent_email']?.toString(),
+      parentEmail: existing?.parentEmail ??
+          parentEmail ??
+          data['parent_email']?.toString(),
       picturePassword: picturePassword,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -225,8 +206,8 @@ class ChildSyncService {
       currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
       learningStyle:
           existing?.learningStyle ?? data['learning_style']?.toString(),
-      specialNeeds:
-          existing?.specialNeeds ?? _parseNullableStringList(data['special_needs']),
+      specialNeeds: existing?.specialNeeds ??
+          _parseNullableStringList(data['special_needs']),
       accessibilityNeeds: existing?.accessibilityNeeds ??
           _parseNullableStringList(data['accessibility_needs']),
     );
