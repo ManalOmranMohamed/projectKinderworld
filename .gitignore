@@ -1,5 +1,7 @@
 app.log
 *.log
+.coverage
+coverage.xml
 .env
 .env.*
 .venv/
@@ -16,5 +18,13 @@ __pycache__/
 *.db-wal
 *.sqlite
 *.sqlite3
+*.pem
+*.key
+*.crt
+*.p12
+*.p8
+*.jks
+*.keystore
+key.properties
 .dart_tool/
 build/

@@ -28,9 +28,17 @@ def test_production_requires_cors():
     original = _with_env(
         {
             "ENVIRONMENT": "production",
+            "PAYMENT_PROVIDER": "stripe",
             "ALLOWED_ORIGINS": "",
             "ALLOWED_ORIGIN_REGEX": "",
-            "KINDER_JWT_SECRET": "SUPER_SECRET_FOR_TEST_123",
+            "STRIPE_SECRET_KEY": "sk_test_placeholder",
+            "STRIPE_WEBHOOK_SECRET": "whsec_placeholder",
+            "STRIPE_CHECKOUT_SUCCESS_URL": "https://app.example.invalid/success",
+            "STRIPE_CHECKOUT_CANCEL_URL": "https://app.example.invalid/cancel",
+            "STRIPE_PORTAL_RETURN_URL": "https://app.example.invalid/portal",
+            "STRIPE_PRICE_PREMIUM_MONTHLY": "price_placeholder_premium",
+            "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:
@@ -46,7 +54,7 @@ def test_reconciliation_requires_schedule():
             "ENVIRONMENT": "development",
             "PAYMENT_RECONCILIATION_ENABLED": "true",
             "PAYMENT_RECONCILIATION_SCHEDULE": "",
-            "KINDER_JWT_SECRET": "TEST_ONLY_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:
@@ -61,15 +69,15 @@ def test_stripe_https_required_in_production():
         {
             "ENVIRONMENT": "production",
             "PAYMENT_PROVIDER": "stripe",
-            "STRIPE_SECRET_KEY": "sk_test_123",
-            "STRIPE_WEBHOOK_SECRET": "whsec_123",
-            "STRIPE_CHECKOUT_SUCCESS_URL": "http://example.com/success",
-            "STRIPE_CHECKOUT_CANCEL_URL": "http://example.com/cancel",
-            "STRIPE_PORTAL_RETURN_URL": "http://example.com/portal",
-            "STRIPE_PRICE_PREMIUM_MONTHLY": "price_123",
-            "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_456",
-            "ALLOWED_ORIGINS": "https://example.com",
-            "KINDER_JWT_SECRET": "SUPER_SECRET_FOR_TEST_123",
+            "STRIPE_SECRET_KEY": "sk_test_placeholder",
+            "STRIPE_WEBHOOK_SECRET": "whsec_placeholder",
+            "STRIPE_CHECKOUT_SUCCESS_URL": "http://app.example.invalid/success",
+            "STRIPE_CHECKOUT_CANCEL_URL": "http://app.example.invalid/cancel",
+            "STRIPE_PORTAL_RETURN_URL": "http://app.example.invalid/portal",
+            "STRIPE_PRICE_PREMIUM_MONTHLY": "price_placeholder_premium",
+            "STRIPE_PRICE_FAMILY_PLUS_MONTHLY": "price_placeholder_family",
+            "ALLOWED_ORIGINS": "https://app.example.invalid",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:
@@ -85,7 +93,7 @@ def test_ai_provider_requires_key():
             "ENVIRONMENT": "development",
             "AI_PROVIDER_MODE": "external",
             "AI_PROVIDER_API_KEY": "",
-            "KINDER_JWT_SECRET": "TEST_ONLY_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:
@@ -100,8 +108,8 @@ def test_internal_provider_blocked_in_production():
         {
             "ENVIRONMENT": "production",
             "PAYMENT_PROVIDER": "internal",
-            "ALLOWED_ORIGINS": "https://example.com",
-            "KINDER_JWT_SECRET": "SUPER_SECRET_FOR_TEST_123",
+            "ALLOWED_ORIGINS": "https://app.example.invalid",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:
@@ -116,7 +124,7 @@ def test_internal_provider_allowed_in_development():
         {
             "ENVIRONMENT": "development",
             "PAYMENT_PROVIDER": "internal",
-            "KINDER_JWT_SECRET": "TEST_ONLY_SECRET",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
         }
     )
     try:

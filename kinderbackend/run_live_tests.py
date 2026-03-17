@@ -17,12 +17,12 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 # ── Set env vars before any imports ──────────────────────────────────────────
-os.environ.setdefault("SECRET_KEY", "TEST_ONLY_SECRET")
-os.environ.setdefault("KINDER_JWT_SECRET", "TEST_ONLY_SECRET")
+os.environ.setdefault("SECRET_KEY", "TEST_ONLY_PLACEHOLDER_SECRET")
+os.environ.setdefault("KINDER_JWT_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
 os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")  # dev/test only
-os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_SECRET")
+os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
 os.environ.setdefault("ADMIN_SEED_PASSWORD", "CHANGE_ME")
-os.environ.setdefault("ADMIN_SEED_EMAIL", "admin.seed@gmail.com")
+os.environ.setdefault("ADMIN_SEED_EMAIL", "admin-seed@example.invalid")
 os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
 
 # Keep live smoke tests isolated from local/dev databases.

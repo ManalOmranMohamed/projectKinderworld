@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/payment_method_record.dart';
@@ -46,8 +45,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
   }
 
   Future<List<PaymentMethodRecord>> _loadMethods({bool forceRefresh = false}) async {
-    final service = ref.read(subscriptionServiceProvider);
-    return await service.listPaymentMethods(forceRefresh: forceRefresh);
+    try {
+      final service = ref.read(subscriptionServiceProvider);
+      return await service.listPaymentMethods(forceRefresh: forceRefresh);
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<void> _addPaymentMethod(AppLocalizations l10n) async {
@@ -71,8 +74,8 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
               const SizedBox(height: 10),
               TextField(
                 controller: providerIdController,
-                decoration: InputDecoration(
-                  labelText: l10n.paymentProviderMethodIdOptional,
+                decoration: const InputDecoration(
+                  labelText: 'Provider method ID (optional)',
                 ),
               ),
               StatefulBuilder(
@@ -80,7 +83,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   return CheckboxListTile(
                     value: setDefault,
                     contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.setAsDefault),
+                    title: const Text('Set as default'),
                     onChanged: (value) =>
                         setState(() => setDefault = value ?? false),
                   );
@@ -106,20 +109,12 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
     labelController.dispose();
     providerIdController.dispose();
     if (confirmed != true) return;
-    try {
-      final service = ref.read(subscriptionServiceProvider);
-      await service.addPaymentMethod(
-        label: label.isEmpty ? null : label,
-        providerMethodId: providerId.isEmpty ? null : providerId,
-        setDefault: setDefault,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.billingComingSoon)),
-      );
-      return;
-    }
+    final service = ref.read(subscriptionServiceProvider);
+    await service.addPaymentMethod(
+      label: label.isEmpty ? null : label,
+      providerMethodId: providerId.isEmpty ? null : providerId,
+      setDefault: setDefault,
+    );
     if (!mounted) return;
     setState(() {
       _methodsFuture = _loadMethods();
@@ -166,32 +161,6 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              l10n.billingComingSoon,
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontSize: AppConstants.fontSize,
-                                color: colors.onSurfaceVariant,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _methodsFuture = _loadMethods(forceRefresh: true);
-                                });
-                              },
-                              child: Text(l10n.retry),
-                            ),
-                          ],
-                        ),
-                      );
                     }
                     final methods = snapshot.data ?? [];
                     if (methods.isEmpty) {
@@ -272,7 +241,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                                                 BorderRadius.circular(8),
                                           ),
                                           child: Text(
-                                            l10n.paymentMethodDefaultLabel,
+                                            'Default',
                                             style: textTheme.labelSmall
                                                 ?.copyWith(
                                               color: AppColors.primary,

@@ -53,7 +53,7 @@ void main() {
     final dio = Dio()..httpClientAdapter = adapter;
     final network = NetworkService(
       dio: dio,
-      secureStorage: _TestSecureStorage('parent.jwt.token'),
+      secureStorage: _TestSecureStorage('parent_test_token_placeholder'),
       logger: Logger(),
     );
 
@@ -61,7 +61,7 @@ void main() {
 
     expect(
       adapter.lastOptions?.headers['Authorization'],
-      'Bearer parent.jwt.token',
+      'Bearer parent_test_token_placeholder',
     );
   });
 
@@ -70,18 +70,20 @@ void main() {
     final dio = Dio()..httpClientAdapter = adapter;
     final network = NetworkService(
       dio: dio,
-      secureStorage: _TestSecureStorage('parent.jwt.token'),
+      secureStorage: _TestSecureStorage('parent_test_token_placeholder'),
       logger: Logger(),
     );
 
     await network.get(
       '/admin/auth/me',
-      options: Options(headers: {'Authorization': 'Bearer admin.jwt.token'}),
+      options: Options(
+        headers: {'Authorization': 'Bearer admin_test_token_placeholder'},
+      ),
     );
 
     expect(
       adapter.lastOptions?.headers['Authorization'],
-      'Bearer admin.jwt.token',
+      'Bearer admin_test_token_placeholder',
     );
   });
 
@@ -91,7 +93,7 @@ void main() {
     final dio = Dio()..httpClientAdapter = adapter;
     final network = NetworkService(
       dio: dio,
-      secureStorage: _TestSecureStorage('parent.jwt.token'),
+      secureStorage: _TestSecureStorage('parent_test_token_placeholder'),
       logger: Logger(),
     );
 

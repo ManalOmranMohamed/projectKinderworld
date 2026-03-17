@@ -6,10 +6,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
 # Ensure tests have deterministic auth/admin env defaults before app imports.
-os.environ.setdefault("SECRET_KEY", "TEST_ONLY_SECRET")
+os.environ.setdefault("SECRET_KEY", "TEST_ONLY_PLACEHOLDER_SECRET")
 os.environ.setdefault("KINDER_JWT_SECRET", os.environ["SECRET_KEY"])
 os.environ.setdefault("ENABLE_ADMIN_SEED_ENDPOINT", "true")
-os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_SECRET")
+os.environ.setdefault("ADMIN_SEED_SECRET", "TEST_ONLY_PLACEHOLDER_SECRET")
 os.environ.setdefault("ADMIN_SEED_PASSWORD", "CHANGE_ME")
 os.environ.setdefault("ADMIN_SEED_EMAIL", "change-me@example.invalid")
 os.environ.setdefault("ADMIN_SEED_NAME", "DEV ONLY ADMIN")
@@ -87,7 +87,7 @@ def create_parent(db):
 
     def _create_parent(
         *,
-        email: str = "parent@example.com",
+        email: str = "parent@example.invalid",
         password: str = "Password123!",
         name: str = "Parent User",
         plan: str = PLAN_FREE,

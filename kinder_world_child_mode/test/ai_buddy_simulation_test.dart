@@ -8,7 +8,6 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
-import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/ai_buddy/ai_buddy_screen.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/services/ai_buddy_service.dart';
