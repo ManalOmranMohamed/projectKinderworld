@@ -103,22 +103,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   Future<void> _handleExternalReturn() async {
-    final service = ref.read(subscriptionServiceProvider);
-    if (_pendingTier != null && _pendingSessionId != null) {
-      try {
-        await service.activatePlan(
-          _pendingTier!,
-          sessionId: _pendingSessionId,
-        );
-      } catch (_) {
-        // rely on backend/webhooks; still refresh snapshot
-      }
-    }
     await _refreshSubscriptionData();
     if (mounted) {
       setState(() {
-        _pendingSessionId = null;
-        _pendingTier = null;
         _returnPayload ??= SubscriptionReturnPayload(
           flow: _pendingReturnFlow ?? 'checkout',
           result: 'pending',
@@ -133,25 +120,26 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     _handledReturnPayload = true;
 
     final service = ref.read(subscriptionServiceProvider);
-    if (payload.sessionId != null && payload.sessionId!.isNotEmpty) {
+    final resolvedSessionId = payload.sessionId ?? _pendingSessionId;
+    if (payload.indicatesSuccessfulCheckout &&
+        resolvedSessionId != null &&
+        resolvedSessionId.isNotEmpty) {
       SubscriptionSnapshot? snapshot;
       try {
         snapshot = await ref.read(subscriptionSnapshotProvider.future);
       } catch (_) {
         snapshot = null;
       }
-      if (snapshot != null) {
-        final planId =
-            snapshot.lifecycle.selectedPlanId ?? snapshot.currentPlanId;
-        if (planId.isNotEmpty) {
-          final tier = subscriptionPlanTierFromBackend(planId);
-          if (tier != PlanTier.free) {
-            try {
-              await service.activatePlan(tier, sessionId: payload.sessionId);
-            } catch (_) {
-              // Allow webhook to update state; still refresh snapshot below.
-            }
-          }
+      final planId =
+          snapshot?.lifecycle.selectedPlanId ?? snapshot?.currentPlanId;
+      final tier = (planId != null && planId.isNotEmpty)
+          ? subscriptionPlanTierFromBackend(planId)
+          : (_pendingTier ?? PlanTier.free);
+      if (tier != PlanTier.free) {
+        try {
+          await service.activatePlan(tier, sessionId: resolvedSessionId);
+        } catch (_) {
+          // Allow webhook to update state; still refresh snapshot below.
         }
       }
     }
@@ -627,6 +615,40 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     );
   }
 
+  List<_PlanCardConfig> _planCardConfigs(AppLocalizations l10n) {
+    return [
+      _PlanCardConfig(
+        title: l10n.planPremium,
+        price: '\$10',
+        priceLabel: l10n.perMonthLabel,
+        subtitle: l10n.premiumFeatures,
+        features: [
+          l10n.unlimitedActivities,
+          l10n.upToThreeChildren,
+          '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
+          l10n.offlineDownloadsLabel,
+        ],
+        tier: PlanTier.premium,
+      ),
+      _PlanCardConfig(
+        title: l10n.familyPlanLabel,
+        price: '\$20',
+        priceLabel: l10n.perMonthLabel,
+        subtitle: l10n.bestForFamilies,
+        features: [
+          l10n.unlimitedActivities,
+          l10n.planUnlimitedChildren,
+          '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
+          l10n.offlineDownloadsLabel,
+          l10n.planFamilyDashboard,
+          l10n.prioritySupportLabel,
+        ],
+        tier: PlanTier.familyPlus,
+        isRecommended: true,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1007,57 +1029,28 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   const SizedBox(height: 20),
                   ParentSectionHeader(title: l10n.availablePlans),
                   const SizedBox(height: 12),
-                  _buildPlanCard(
-                    currentPlanId: snapshot.currentPlanId,
-                    title: l10n.adminPlanFree,
-                    price: '\$0',
-                    priceLabel: l10n.foreverLabel,
-                    subtitle: l10n.basicFeaturesOnly,
-                    features: [
-                      l10n.limitedActivities,
-                      l10n.oneChildProfile,
-                      l10n.planBasicReports,
-                    ],
-                    tier: PlanTier.free,
-                    accentColor: colors.onSurfaceVariant,
-                    l10n: l10n,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPlanCard(
-                    currentPlanId: snapshot.currentPlanId,
-                    title: l10n.planPremium,
-                    price: '\$10',
-                    priceLabel: l10n.perMonthLabel,
-                    subtitle: l10n.premiumFeatures,
-                    features: [
-                      l10n.unlimitedActivities,
-                      l10n.upToThreeChildren,
-                      '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
-                      l10n.offlineDownloadsLabel,
-                    ],
-                    tier: PlanTier.premium,
-                    accentColor: parent.info,
-                    l10n: l10n,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPlanCard(
-                    currentPlanId: snapshot.currentPlanId,
-                    title: l10n.familyPlanLabel,
-                    price: '\$20',
-                    priceLabel: l10n.perMonthLabel,
-                    subtitle: l10n.bestForFamilies,
-                    features: [
-                      l10n.unlimitedActivities,
-                      l10n.upToThreeChildren,
-                      '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
-                      l10n.offlineDownloadsLabel,
-                      l10n.prioritySupportLabel,
-                    ],
-                    tier: PlanTier.familyPlus,
-                    isRecommended: true,
-                    accentColor: parent.primary,
-                    l10n: l10n,
-                  ),
+                  ..._planCardConfigs(l10n).asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final config = entry.value;
+                    final accentColor = config.tier == PlanTier.familyPlus
+                        ? parent.primary
+                        : parent.info;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: index == 1 ? 0 : 12),
+                      child: _buildPlanCard(
+                        currentPlanId: snapshot.currentPlanId,
+                        title: config.title,
+                        price: config.price,
+                        priceLabel: config.priceLabel,
+                        subtitle: config.subtitle,
+                        features: config.features,
+                        tier: config.tier,
+                        isRecommended: config.isRecommended,
+                        accentColor: accentColor,
+                        l10n: l10n,
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -1264,6 +1257,26 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       ),
     );
   }
+}
+
+class _PlanCardConfig {
+  const _PlanCardConfig({
+    required this.title,
+    required this.price,
+    required this.priceLabel,
+    required this.subtitle,
+    required this.features,
+    required this.tier,
+    this.isRecommended = false,
+  });
+
+  final String title;
+  final String price;
+  final String priceLabel;
+  final String subtitle;
+  final List<String> features;
+  final PlanTier tier;
+  final bool isRecommended;
 }
 
 class _SubscriptionStateCard extends StatelessWidget {

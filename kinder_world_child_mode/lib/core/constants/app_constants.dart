@@ -1,6 +1,5 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// SPACING SYSTEM — use these instead of raw SizedBox / EdgeInsets values
-// ─────────────────────────────────────────────────────────────────────────────
+import 'package:flutter/foundation.dart';
+
 class AppSpacing {
   AppSpacing._();
 
@@ -14,22 +13,12 @@ class AppSpacing {
   static const double huge = 40.0;
   static const double massive = 48.0;
 
-  /// Standard horizontal page padding
   static const double pagePadding = 20.0;
-
-  /// Standard vertical section gap
   static const double sectionGap = 24.0;
-
-  /// Gap between cards in a list
   static const double cardGap = 12.0;
-
-  /// Inner card padding
   static const double cardPadding = 18.0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RADIUS SYSTEM — consistent border radius values
-// ─────────────────────────────────────────────────────────────────────────────
 class AppRadius {
   AppRadius._();
 
@@ -41,72 +30,59 @@ class AppRadius {
   static const double xxl = 24.0;
   static const double full = 999.0;
 
-  /// Standard card radius
   static const double card = 16.0;
-
-  /// Button radius
   static const double button = 14.0;
-
-  /// Input field radius
   static const double input = 12.0;
-
-  /// Icon container radius
   static const double icon = 10.0;
-
-  /// Chip radius
   static const double chip = 8.0;
-
-  /// Badge radius
   static const double badge = 6.0;
 }
 
 class AppConstants {
   AppConstants._();
 
-  // App Info
   static const String appName = 'Kinder World';
   static const String appVersion = '1.0.0';
-  
-  // API
+
   // Override at build time:
-  //   flutter run  --dart-define=API_BASE_URL=http://<HOST>:8000
-  //   flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
-  static const String baseUrl = String.fromEnvironment(
+  // flutter run --dart-define=API_BASE_URL=http://<HOST>:8000
+  // flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
+  static const String _baseUrlOverride = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.42.128:8000',
+    defaultValue: '',
   );
+
+  static final String baseUrl = _baseUrlOverride.isNotEmpty
+      ? _baseUrlOverride
+      : kIsWeb
+          ? 'http://127.0.0.1:8000'
+          : 'http://10.0.2.2:8000';
+
   static const Duration apiTimeout = Duration(seconds: 60);
-  
-  // Storage
+
   static const String hiveBoxName = 'kinder_world_box';
   static const String secureStorageKey = 'kinder_world_secure';
-  
-  // Performance Targets
+
   static const Duration startupTime = Duration(seconds: 3);
   static const Duration contentLoadTime = Duration(seconds: 2);
   static const Duration aiResponseTime = Duration(milliseconds: 1500);
-  static const int maxMemoryUsage = 200; // MB
-  
-  // Child-Friendly UI
+  static const int maxMemoryUsage = 200;
+
   static const double minTouchTarget = 48.0;
   static const double iconSize = 32.0;
   static const double largeIconSize = 48.0;
   static const double fontSize = 18.0;
   static const double largeFontSize = 24.0;
-  
-  // Screen Time Defaults
-  static const int defaultDailyLimit = 120; // minutes
-  static const int breakInterval = 30; // minutes
-  static const int breakDuration = 5; // minutes
-  
-  // Content
+
+  static const int defaultDailyLimit = 120;
+  static const int breakInterval = 30;
+  static const int breakDuration = 5;
+
   static const int maxContentAge = 12;
   static const int minContentAge = 5;
-  
-  // Avatar defaults
+
   static const String defaultChildAvatar = 'assets/images/avatars/av1.png';
-  
-  // Subscription
+
   static const int freeTrialDays = 14;
   static const int maxChildProfiles = 1;
 }

@@ -192,6 +192,8 @@ class SubscriptionService:
         catalog = get_plan_catalog()
         plans: list[dict[str, object]] = []
         for plan_id, details in catalog.items():
+            if plan_id == PLAN_FREE:
+                continue
             plans.append(
                 {
                     "id": details["id"],
@@ -435,19 +437,12 @@ class SubscriptionService:
             return self._selection_payload_from_snapshot(status_payload)
 
         profile = self._ensure_subscription_profile(db=db, user=user)
-        provider = self._payment_provider()
-        if not provider.is_external:
-            self._activate_plan(
-                db=db,
-                user=user,
-                plan=requested,
-                source="parent_activate",
-                request_origin="activate",
+        if profile.selected_plan_id and profile.selected_plan_id != requested:
+            raise HTTPException(
+                status_code=409,
+                detail="Requested plan does not match the pending checkout selection",
             )
-            db.commit()
-            db.refresh(user)
-            profile = self._ensure_subscription_profile(db=db, user=user)
-            return self._build_status_payload(user=user, profile=profile)
+        provider = self._payment_provider()
 
         checkout_attempt = self._latest_checkout_attempt(
             db=db,

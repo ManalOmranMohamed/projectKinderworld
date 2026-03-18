@@ -25,5 +25,24 @@ void main() {
       expect(payload!.result, 'canceled');
       expect(payload.flow, 'portal');
     });
+
+    test('marks checkout as successful only when payment success is explicit', () {
+      final successfulPayload = SubscriptionReturnPayload.fromQuery({
+        'flow': 'checkout',
+        'result': 'pending',
+        'session_id': 'cs_test_456',
+        'payment_status': 'succeeded',
+      });
+      final pendingPayload = SubscriptionReturnPayload.fromQuery({
+        'flow': 'checkout',
+        'result': 'pending',
+        'session_id': 'cs_test_789',
+      });
+
+      expect(successfulPayload, isNotNull);
+      expect(successfulPayload!.indicatesSuccessfulCheckout, isTrue);
+      expect(pendingPayload, isNotNull);
+      expect(pendingPayload!.indicatesSuccessfulCheckout, isFalse);
+    });
   });
 }

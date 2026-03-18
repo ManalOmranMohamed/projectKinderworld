@@ -450,11 +450,12 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
     )
     assert premium_select.status_code == 200
     premium_payload = premium_select.json()
-    assert premium_payload["current_plan_id"] == PLAN_PREMIUM
+    assert premium_payload["current_plan_id"] == PLAN_FREE
+    assert premium_payload["status"] == "pending_activation"
     assert premium_payload["session_id"].startswith("mock_session_")
 
     db.refresh(user)
-    assert user.plan == PLAN_PREMIUM
+    assert user.plan == PLAN_FREE
 
     manage = client.post("/subscription/manage", headers=headers)
     assert manage.status_code == 501

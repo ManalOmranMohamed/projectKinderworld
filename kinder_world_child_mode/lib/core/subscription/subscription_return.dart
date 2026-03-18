@@ -15,6 +15,39 @@ class SubscriptionReturnPayload {
   final String? paymentStatus;
   final String? provider;
 
+  bool get indicatesSuccessfulCheckout {
+    if (flow != 'checkout') return false;
+
+    final normalizedCheckoutStatus = checkoutStatus?.trim().toLowerCase();
+    final normalizedPaymentStatus = paymentStatus?.trim().toLowerCase();
+
+    const successResults = {'success'};
+    const successCheckoutStatuses = {
+      'complete',
+      'completed',
+      'paid',
+      'success',
+      'succeeded',
+    };
+    const successPaymentStatuses = {
+      'paid',
+      'success',
+      'succeeded',
+    };
+
+    if (normalizedPaymentStatus != null &&
+        successPaymentStatuses.contains(normalizedPaymentStatus)) {
+      return true;
+    }
+
+    if (normalizedCheckoutStatus != null &&
+        successCheckoutStatuses.contains(normalizedCheckoutStatus)) {
+      return true;
+    }
+
+    return successResults.contains(result);
+  }
+
   static SubscriptionReturnPayload? fromQuery(Map<String, String> params) {
     final flow = (params['flow'] ?? params['source'] ?? '').trim().toLowerCase();
     final result = (params['result'] ?? params['status'] ?? '').trim().toLowerCase();

@@ -5,7 +5,6 @@ import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
-import 'package:kinder_world/features/child_mode/learn/learn_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
@@ -341,7 +340,7 @@ class _FeaturedContentCard extends StatelessWidget {
   void _openDetail(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ChildContentDetailScreen(initialItem: item),
+        builder: (_) => _PlayContentDetailScreen(initialItem: item),
       ),
     );
   }
@@ -362,7 +361,7 @@ class _PlayableContentCard extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ChildContentDetailScreen(initialItem: item),
+            builder: (_) => _PlayContentDetailScreen(initialItem: item),
           ),
         );
       },
@@ -420,6 +419,205 @@ class _PlayableContentCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlayContentDetailScreen extends ConsumerStatefulWidget {
+  const _PlayContentDetailScreen({
+    required this.initialItem,
+  });
+
+  final PublicContentItem initialItem;
+
+  @override
+  ConsumerState<_PlayContentDetailScreen> createState() =>
+      _PlayContentDetailScreenState();
+}
+
+class _PlayContentDetailScreenState
+    extends ConsumerState<_PlayContentDetailScreen> {
+  late Future<PublicContentItem?> _itemFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _itemFuture = ref.read(publicContentRepositoryProvider).fetchItem(
+          widget.initialItem.slug,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _localized(
+            widget.initialItem.titleEn,
+            widget.initialItem.titleAr,
+            context,
+          ),
+        ),
+      ),
+      body: FutureBuilder<PublicContentItem?>(
+        future: _itemFuture,
+        builder: (context, snapshot) {
+          final item = snapshot.data ?? widget.initialItem;
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              _PlayDetailHero(item: item),
+              const SizedBox(height: 20),
+              Text(
+                _localized(item.titleEn, item.titleAr, context),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 10),
+              if ((item.descriptionEn ?? item.descriptionAr ?? '').isNotEmpty)
+                Text(
+                  _localized(
+                    item.descriptionEn ?? '',
+                    item.descriptionAr ?? '',
+                    context,
+                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  _localized(item.bodyEn ?? '', item.bodyAr ?? '', context).isEmpty
+                      ? 'No published body content yet.'
+                      : _localized(
+                          item.bodyEn ?? '',
+                          item.bodyAr ?? '',
+                          context,
+                        ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        height: 1.6,
+                      ),
+                ),
+              ),
+              if (item.quizzes.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const ChildSectionHeader(title: 'Published Quizzes'),
+                const SizedBox(height: 12),
+                ...item.quizzes.map(
+                  (quiz) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.quiz_outlined),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _localized(quiz.titleEn, quiz.titleAr, context),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('${quiz.questionCount} questions'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlayDetailHero extends StatelessWidget {
+  const _PlayDetailHero({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _categoryColor(item.category?.slug ?? item.contentType, context);
+    final hasRemoteImage = item.thumbnailUrl != null &&
+        item.thumbnailUrl!.trim().isNotEmpty &&
+        (item.thumbnailUrl!.startsWith('http://') ||
+            item.thumbnailUrl!.startsWith('https://'));
+
+    return Container(
+      height: 220,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.24),
+            accent.withValues(alpha: 0.10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: hasRemoteImage
+            ? Image.network(
+                item.thumbnailUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _PlayDetailHeroFallback(
+                  icon: _contentIcon(item.contentType),
+                  color: accent,
+                ),
+              )
+            : _PlayDetailHeroFallback(
+                icon: _contentIcon(item.contentType),
+                color: accent,
+              ),
+      ),
+    );
+  }
+}
+
+class _PlayDetailHeroFallback extends StatelessWidget {
+  const _PlayDetailHeroFallback({
+    required this.icon,
+    required this.color,
+  });
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.22),
+            color.withValues(alpha: 0.10),
+          ],
+        ),
+      ),
+      child: Icon(icon, size: 34, color: color),
     );
   }
 }

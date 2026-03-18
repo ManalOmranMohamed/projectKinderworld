@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from plan_service import PLAN_FAMILY_PLUS, PLAN_FREE, PLAN_PREMIUM
 
 
@@ -21,24 +19,24 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     )
     assert select.status_code == 200
     select_payload = select.json()
-    assert select_payload["current_plan_id"] == PLAN_PREMIUM
-    assert select_payload["status"] == "active"
-    assert select_payload["will_renew"] is True
-    assert select_payload["last_payment_status"] == "succeeded"
+    assert select_payload["current_plan_id"] == PLAN_FREE
+    assert select_payload["status"] == "pending_activation"
+    assert select_payload["will_renew"] is False
+    assert select_payload["last_payment_status"] == "pending"
     assert select_payload["session_id"].startswith("mock_session_")
-    assert datetime.fromisoformat(select_payload["started_at"]) < datetime.fromisoformat(
-        select_payload["expires_at"]
-    )
+    assert select_payload["started_at"] is None
+    assert select_payload["expires_at"] is None
 
     me_after_select = client.get("/subscription/me", headers=headers)
     assert me_after_select.status_code == 200
     me_payload = me_after_select.json()
-    assert me_payload["plan"] == PLAN_PREMIUM
-    assert me_payload["current_plan_id"] == PLAN_PREMIUM
-    assert me_payload["lifecycle"]["status"] == "active"
-    assert me_payload["lifecycle"]["last_payment_status"] == "succeeded"
-    assert me_payload["history_summary"]["event_count"] >= 2
-    assert me_payload["history_summary"]["billing_transaction_count"] >= 1
+    assert me_payload["plan"] == PLAN_FREE
+    assert me_payload["current_plan_id"] == PLAN_FREE
+    assert me_payload["lifecycle"]["selected_plan_id"] == PLAN_PREMIUM
+    assert me_payload["lifecycle"]["status"] == "pending_activation"
+    assert me_payload["lifecycle"]["last_payment_status"] == "pending"
+    assert me_payload["history_summary"]["event_count"] >= 1
+    assert me_payload["history_summary"]["billing_transaction_count"] == 0
     assert me_payload["history_summary"]["payment_attempt_count"] >= 1
 
     history = client.get("/subscription/history", headers=headers)
@@ -46,36 +44,29 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     history_payload = history.json()
     event_types = [item["event_type"] for item in history_payload["events"]]
     assert "select" in event_types
-    assert "activate" in event_types
-    assert history_payload["billing_transactions"][0]["transaction_type"] == "activation"
     assert history_payload["payment_attempts"][0]["attempt_type"] == "checkout"
 
     before_renew = client.get("/subscription", headers=headers).json()
     renew = client.post(
         "/subscription/activate",
-        json={"plan_type": "premium"},
+        json={"plan_type": "premium", "session_id": select_payload["session_id"]},
         headers=headers,
     )
-    assert renew.status_code == 200
-    renew_payload = renew.json()
-    assert renew_payload["current_plan_id"] == PLAN_PREMIUM
-    assert renew_payload["status"] == "active"
-    assert datetime.fromisoformat(renew_payload["expires_at"]) > datetime.fromisoformat(
-        before_renew["expires_at"]
-    )
+    assert renew.status_code == 409
+    assert renew.json()["detail"] == "Payment is not completed yet"
+
+    after_activate_attempt = client.get("/subscription", headers=headers).json()
+    assert after_activate_attempt["current_plan_id"] == before_renew["current_plan_id"]
+    assert after_activate_attempt["status"] == "pending_activation"
 
     history_after_renew = client.get("/subscription/history", headers=headers)
     assert history_after_renew.status_code == 200
     renew_event_types = [item["event_type"] for item in history_after_renew.json()["events"]]
-    assert "renew" in renew_event_types
     assert any(
-        item["transaction_type"] == "renewal"
-        for item in history_after_renew.json()["billing_transactions"]
-    )
-    assert any(
-        item["attempt_type"] == "renewal"
+        item["attempt_type"] in {"checkout", "activation"}
         for item in history_after_renew.json()["payment_attempts"]
     )
+    assert "failure" in renew_event_types
 
     cancel = client.post("/subscription/cancel", headers=headers)
     assert cancel.status_code == 200
@@ -95,6 +86,30 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     assert "cancel" in final_event_types
     assert "manage_request" in final_event_types
     assert "failure" in final_event_types
+
+
+def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_headers):
+    parent = create_parent(email="mismatch.parent@example.com", plan=PLAN_FREE)
+    headers = auth_headers(parent)
+
+    select = client.post(
+        "/subscription/select",
+        json={"plan_type": "premium"},
+        headers=headers,
+    )
+    assert select.status_code == 200
+    select_payload = select.json()
+
+    activate = client.post(
+        "/subscription/activate",
+        json={"plan_type": "family_plus", "session_id": select_payload["session_id"]},
+        headers=headers,
+    )
+    assert activate.status_code == 409
+    assert (
+        activate.json()["detail"]
+        == "Requested plan does not match the pending checkout selection"
+    )
 
 
 def test_admin_subscription_detail_exposes_lifecycle_and_history(
@@ -122,9 +137,10 @@ def test_admin_subscription_detail_exposes_lifecycle_and_history(
     )
     assert detail.status_code == 200
     item = detail.json()["item"]
-    assert item["plan"] == PLAN_FAMILY_PLUS
-    assert item["lifecycle"]["status"] == "active"
-    assert item["history_summary"]["event_count"] >= 2
-    assert len(item["recent_events"]) >= 2
-    assert len(item["billing_history"]) >= 1
+    assert item["plan"] == PLAN_FREE
+    assert item["lifecycle"]["selected_plan_id"] == PLAN_FAMILY_PLUS
+    assert item["lifecycle"]["status"] == "pending_activation"
+    assert item["history_summary"]["event_count"] >= 1
+    assert len(item["recent_events"]) >= 1
+    assert len(item["billing_history"]) == 0
     assert len(item["payment_attempts"]) >= 1

@@ -113,7 +113,7 @@ def test_subscription_endpoints(client, db):
     assert plans_response.status_code == 200
     plans = plans_response.json()
     assert isinstance(plans, list)
-    assert any(plan["id"] == PLAN_FREE for plan in plans)
+    assert [plan["id"] for plan in plans] == ["PREMIUM", "FAMILY_PLUS"]
 
     status_response = client.get(
         "/subscription",
@@ -140,5 +140,6 @@ def test_subscription_endpoints(client, db):
     )
     assert select_paid.status_code == 200
     paid_payload = select_paid.json()
-    assert paid_payload["current_plan_id"] == PLAN_PREMIUM
+    assert paid_payload["current_plan_id"] == PLAN_FREE
+    assert paid_payload["status"] == "pending_activation"
     assert paid_payload["session_id"]
