@@ -19,7 +19,6 @@ from models import (
     User,
 )
 from plan_service import (
-    PLAN_FAMILY_PLUS,
     PLAN_FREE,
     get_plan_catalog,
     get_plan_features,
@@ -124,6 +123,7 @@ class SubscriptionService:
         profile = self._ensure_subscription_profile(db=db, user=user)
         now = db_utc_now()
         previous_plan = profile.current_plan_id
+        notification_old_plan = profile.selected_plan_id or previous_plan
         previous_status = profile.status
         provider_reference = profile.provider_subscription_id
 
@@ -178,7 +178,7 @@ class SubscriptionService:
             notification_service.notify_subscription_changed(
                 db,
                 user=user,
-                old_plan=previous_plan,
+                old_plan=notification_old_plan,
                 new_plan=PLAN_FREE,
                 source=source,
             )
@@ -362,6 +362,15 @@ class SubscriptionService:
             occurred_at=now,
         )
 
+        if not self._checkout_is_paid(checkout):
+            notification_service.notify_subscription_changed(
+                db,
+                user=user,
+                old_plan=previous_plan,
+                new_plan=requested,
+                source="parent_select",
+            )
+
         if self._checkout_is_paid(checkout):
             logger.info(
                 "checkout_completed user_id=%s plan=%s provider=%s session_id=%s",
@@ -454,7 +463,9 @@ class SubscriptionService:
             checkout_attempt.provider_reference if checkout_attempt is not None else None
         )
         if not session_id:
-            raise HTTPException(status_code=422, detail="session_id is required to activate this plan")
+            raise HTTPException(
+                status_code=422, detail="session_id is required to activate this plan"
+            )
 
         try:
             checkout = provider.retrieve_checkout_session(session_id=session_id)
@@ -578,9 +589,7 @@ class SubscriptionService:
             )
             checkout_attempt.status = self._payment_status_from_checkout(checkout)
             checkout_attempt.failure_code = "PAYMENT_NOT_COMPLETED"
-            checkout_attempt.failure_message = (
-                f"Checkout session {checkout.session_id} is {checkout.status}/{checkout.payment_status}"
-            )
+            checkout_attempt.failure_message = f"Checkout session {checkout.session_id} is {checkout.status}/{checkout.payment_status}"
             db.add(checkout_attempt)
             profile.last_payment_status = checkout_attempt.status
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
@@ -672,7 +681,9 @@ class SubscriptionService:
         payment_intent_id = None
         provider_reference = latest_success.provider_reference if latest_success else None
         if payment_attempt and isinstance(payment_attempt.metadata_json, dict):
-            payment_intent_id = str(payment_attempt.metadata_json.get("payment_intent_id") or "") or None
+            payment_intent_id = (
+                str(payment_attempt.metadata_json.get("payment_intent_id") or "") or None
+            )
 
         if not payment_intent_id and not provider_reference:
             logger.warning(
@@ -930,7 +941,9 @@ class SubscriptionService:
         provider = self._payment_provider()
         if provider.is_external:
             if not profile.provider_customer_id:
-                raise HTTPException(status_code=409, detail="No provider customer exists for this account")
+                raise HTTPException(
+                    status_code=409, detail="No provider customer exists for this account"
+                )
             if not provider_method_id:
                 raise HTTPException(status_code=422, detail="provider_method_id is required")
             try:
@@ -1079,7 +1092,9 @@ class SubscriptionService:
         previous_plan = profile.current_plan_id
         previous_status = profile.status
         was_same_active_plan = (
-            previous_plan == plan and profile.status == SUBSCRIPTION_STATUS_ACTIVE and plan != PLAN_FREE
+            previous_plan == plan
+            and profile.status == SUBSCRIPTION_STATUS_ACTIVE
+            and plan != PLAN_FREE
         )
 
         if payment_attempt is None:
@@ -1100,7 +1115,9 @@ class SubscriptionService:
         if checkout is not None:
             profile.provider = checkout.provider
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-            profile.provider_subscription_id = checkout.subscription_id or profile.provider_subscription_id
+            profile.provider_subscription_id = (
+                checkout.subscription_id or profile.provider_subscription_id
+            )
 
         profile.selected_plan_id = None
         profile.current_plan_id = plan
@@ -1133,7 +1150,9 @@ class SubscriptionService:
             "payment_attempt_id": payment_attempt.id,
         }
         if checkout is not None:
-            details_json.update(self._checkout_metadata(checkout=checkout, request_origin=request_origin))
+            details_json.update(
+                self._checkout_metadata(checkout=checkout, request_origin=request_origin)
+            )
 
         self._record_subscription_event(
             db=db,
@@ -1213,7 +1232,9 @@ class SubscriptionService:
             "payment_attempts": self._list_payment_attempts(db=db, profile=profile, limit=10),
         }
 
-    def _build_status_payload(self, *, user: User, profile: SubscriptionProfile) -> dict[str, object]:
+    def _build_status_payload(
+        self, *, user: User, profile: SubscriptionProfile
+    ) -> dict[str, object]:
         lifecycle = self._serialize_lifecycle(user=user, profile=profile)
         return {
             "current_plan_id": profile.current_plan_id,
@@ -1241,7 +1262,9 @@ class SubscriptionService:
             "last_payment_status": lifecycle.get("last_payment_status"),
         }
 
-    def _serialize_lifecycle(self, *, user: User, profile: SubscriptionProfile) -> dict[str, object]:
+    def _serialize_lifecycle(
+        self, *, user: User, profile: SubscriptionProfile
+    ) -> dict[str, object]:
         has_paid_access = bool(user.is_active) and profile.current_plan_id != PLAN_FREE
         return {
             "current_plan_id": profile.current_plan_id,
@@ -1636,7 +1659,9 @@ class SubscriptionService:
                 source=source,
             )
             db.commit()
-            raise HTTPException(status_code=409, detail="No billing customer is available for this account")
+            raise HTTPException(
+                status_code=409, detail="No billing customer is available for this account"
+            )
 
         try:
             portal = provider.create_billing_portal_session(
@@ -1841,7 +1866,9 @@ class SubscriptionService:
             .all()
         )
         by_provider_id = {
-            method.provider_method_id: method for method in active_methods if method.provider_method_id
+            method.provider_method_id: method
+            for method in active_methods
+            if method.provider_method_id
         }
         current_ids = {reference.method_id for reference in references}
 

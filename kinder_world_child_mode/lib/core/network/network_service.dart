@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
 class NetworkService {
@@ -206,8 +207,7 @@ class NetworkService {
     if (token == null || token.isEmpty) {
       return false;
     }
-    // Child mode uses a local session marker, not a backend JWT.
-    if (token.startsWith('child_session_')) {
+    if (isChildSessionToken(token)) {
       return false;
     }
     return true;

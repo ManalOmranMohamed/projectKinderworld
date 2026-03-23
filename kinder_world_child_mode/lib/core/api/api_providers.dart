@@ -6,10 +6,15 @@ import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/api/children_api.dart';
 import 'package:kinder_world/core/api/reports_api.dart';
 import 'package:kinder_world/core/api/subscription_api.dart';
+import 'package:kinder_world/core/providers/device_identity_provider.dart';
 
 final authApiProvider = Provider<AuthApi>((ref) {
   final network = ref.watch(networkServiceProvider);
-  return AuthApi(network);
+  final deviceIdentityService = ref.watch(deviceIdentityServiceProvider);
+  return AuthApi(
+    network,
+    deviceIdentityService: deviceIdentityService,
+  );
 });
 
 final childrenApiProvider = Provider<ChildrenApi>((ref) {

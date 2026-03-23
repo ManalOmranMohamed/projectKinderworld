@@ -19,14 +19,7 @@ class PublicContentRepository {
       final response = await _networkService.get<Map<String, dynamic>>(
         '/content/child/categories',
       );
-      final items = response.data?['items'];
-      if (items is! List) {
-        return const [];
-      }
-      return items
-          .whereType<Map>()
-          .map((item) => PublicContentCategory.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
+      return _items(response.data?['items']).map(PublicContentCategory.fromJson).toList();
     } catch (e) {
       _logger.w('Error fetching child content categories: $e');
       return const [];
@@ -51,14 +44,7 @@ class PublicContentRepository {
           if (age != null) 'age': age,
         },
       );
-      final items = response.data?['items'];
-      if (items is! List) {
-        return const [];
-      }
-      return items
-          .whereType<Map>()
-          .map((item) => PublicContentItem.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
+      return _items(response.data?['items']).map(PublicContentItem.fromJson).toList();
     } catch (e) {
       _logger.w('Error fetching child content items: $e');
       return const [];
@@ -70,11 +56,11 @@ class PublicContentRepository {
       final response = await _networkService.get<Map<String, dynamic>>(
         '/content/child/items/$slug',
       );
-      final item = response.data?['item'];
-      if (item is! Map) {
+      final item = _item(response.data?['item']);
+      if (item.isEmpty) {
         return null;
       }
-      return PublicContentItem.fromJson(Map<String, dynamic>.from(item));
+      return PublicContentItem.fromJson(item);
     } catch (e) {
       _logger.w('Error fetching child content item $slug: $e');
       return null;
@@ -88,3 +74,20 @@ final publicContentRepositoryProvider = Provider<PublicContentRepository>((ref) 
     logger: ref.watch(loggerProvider),
   );
 });
+
+List<Map<String, dynamic>> _items(Object? value) {
+  if (value is! List) {
+    return const <Map<String, dynamic>>[];
+  }
+  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+}
+
+Map<String, dynamic> _item(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return Map<String, dynamic>.from(value);
+  }
+  return const <String, dynamic>{};
+}

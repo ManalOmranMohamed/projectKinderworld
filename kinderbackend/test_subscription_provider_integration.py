@@ -224,8 +224,13 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         snapshot_payload = snapshot.json()
         assert snapshot_payload["plan"] == PLAN_PREMIUM
         assert snapshot_payload["lifecycle"]["provider"] == "stripe"
-        assert snapshot_payload["lifecycle"]["provider_customer_id"] == fake_provider.state.customer_id
-        assert snapshot_payload["lifecycle"]["provider_subscription_id"] == fake_provider.state.subscription_id
+        assert (
+            snapshot_payload["lifecycle"]["provider_customer_id"] == fake_provider.state.customer_id
+        )
+        assert (
+            snapshot_payload["lifecycle"]["provider_subscription_id"]
+            == fake_provider.state.subscription_id
+        )
         assert any(
             item["provider_reference"] == fake_provider.state.session_id
             for item in snapshot_payload["payment_attempts"]
@@ -275,11 +280,15 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         assert history_after_refund.status_code == 200
         history_payload = history_after_refund.json()
         assert any(item["event_type"] == "refund" for item in history_payload["events"])
-        assert any(item["transaction_type"] == "refund" for item in history_payload["billing_transactions"])
+        assert any(
+            item["transaction_type"] == "refund" for item in history_payload["billing_transactions"]
+        )
 
         synced_methods = client.get("/billing/methods", headers=headers)
         visa_method = next(
-            item for item in synced_methods.json()["methods"] if item["provider_method_id"] == "pm_card_visa"
+            item
+            for item in synced_methods.json()["methods"]
+            if item["provider_method_id"] == "pm_card_visa"
         )
         delete_method = client.delete(f"/billing/methods/{visa_method['id']}", headers=headers)
         assert delete_method.status_code == 200

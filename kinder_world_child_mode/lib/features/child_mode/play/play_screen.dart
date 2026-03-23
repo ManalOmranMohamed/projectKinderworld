@@ -44,7 +44,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(colors, l10n),
-              _buildTypeTabs(),
+              _buildTypeTabs(l10n),
               const SizedBox(height: 14),
               _buildSearchBar(colors, l10n),
               const SizedBox(height: 12),
@@ -61,7 +61,7 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                       return ChildEmptyState(
                         emoji: '...',
                         title: l10n.nothingFound,
-                        subtitle: 'Publish child-safe videos, stories, or activities from CMS.',
+                        subtitle: l10n.playContentEmptyStateSubtitle,
                       );
                     }
                     return ListView(
@@ -82,7 +82,9 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                           ),
                           const SizedBox(height: 20),
                         ],
-                        ChildSectionHeader(title: l10n.allVideos),
+                        ChildSectionHeader(
+                          title: _sectionTitle(_selectedType, l10n),
+                        ),
                         const SizedBox(height: 12),
                         ...filtered.map(
                           (item) => Padding(
@@ -192,13 +194,13 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
     );
   }
 
-  Widget _buildTypeTabs() {
-    const tabs = [
-      ('all', 'All'),
-      ('video', 'Videos'),
-      ('story', 'Stories'),
-      ('activity', 'Activities'),
-      ('lesson', 'Lessons'),
+  Widget _buildTypeTabs(AppLocalizations l10n) {
+    final tabs = [
+      ('all', l10n.all),
+      ('video', l10n.categoryVideos),
+      ('story', l10n.categoryStories),
+      ('activity', l10n.activities),
+      ('lesson', l10n.availableLessons),
     ];
     return SizedBox(
       height: 48,
@@ -306,7 +308,7 @@ class _FeaturedContentCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _displayType(item.contentType),
+                        _displayType(item.contentType, AppLocalizations.of(context)!),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -397,7 +399,7 @@ class _PlayableContentCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      _displayType(item.contentType),
+                      _displayType(item.contentType, AppLocalizations.of(context)!),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -450,6 +452,7 @@ class _PlayContentDetailScreenState
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -497,7 +500,7 @@ class _PlayContentDetailScreenState
                 ),
                 child: Text(
                   _localized(item.bodyEn ?? '', item.bodyAr ?? '', context).isEmpty
-                      ? 'No published body content yet.'
+                      ? l10n.playNoBodyContentYet
                       : _localized(
                           item.bodyEn ?? '',
                           item.bodyAr ?? '',
@@ -510,7 +513,7 @@ class _PlayContentDetailScreenState
               ),
               if (item.quizzes.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const ChildSectionHeader(title: 'Published Quizzes'),
+                ChildSectionHeader(title: l10n.playPublishedQuizzes),
                 const SizedBox(height: 12),
                 ...item.quizzes.map(
                   (quiz) => Container(
@@ -536,7 +539,7 @@ class _PlayContentDetailScreenState
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text('${quiz.questionCount} questions'),
+                              Text('${quiz.questionCount} ${l10n.adminCmsQuestionsLabel}'),
                             ],
                           ),
                         ),
@@ -680,18 +683,33 @@ String _localized(String en, String ar, BuildContext context) {
   return ar;
 }
 
-String _displayType(String contentType) {
+String _displayType(String contentType, AppLocalizations l10n) {
   switch (contentType) {
     case 'lesson':
-      return 'Lesson';
+      return l10n.playTypeLesson;
     case 'story':
-      return 'Story';
+      return l10n.playTypeStory;
     case 'video':
-      return 'Video';
+      return l10n.playTypeVideo;
     case 'activity':
-      return 'Activity';
+      return l10n.playTypeActivity;
     default:
       return contentType;
+  }
+}
+
+String _sectionTitle(String selectedType, AppLocalizations l10n) {
+  switch (selectedType) {
+    case 'video':
+      return l10n.categoryVideos;
+    case 'story':
+      return l10n.categoryStories;
+    case 'activity':
+      return l10n.activities;
+    case 'lesson':
+      return l10n.availableLessons;
+    default:
+      return l10n.playPublishedContent;
   }
 }
 

@@ -9,10 +9,7 @@ from sqlalchemy.orm import Session
 from core.time_utils import db_utc_now
 from models import AiBuddyMessage, AiBuddySession, ChildProfile, User
 from services.ai_buddy_persistence import ai_buddy_persistence_service
-from services.ai_buddy_response_generator import (
-    AiBuddyProviderState,
-    ai_buddy_response_generator,
-)
+from services.ai_buddy_response_generator import AiBuddyProviderState, ai_buddy_response_generator
 
 
 class AiBuddyVisibilityService:
@@ -26,7 +23,6 @@ class AiBuddyVisibilityService:
         child_name: str | None,
         messages: list[AiBuddyMessage],
     ) -> None:
-        child_messages = [item for item in messages if item.role == "child"]
         assistant_messages = [item for item in messages if item.role == "assistant"]
         safety_counts = Counter(item.safety_status or "allowed" for item in assistant_messages)
         recent_intents = [
@@ -34,9 +30,14 @@ class AiBuddyVisibilityService:
             for item in assistant_messages[-4:]
             if item.intent and item.intent not in {"greeting", "safety_response"}
         ]
-        intent_phrase = ", ".join(dict.fromkeys(recent_intents)) if recent_intents else "general_help"
+        intent_phrase = (
+            ", ".join(dict.fromkeys(recent_intents)) if recent_intents else "general_help"
+        )
         name = (child_name or "The child").strip() or "The child"
-        if safety_counts.get("needs_refusal", 0) > 0 or safety_counts.get("needs_safe_redirect", 0) > 0:
+        if (
+            safety_counts.get("needs_refusal", 0) > 0
+            or safety_counts.get("needs_safe_redirect", 0) > 0
+        ):
             summary = (
                 f"{name} used AI Buddy with safety interventions. "
                 f"Topics were redirected toward safer activities. Focus areas: {intent_phrase}."
@@ -185,9 +186,7 @@ class AiBuddyVisibilityService:
             )
         )
         if provider_state.status != "ready":
-            summary_text = (
-                f"{summary_text} AI Buddy is running in safe fallback mode with no external AI provider."
-            )
+            summary_text = f"{summary_text} AI Buddy is running in safe fallback mode with no external AI provider."
 
         return {
             "child_id": child.id,
@@ -214,7 +213,11 @@ class AiBuddyVisibilityService:
                 "last_session_at": (
                     current_session.last_message_at.isoformat()
                     if current_session is not None and current_session.last_message_at
-                    else (sessions[0].last_message_at.isoformat() if sessions and sessions[0].last_message_at else None)
+                    else (
+                        sessions[0].last_message_at.isoformat()
+                        if sessions and sessions[0].last_message_at
+                        else None
+                    )
                 ),
                 "allowed_count": safety_counter.get("allowed", 0),
                 "refusal_count": safety_counter.get("needs_refusal", 0),

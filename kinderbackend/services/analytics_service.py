@@ -626,6 +626,7 @@ class AnalyticsService:
         )
         score_summary = self._score_summary(db=db, child_ids=child_ids, days=days)
         recent_sessions = self._recent_sessions(db=db, child_ids=child_ids, days=days, limit=5)
+        child_summaries = self._child_summaries(db=db, children=children, days=min(days, 7))
 
         unread_notifications = (
             db.query(Notification)
@@ -648,8 +649,12 @@ class AnalyticsService:
             "unread_notifications": unread_notifications,
             "open_support_tickets": open_support_tickets,
             "payment_methods_count": payment_methods,
-            f"screen_time_minutes_{days}d": sum(item["screen_time_minutes"] for item in daily_points),
-            f"activities_completed_{days}d": sum(item["activities_completed"] for item in daily_points),
+            f"screen_time_minutes_{days}d": sum(
+                item["screen_time_minutes"] for item in daily_points
+            ),
+            f"activities_completed_{days}d": sum(
+                item["activities_completed"] for item in daily_points
+            ),
             f"lessons_completed_{days}d": sum(item["lessons_completed"] for item in daily_points),
             "average_score": score_summary["average_score"],
             "completion_rate": score_summary["completion_rate"],
@@ -667,6 +672,8 @@ class AnalyticsService:
         return {
             "reports": daily_points,
             "summary": summary,
+            "child_summary": child_summaries[0] if child_summaries else None,
+            "child_summaries": child_summaries,
             "children": [self._serialize_child(child) for child in children],
             "recent_sessions": recent_sessions,
             "data_availability": data_availability,

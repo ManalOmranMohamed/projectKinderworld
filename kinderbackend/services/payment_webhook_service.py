@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from uuid import uuid4
 from typing import Any
+from uuid import uuid4
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -12,15 +12,11 @@ from core.observability import emit_event
 from core.time_utils import db_utc_now
 from models import PaymentAttempt, PaymentWebhookEvent, SubscriptionProfile, User
 from plan_service import PLAN_FREE
-from services.payment_webhook_verifier import (
-    WebhookVerificationError,
-    stripe_webhook_verifier,
-)
+from services.payment_webhook_verifier import WebhookVerificationError, stripe_webhook_verifier
 from services.subscription_service import (
     PAYMENT_STATUS_ACTION_REQUIRED,
     PAYMENT_STATUS_CANCELED,
     PAYMENT_STATUS_FAILED,
-    PAYMENT_STATUS_PENDING,
     PAYMENT_STATUS_SUCCEEDED,
     SUBSCRIPTION_STATUS_ACTIVE,
     SUBSCRIPTION_STATUS_CANCELED,
@@ -29,7 +25,6 @@ from services.subscription_service import (
     SubscriptionService,
     subscription_service,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +82,12 @@ class PaymentWebhookService:
             event_type=event_type,
         )
         record = self._get_webhook_record(db=db, provider="stripe", event_id=event_id)
-        if record is not None and record.status in {"processed", "ignored", "duplicate", "processing"}:
+        if record is not None and record.status in {
+            "processed",
+            "ignored",
+            "duplicate",
+            "processing",
+        }:
             logger.info(
                 "webhook_duplicate provider=stripe event_id=%s event_type=%s status=%s",
                 event_id,
@@ -222,7 +222,9 @@ class PaymentWebhookService:
             "subscription_profile_id": None,
         }
 
-    def _handle_checkout_session_completed(self, *, db: Session, obj: dict[str, Any]) -> dict[str, Any]:
+    def _handle_checkout_session_completed(
+        self, *, db: Session, obj: dict[str, Any]
+    ) -> dict[str, Any]:
         user, profile = self._resolve_profile_context(db=db, obj=obj)
         if user is None or profile is None:
             return self._ignored_result(obj=obj, event_type="checkout.session.completed")
@@ -232,7 +234,9 @@ class PaymentWebhookService:
         checkout = self._checkout_result_from_object(obj)
         profile.provider = "stripe"
         profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-        profile.provider_subscription_id = checkout.subscription_id or profile.provider_subscription_id
+        profile.provider_subscription_id = (
+            checkout.subscription_id or profile.provider_subscription_id
+        )
         profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
         db.add(profile)
 
@@ -314,8 +318,12 @@ class PaymentWebhookService:
         amount_cents = int(obj.get("amount_paid") or obj.get("amount_due") or 0)
 
         profile.provider = "stripe"
-        profile.provider_customer_id = self._as_str(obj.get("customer")) or profile.provider_customer_id
-        profile.provider_subscription_id = self._subscription_id_from_object(obj) or profile.provider_subscription_id
+        profile.provider_customer_id = (
+            self._as_str(obj.get("customer")) or profile.provider_customer_id
+        )
+        profile.provider_subscription_id = (
+            self._subscription_id_from_object(obj) or profile.provider_subscription_id
+        )
         profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
         db.add(profile)
 
@@ -337,9 +345,8 @@ class PaymentWebhookService:
             },
         )
 
-        should_activate = (
-            plan_id is not None
-            and (profile.current_plan_id != plan_id or profile.status != SUBSCRIPTION_STATUS_ACTIVE)
+        should_activate = plan_id is not None and (
+            profile.current_plan_id != plan_id or profile.status != SUBSCRIPTION_STATUS_ACTIVE
         )
         should_renew = (
             plan_id is not None
@@ -360,11 +367,15 @@ class PaymentWebhookService:
         else:
             if plan_id and profile.current_plan_id == PLAN_FREE:
                 profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(user=user, plan=plan_id, when=now)  # noqa: SLF001
+                self._subscription_service._sync_user_plan_projection(
+                    user=user, plan=plan_id, when=now
+                )  # noqa: SLF001
                 db.add(user)
             if profile.status in {SUBSCRIPTION_STATUS_PENDING, SUBSCRIPTION_STATUS_PAST_DUE}:
                 profile.status = SUBSCRIPTION_STATUS_ACTIVE
-            if period_end is not None and (profile.expires_at is None or period_end > profile.expires_at):
+            if period_end is not None and (
+                profile.expires_at is None or period_end > profile.expires_at
+            ):
                 profile.expires_at = period_end
             profile.will_renew = not bool(obj.get("cancel_at_period_end"))
             db.add(profile)
@@ -396,7 +407,9 @@ class PaymentWebhookService:
             provider_reference=invoice_id,
             occurred_at=now,
         )
-        if period_end is not None and (profile.expires_at is None or period_end > profile.expires_at):
+        if period_end is not None and (
+            profile.expires_at is None or period_end > profile.expires_at
+        ):
             profile.expires_at = period_end
             db.add(profile)
         return {
@@ -420,8 +433,12 @@ class PaymentWebhookService:
         failure_message = self._failure_message_from_invoice(obj)
 
         profile.provider = "stripe"
-        profile.provider_customer_id = self._as_str(obj.get("customer")) or profile.provider_customer_id
-        profile.provider_subscription_id = self._subscription_id_from_object(obj) or profile.provider_subscription_id
+        profile.provider_customer_id = (
+            self._as_str(obj.get("customer")) or profile.provider_customer_id
+        )
+        profile.provider_subscription_id = (
+            self._subscription_id_from_object(obj) or profile.provider_subscription_id
+        )
         profile.last_payment_status = PAYMENT_STATUS_FAILED
         profile.status = (
             SUBSCRIPTION_STATUS_PAST_DUE
@@ -498,8 +515,12 @@ class PaymentWebhookService:
 
         profile.provider = "stripe"
         profile.provider_customer_id = provider_customer_id or profile.provider_customer_id
-        profile.provider_subscription_id = provider_subscription_id or profile.provider_subscription_id
-        profile.expires_at = self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
+        profile.provider_subscription_id = (
+            provider_subscription_id or profile.provider_subscription_id
+        )
+        profile.expires_at = (
+            self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
+        )
         profile.cancel_at = self._timestamp_to_utc(obj.get("cancel_at")) or profile.cancel_at
 
         provider_status = self._as_str(obj.get("status"))
@@ -509,7 +530,9 @@ class PaymentWebhookService:
             profile.will_renew = not bool(obj.get("cancel_at_period_end"))
             if plan_id:
                 profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(user=user, plan=plan_id, when=now)  # noqa: SLF001
+                self._subscription_service._sync_user_plan_projection(
+                    user=user, plan=plan_id, when=now
+                )  # noqa: SLF001
                 db.add(user)
         elif provider_status in {"past_due", "unpaid"}:
             profile.status = SUBSCRIPTION_STATUS_PAST_DUE
@@ -517,7 +540,9 @@ class PaymentWebhookService:
             profile.will_renew = True
             if plan_id:
                 profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(user=user, plan=plan_id, when=now)  # noqa: SLF001
+                self._subscription_service._sync_user_plan_projection(
+                    user=user, plan=plan_id, when=now
+                )  # noqa: SLF001
                 db.add(user)
         elif provider_status in {"incomplete", "incomplete_expired"}:
             profile.status = SUBSCRIPTION_STATUS_PENDING
@@ -528,7 +553,9 @@ class PaymentWebhookService:
             profile.will_renew = False
             profile.current_plan_id = PLAN_FREE
             profile.selected_plan_id = None
-            self._subscription_service._sync_user_plan_projection(user=user, plan=PLAN_FREE, when=now)  # noqa: SLF001
+            self._subscription_service._sync_user_plan_projection(
+                user=user, plan=PLAN_FREE, when=now
+            )  # noqa: SLF001
             db.add(user)
         db.add(profile)
 
@@ -567,17 +594,25 @@ class PaymentWebhookService:
         previous_status = profile.status
 
         profile.provider = "stripe"
-        profile.provider_customer_id = self._as_str(obj.get("customer")) or profile.provider_customer_id
-        profile.provider_subscription_id = provider_subscription_id or profile.provider_subscription_id
+        profile.provider_customer_id = (
+            self._as_str(obj.get("customer")) or profile.provider_customer_id
+        )
+        profile.provider_subscription_id = (
+            provider_subscription_id or profile.provider_subscription_id
+        )
         profile.cancel_at = self._timestamp_to_utc(obj.get("canceled_at")) or now
-        profile.expires_at = self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
+        profile.expires_at = (
+            self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
+        )
         profile.status = SUBSCRIPTION_STATUS_CANCELED
         profile.last_payment_status = PAYMENT_STATUS_CANCELED
         profile.will_renew = False
         profile.current_plan_id = PLAN_FREE
         profile.selected_plan_id = None
         db.add(profile)
-        self._subscription_service._sync_user_plan_projection(user=user, plan=PLAN_FREE, when=now)  # noqa: SLF001
+        self._subscription_service._sync_user_plan_projection(
+            user=user, plan=PLAN_FREE, when=now
+        )  # noqa: SLF001
         db.add(user)
 
         self._subscription_service._record_subscription_event(  # noqa: SLF001
@@ -629,7 +664,9 @@ class PaymentWebhookService:
 
         profile_id = self._as_int(metadata.get("profile_id"))
         if profile_id is not None:
-            profile = db.query(SubscriptionProfile).filter(SubscriptionProfile.id == profile_id).first()
+            profile = (
+                db.query(SubscriptionProfile).filter(SubscriptionProfile.id == profile_id).first()
+            )
 
         if profile is None:
             subscription_id = self._subscription_id_from_object(obj)
@@ -654,7 +691,9 @@ class PaymentWebhookService:
             if user_id is not None:
                 user = db.query(User).filter(User.id == user_id).first()
                 if user is not None:
-                    profile = self._subscription_service._ensure_subscription_profile(db=db, user=user)  # noqa: SLF001
+                    profile = self._subscription_service._ensure_subscription_profile(
+                        db=db, user=user
+                    )  # noqa: SLF001
 
         if profile is not None and user is None:
             user = profile.user or db.query(User).filter(User.id == profile.user_id).first()
@@ -716,7 +755,9 @@ class PaymentWebhookService:
         db.flush()
         return attempt
 
-    def _infer_plan_id(self, *, obj: dict[str, Any], profile: SubscriptionProfile | None) -> str | None:
+    def _infer_plan_id(
+        self, *, obj: dict[str, Any], profile: SubscriptionProfile | None
+    ) -> str | None:
         metadata = self._metadata_from_object(obj)
         for key in ("plan_id", "plan", "selected_plan_id"):
             value = self._normalize_plan(metadata.get(key))

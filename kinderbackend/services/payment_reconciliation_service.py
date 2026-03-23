@@ -28,7 +28,6 @@ from services.subscription_service import (
     subscription_service,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -162,13 +161,9 @@ class PaymentReconciliationService:
             changes["last_payment_status"] = desired["last_payment_status"]
         if profile.will_renew != desired["will_renew"]:
             changes["will_renew"] = desired["will_renew"]
-        if self._normalize_dt(profile.expires_at) != self._normalize_dt(
-            desired["expires_at"]
-        ):
+        if self._normalize_dt(profile.expires_at) != self._normalize_dt(desired["expires_at"]):
             changes["expires_at"] = desired["expires_at"]
-        if self._normalize_dt(profile.cancel_at) != self._normalize_dt(
-            desired["cancel_at"]
-        ):
+        if self._normalize_dt(profile.cancel_at) != self._normalize_dt(desired["cancel_at"]):
             changes["cancel_at"] = desired["cancel_at"]
         if profile.current_plan_id != desired["plan_id"]:
             changes["current_plan_id"] = desired["plan_id"]
@@ -191,8 +186,8 @@ class PaymentReconciliationService:
         if not changes:
             return None
 
-        for field, value in changes.items():
-            if field == "user_plan" and user is not None:
+        for field_name, value in changes.items():
+            if field_name == "user_plan" and user is not None:
                 subscription_service._sync_user_plan_projection(  # noqa: SLF001
                     user=user,
                     plan=value,
@@ -200,7 +195,7 @@ class PaymentReconciliationService:
                 )
                 db.add(user)
             else:
-                setattr(profile, field, value)
+                setattr(profile, field_name, value)
         profile.updated_at = db_utc_now()
         db.add(profile)
         logger.info(
@@ -271,8 +266,7 @@ class PaymentReconciliationService:
             attempt.completed_at = now
             attempt.failure_code = "INVOICE_STATUS"
             attempt.failure_message = (
-                f"Invoice {snapshot.latest_invoice_id} status "
-                f"{snapshot.latest_invoice_status}"
+                f"Invoice {snapshot.latest_invoice_id} status " f"{snapshot.latest_invoice_status}"
             )
         db.add(attempt)
         db.flush()
@@ -328,9 +322,11 @@ class PaymentReconciliationService:
         return {
             "status": mapped_status,
             "last_payment_status": last_payment_status,
-            "will_renew": bool(not snapshot.cancel_at_period_end)
-            if mapped_status in {SUBSCRIPTION_STATUS_ACTIVE, SUBSCRIPTION_STATUS_PAST_DUE}
-            else False,
+            "will_renew": (
+                bool(not snapshot.cancel_at_period_end)
+                if mapped_status in {SUBSCRIPTION_STATUS_ACTIVE, SUBSCRIPTION_STATUS_PAST_DUE}
+                else False
+            ),
             "expires_at": snapshot.current_period_end,
             "cancel_at": snapshot.cancel_at,
             "plan_id": plan_id,

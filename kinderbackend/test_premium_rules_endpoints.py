@@ -35,7 +35,7 @@ def test_premium_rules_endpoints_use_backend_data(
 ):
     parent = create_parent(email="premium.rules@example.com", plan="PREMIUM")
     active_child = create_child(parent_id=parent.id, name="Lina", age=8)
-    inactive_child = create_child(parent_id=parent.id, name="Omar", age=7)
+    create_child(parent_id=parent.id, name="Omar", age=7)
     headers = auth_headers(parent)
     now = utc_now()
 
@@ -94,7 +94,10 @@ def test_premium_rules_endpoints_use_backend_data(
     insights_payload = insights.json()
     assert insights_payload["data_source"] == "backend_rules"
     assert insights_payload["insights"]
-    assert any(item["code"] in {"mood_support", "content_affinity", "inactivity_watch"} for item in insights_payload["insights"])
+    assert any(
+        item["code"] in {"mood_support", "content_affinity", "inactivity_watch"}
+        for item in insights_payload["insights"]
+    )
 
     smart_notifications = client.get("/notifications/smart", headers=headers)
     assert smart_notifications.status_code == 200

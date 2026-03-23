@@ -9,6 +9,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/children_api_parsing.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
 
@@ -84,7 +85,7 @@ class ChildrenCacheService {
     final shouldFetchRemote =
         forceRefresh || snapshot.isStale || localById.isEmpty;
     final isAuthMissing =
-        token == null || token.isEmpty || token.startsWith('child_session_');
+        token == null || token.isEmpty || isChildSessionToken(token);
     if (isAuthMissing) {
       final isServerBacked = snapshot.syncState != CacheSyncState.neverSynced;
       if (!isServerBacked) {

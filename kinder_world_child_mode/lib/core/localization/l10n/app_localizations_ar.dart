@@ -3398,4 +3398,28 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get aiBuddyFallbackSummary =>
       'AI Buddy يعمل حاليًا في وضع بديل من الخادم وليس عبر مزود نموذج فعلي.';
+  @override
+  String get playContentEmptyStateSubtitle =>
+      'انشري فيديوهات أو قصصاً أو أنشطة آمنة للأطفال من لوحة المحتوى.';
+
+  @override
+  String get playPublishedContent => 'المحتوى المنشور';
+
+  @override
+  String get playNoBodyContentYet => 'لا يوجد محتوى منشور بعد.';
+
+  @override
+  String get playPublishedQuizzes => 'الاختبارات المنشورة';
+
+  @override
+  String get playTypeLesson => 'درس';
+
+  @override
+  String get playTypeStory => 'قصة';
+
+  @override
+  String get playTypeVideo => 'فيديو';
+
+  @override
+  String get playTypeActivity => 'نشاط';
 }

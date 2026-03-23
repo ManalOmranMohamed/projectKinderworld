@@ -69,7 +69,7 @@ jobs:
         run: |
           python ../tools/coverage_policy.py flutter \
             --coverage-file coverage/lcov.info \
-            --min-total 25 \
+            --min-total 28 \
             --summary-file "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Flutter coverage artifacts

@@ -1,5 +1,6 @@
-// ignore_for_file: prefer_const_constructors, unused_element
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/data/child_avatar_catalog.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/app.dart';
@@ -22,22 +24,6 @@ import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 
-class _AvatarOption {
-  final String id;
-  final String assetPath;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-
-  const _AvatarOption({
-    required this.id,
-    required this.assetPath,
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-  });
-}
-
 class ChildManagementScreen extends ConsumerStatefulWidget {
   const ChildManagementScreen({super.key});
 
@@ -47,274 +33,15 @@ class ChildManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
-  final List<_AvatarOption> _avatarOptions = const [
-    _AvatarOption(
-      id: 'assets/images/avatars/boy1.png',
-      assetPath: 'assets/images/avatars/boy1.png',
-      icon: Icons.face,
-      backgroundColor: Color(0xFFE3F2FD),
-      iconColor: Color(0xFF1E88E5),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy2.png',
-      assetPath: 'assets/images/avatars/boy2.png',
-      icon: Icons.sentiment_satisfied_alt,
-      backgroundColor: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFFB8C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy3.png',
-      assetPath: 'assets/images/avatars/boy3.png',
-      icon: Icons.face,
-      backgroundColor: Color(0xFFE1F5FE),
-      iconColor: Color(0xFF0277BD),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy4.png',
-      assetPath: 'assets/images/avatars/boy4.png',
-      icon: Icons.child_care,
-      backgroundColor: Color(0xFFFFE0B2),
-      iconColor: Color(0xFFF57C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl1.png',
-      assetPath: 'assets/images/avatars/girl1.png',
-      icon: Icons.emoji_emotions,
-      backgroundColor: Color(0xFFF3E5F5),
-      iconColor: Color(0xFF8E24AA),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl2.png',
-      assetPath: 'assets/images/avatars/girl2.png',
-      icon: Icons.mood,
-      backgroundColor: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF43A047),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl3.png',
-      assetPath: 'assets/images/avatars/girl3.png',
-      icon: Icons.face_retouching_natural,
-      backgroundColor: Color(0xFFFCE4EC),
-      iconColor: Color(0xFFC2185B),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl4.png',
-      assetPath: 'assets/images/avatars/girl4.png',
-      icon: Icons.girl,
-      backgroundColor: Color(0xFFF8BBD0),
-      iconColor: Color(0xFFE91E63),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av1.png',
-      assetPath: 'assets/images/avatars/av1.png',
-      icon: Icons.face_2_rounded,
-      backgroundColor: Color(0xFFEDE7F6),
-      iconColor: Color(0xFF7E57C2),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av2.png',
-      assetPath: 'assets/images/avatars/av2.png',
-      icon: Icons.tag_faces_rounded,
-      backgroundColor: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF2E7D32),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av3.png',
-      assetPath: 'assets/images/avatars/av3.png',
-      icon: Icons.cruelty_free_rounded,
-      backgroundColor: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFEF6C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av4.png',
-      assetPath: 'assets/images/avatars/av4.png',
-      icon: Icons.auto_awesome_rounded,
-      backgroundColor: Color(0xFFE1F5FE),
-      iconColor: Color(0xFF0277BD),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av5.png',
-      assetPath: 'assets/images/avatars/av5.png',
-      icon: Icons.pets_rounded,
-      backgroundColor: Color(0xFFFCE4EC),
-      iconColor: Color(0xFFAD1457),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av6.png',
-      assetPath: 'assets/images/avatars/av6.png',
-      icon: Icons.emoji_emotions_rounded,
-      backgroundColor: Color(0xFFFFF8E1),
-      iconColor: Color(0xFFF9A825),
-    ),
-  ];
   Future<List<ChildProfile>>? _childrenFuture;
   String? _cachedParentId;
   OverlayEntry? _topMessageEntry;
-
-  int _parseInt(dynamic value, int fallback) {
-    if (value is int) return value;
-    if (value is double) return value.round();
-    if (value is String) return int.tryParse(value) ?? fallback;
-    return fallback;
-  }
-
-  DateTime _parseDate(dynamic value, DateTime fallback) {
-    if (value is DateTime) return value;
-    if (value is String) {
-      final parsed = DateTime.tryParse(value);
-      if (parsed != null) return parsed;
-    }
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return fallback;
-  }
-
-  DateTime? _parseNullableDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  List<String> _parseStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return const [];
-  }
-
-  List<String>? _parseNullableStringList(dynamic value) {
-    if (value is List) {
-      return value.map((item) => item.toString()).toList();
-    }
-    return null;
-  }
-
-  DateTime? _parseBirthDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
-    }
-    if (value is double) {
-      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-    }
-    return null;
-  }
-
-  int _ageFromBirthDate(DateTime? birthDate) {
-    if (birthDate == null) return 0;
-    final now = DateTime.now();
-    var age = now.year - birthDate.year;
-    final hasHadBirthday = (now.month > birthDate.month) ||
-        (now.month == birthDate.month && now.day >= birthDate.day);
-    if (!hasHadBirthday) age -= 1;
-    return age.clamp(0, 120);
-  }
 
   bool _isOfflineDioError(DioException e) {
     return e.type == DioExceptionType.connectionError ||
         e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout;
-  }
-
-  int _resolveAgeFromApi(Map<String, dynamic> data, ChildProfile? existing) {
-    final apiAge = _parseInt(data['age'], 0);
-    final birthDate = _parseBirthDate(
-      data['birthdate'] ??
-          data['birth_date'] ??
-          data['date_of_birth'] ??
-          data['dob'],
-    );
-    final computedAge = _ageFromBirthDate(birthDate);
-
-    if (kDebugMode) {
-      debugPrint(
-        'Child age resolve: apiAge=$apiAge, birthDate=$birthDate, computedAge=$computedAge, existing=${existing?.age}',
-      );
-    }
-
-    if (apiAge > 0) return apiAge;
-    if (computedAge > 0) return computedAge;
-    return existing?.age ?? 0;
-  }
-
-  ChildProfile? _mergeChildProfileFromApi(
-    Map<String, dynamic> data, {
-    required String parentId,
-    String? parentEmail,
-    ChildProfile? existing,
-  }) {
-    final childId = parseChildId(data);
-    if (childId == null || childId.isEmpty) return null;
-
-    final now = DateTime.now();
-    final apiName = data['name']?.toString().trim();
-    final resolvedName = (apiName != null && apiName.isNotEmpty)
-        ? apiName
-        : (existing?.name ?? childId);
-    final age = _resolveAgeFromApi(data, existing);
-    final existingLevel = existing?.level ?? 0;
-    final level =
-        existingLevel > 0 ? existingLevel : _parseInt(data['level'], 1);
-    final avatar = existing?.avatar ??
-        data['avatar']?.toString() ??
-        _avatarOptions.first.id;
-    final resolvedAvatarPath = existing?.avatarPath.isNotEmpty == true
-        ? existing!.avatarPath
-        : (avatar.isNotEmpty ? avatar : AppConstants.defaultChildAvatar);
-    final picturePassword = (existing?.picturePassword.isNotEmpty ?? false)
-        ? existing!.picturePassword
-        : _parseStringList(data['picture_password']);
-    final createdAt =
-        existing?.createdAt ?? _parseDate(data['created_at'], now);
-    final updatedAt = _parseDate(data['updated_at'], now);
-    final lastSession =
-        existing?.lastSession ?? _parseNullableDate(data['last_session']);
-
-    return ChildProfile(
-      id: childId,
-      name: resolvedName,
-      age: age,
-      avatar: avatar,
-      avatarPath: resolvedAvatarPath,
-      interests: existing?.interests ?? _parseStringList(data['interests']),
-      level: level,
-      xp: existing?.xp ?? _parseInt(data['xp'], 0),
-      streak: existing?.streak ?? _parseInt(data['streak'], 0),
-      favorites: existing?.favorites ?? _parseStringList(data['favorites']),
-      parentId: parentId,
-      parentEmail: existing?.parentEmail ??
-          parentEmail ??
-          data['parent_email']?.toString(),
-      picturePassword: picturePassword,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      lastSession: lastSession,
-      totalTimeSpent:
-          existing?.totalTimeSpent ?? _parseInt(data['total_time_spent'], 0),
-      activitiesCompleted: existing?.activitiesCompleted ??
-          _parseInt(data['activities_completed'], 0),
-      currentMood: existing?.currentMood ?? data['current_mood']?.toString(),
-      learningStyle:
-          existing?.learningStyle ?? data['learning_style']?.toString(),
-      specialNeeds: existing?.specialNeeds ??
-          _parseNullableStringList(data['special_needs']),
-      accessibilityNeeds: existing?.accessibilityNeeds ??
-          _parseNullableStringList(data['accessibility_needs']),
-    );
   }
 
   String? _extractChildIdFromResponse(dynamic data) {
@@ -423,7 +150,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.push('/parent/subscription');
+                unawaited(context.push('/parent/subscription'));
               },
               child: Text(l10n.upgradeNow),
             ),
@@ -486,7 +213,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                     _loadChildrenForParent(_cachedParentId!);
                               });
                             } else {
-                              _refreshChildren();
+                              await _refreshChildren();
                             }
                           } on DioException catch (e) {
                             if (_isOfflineDioError(e)) {
@@ -519,7 +246,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       _loadChildrenForParent(_cachedParentId!);
                                 });
                               } else {
-                                _refreshChildren();
+                                await _refreshChildren();
                               }
                               return;
                             }
@@ -564,22 +291,12 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     super.dispose();
   }
 
-  _AvatarOption? _avatarForValue(String? value) {
-    if (value == null || value.isEmpty) return null;
-    for (final option in _avatarOptions) {
-      if (option.id == value || option.assetPath == value) {
-        return option;
-      }
-    }
-    return null;
-  }
-
   Widget _buildAvatarCircle({
     required String? avatarId,
     required String? avatarPath,
     required double size,
   }) {
-    final option = _avatarForValue(avatarId ?? avatarPath);
+    final option = childAvatarOptionForValue(avatarId ?? avatarPath);
     final resolvedBackground = option?.backgroundColor ??
         context.parentTheme.primary.withValues(alpha: 0.1);
     final resolvedPath =
@@ -773,7 +490,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
             final parentContext = context;
             String name = '';
             int? age;
-            String selectedAvatar = _avatarOptions.first.id;
+            String selectedAvatar = defaultChildAvatarId;
             final List<String> picturePassword = [];
             bool passwordTouched = false;
             bool isSaving = false;
@@ -862,7 +579,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                               child: Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: _avatarOptions.map((option) {
+                                children: childAvatarOptions.map((option) {
                                   final isSelected =
                                       selectedAvatar == option.id;
                                   return InkWell(
@@ -1092,8 +809,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                   if (saved != null) {
                                     await ref
                                         .read(childrenCacheServiceProvider)
-                                        .markChildrenMutated(
-                                            resolvedParentId);
+                                        .markChildrenMutated(resolvedParentId);
                                     messenger.showSnackBar(
                                       SnackBar(
                                         content: Text(l10n.childProfileAdded),
@@ -1156,9 +872,11 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: ParentCard(
-        onTap: () => context.push(
-          Routes.parentChildProfileById(child.id),
-          extra: child,
+        onTap: () => unawaited(
+          context.push(
+            Routes.parentChildProfileById(child.id),
+            extra: child,
+          ),
         ),
         child: Row(
           children: [
@@ -1276,8 +994,9 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                 Tooltip(
                   message: l10n.activityReports,
                   child: IconButton(
-                    onPressed: () =>
-                        context.push('/parent/reports', extra: child.id),
+                    onPressed: () => unawaited(
+                      context.push('/parent/reports', extra: child.id),
+                    ),
                     icon: const Icon(Icons.pie_chart),
                     color: context.parentTheme.primary,
                     iconSize: 20,
@@ -1350,7 +1069,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     );
   }
 
-  Widget _buildAvatarOption(_AvatarOption option) {
+  Widget _buildAvatarOption(ChildAvatarOption option) {
     return Container(
       width: 44,
       height: 44,

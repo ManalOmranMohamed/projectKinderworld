@@ -11,12 +11,8 @@ from core.system_settings import require_ai_buddy_enabled
 from models import AiBuddyMessage, AiBuddySession, AiInteraction, ChildProfile, User
 from services.ai_buddy_moderation import ai_buddy_moderation_service
 from services.ai_buddy_persistence import ai_buddy_persistence_service
-from services.ai_buddy_response_generator import (
-    AiBuddyProviderState,
-    ai_buddy_response_generator,
-)
+from services.ai_buddy_response_generator import AiBuddyProviderState, ai_buddy_response_generator
 from services.ai_buddy_visibility import ai_buddy_visibility_service
-
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +33,14 @@ class AiBuddyService:
             parent=parent,
             child_id=child_id,
         )
-        session = None if force_new else ai_buddy_persistence_service.get_current_session(
-            db=db,
-            parent=parent,
-            child_id=child.id,
+        session = (
+            None
+            if force_new
+            else ai_buddy_persistence_service.get_current_session(
+                db=db,
+                parent=parent,
+                child_id=child.id,
+            )
         )
         provider_state = ai_buddy_response_generator.provider_state()
 
@@ -192,7 +192,9 @@ class AiBuddyService:
             session_id=session_id,
         )
         if session.child_id != child.id:
-            raise HTTPException(status_code=400, detail="Session does not belong to requested child")
+            raise HTTPException(
+                status_code=400, detail="Session does not belong to requested child"
+            )
 
         moderation = ai_buddy_moderation_service.moderate_input(text=content)
         logger.info(
@@ -296,7 +298,9 @@ class AiBuddyService:
                     "action_taken": "generated_response",
                 }
             else:
-                assistant_content = output_moderation.safe_response or moderation.safe_response or ""
+                assistant_content = (
+                    output_moderation.safe_response or moderation.safe_response or ""
+                )
                 assistant_response_source = "safety_policy"
                 assistant_intent = "safety_response"
                 assistant_safety_status = output_moderation.classification
@@ -310,7 +314,9 @@ class AiBuddyService:
         else:
             assistant_response_source = "safety_policy"
             assistant_intent = "safety_response"
-            assistant_metadata["action_taken"] = "refusal" if moderation.classification == "needs_refusal" else "safe_redirect"
+            assistant_metadata["action_taken"] = (
+                "refusal" if moderation.classification == "needs_refusal" else "safe_redirect"
+            )
             logger.warning(
                 "ai_buddy_input_blocked parent_id=%s child_id=%s session_id=%s classification=%s",
                 parent.id,
@@ -524,7 +530,9 @@ class AiBuddyService:
             "visibility_mode": session.visibility_mode,
             "parent_summary": session.parent_summary,
             "started_at": session.started_at.isoformat() if session.started_at else None,
-            "last_message_at": session.last_message_at.isoformat() if session.last_message_at else None,
+            "last_message_at": (
+                session.last_message_at.isoformat() if session.last_message_at else None
+            ),
             "ended_at": session.ended_at.isoformat() if session.ended_at else None,
             "retention_expires_at": (
                 session.retention_expires_at.isoformat() if session.retention_expires_at else None

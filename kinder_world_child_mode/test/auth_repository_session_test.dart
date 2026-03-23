@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
@@ -11,6 +12,8 @@ import 'package:logger/logger.dart';
 class _MemorySecureStorage extends SecureStorage {
   String? authToken;
   String? refreshToken;
+  String? parentAccessToken;
+  String? parentRefreshToken;
   String? userId;
   String? userEmail;
   String? userRole;
@@ -32,6 +35,24 @@ class _MemorySecureStorage extends SecureStorage {
   @override
   Future<bool> saveRefreshToken(String token) async {
     refreshToken = token;
+    return true;
+  }
+
+  @override
+  Future<String?> getParentAccessToken() async => parentAccessToken;
+
+  @override
+  Future<bool> saveParentAccessToken(String token) async {
+    parentAccessToken = token;
+    return true;
+  }
+
+  @override
+  Future<String?> getParentRefreshToken() async => parentRefreshToken;
+
+  @override
+  Future<bool> saveParentRefreshToken(String token) async {
+    parentRefreshToken = token;
     return true;
   }
 
@@ -108,6 +129,8 @@ class _MemorySecureStorage extends SecureStorage {
   Future<bool> clearAuthOnly() async {
     authToken = null;
     refreshToken = null;
+    parentAccessToken = null;
+    parentRefreshToken = null;
     userId = null;
     userEmail = null;
     userRole = null;
@@ -135,6 +158,14 @@ class _FakeAuthApi extends AuthApi {
   AuthSessionPayload? registerPayload;
   ChildLoginPayload? childLoginPayload;
   Map<String, dynamic>? refreshPayload;
+  Map<String, dynamic>? childSessionValidationPayload;
+  Map<String, dynamic>? logoutPayload;
+  Map<String, dynamic>? childRegisterPayload;
+  Map<String, dynamic>? parentPinStatusPayload;
+  Object? logoutError;
+  int logoutCalls = 0;
+  String? lastChildRegisterAuthorization;
+  int parentPinStatusCalls = 0;
 
   @override
   Future<AuthSessionPayload> login({
@@ -169,12 +200,63 @@ class _FakeAuthApi extends AuthApi {
   }) async {
     return refreshPayload ?? const {};
   }
+
+  @override
+  Future<Map<String, dynamic>> validateChildSession({
+    required String sessionToken,
+  }) async {
+    return childSessionValidationPayload ?? const {};
+  }
+
+  @override
+  Future<Map<String, dynamic>> logout() async {
+    logoutCalls += 1;
+    if (logoutError != null) {
+      throw logoutError!;
+    }
+    return logoutPayload ?? const {'success': true};
+  }
+
+  @override
+  Future<Map<String, dynamic>> childRegister({
+    required String name,
+    required List<String> picturePassword,
+    required String parentAccessToken,
+    String? parentEmail,
+    required int age,
+    String? avatar,
+  }) async {
+    lastChildRegisterAuthorization = parentAccessToken;
+    return childRegisterPayload ??
+        const {
+          'child': {'id': 7, 'name': 'Kid'}
+        };
+  }
+
+  @override
+  Future<Map<String, dynamic>> parentPinStatus() async {
+    parentPinStatusCalls += 1;
+    return parentPinStatusPayload ??
+        const {
+          'has_pin': true,
+          'is_locked': false,
+          'failed_attempts': 0,
+        };
+  }
 }
 
 String _jwtWithExp(DateTime dateTime) {
   final header = base64Url.encode(utf8.encode('{"alg":"none","typ":"JWT"}'));
   final payload = base64Url.encode(
     utf8.encode('{"exp":${dateTime.millisecondsSinceEpoch ~/ 1000}}'),
+  );
+  return '$header.$payload.signature';
+}
+
+String _childSessionJwt() {
+  final header = base64Url.encode(utf8.encode('{"alg":"none","typ":"JWT"}'));
+  final payload = base64Url.encode(
+    utf8.encode('{"token_type":"child_session","exp":4102444800}'),
   );
   return '$header.$payload.signature';
 }
@@ -246,18 +328,22 @@ void main() {
     expect(storage.parentPinVerified, isFalse);
   });
 
-  test('loginChild clears parent-only fields and saves child session marker',
+  test(
+      'loginChild clears parent-only fields and saves backend child session token',
       () async {
     storage.refreshToken = 'refresh.jwt';
     storage.userEmail = 'parent@example.com';
     storage.parentPinVerified = true;
-    authApi.childLoginPayload = const ChildLoginPayload(
+    final sessionToken = _childSessionJwt();
+    authApi.childLoginPayload = ChildLoginPayload(
       success: true,
       childId: 'child-7',
       name: 'Mira',
+      sessionToken: sessionToken,
       raw: {
         'name': 'Mira',
         'child_id': 'child-7',
+        'session_token': sessionToken,
       },
     );
 
@@ -268,7 +354,7 @@ void main() {
     );
 
     expect(user, isNotNull);
-    expect(storage.authToken, 'child_session_child-7');
+    expect(storage.authToken, sessionToken);
     expect(storage.refreshToken, isNull);
     expect(storage.userEmail, isNull);
     expect(storage.userRole, UserRoles.child);
@@ -277,7 +363,8 @@ void main() {
     expect(storage.parentPinVerified, isFalse);
   });
 
-  test('validateToken returns false for expired jwt and true for child marker',
+  test(
+      'validateToken rejects legacy child markers and validates child session JWTs',
       () async {
     storage.authToken = _jwtWithExp(
       DateTime.now().toUtc().subtract(const Duration(minutes: 5)),
@@ -285,7 +372,82 @@ void main() {
     expect(await repository.validateToken(), isFalse);
 
     storage.authToken = 'child_session_child-7';
+    expect(await repository.validateToken(), isFalse);
+
+    storage.authToken = _childSessionJwt();
+    authApi.childSessionValidationPayload = const {
+      'success': true,
+      'child_id': 'child-7',
+      'name': 'Mira',
+    };
     expect(await repository.validateToken(), isTrue);
+  });
+
+  test('getCurrentUser resolves child identity from backend session validation',
+      () async {
+    storage.userRole = UserRoles.child;
+    storage.authToken = _childSessionJwt();
+    storage.childSession = 'child-7';
+    authApi.childSessionValidationPayload = const {
+      'success': true,
+      'child_id': 'child-7',
+      'name': 'Mira',
+    };
+
+    final user = await repository.getCurrentUser();
+
+    expect(user, isNotNull);
+    expect(user!.id, 'child-7');
+    expect(user.role, UserRoles.child);
+    expect(user.name, 'Mira');
+  });
+
+  test('getCurrentUser clears legacy child markers', () async {
+    storage.userRole = UserRoles.child;
+    storage.authToken = 'child_session_child-7';
+
+    final user = await repository.getCurrentUser();
+
+    expect(user, isNull);
+    expect(storage.authToken, isNull);
+    expect(storage.userRole, isNull);
+  });
+
+  test('logout notifies backend for parent sessions before clearing local auth',
+      () async {
+    storage.authToken = 'token';
+    storage.refreshToken = 'refresh';
+    storage.userId = 'parent-1';
+    storage.userEmail = 'parent@example.com';
+    storage.userRole = UserRoles.parent;
+    authApi.logoutPayload = const {'success': true};
+
+    final success = await repository.logout();
+
+    expect(success, isTrue);
+    expect(authApi.logoutCalls, 1);
+    expect(storage.authToken, isNull);
+    expect(storage.refreshToken, isNull);
+  });
+
+  test('logout clears local auth even when parent logout API fails', () async {
+    storage.authToken = 'token';
+    storage.refreshToken = 'refresh';
+    storage.userRole = UserRoles.parent;
+    authApi.logoutError = DioException(
+      requestOptions: RequestOptions(path: '/auth/logout'),
+      response: Response(
+        requestOptions: RequestOptions(path: '/auth/logout'),
+        statusCode: 500,
+      ),
+    );
+
+    final success = await repository.logout();
+
+    expect(success, isTrue);
+    expect(authApi.logoutCalls, 1);
+    expect(storage.authToken, isNull);
+    expect(storage.userRole, isNull);
   });
 
   test('logout clears auth-only session fields', () async {
@@ -296,10 +458,12 @@ void main() {
     storage.userRole = UserRoles.parent;
     storage.childSession = 'child-1';
     storage.parentPinVerified = true;
+    authApi.logoutPayload = const {'success': true};
 
     final success = await repository.logout();
 
     expect(success, isTrue);
+    expect(authApi.logoutCalls, 1);
     expect(storage.authToken, isNull);
     expect(storage.refreshToken, isNull);
     expect(storage.userId, isNull);
@@ -307,5 +471,86 @@ void main() {
     expect(storage.userRole, isNull);
     expect(storage.childSession, isNull);
     expect(storage.parentPinVerified, isFalse);
+  });
+
+  test('registerChild uses current parent auth token for secured child creation',
+      () async {
+    storage.authToken = 'parent.jwt';
+    storage.userRole = UserRoles.parent;
+    authApi.childRegisterPayload = const {
+      'child': {'id': 7, 'name': 'Mira'}
+    };
+
+    final response = await repository.registerChild(
+      name: 'Mira',
+      picturePassword: const ['apple', 'cat', 'dog'],
+      parentEmail: 'parent@example.com',
+      age: 7,
+    );
+
+    expect(response, isNotNull);
+    expect(response!.childId, '7');
+    expect(authApi.lastChildRegisterAuthorization, 'parent.jwt');
+  });
+
+  test(
+      'registerChild falls back to stored parent token when child session is active',
+      () async {
+    storage.authToken = _childSessionJwt();
+    storage.userRole = UserRoles.child;
+    storage.parentAccessToken = 'stored.parent.jwt';
+    authApi.childRegisterPayload = const {
+      'child': {'id': 8, 'name': 'Noor'}
+    };
+
+    final response = await repository.registerChild(
+      name: 'Noor',
+      picturePassword: const ['apple', 'cat', 'dog'],
+      parentEmail: 'parent@example.com',
+      age: 7,
+    );
+
+    expect(response, isNotNull);
+    expect(response!.childId, '8');
+    expect(authApi.lastChildRegisterAuthorization, 'stored.parent.jwt');
+  });
+
+  test('registerChild fails fast when no parent session is available', () async {
+    expect(
+      () => repository.registerChild(
+        name: 'Noor',
+        picturePassword: const ['apple', 'cat', 'dog'],
+        parentEmail: 'parent@example.com',
+        age: 7,
+      ),
+      throwsA(isA<ChildRegisterException>()),
+    );
+  });
+
+  test('getParentPinStatus skips API call without authenticated parent session',
+      () async {
+    storage.authToken = null;
+    storage.userRole = null;
+
+    final status = await repository.getParentPinStatus();
+
+    expect(status.hasPin, isFalse);
+    expect(authApi.parentPinStatusCalls, 0);
+  });
+
+  test('getParentPinStatus uses API for authenticated parent sessions', () async {
+    storage.authToken = 'parent.jwt';
+    storage.userRole = UserRoles.parent;
+    authApi.parentPinStatusPayload = const {
+      'has_pin': true,
+      'is_locked': false,
+      'failed_attempts': 2,
+    };
+
+    final status = await repository.getParentPinStatus();
+
+    expect(status.hasPin, isTrue);
+    expect(status.failedAttempts, 2);
+    expect(authApi.parentPinStatusCalls, 1);
   });
 }

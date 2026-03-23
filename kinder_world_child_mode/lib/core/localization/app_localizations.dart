@@ -1195,6 +1195,14 @@ abstract class AppLocalizations {
   String get safeAndFunVideos;
   String get safeMode;
   String get searchVideos;
+  String get playContentEmptyStateSubtitle;
+  String get playPublishedContent;
+  String get playNoBodyContentYet;
+  String get playPublishedQuizzes;
+  String get playTypeLesson;
+  String get playTypeStory;
+  String get playTypeVideo;
+  String get playTypeActivity;
   String get fanFavourite;
   String get todaysPick;
   String get topRated;

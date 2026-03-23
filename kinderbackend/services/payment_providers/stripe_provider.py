@@ -9,8 +9,8 @@ from services.payment_provider import (
     PaymentMethodReference,
     PaymentProviderUnavailableError,
     PortalSessionResult,
-    RefundResult,
     ProviderSubscriptionSnapshot,
+    RefundResult,
 )
 
 
@@ -109,9 +109,7 @@ class StripePaymentProvider:
             cancel_at=_from_unix(getattr(subscription, "cancel_at", None)),
             cancel_at_period_end=bool(getattr(subscription, "cancel_at_period_end", False)),
             latest_invoice_id=str(latest_invoice_id) if latest_invoice_id else None,
-            latest_invoice_status=str(latest_invoice_status)
-            if latest_invoice_status
-            else None,
+            latest_invoice_status=str(latest_invoice_status) if latest_invoice_status else None,
             raw=subscription.to_dict_recursive(),
         )
 

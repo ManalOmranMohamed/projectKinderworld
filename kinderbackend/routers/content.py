@@ -116,7 +116,9 @@ def _serialize_public_content_item(
         payload["quizzes"] = [
             _serialize_public_quiz(quiz)
             for quiz in (content.quizzes or [])
-            if quiz.deleted_at is None and quiz.status == "published" and quiz.published_at is not None
+            if quiz.deleted_at is None
+            and quiz.status == "published"
+            and quiz.published_at is not None
         ]
     return payload
 
@@ -146,7 +148,9 @@ def _faq_items_from_page(page: ContentItem) -> list[dict[str, Any]]:
         question_ar = str(item.get("question_ar") or "").strip()
         answer_en = str(item.get("answer_en") or item.get("answer") or "").strip()
         answer_ar = str(item.get("answer_ar") or "").strip()
-        question = str(item.get("question") or question_en or question_ar or item.get("title") or "").strip()
+        question = str(
+            item.get("question") or question_en or question_ar or item.get("title") or ""
+        ).strip()
         answer = str(item.get("answer") or answer_en or answer_ar or item.get("body") or "").strip()
         if not question or not answer:
             continue
@@ -242,10 +246,14 @@ def list_child_content_items(
     search: str | None = None,
     db: Session = Depends(get_db),
 ):
-    query = _published_content_query(db).filter(ContentItem.content_type.in_(PUBLIC_CHILD_CONTENT_TYPES))
+    query = _published_content_query(db).filter(
+        ContentItem.content_type.in_(PUBLIC_CHILD_CONTENT_TYPES)
+    )
 
     if category_slug:
-        query = query.join(ContentItem.category).filter(ContentCategory.slug == category_slug.lower())
+        query = query.join(ContentItem.category).filter(
+            ContentCategory.slug == category_slug.lower()
+        )
     if content_type:
         normalized_type = content_type.strip().lower()
         if normalized_type not in PUBLIC_CHILD_CONTENT_TYPES:

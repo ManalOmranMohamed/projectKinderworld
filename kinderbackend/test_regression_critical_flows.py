@@ -67,6 +67,15 @@ def test_regression_parent_onboarding_login(client):
 def test_regression_child_mode_content_usage(client, db, create_parent):
     parent = create_parent(email="regression.child.parent@example.com")
     _seed_child_content(db)
+    login = client.post(
+        "/auth/login",
+        json={
+            "email": parent.email,
+            "password": "Password123!",
+        },
+    )
+    assert login.status_code == 200
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     child_register = client.post(
         "/auth/child/register",
@@ -76,6 +85,7 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
             "age": 7,
             "parent_email": parent.email,
         },
+        headers=headers,
     )
     assert child_register.status_code == 200
     child_payload = child_register.json()["child"]
@@ -94,9 +104,7 @@ def test_regression_child_mode_content_usage(client, db, create_parent):
 
     categories = client.get("/content/child/categories")
     assert categories.status_code == 200
-    assert any(
-        item["slug"] == "regression-learning" for item in categories.json()["items"]
-    )
+    assert any(item["slug"] == "regression-learning" for item in categories.json()["items"])
 
     items = client.get("/content/child/items", params={"category_slug": "regression-learning"})
     assert items.status_code == 200
@@ -188,7 +196,7 @@ def test_regression_payment_provider_webhook_reconciliation(
     assert checkout.status_code == 200
 
     portal = client.post("/billing/portal", headers=headers)
-    assert portal.status_code in {409, 501, 503}
+    assert portal.status_code in {200, 409, 503}
 
     webhook = client.post("/webhooks/stripe", content=b"{}")
     assert webhook.status_code == 400

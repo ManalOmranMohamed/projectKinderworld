@@ -5,8 +5,6 @@ settings, child management, user management, and subscription admin actions.
 
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 import admin_models  # noqa: F401
 from admin_auth import create_admin_access_token
 from admin_models import AdminUser, AdminUserRole, AuditLog, Permission, Role, RolePermission
@@ -14,6 +12,7 @@ from auth import create_access_token, hash_password, verify_password
 from models import ChildProfile, SupportTicket, User
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 from routers.admin_seed import PERMISSION_DEFS, ROLE_DEFS
+from test_client_compat import TestClient
 
 
 def _seed_builtin_rbac(db) -> None:
@@ -260,7 +259,7 @@ def test_admin_support_ticket_assign_reply_close_and_audit(client: TestClient, d
     assert "support.close" in actions
 
 
-def test_admin_user_management_subscription_and_refund_placeholder(client: TestClient, db):
+def test_admin_user_management_subscription_and_refund_flow(client: TestClient, db):
     _seed_builtin_rbac(db)
     admin = _create_admin(db, email="manager.admin@kinderworld.app", role_names=["super_admin"])
     parent = _create_parent(
@@ -324,8 +323,9 @@ def test_admin_user_management_subscription_and_refund_placeholder(client: TestC
         f"/admin/subscriptions/{parent.id}/refund",
         headers=_admin_headers(admin),
     )
-    assert refund.status_code == 501
-    assert "Refunds are not supported" in refund.json()["detail"]
+    assert refund.status_code == 200
+    assert refund.json()["success"] is True
+    assert refund.json()["status"] == "succeeded"
 
 
 def test_admin_settings_and_child_management_endpoints(client: TestClient, db):

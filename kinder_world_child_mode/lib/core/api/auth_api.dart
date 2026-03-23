@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:kinder_world/core/network/network_service.dart';
+import 'package:kinder_world/core/services/device_identity_service.dart';
 
 class AuthSessionPayload {
   const AuthSessionPayload({
@@ -19,19 +21,29 @@ class ChildLoginPayload {
     required this.success,
     this.childId,
     this.name,
+    this.sessionToken,
+    this.sessionExpiresAt,
+    this.sessionTtlMinutes,
     required this.raw,
   });
 
   final bool success;
   final String? childId;
   final String? name;
+  final String? sessionToken;
+  final DateTime? sessionExpiresAt;
+  final int? sessionTtlMinutes;
   final Map<String, dynamic> raw;
 }
 
 class AuthApi {
-  const AuthApi(this._network);
+  AuthApi(
+    this._network, {
+    DeviceIdentityService? deviceIdentityService,
+  }) : _deviceIdentityService = deviceIdentityService;
 
   final NetworkService _network;
+  final DeviceIdentityService? _deviceIdentityService;
 
   Future<AuthSessionPayload> login({
     required String email,
@@ -116,12 +128,14 @@ class AuthApi {
     required String name,
     required List<String> picturePassword,
   }) async {
+    final deviceId = await _resolveDeviceId();
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/child/login',
       data: {
         'child_id': int.tryParse(childId) ?? childId,
         'name': name.trim(),
         'picture_password': picturePassword,
+        if (deviceId != null) 'device_id': deviceId,
       },
     );
     final body = Map<String, dynamic>.from(response.data ?? const {});
@@ -129,26 +143,50 @@ class AuthApi {
       success: body['success'] == true,
       childId: body['child_id']?.toString(),
       name: body['name']?.toString(),
+      sessionToken: body['session_token']?.toString(),
+      sessionExpiresAt: body['session_expires_at'] is String
+          ? DateTime.tryParse(body['session_expires_at'] as String)
+          : null,
+      sessionTtlMinutes: (body['session_ttl_minutes'] as num?)?.toInt(),
       raw: body,
     );
+  }
+
+  Future<Map<String, dynamic>> validateChildSession({
+    required String sessionToken,
+  }) async {
+    final deviceId = await _resolveDeviceId();
+    final response = await _network.post<Map<String, dynamic>>(
+      '/auth/child/session/validate',
+      data: {
+        'session_token': sessionToken,
+        if (deviceId != null) 'device_id': deviceId,
+      },
+    );
+    return Map<String, dynamic>.from(response.data ?? const {});
   }
 
   Future<Map<String, dynamic>> childRegister({
     required String name,
     required List<String> picturePassword,
-    required String parentEmail,
+    required String parentAccessToken,
+    String? parentEmail,
     required int age,
     String? avatar,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
-      '/auth/child/register',
+      '/children',
       data: {
         'name': name.trim(),
         'picture_password': picturePassword,
-        'parent_email': parentEmail.trim().toLowerCase(),
+        if (parentEmail != null && parentEmail.trim().isNotEmpty)
+          'parent_email': parentEmail.trim().toLowerCase(),
         'age': age,
         if (avatar != null) 'avatar': avatar,
       },
+      options: Options(
+        headers: {'Authorization': 'Bearer $parentAccessToken'},
+      ),
     );
     return Map<String, dynamic>.from(response.data ?? const {});
   }
@@ -232,5 +270,9 @@ class AuthApi {
       ),
       raw: body,
     );
+  }
+
+  Future<String?> _resolveDeviceId() async {
+    return await _deviceIdentityService?.getDeviceId();
   }
 }

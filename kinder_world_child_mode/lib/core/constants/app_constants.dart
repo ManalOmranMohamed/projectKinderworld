@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class AppSpacing {
   AppSpacing._();
 
@@ -47,16 +45,71 @@ class AppConstants {
   // Override at build time:
   // flutter run --dart-define=API_BASE_URL=http://<HOST>:8000
   // flutter build apk --dart-define=API_BASE_URL=http://<HOST>:8000
+  // Optional environment routing:
+  // --dart-define=APP_ENV=development|staging|production
+  // --dart-define=DEV_API_BASE_URL=http://127.0.0.1:8000
+  // --dart-define=STAGING_API_BASE_URL=https://staging.example.com
+  // --dart-define=PROD_API_BASE_URL=https://api.example.com
   static const String _baseUrlOverride = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: '',
   );
+  static const String _appEnv = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: 'development',
+  );
+  static const String _developmentBaseUrl = String.fromEnvironment(
+    'DEV_API_BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000',
+  );
+  static const String _stagingBaseUrl = String.fromEnvironment(
+    'STAGING_API_BASE_URL',
+    defaultValue: '',
+  );
+  static const String _productionBaseUrl = String.fromEnvironment(
+    'PROD_API_BASE_URL',
+    defaultValue: '',
+  );
 
-  static final String baseUrl = _baseUrlOverride.isNotEmpty
-      ? _baseUrlOverride
-      : kIsWeb
-          ? 'http://127.0.0.1:8000'
-          : 'http://10.0.2.2:8000';
+  static final String baseUrl = _resolveBaseUrl();
+
+  static String _resolveBaseUrl() {
+    if (_baseUrlOverride.isNotEmpty) {
+      return _baseUrlOverride;
+    }
+
+    switch (_appEnv) {
+      case 'production':
+      case 'prod':
+        return _requiredBaseUrl(
+          value: _productionBaseUrl,
+          defineName: 'PROD_API_BASE_URL',
+        );
+      case 'staging':
+        return _requiredBaseUrl(
+          value: _stagingBaseUrl,
+          defineName: 'STAGING_API_BASE_URL',
+        );
+      case 'test':
+      case 'development':
+      case 'dev':
+      default:
+        return _developmentBaseUrl;
+    }
+  }
+
+  static String _requiredBaseUrl({
+    required String value,
+    required String defineName,
+  }) {
+    if (value.isNotEmpty) {
+      return value;
+    }
+    throw StateError(
+      'Missing API base URL. Provide --dart-define=$defineName=<URL> or '
+      '--dart-define=API_BASE_URL=<URL>.',
+    );
+  }
 
   static const Duration apiTimeout = Duration(seconds: 60);
 

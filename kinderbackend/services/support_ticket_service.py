@@ -147,20 +147,14 @@ class SupportTicketService:
         }
 
     def list_user_tickets(self, *, user: User, db: Session) -> dict[str, object]:
-        items = (
-            self.ticket_query(db)
-            .filter(SupportTicket.user_id == user.id)
-            .all()
-        )
+        items = self.ticket_query(db).filter(SupportTicket.user_id == user.id).all()
         ranked = premium_behavior_service.rank_support_tickets(items)
         return {
             "items": [serialize_support_ticket(item["ticket"]) for item in ranked],
             "summary": {
                 "total": len(ranked),
                 "open": sum(1 for item in ranked if item["ticket"].status == "open"),
-                "in_progress": sum(
-                    1 for item in ranked if item["ticket"].status == "in_progress"
-                ),
+                "in_progress": sum(1 for item in ranked if item["ticket"].status == "in_progress"),
                 "resolved": sum(1 for item in ranked if item["ticket"].status == "resolved"),
                 "closed": sum(1 for item in ranked if item["ticket"].status == "closed"),
             },

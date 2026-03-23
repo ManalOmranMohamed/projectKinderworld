@@ -1,10 +1,9 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kinder_world/core/api/auth_api.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
 class ChildLoginException implements Exception {
@@ -149,14 +148,41 @@ class AuthRepository {
       if (role == null) return null;
 
       if (role == UserRoles.child) {
+        final sessionToken = await _secureStorage.getAuthToken();
+        if (sessionToken == null || sessionToken.isEmpty) {
+          return null;
+        }
+        if (isLegacyChildSessionMarker(sessionToken)) {
+          await _secureStorage.clearAuthOnly();
+          return null;
+        }
         final childId = await _secureStorage.getChildSession();
-        if (childId == null) return null;
+
+        final data = await _authApi.validateChildSession(
+          sessionToken: sessionToken,
+        );
+        if (data['success'] != true) {
+          await _secureStorage.clearAuthOnly();
+          return null;
+        }
+
+        final resolvedChildId =
+            data['child_id']?.toString().trim().isNotEmpty == true
+                ? data['child_id'].toString()
+                : childId;
+        if (resolvedChildId == null || resolvedChildId.trim().isEmpty) {
+          await _secureStorage.clearAuthOnly();
+          return null;
+        }
+        final resolvedName = _extractChildName(data);
         final now = DateTime.now();
         return User(
-          id: childId,
-          email: '$childId@child.local',
+          id: resolvedChildId,
+          email: '$resolvedChildId@child.local',
           role: UserRoles.child,
-          name: 'Child $childId',
+          name: resolvedName?.isNotEmpty == true
+              ? resolvedName!.trim()
+              : 'Child $resolvedChildId',
           createdAt: now,
           updatedAt: now,
           isActive: true,
@@ -168,6 +194,9 @@ class AuthRepository {
     } on DioException catch (e) {
       final statusCode = e.response?.statusCode;
       _logger.e('Error getting current user: ${e.message}');
+      if (role == UserRoles.child && statusCode == 401) {
+        await _secureStorage.clearAuthOnly();
+      }
       if (role == UserRoles.parent && statusCode == 401) {
         final refreshedToken = await refreshToken();
         if (refreshedToken != null && refreshedToken.isNotEmpty) {
@@ -351,23 +380,33 @@ class AuthRepository {
   }
 
   bool _tokenLooksExpired(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) return false;
-      final normalized = base64Url.normalize(parts[1]);
-      final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
-      if (payload is! Map<String, dynamic>) return false;
-      final exp = payload['exp'];
-      final expSeconds = exp is int ? exp : int.tryParse(exp?.toString() ?? '');
-      if (expSeconds == null) return false;
-      final expiresAt = DateTime.fromMillisecondsSinceEpoch(
-        expSeconds * 1000,
-        isUtc: true,
-      );
-      return expiresAt.isBefore(DateTime.now().toUtc());
-    } catch (_) {
+    return isJwtExpired(token);
+  }
+
+  bool _isUsableParentToken(String? token) {
+    if (token == null || token.isEmpty) {
       return false;
     }
+    if (isChildSessionToken(token) || isLegacyChildSessionMarker(token)) {
+      return false;
+    }
+    return true;
+  }
+
+  Future<String?> _resolveParentRegistrationToken() async {
+    final currentRole = await _secureStorage.getUserRole();
+    final currentAuthToken = _secureStorage.hasCachedAuthToken
+        ? _secureStorage.cachedAuthToken
+        : await _secureStorage.getAuthToken();
+    if (currentRole == UserRoles.parent && _isUsableParentToken(currentAuthToken)) {
+      return currentAuthToken;
+    }
+
+    final storedParentToken = await _secureStorage.getParentAccessToken();
+    if (_isUsableParentToken(storedParentToken)) {
+      return storedParentToken;
+    }
+    return null;
   }
 
   // ==================== CHILD AUTHENTICATION ====================
@@ -401,14 +440,22 @@ class AuthRepository {
       }
 
       final resolvedName = _extractChildName(data);
+      final resolvedChildId = payload.childId?.trim().isNotEmpty == true
+          ? payload.childId!
+          : childId;
+      final sessionToken = payload.sessionToken?.trim();
+      if (sessionToken == null || sessionToken.isEmpty) {
+        _logger.e('Child login failed: missing session token');
+        throw const ChildLoginException();
+      }
       final now = DateTime.now();
       final childUser = User(
-        id: childId,
-        email: '$childId@child.local',
+        id: resolvedChildId,
+        email: '$resolvedChildId@child.local',
         role: UserRoles.child,
         name: resolvedName?.isNotEmpty == true
             ? resolvedName!.trim()
-            : 'Child $childId',
+            : 'Child $resolvedChildId',
         createdAt: now,
         updatedAt: now,
         isActive: true,
@@ -417,10 +464,10 @@ class AuthRepository {
       await _secureStorage.deleteRefreshToken();
       await _secureStorage.deleteUserEmail();
       await _secureStorage.clearParentPinVerification();
-      await _secureStorage.saveAuthToken('child_session_$childId');
-      await _secureStorage.saveUserId(childId);
+      await _secureStorage.saveAuthToken(sessionToken);
+      await _secureStorage.saveUserId(resolvedChildId);
       await _secureStorage.saveUserRole(UserRoles.child);
-      await _secureStorage.saveChildSession(childId);
+      await _secureStorage.saveChildSession(resolvedChildId);
 
       _logger.d('Child login successful: ${childUser.id}');
       return childUser;
@@ -428,6 +475,8 @@ class AuthRepository {
       _logger.e(
           'Child login error: ${e.response?.statusCode} - ${e.response?.data}');
       throw ChildLoginException(statusCode: e.response?.statusCode);
+    } on ChildLoginException {
+      rethrow;
     } catch (e) {
       _logger.e('Child login error: $e');
       throw const ChildLoginException();
@@ -445,6 +494,7 @@ class AuthRepository {
     try {
       final trimmedName = name.trim();
       final trimmedEmail = parentEmail.trim().toLowerCase();
+      final parentAccessToken = await _resolveParentRegistrationToken();
 
       if (trimmedName.isEmpty ||
           trimmedEmail.isEmpty ||
@@ -454,10 +504,18 @@ class AuthRepository {
         _logger.w('Child register failed: Missing or invalid data');
         throw const ChildRegisterException(statusCode: 422);
       }
+      if (parentAccessToken == null) {
+        _logger.w('Child register blocked: parent authentication is required');
+        throw const ChildRegisterException(
+          statusCode: 401,
+          message: 'Parent authentication is required',
+        );
+      }
 
       final data = await _authApi.childRegister(
         name: trimmedName,
         picturePassword: picturePassword,
+        parentAccessToken: parentAccessToken,
         parentEmail: trimmedEmail,
         age: age,
         avatar: avatar,
@@ -519,6 +577,8 @@ class AuthRepository {
         detailCode: detailCode,
         message: message,
       );
+    } on ChildRegisterException {
+      rethrow;
     } catch (e) {
       _logger.e('Child register error: $e');
       throw const ChildRegisterException();
@@ -571,6 +631,26 @@ class AuthRepository {
   Future<bool> logout() async {
     try {
       _logger.d('Logging out user');
+      final role = await _secureStorage.getUserRole();
+      final authToken = await _secureStorage.getAuthToken();
+      final shouldNotifyBackend = role == UserRoles.parent &&
+          authToken != null &&
+          authToken.isNotEmpty &&
+          !isChildSessionToken(authToken) &&
+          !isLegacyChildSessionMarker(authToken);
+
+      if (shouldNotifyBackend) {
+        try {
+          await _authApi.logout();
+        } on DioException catch (e) {
+          _logger.w(
+            'Parent logout API failed: ${e.response?.statusCode} ${e.message}',
+          );
+        } catch (e) {
+          _logger.w('Parent logout API failed: $e');
+        }
+      }
+
       await _secureStorage.clearParentPinVerification();
       await _secureStorage.clearAuthOnly();
       _logger.d('Logout successful');
@@ -584,10 +664,30 @@ class AuthRepository {
   // ==================== PARENT PIN ====================
 
   Future<ParentPinStatus> getParentPinStatus() async {
+    final role = await _secureStorage.getUserRole();
+    final authToken = _secureStorage.hasCachedAuthToken
+        ? _secureStorage.cachedAuthToken
+        : await _secureStorage.getAuthToken();
+    final hasUsableParentSession =
+        role == UserRoles.parent && _isUsableParentToken(authToken);
+
+    if (!hasUsableParentSession) {
+      _logger.d(
+        'Skipping parent PIN status request: no authenticated parent session',
+      );
+      return const ParentPinStatus(
+        hasPin: false,
+        isLocked: false,
+        failedAttempts: 0,
+        lockedUntil: null,
+      );
+    }
+
     try {
       final data = await _authApi.parentPinStatus();
+      await _secureStorage.deleteLegacyParentPin();
 
-      final status = ParentPinStatus(
+      return ParentPinStatus(
         hasPin: data['has_pin'] == true,
         isLocked: data['is_locked'] == true,
         failedAttempts: (data['failed_attempts'] as num?)?.toInt() ?? 0,
@@ -595,26 +695,21 @@ class AuthRepository {
             ? DateTime.tryParse(data['locked_until'] as String)
             : null,
       );
-
-      // Migrate legacy local PIN if it exists and backend has no PIN yet.
-      final legacyPin = await _secureStorage.getParentPin();
-      if (!status.hasPin &&
-          legacyPin != null &&
-          legacyPin.length == 4 &&
-          RegExp(r'^\d{4}$').hasMatch(legacyPin)) {
-        final migrated = await setParentPin(legacyPin, legacyPin);
-        if (migrated.success) {
-          await _secureStorage.deleteParentPin();
-          return const ParentPinStatus(
-            hasPin: true,
-            isLocked: false,
-            failedAttempts: 0,
-            lockedUntil: null,
-          );
-        }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        _logger.w(
+          'Parent PIN status request returned 401; clearing parent PIN verification state',
+        );
+        await _secureStorage.clearParentPinVerification();
+      } else {
+        _logger.e('Error getting parent PIN status: $e');
       }
-
-      return status;
+      return const ParentPinStatus(
+        hasPin: false,
+        isLocked: false,
+        failedAttempts: 0,
+        lockedUntil: null,
+      );
     } catch (e) {
       _logger.e('Error getting parent PIN status: $e');
       return const ParentPinStatus(
@@ -633,9 +728,10 @@ class AuthRepository {
         pin: pin,
         confirmPin: confirmPin,
       );
-      await _secureStorage.saveParentPinVerified(true);
+      final success = response['success'] == true;
+      await _secureStorage.saveParentPinVerified(success);
       return ParentPinActionResult(
-        success: response['success'] == true,
+        success: success,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
@@ -655,9 +751,10 @@ class AuthRepository {
   Future<ParentPinActionResult> verifyParentPin(String enteredPin) async {
     try {
       final response = await _authApi.parentPinVerify(pin: enteredPin);
-      await _secureStorage.saveParentPinVerified(true);
+      final success = response['success'] == true;
+      await _secureStorage.saveParentPinVerified(success);
       return ParentPinActionResult(
-        success: response['success'] == true,
+        success: success,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
@@ -688,9 +785,10 @@ class AuthRepository {
         newPin: newPin,
         confirmPin: confirmPin,
       );
-      await _secureStorage.saveParentPinVerified(true);
+      final success = response['success'] == true;
+      await _secureStorage.saveParentPinVerified(success);
       return ParentPinActionResult(
-        success: response['success'] == true,
+        success: success,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
@@ -893,7 +991,14 @@ class AuthRepository {
       final token = await _secureStorage.getAuthToken();
 
       if (token == null || token.isEmpty) return false;
-      if (token.startsWith('child_session_')) return true;
+      if (isLegacyChildSessionMarker(token)) {
+        await _secureStorage.clearAuthOnly();
+        return false;
+      }
+      if (isChildSessionToken(token)) {
+        final data = await _authApi.validateChildSession(sessionToken: token);
+        return data['success'] == true;
+      }
 
       return !_tokenLooksExpired(token);
     } catch (e) {

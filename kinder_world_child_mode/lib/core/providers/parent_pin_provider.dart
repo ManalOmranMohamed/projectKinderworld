@@ -65,9 +65,7 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
     required Logger logger,
   })  : _authRepository = authRepository,
         _logger = logger,
-        super(const ParentPinState()) {
-    refreshStatus();
-  }
+        super(const ParentPinState());
 
   final AuthRepository _authRepository;
   final Logger _logger;

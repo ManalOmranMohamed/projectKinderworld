@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -100,9 +102,9 @@ class AppNavigationController {
     }
     return true;
     } finally {
-      Future<void>.microtask(() {
+      unawaited(Future<void>.microtask(() {
         _backHandlingLocked = false;
-      });
+      }));
     }
   }
 
@@ -136,9 +138,6 @@ class AppNavigationController {
     if (normalized.startsWith('${Routes.childLearn}/subject/') ||
         normalized.startsWith('${Routes.childLearn}/lesson/')) {
       return Routes.childLearn;
-    }
-    if (normalized.startsWith('${Routes.childPlay}/category/')) {
-      return Routes.childPlay;
     }
     if (normalized == Routes.childAchievements ||
         normalized == Routes.childStore) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -59,9 +61,8 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       _sent = true;
     });
 
-    _animController
-      ..reset()
-      ..forward();
+    _animController.reset();
+    unawaited(_animController.forward());
   }
 
   void _resetState() {
@@ -69,9 +70,8 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
       _sent = false;
       _emailController.clear();
     });
-    _animController
-      ..reset()
-      ..forward();
+    _animController.reset();
+    unawaited(_animController.forward());
   }
 
   @override

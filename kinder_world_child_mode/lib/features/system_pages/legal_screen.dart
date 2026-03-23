@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/providers/cache_provider.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/legal/legal_default_documents.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/legal_content_payload.dart';
 import 'package:kinder_world/app.dart';
 
 /// LegalScreen uses ConsumerStatefulWidget so the network Future is created
@@ -20,7 +22,7 @@ class LegalScreen extends ConsumerStatefulWidget {
 }
 
 class _LegalScreenState extends ConsumerState<LegalScreen> {
-  late Future<Map<String, dynamic>> _contentFuture;
+  late Future<LegalContentPayload> _contentFuture;
   bool _showingCachedContent = false;
   bool _cachedHintShown = false;
 
@@ -30,7 +32,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
     _contentFuture = _loadLegalContent();
   }
 
-  Future<Map<String, dynamic>> _loadLegalContent({
+  Future<LegalContentPayload> _loadLegalContent({
     bool forceRefresh = false,
   }) async {
     const staleAfter = Duration(days: 7);
@@ -44,7 +46,10 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
     if (!forceRefresh && snapshot.hasData && !snapshot.isStale) {
       _showingCachedContent = true;
       _cachedHintShown = false;
-      return cacheStore.readMap(scope: 'legal_content', key: widget.type) ?? {};
+      return LegalContentPayload.fromJson(
+        cacheStore.readMap(scope: 'legal_content', key: widget.type) ??
+            const {},
+      );
     }
 
     try {
@@ -60,18 +65,18 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
       );
       _showingCachedContent = false;
       _cachedHintShown = false;
-      return data;
+      return LegalContentPayload.fromJson(data);
     } catch (_) {
       final cached =
           cacheStore.readMap(scope: 'legal_content', key: widget.type);
       if (cached != null) {
         _showingCachedContent = true;
         _cachedHintShown = false;
-        return cached;
+        return LegalContentPayload.fromJson(cached);
       }
       _showingCachedContent = false;
       _cachedHintShown = false;
-      return {};
+      return const LegalContentPayload();
     }
   }
 
@@ -107,7 +112,7 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
         ],
       ),
       body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
+        child: FutureBuilder<LegalContentPayload>(
           future: _contentFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -127,8 +132,15 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
                 );
               });
             }
-            final body = snapshot.data?['body']?.toString();
-            if (body == null || body.isEmpty) {
+            final languageCode = Localizations.localeOf(context).languageCode;
+            final payload = snapshot.data ?? const LegalContentPayload();
+            final fallbackBody = legalDefaultDocumentForType(widget.type)
+                ?.bodyForLanguageCode(languageCode);
+            final body = payload.resolvedBodyForLanguageCode(languageCode);
+            final resolvedBody = body.isNotEmpty ? body : (fallbackBody ?? '');
+            final isUsingDefaultBody = body.isEmpty && resolvedBody.isNotEmpty;
+
+            if (resolvedBody.isEmpty) {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -166,13 +178,36 @@ class _LegalScreenState extends ConsumerState<LegalScreen> {
             return Padding(
               padding: const EdgeInsets.all(24),
               child: SingleChildScrollView(
-                child: Text(
-                  body,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 16,
-                    height: 1.5,
-                    color: colors.onSurface,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isUsingDefaultBody) ...[
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: colors.secondaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          _getPlaceholder(widget.type, l10n),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.onSecondaryContainer,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                    Text(
+                      resolvedBody,
+                      style: textTheme.bodyMedium?.copyWith(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Iterable
 
@@ -180,21 +180,15 @@ class AiBuddyResponseGenerator:
                 "but it kept shining until other stars joined in. Soon the whole sky looked friendly."
             )
         if intent == "fun_fact":
-            return (
-                "Fun fact: octopuses have three hearts. If you want, I can give you another fact about animals or space."
-            )
+            return "Fun fact: octopuses have three hearts. If you want, I can give you another fact about animals or space."
         if intent == "motivation":
             return (
                 f"{prefix}it is okay to feel tired or sad sometimes. Take one deep breath, wiggle your shoulders, "
                 "and try one small step. I can stay with you and help."
             )
         if any("?" in item for item in recent_messages):
-            return (
-                f"{prefix}I can help with that. Tell me if you want a lesson idea, a game, a story, or a fun fact."
-            )
-        return (
-            f"{prefix}I heard you say: \"{message[:80]}\". I can help with learning, stories, games, and kind encouragement."
-        )
+            return f"{prefix}I can help with that. Tell me if you want a lesson idea, a game, a story, or a fun fact."
+        return f'{prefix}I heard you say: "{message[:80]}". I can help with learning, stories, games, and kind encouragement.'
 
     def _build_arabic_response(
         self,
@@ -205,26 +199,16 @@ class AiBuddyResponseGenerator:
     ) -> str:
         prefix = f"{child_name}، " if child_name else ""
         if intent == "recommend_lesson":
-            return (
-                f"{prefix}هيا نجرب نشاطا صغيرا: عد خمس أشياء حولك، ثم أخبرني أي شيء هو الأكبر."
-            )
+            return f"{prefix}هيا نجرب نشاطا صغيرا: عد خمس أشياء حولك، ثم أخبرني أي شيء هو الأكبر."
         if intent == "suggest_game":
-            return (
-                f"{prefix}لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم، ثم أخبرني ماذا وجدت."
-            )
+            return f"{prefix}لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم، ثم أخبرني ماذا وجدت."
         if intent == "tell_story":
-            return (
-                "قصة قصيرة: كان هناك نجم صغير خائف من السماء المظلمة، لكنه استمر في اللمعان حتى ظهرت نجوم أخرى، فأصبحت السماء أجمل وأهدأ."
-            )
+            return "قصة قصيرة: كان هناك نجم صغير خائف من السماء المظلمة، لكنه استمر في اللمعان حتى ظهرت نجوم أخرى، فأصبحت السماء أجمل وأهدأ."
         if intent == "fun_fact":
             return "معلومة لطيفة: للأخطبوط ثلاثة قلوب. إذا أردت، أستطيع أن أعطيك معلومة أخرى."
         if intent == "motivation":
-            return (
-                f"{prefix}من الطبيعي أن تشعر بالتعب أو الحزن أحيانا. خذ نفسا عميقا، وحرك كتفيك قليلا، ثم نبدأ خطوة صغيرة معا."
-            )
-        return (
-            f"{prefix}أنا هنا لأساعدك. يمكنني أن أقترح درسا بسيطا أو لعبة ممتعة أو قصة قصيرة أو معلومة جديدة."
-        )
+            return f"{prefix}من الطبيعي أن تشعر بالتعب أو الحزن أحيانا. خذ نفسا عميقا، وحرك كتفيك قليلا، ثم نبدأ خطوة صغيرة معا."
+        return f"{prefix}أنا هنا لأساعدك. يمكنني أن أقترح درسا بسيطا أو لعبة ممتعة أو قصة قصيرة أو معلومة جديدة."
 
 
 ai_buddy_response_generator = AiBuddyResponseGenerator()

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/admin_management_activity.dart';
 import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
@@ -27,7 +28,7 @@ class AdminUserDetailsScreen extends ConsumerStatefulWidget {
 class _AdminUserDetailsScreenState
     extends ConsumerState<AdminUserDetailsScreen> {
   AdminParentUser? _user;
-  Map<String, dynamic>? _activity;
+  AdminUserActivityDetails? _activity;
   bool _loading = true;
   String? _error;
 
@@ -59,7 +60,7 @@ class _AdminUserDetailsScreenState
       if (!mounted) return;
       setState(() {
         _user = results[0] as AdminParentUser;
-        _activity = results[1] as Map<String, dynamic>;
+        _activity = results[1] as AdminUserActivityDetails;
         _loading = false;
       });
     } catch (e) {
@@ -88,18 +89,10 @@ class _AdminUserDetailsScreenState
       );
     }
 
-    final summary =
-        Map<String, dynamic>.from(_activity?['summary'] as Map? ?? const {});
-    final notifications = List<Map<String, dynamic>>.from(
-      (_activity?['notifications'] as List<dynamic>? ?? const []).map(
-        (item) => Map<String, dynamic>.from(item as Map),
-      ),
-    );
-    final tickets = List<Map<String, dynamic>>.from(
-      (_activity?['support_tickets'] as List<dynamic>? ?? const []).map(
-        (item) => Map<String, dynamic>.from(item as Map),
-      ),
-    );
+    final activity = _activity;
+    final summary = activity?.summary;
+    final notifications = activity?.notifications ?? const <AdminUserNotificationPreview>[];
+    final tickets = activity?.supportTickets ?? const <AdminUserSupportTicketPreview>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -127,10 +120,10 @@ class _AdminUserDetailsScreenState
               _InfoCard(
                 title: l10n.adminUsersActivityCard,
                 lines: [
-                  '${l10n.adminUsersChildrenColumn}: ${summary['child_count'] ?? _user!.childCount}',
-                  '${l10n.adminUsersNotificationsMetric}: ${summary['notification_count'] ?? 0}',
-                  '${l10n.adminUsersSupportMetric}: ${summary['support_ticket_count'] ?? 0}',
-                  '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _user!.updatedAt ?? l10n.notAvailable}',
+                  '${l10n.adminUsersChildrenColumn}: ${summary?.childCount ?? _user!.childCount}',
+                  '${l10n.adminUsersNotificationsMetric}: ${summary?.notificationCount ?? 0}',
+                  '${l10n.adminUsersSupportMetric}: ${summary?.supportTicketCount ?? 0}',
+                  '${l10n.adminUsersLastUpdatedMetric}: ${summary?.lastUpdatedAt ?? _user!.updatedAt ?? l10n.notAvailable}',
                 ],
               ),
             ],
@@ -172,10 +165,9 @@ class _AdminUserDetailsScreenState
                           (entry) => ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(
-                              entry['title'] as String? ?? l10n.notAvailable,
+                              entry.title.isEmpty ? l10n.notAvailable : entry.title,
                             ),
-                            subtitle:
-                                Text(entry['created_at'] as String? ?? ''),
+                            subtitle: Text(entry.createdAt ?? ''),
                           ),
                         )
                         .toList(),
@@ -195,10 +187,9 @@ class _AdminUserDetailsScreenState
                           (entry) => ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(
-                              entry['subject'] as String? ?? l10n.notAvailable,
+                              entry.subject.isEmpty ? l10n.notAvailable : entry.subject,
                             ),
-                            subtitle:
-                                Text(entry['created_at'] as String? ?? ''),
+                            subtitle: Text(entry.createdAt ?? ''),
                           ),
                         )
                         .toList(),

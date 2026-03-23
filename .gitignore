@@ -2,6 +2,9 @@ app.log
 *.log
 .coverage
 coverage.xml
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .env
 .env.*
 .venv/
@@ -28,3 +31,7 @@ __pycache__/
 key.properties
 .dart_tool/
 build/
+kinder_world_child_mode/coverage/
+kinderbackend/htmlcov/
+kinder_world_child_mode/.flutter-plugins
+kinder_world_child_mode/.flutter-plugins-dependencies

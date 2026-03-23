@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import shutil
 import sqlite3
 import subprocess
@@ -121,7 +120,9 @@ def main() -> int:
         if not args.apply:
             return 0
 
-        target_path = Path(args.target) if args.target else _sqlite_path_from_url(database.DATABASE_URL)
+        target_path = (
+            Path(args.target) if args.target else _sqlite_path_from_url(database.DATABASE_URL)
+        )
         if target_path is None:
             print("[FAIL] could not resolve target sqlite path")
             return 1

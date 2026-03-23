@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/providers/auth_controller.dart';
+import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:logger/logger.dart';
 
 import 'package:kinder_world/core/storage/secure_storage.dart';
@@ -56,18 +58,30 @@ bool isParentPinProtectedRoute(String path) {
 
 class RouterRefreshListenable extends ChangeNotifier {
   RouterRefreshListenable(this.ref) {
-    _subscription = ref.listen<AdminAuthState>(
+    _adminSubscription = ref.listen<AdminAuthState>(
       adminAuthProvider,
+      (_, __) => notifyListeners(),
+    );
+    _authSubscription = ref.listen<AuthState>(
+      authControllerProvider,
+      (_, __) => notifyListeners(),
+    );
+    _parentPinSubscription = ref.listen<ParentPinState>(
+      parentPinProvider,
       (_, __) => notifyListeners(),
     );
   }
 
   final Ref ref;
-  late final ProviderSubscription<AdminAuthState> _subscription;
+  late final ProviderSubscription<AdminAuthState> _adminSubscription;
+  late final ProviderSubscription<AuthState> _authSubscription;
+  late final ProviderSubscription<ParentPinState> _parentPinSubscription;
 
   @override
   void dispose() {
-    _subscription.close();
+    _adminSubscription.close();
+    _authSubscription.close();
+    _parentPinSubscription.close();
     super.dispose();
   }
 }

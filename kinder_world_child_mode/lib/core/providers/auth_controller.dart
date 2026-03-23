@@ -367,6 +367,7 @@ class AuthController extends StateNotifier<AuthState> {
     }
     switch (statusCode) {
       case 401:
+      case 403:
         return 'child_register_401';
       case 404:
         return 'child_register_404';

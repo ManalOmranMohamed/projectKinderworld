@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,10 +74,10 @@ class _ActivityOfTheDayScreenState
     });
 
     if (record != null) {
-      HapticFeedback.lightImpact();
+      unawaited(HapticFeedback.lightImpact());
       showChildFeedbackSnackBar(context, l10n.xpBonusEarned);
     } else {
-      HapticFeedback.heavyImpact();
+      unawaited(HapticFeedback.heavyImpact());
       showChildFeedbackSnackBar(context, l10n.tryAgain, success: false);
     }
   }

@@ -1,25 +1,16 @@
 ﻿import logging
 import os
 import time
+import json
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Optional
-
 from jose import JWTError
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from auth import create_token, decode_token
+from auth import create_token, decode_token, hash_password, verify_password
 from core.errors import forbidden, http_error, not_found, unauthorized, unprocessable
 from core.time_utils import db_utc_now, utc_now
-from core.validators import (
-    normalize_email,
-    resolve_child_age,
-    validate_child_age,
-    validate_email_domain,
-    validate_picture_password_length,
-)
-from deps import decode_bearer
+from core.validators import resolve_child_age, validate_child_age, validate_picture_password_length
 from models import ChildProfile, User
 from plan_service import PLAN_LIMITS, get_user_plan
 from schemas.auth import (
@@ -34,12 +25,71 @@ from serializers import child_to_json
 logger = logging.getLogger(__name__)
 
 PREMIUM_PRICE_USD = 10
+PICTURE_PASSWORD_HASH_SCHEME = "bcrypt_json_v1"
 
 _FAILED_ATTEMPTS: dict[str, list[float]] = defaultdict(list)
 _DEVICE_BINDINGS: dict[int, str] = {}
 
 
 class ChildService:
+    def _canonical_picture_password(self, picture_password: list[str]) -> str:
+        validate_picture_password_length(picture_password, length=3)
+        return json.dumps(picture_password, separators=(",", ":"), ensure_ascii=True)
+
+    def _hash_picture_password(self, picture_password: list[str]) -> dict[str, str | int]:
+        return {
+            "scheme": PICTURE_PASSWORD_HASH_SCHEME,
+            "hash": hash_password(self._canonical_picture_password(picture_password)),
+            "length": len(picture_password),
+        }
+
+    def picture_password_length(self, stored_password: object) -> int:
+        if isinstance(stored_password, list):
+            return len(stored_password)
+        if isinstance(stored_password, dict):
+            length = stored_password.get("length")
+            if isinstance(length, int):
+                return length
+        return 0
+
+    def _verify_picture_password(
+        self,
+        *,
+        stored_password: object,
+        provided_password: list[str],
+    ) -> bool:
+        if isinstance(stored_password, list):
+            return stored_password == provided_password
+        if isinstance(stored_password, dict):
+            scheme = stored_password.get("scheme")
+            password_hash = stored_password.get("hash")
+            if scheme == PICTURE_PASSWORD_HASH_SCHEME and isinstance(password_hash, str):
+                return verify_password(
+                    self._canonical_picture_password(provided_password),
+                    password_hash,
+                )
+        return False
+
+    def _ensure_parent_matches_payload_email(
+        self,
+        *,
+        parent: User,
+        parent_email: str | None,
+    ) -> None:
+        if parent_email is None:
+            return
+        normalized_payload_email = parent_email.strip().lower()
+        normalized_parent_email = (parent.email or "").strip().lower()
+        if normalized_payload_email == normalized_parent_email:
+            return
+        logger.warning(
+            "child_register_parent_email_mismatch parent_id=%s authenticated_email=%s payload_email=%s",
+            parent.id,
+            normalized_parent_email,
+            normalized_payload_email,
+        )
+        raise forbidden("Parent email does not match authenticated parent")
+
     def _rate_limit_window_seconds(self) -> int:
         return max(int(os.getenv("CHILD_AUTH_RATE_LIMIT_WINDOW_SECONDS", "300")), 30)
 
@@ -175,42 +225,6 @@ class ChildService:
             )
             raise forbidden("This child account is bound to a different device")
 
-    def resolve_parent(
-        self,
-        *,
-        parent_email: Optional[str],
-        authorization: Optional[str],
-        db: Session,
-    ) -> User:
-        if parent_email:
-            normalized_email = normalize_email(parent_email)
-            parent = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-            if not parent:
-                raise not_found("Parent not found")
-            return parent
-
-        parent_id = decode_bearer(authorization)
-        if not parent_id:
-            raise unauthorized("Invalid token payload")
-
-        parent = db.query(User).filter(User.id == int(parent_id)).first()
-        if not parent:
-            raise not_found("Parent not found")
-        token = authorization.replace("Bearer ", "").strip() if authorization else ""
-        try:
-            payload = decode_token(token)
-        except JWTError:
-            raise unauthorized("Invalid token")
-
-        try:
-            token_version = int(payload.get("token_version"))
-        except (TypeError, ValueError):
-            raise unauthorized("Token has been revoked")
-
-        if token_version != int(parent.token_version or 0):
-            raise unauthorized("Token has been revoked")
-        return parent
-
     def enforce_child_limit(self, *, parent: User, db: Session) -> None:
         plan = get_user_plan(parent)
         limit = PLAN_LIMITS.get(plan)
@@ -260,18 +274,14 @@ class ChildService:
         self,
         *,
         payload: ChildCreate,
-        authorization: Optional[str],
+        parent: User,
         db: Session,
     ) -> dict:
-        if payload.parent_email:
-            validate_email_domain(normalize_email(payload.parent_email))
-
         resolved_age = resolve_child_age(payload.age, payload.date_of_birth)
         validate_child_age(resolved_age)
-        parent = self.resolve_parent(
+        self._ensure_parent_matches_payload_email(
+            parent=parent,
             parent_email=payload.parent_email,
-            authorization=authorization,
-            db=db,
         )
         self.enforce_child_limit(parent=parent, db=db)
         self.ensure_unique_child_name(parent=parent, name=payload.name, db=db)
@@ -279,7 +289,7 @@ class ChildService:
         child = ChildProfile(
             parent_id=parent.id,
             name=payload.name,
-            picture_password=payload.picture_password,
+            picture_password=self._hash_picture_password(payload.picture_password),
             date_of_birth=payload.date_of_birth,
             age=resolved_age,
             avatar=payload.avatar,
@@ -338,7 +348,7 @@ class ChildService:
         if payload.name is not None:
             child.name = payload.name
         if payload.picture_password is not None:
-            child.picture_password = payload.picture_password
+            child.picture_password = self._hash_picture_password(payload.picture_password)
         if payload.date_of_birth is not None:
             child.date_of_birth = payload.date_of_birth
         if payload.age is not None or payload.date_of_birth is not None:
@@ -354,22 +364,20 @@ class ChildService:
         db.refresh(child)
         return {"child": child_to_json(child)}
 
-    def register_child(self, *, payload: ChildRegisterIn, db: Session) -> dict:
-        parent_email = normalize_email(payload.parent_email)
-        validate_email_domain(parent_email)
-        parent = db.query(User).filter(func.lower(User.email) == parent_email).first()
-        if not parent:
-            raise not_found("Parent not found")
-
+    def register_child(self, *, payload: ChildRegisterIn, parent: User, db: Session) -> dict:
         resolved_age = resolve_child_age(payload.age, payload.date_of_birth)
         validate_child_age(resolved_age)
+        self._ensure_parent_matches_payload_email(
+            parent=parent,
+            parent_email=payload.parent_email,
+        )
         self.enforce_child_limit(parent=parent, db=db)
         self.ensure_unique_child_name(parent=parent, name=payload.name, db=db)
 
         child = ChildProfile(
             parent_id=parent.id,
             name=payload.name,
-            picture_password=payload.picture_password,
+            picture_password=self._hash_picture_password(payload.picture_password),
             date_of_birth=payload.date_of_birth,
             age=resolved_age,
             avatar=payload.avatar,
@@ -451,8 +459,11 @@ class ChildService:
             )
             raise unauthorized("Invalid credentials")
 
-        stored = child.picture_password or []
-        if stored != payload.picture_password:
+        stored_password = child.picture_password or []
+        if not self._verify_picture_password(
+            stored_password=stored_password,
+            provided_password=payload.picture_password,
+        ):
             self._record_failed_attempt(
                 child_id=child.id,
                 client_ip=client_ip,
@@ -519,7 +530,10 @@ class ChildService:
             raise not_found("Child not found")
 
         token_device = claims.get("device_id")
-        if token_device and payload.device_id and token_device != payload.device_id:
+        request_device = (payload.device_id or "").strip() or None
+        if token_device and not request_device:
+            raise unauthorized("Device ID is required for this child session")
+        if token_device and token_device != request_device:
             raise unauthorized("Child session is bound to a different device")
 
         exp = claims.get("exp")
@@ -551,13 +565,16 @@ class ChildService:
         if not normalized_name or normalized_name != child_name:
             raise unauthorized("Invalid credentials")
 
-        stored = child.picture_password or []
-        if stored != payload.current_picture_password:
+        stored_password = child.picture_password or []
+        if not self._verify_picture_password(
+            stored_password=stored_password,
+            provided_password=payload.current_picture_password,
+        ):
             raise unauthorized("Current picture password is incorrect")
 
         validate_picture_password_length(payload.new_picture_password, length=3)
 
-        child.picture_password = payload.new_picture_password
+        child.picture_password = self._hash_picture_password(payload.new_picture_password)
         child.updated_at = db_utc_now()
         db.add(child)
         db.commit()
@@ -567,14 +584,6 @@ class ChildService:
 
 
 child_service = ChildService()
-
-
-def resolve_parent(parent_email: Optional[str], authorization: Optional[str], db: Session) -> User:
-    return child_service.resolve_parent(
-        parent_email=parent_email,
-        authorization=authorization,
-        db=db,
-    )
 
 
 def enforce_child_limit(parent: User, db: Session) -> None:
@@ -587,12 +596,12 @@ def ensure_unique_child_name(parent: User, name: str, db: Session) -> None:
 
 def create_child_profile(
     payload: ChildCreate,
-    authorization: Optional[str],
+    parent: User,
     db: Session,
 ) -> dict:
     return child_service.create_child_profile(
         payload=payload,
-        authorization=authorization,
+        parent=parent,
         db=db,
     )
 
@@ -614,8 +623,8 @@ def update_child_profile(child_id: int, payload: ChildUpdate, parent: User, db: 
     )
 
 
-def register_child(payload: ChildRegisterIn, db: Session) -> dict:
-    return child_service.register_child(payload=payload, db=db)
+def register_child(payload: ChildRegisterIn, parent: User, db: Session) -> dict:
+    return child_service.register_child(payload=payload, parent=parent, db=db)
 
 
 def login_child(

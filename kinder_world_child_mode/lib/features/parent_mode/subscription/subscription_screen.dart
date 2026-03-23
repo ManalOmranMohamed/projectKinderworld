@@ -12,6 +12,7 @@ import 'package:kinder_world/core/subscription/subscription_return.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/features/parent_mode/subscription/subscription_plan_catalog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
@@ -210,7 +211,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         _pendingReturnFlow = 'checkout';
         _refreshOnResume = true;
       });
-
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text(_resolveActionError(e))),
@@ -399,7 +399,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }) {
     final events = history?.events ?? snapshot.recentEvents;
     final attempts = history?.paymentAttempts ?? snapshot.paymentAttempts;
-    final transactions = history?.billingTransactions ?? snapshot.billingHistory;
+    final transactions =
+        history?.billingTransactions ?? snapshot.billingHistory;
     final lifecycle = snapshot.lifecycle;
 
     bool hasPortalUnavailable = events.any((event) {
@@ -419,9 +420,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           event.eventType == 'activation_failed';
     });
 
-    bool hasActionRequired =
-        lifecycle.lastPaymentStatus == 'action_required' ||
-            attempts.any((item) => item.status == 'action_required');
+    bool hasActionRequired = lifecycle.lastPaymentStatus == 'action_required' ||
+        attempts.any((item) => item.status == 'action_required');
 
     bool hasFailed = lifecycle.lastPaymentStatus == 'failed' ||
         attempts.any((item) => item.status == 'failed') ||
@@ -477,8 +477,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       bg = colors.secondaryContainer;
       fg = colors.onSecondaryContainer;
       title = 'Action required';
-      subtitle =
-          'Additional verification is needed to complete the payment.';
+      subtitle = 'Additional verification is needed to complete the payment.';
     } else if (hasFailed) {
       icon = Icons.error_outline_rounded;
       bg = colors.errorContainer;
@@ -502,8 +501,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       bg = colors.tertiaryContainer;
       fg = colors.onTertiaryContainer;
       title = 'Payment pending';
-      subtitle =
-          'We are waiting for the provider to confirm the payment.';
+      subtitle = 'We are waiting for the provider to confirm the payment.';
     }
 
     return ParentCard(
@@ -613,40 +611,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         ],
       ),
     );
-  }
-
-  List<_PlanCardConfig> _planCardConfigs(AppLocalizations l10n) {
-    return [
-      _PlanCardConfig(
-        title: l10n.planPremium,
-        price: '\$10',
-        priceLabel: l10n.perMonthLabel,
-        subtitle: l10n.premiumFeatures,
-        features: [
-          l10n.unlimitedActivities,
-          l10n.upToThreeChildren,
-          '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
-          l10n.offlineDownloadsLabel,
-        ],
-        tier: PlanTier.premium,
-      ),
-      _PlanCardConfig(
-        title: l10n.familyPlanLabel,
-        price: '\$20',
-        priceLabel: l10n.perMonthLabel,
-        subtitle: l10n.bestForFamilies,
-        features: [
-          l10n.unlimitedActivities,
-          l10n.planUnlimitedChildren,
-          '${l10n.advancedReportsLabel} & ${l10n.aiInsights}',
-          l10n.offlineDownloadsLabel,
-          l10n.planFamilyDashboard,
-          l10n.prioritySupportLabel,
-        ],
-        tier: PlanTier.familyPlus,
-        isRecommended: true,
-      ),
-    ];
   }
 
   @override
@@ -968,12 +932,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     title: 'Recent Events',
                     icon: Icons.event_note_rounded,
                     loading: historyAsync.isLoading,
-                    errorMessage:
-                        historyAsync.hasError ? historyAsync.error.toString() : null,
+                    errorMessage: historyAsync.hasError
+                        ? historyAsync.error.toString()
+                        : null,
                     children: (history?.events ?? snapshot.recentEvents)
                         .take(8)
                         .map((event) => _HistoryTile(
-                              title: '${_displayStatus(event.eventType)} • ${event.planId}',
+                              title:
+                                  '${_displayStatus(event.eventType)} • ${event.planId}',
                               subtitle:
                                   '${_displayStatus(event.status)} • ${event.source}',
                               trailing: _formatDateTime(event.occurredAt),
@@ -986,16 +952,19 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     title: 'Billing History',
                     icon: Icons.receipt_long_rounded,
                     loading: historyAsync.isLoading,
-                    errorMessage:
-                        historyAsync.hasError ? historyAsync.error.toString() : null,
-                    children: (history?.billingTransactions ?? snapshot.billingHistory)
+                    errorMessage: historyAsync.hasError
+                        ? historyAsync.error.toString()
+                        : null,
+                    children: (history?.billingTransactions ??
+                            snapshot.billingHistory)
                         .take(8)
                         .map((transaction) => _HistoryTile(
                               title:
                                   '${_displayStatus(transaction.transactionType)} • ${transaction.planId}',
                               subtitle:
                                   '${_formatAmount(transaction.amountCents, transaction.currency)} • ${_displayStatus(transaction.status)}',
-                              trailing: _formatDateTime(transaction.effectiveAt),
+                              trailing:
+                                  _formatDateTime(transaction.effectiveAt),
                               icon: Icons.receipt_rounded,
                             ))
                         .toList(),
@@ -1005,31 +974,37 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     title: 'Payment Attempts',
                     icon: Icons.credit_score_rounded,
                     loading: historyAsync.isLoading,
-                    errorMessage:
-                        historyAsync.hasError ? historyAsync.error.toString() : null,
-                    children: (history?.paymentAttempts ?? snapshot.paymentAttempts)
-                        .take(8)
-                        .map((attempt) => _HistoryTile(
-                              title:
-                                  '${_displayStatus(attempt.attemptType)} • ${attempt.planId}',
-                              subtitle: [
-                                _formatAmount(attempt.amountCents, attempt.currency),
-                                _displayStatus(attempt.status),
-                                if (attempt.failureCode != null &&
-                                    attempt.failureCode!.isNotEmpty)
-                                  attempt.failureCode!,
-                              ].join(' • '),
-                              trailing: _formatDateTime(
-                                attempt.completedAt ?? attempt.requestedAt,
-                              ),
-                              icon: Icons.payments_outlined,
-                            ))
-                        .toList(),
+                    errorMessage: historyAsync.hasError
+                        ? historyAsync.error.toString()
+                        : null,
+                    children:
+                        (history?.paymentAttempts ?? snapshot.paymentAttempts)
+                            .take(8)
+                            .map((attempt) => _HistoryTile(
+                                  title:
+                                      '${_displayStatus(attempt.attemptType)} • ${attempt.planId}',
+                                  subtitle: [
+                                    _formatAmount(
+                                        attempt.amountCents, attempt.currency),
+                                    _displayStatus(attempt.status),
+                                    if (attempt.failureCode != null &&
+                                        attempt.failureCode!.isNotEmpty)
+                                      attempt.failureCode!,
+                                  ].join(' • '),
+                                  trailing: _formatDateTime(
+                                    attempt.completedAt ?? attempt.requestedAt,
+                                  ),
+                                  icon: Icons.payments_outlined,
+                                ))
+                            .toList(),
                   ),
                   const SizedBox(height: 20),
                   ParentSectionHeader(title: l10n.availablePlans),
                   const SizedBox(height: 12),
-                  ..._planCardConfigs(l10n).asMap().entries.map((entry) {
+                  ...buildSubscriptionPlanCardConfigs(l10n)
+                      .asMap()
+                      .entries
+                      .map((entry) {
                     final index = entry.key;
                     final config = entry.value;
                     final accentColor = config.tier == PlanTier.familyPlus
@@ -1108,8 +1083,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     final isCurrent = subscriptionPlanTierFromBackend(currentPlanId) == tier;
     final actionKey = 'select_${tier.name}';
     final isProcessingThis = _actionKey == actionKey;
-    final buttonForeground =
-        isCurrent ? colors.onSurface : accentColor.onColor;
+    final buttonForeground = isCurrent ? colors.onSurface : accentColor.onColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -1233,9 +1207,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
               width: double.infinity,
               height: 48,
               child: FilledButton(
-                onPressed: isCurrent || _isProcessing
-                    ? null
-                    : () => _selectPlan(tier),
+                onPressed:
+                    isCurrent || _isProcessing ? null : () => _selectPlan(tier),
                 style: FilledButton.styleFrom(
                   backgroundColor:
                       isCurrent ? colors.surfaceContainerHighest : accentColor,
@@ -1246,9 +1219,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 ),
                 child: _ActionLabel(
                   isBusy: _isProcessing && isProcessingThis,
-                  label: isCurrent
-                      ? l10n.currentPlanLabel
-                      : l10n.choosePlanLabel,
+                  label:
+                      isCurrent ? l10n.currentPlanLabel : l10n.choosePlanLabel,
                 ),
               ),
             ),
@@ -1257,26 +1229,6 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       ),
     );
   }
-}
-
-class _PlanCardConfig {
-  const _PlanCardConfig({
-    required this.title,
-    required this.price,
-    required this.priceLabel,
-    required this.subtitle,
-    required this.features,
-    required this.tier,
-    this.isRecommended = false,
-  });
-
-  final String title;
-  final String price;
-  final String priceLabel;
-  final String subtitle;
-  final List<String> features;
-  final PlanTier tier;
-  final bool isRecommended;
 }
 
 class _SubscriptionStateCard extends StatelessWidget {

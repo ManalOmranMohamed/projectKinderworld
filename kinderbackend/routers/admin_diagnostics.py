@@ -67,9 +67,7 @@ def diagnostics_health(
     reconciliation_issues = (
         db.query(func.count(SubscriptionEvent.id))
         .filter(
-            SubscriptionEvent.event_type.in_(
-                ["reconciliation_mismatch", "reconciliation_error"]
-            )
+            SubscriptionEvent.event_type.in_(["reconciliation_mismatch", "reconciliation_error"])
         )
         .scalar()
         or 0

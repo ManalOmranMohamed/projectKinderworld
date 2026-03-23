@@ -55,7 +55,8 @@ class _QueuedResponse {
 }
 
 void main() {
-  test('content service fetches FAQ items from /content/help-faq response', () async {
+  test('content service fetches FAQ items from /content/help-faq response',
+      () async {
     final adapter = _QueuedAdapter([
       const _QueuedResponse(
         200,
@@ -88,7 +89,8 @@ void main() {
     expect(items.first.question, 'How do I add a child profile?');
   });
 
-  test('content service resolves legal content from /legal/privacy body', () async {
+  test('content service resolves legal content from /legal/privacy body',
+      () async {
     final adapter = _QueuedAdapter([
       const _QueuedResponse(
         200,
@@ -112,5 +114,95 @@ void main() {
 
     expect(adapter.lastOptions?.path, '/legal/privacy');
     expect(body, 'Privacy body from backend');
+  });
+
+  test('content service resolves legal payload content fallback', () async {
+    final adapter = _QueuedAdapter([
+      const _QueuedResponse(
+        200,
+        {
+          'content': 'COPPA fallback content',
+        },
+      ),
+    ]);
+    final dio = Dio()..httpClientAdapter = adapter;
+    final network = NetworkService(
+      dio: dio,
+      secureStorage: _TestSecureStorage(),
+      logger: Logger(),
+    );
+    final service = ContentService(
+      networkService: network,
+      logger: Logger(),
+    );
+
+    final payload = await service.getLegalPayload('coppa');
+
+    expect(adapter.lastOptions?.path, '/legal/coppa');
+    expect(payload.resolvedBody, 'COPPA fallback content');
+  });
+
+  test('content service resolves localized legal item body fallback', () async {
+    final adapter = _QueuedAdapter([
+      const _QueuedResponse(
+        200,
+        {
+          'item': {
+            'id': 4,
+            'slug': 'privacy-policy',
+            'content_type': 'legal',
+            'title_en': 'Privacy Policy',
+            'title_ar': 'سياسة الخصوصية',
+            'body_en': 'Privacy body from item',
+            'body_ar': 'محتوى الخصوصية من العنصر',
+          },
+        },
+      ),
+    ]);
+    final dio = Dio()..httpClientAdapter = adapter;
+    final network = NetworkService(
+      dio: dio,
+      secureStorage: _TestSecureStorage(),
+      logger: Logger(),
+    );
+    final service = ContentService(
+      networkService: network,
+      logger: Logger(),
+    );
+
+    final payload = await service.getLegalPayload('privacy');
+
+    expect(adapter.lastOptions?.path, '/legal/privacy');
+    expect(payload.resolvedBody, 'Privacy body from item');
+    expect(
+      payload.resolvedBodyForLanguageCode('ar'),
+      'محتوى الخصوصية من العنصر',
+    );
+  });
+
+  test('content service fetches about body from /content/about', () async {
+    final adapter = _QueuedAdapter([
+      const _QueuedResponse(
+        200,
+        {
+          'body': 'About Kinder World',
+        },
+      ),
+    ]);
+    final dio = Dio()..httpClientAdapter = adapter;
+    final network = NetworkService(
+      dio: dio,
+      secureStorage: _TestSecureStorage(),
+      logger: Logger(),
+    );
+    final service = ContentService(
+      networkService: network,
+      logger: Logger(),
+    );
+
+    final body = await service.getAbout();
+
+    expect(adapter.lastOptions?.path, '/content/about');
+    expect(body, 'About Kinder World');
   });
 }

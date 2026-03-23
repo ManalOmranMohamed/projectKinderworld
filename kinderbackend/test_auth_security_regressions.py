@@ -96,14 +96,26 @@ def test_register_validation_returns_422_instead_of_500_for_trimmed_blank_value(
 
 
 def test_child_register_validation_returns_safe_json_errors(client):
+    register = client.post(
+        "/auth/register",
+        json={
+            "name": "Validation Parent",
+            "email": "validation.parent@example.com",
+            "password": "Password123!",
+            "confirm_password": "Password123!",
+        },
+    )
+    assert register.status_code == 200
+
     response = client.post(
         "/auth/child/register",
         json={
             "name": "Validation Kid",
-            "parent_email": "parent@example.com",
+            "parent_email": "validation.parent@example.com",
             "age": 8,
             "picture_password": ["cat", " ", "apple"],
         },
+        headers={"Authorization": f"Bearer {register.json()['access_token']}"},
     )
 
     assert response.status_code == 422
@@ -113,3 +125,17 @@ def test_child_register_validation_returns_safe_json_errors(client):
         error["msg"] == "Value error, picture_password entries must be non-empty strings"
         for error in payload["detail"]
     )
+
+
+def test_child_register_requires_parent_authentication(client):
+    response = client.post(
+        "/auth/child/register",
+        json={
+            "name": "Protected Kid",
+            "parent_email": "parent@example.com",
+            "age": 8,
+            "picture_password": ["cat", "dog", "apple"],
+        },
+    )
+
+    assert response.status_code == 401

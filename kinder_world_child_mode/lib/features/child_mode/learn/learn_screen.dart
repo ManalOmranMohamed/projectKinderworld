@@ -1,12 +1,16 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
+import 'package:kinder_world/routing/route_paths.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
@@ -38,10 +42,6 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     ));
 
     _controller.forward();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(contentControllerProvider.notifier).loadAllActivities();
-    });
   }
 
   @override
@@ -50,60 +50,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> _categories = const [
-    {
-      'title': 'Behavioral',
-      'image': 'assets/images/behavioral_main.png',
-      'color': AppColors.behavioral,
-      'route': 'behavioral',
-    },
-    {
-      'title': 'Educational',
-      'image': 'assets/images/educational_main.png',
-      'color': AppColors.educational,
-      'route': 'educational',
-    },
-    {
-      'title': 'Skillful',
-      'image': 'assets/images/skillful_main.png',
-      'color': AppColors.skillful,
-      'route': 'skillful',
-    },
-    {
-      'title': 'Entertaining',
-      'image': 'assets/images/entertaining_main.png',
-      'color': AppColors.entertaining,
-      'route': 'entertaining',
-    },
-  ];
-
-  final List<Map<String, String>> _searchItems = const [
-    {'title': 'Behavioral', 'route': 'behavioral'},
-    {'title': 'Educational', 'route': 'educational'},
-    {'title': 'Skillful', 'route': 'skillful'},
-    {'title': 'Entertaining', 'route': 'entertaining'},
-    {'title': 'Values', 'route': 'behavioral'},
-    {'title': 'Methods', 'route': 'behavioral'},
-    {'title': 'Activities', 'route': 'behavioral'},
-    {'title': 'Value Details', 'route': 'behavioral'},
-    {'title': 'Method Content', 'route': 'behavioral'},
-    {'title': 'Stories', 'route': 'entertaining'},
-    {'title': 'Games', 'route': 'entertaining'},
-    {'title': 'Music', 'route': 'entertaining'},
-    {'title': 'Videos', 'route': 'entertaining'},
-    {'title': 'Subjects', 'route': 'educational'},
-    {'title': 'Lessons', 'route': 'educational'},
-    {'title': 'Lesson Detail', 'route': 'educational'},
-    {'title': 'Skills', 'route': 'skillful'},
-    {'title': 'Skill Details', 'route': 'skillful'},
-    {'title': 'Skill Video', 'route': 'skillful'},
-    {'title': 'Behavioral Values', 'route': 'behavioral'},
-    {'title': 'Behavioral Methods', 'route': 'behavioral'},
-  ];
+  List<Map<String, dynamic>> get _categories => learnCategories;
+  List<Map<String, String>> get _searchItems => learnSearchItems;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final contentState = ref.watch(contentControllerProvider);
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -124,12 +77,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                   onSubmitted: (value) {
                     final query = value.trim().toLowerCase();
                     if (query.isEmpty) return;
-                    final match = _searchItems.firstWhere(
+                    final match = _buildSearchEntries(contentState.activities)
+                        .firstWhere(
                       (c) => (c['title'] as String).toLowerCase() == query,
                       orElse: () => {},
                     );
                     if (match.isNotEmpty) {
-                      _openCategory(context, match['route'] as String);
+                      _openSearchResult(context, match);
                     }
                   },
                   decoration: InputDecoration(
@@ -145,6 +99,16 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
+                if (contentState.isLoading && contentState.activities.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: LinearProgressIndicator(),
+                  ),
+                if (contentState.error != null &&
+                    contentState.activities.isEmpty) ...[
+                  _buildContentErrorCard(context),
+                  const SizedBox(height: 16),
+                ],
                 const ChildHeader(
                   padding: EdgeInsets.only(bottom: 24),
                 ),
@@ -171,7 +135,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                         const SizedBox(width: 12),
                         Flexible(
                           child: Text(
-                            l10n.letsExploreAndLearn,
+                            contentState.activities.isNotEmpty
+                                ? '${l10n.letsExploreAndLearn} - ${contentState.activities.length}'
+                                : l10n.letsExploreAndLearn,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -186,7 +152,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                 const SizedBox(height: 30),
 
                 Expanded(
-                  child: _buildSearchResults(context),
+                  child: _buildSearchResults(context, contentState.activities),
                 ),
               ],
             ),
@@ -196,12 +162,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     );
   }
 
-  Widget _buildSearchResults(BuildContext context) {
+  Widget _buildSearchResults(BuildContext context, List<Activity> activities) {
     final l10n = AppLocalizations.of(context)!;
     final query = _searchQuery.trim().toLowerCase();
+    final searchEntries = _buildSearchEntries(activities);
     final results = query.isEmpty
         ? _categories
-        : _searchItems
+        : searchEntries
             .where((c) => (c['title'] as String).toLowerCase().contains(query))
             .toList();
 
@@ -232,10 +199,14 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
             category['image'],
             category['color'],
             category['route'],
+            availableCount: _activityCountForRoute(
+              activities,
+              category['route'] as String,
+            ),
           );
         }
         return InkWell(
-          onTap: () => _openCategory(context, category['route']),
+          onTap: () => _openSearchResult(context, category),
           borderRadius: BorderRadius.circular(20),
           child: Container(
             decoration: BoxDecoration(
@@ -296,6 +267,69 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     }
   }
 
+  void _openSearchResult(BuildContext context, Map<String, dynamic> result) {
+    final lessonId = result['lessonId']?.toString();
+    if (lessonId != null && lessonId.isNotEmpty) {
+      context.push('${Routes.childLearn}/lesson/$lessonId');
+      return;
+    }
+    _openCategory(context, result['route'] as String);
+  }
+
+  List<Map<String, dynamic>> _buildSearchEntries(List<Activity> activities) {
+    final entries = _searchItems
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: true);
+    for (final activity in activities) {
+      entries.add({
+        'title': activity.title,
+        'route': activity.aspect,
+        if (activity.type == ActivityTypes.lesson) 'lessonId': activity.id,
+      });
+    }
+    return entries;
+  }
+
+  int _activityCountForRoute(List<Activity> activities, String route) {
+    return activities.where((activity) => activity.aspect == route).length;
+  }
+
+  Widget _buildContentErrorCard(BuildContext context) {
+    final errorText =
+        ref.watch(contentControllerProvider).error ?? 'Failed to load content';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            color: Theme.of(context).colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              errorText,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(contentControllerProvider.notifier).loadAllActivities();
+            },
+            child: Text(AppLocalizations.of(context)!.retry),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _localizedSearchTitle(BuildContext context, String title) {
     final l10n = AppLocalizations.of(context)!;
     switch (title) {
@@ -318,6 +352,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
     String imagePath,
     Color color,
     String route,
+    {int availableCount = 0}
   ) {
     return InkWell(
       onTap: () {
@@ -361,39 +396,70 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
             onError: (error, stackTrace) {},
           ),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.6),
-              ],
-            ),
-          ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 4.0,
-                      color: Colors.black.withValues(alpha: 0.3),
-                      offset: Offset(0, 2),
-                    ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.6),
                   ],
                 ),
               ),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 4.0,
+                          color: Colors.black.withValues(alpha: 0.3),
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
+            if (availableCount > 0)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_stories, size: 14, color: color),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$availableCount',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -408,43 +474,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
 class EntertainingScreen extends StatelessWidget {
   const EntertainingScreen({super.key});
 
-  static const List<Map<String, dynamic>> _items = [
-    {
-      'title': 'Puppet Show',
-      'image': 'assets/images/ent_puppet_show.png',
-      'color': Colors.orange
-    },
-    {
-      'title': 'Interactive Stories',
-      'image': 'assets/images/ent_stories.png',
-      'color': Colors.purple
-    },
-    {
-      'title': 'Songs & Music',
-      'image': 'assets/images/ent_music.png',
-      'color': Colors.pink
-    },
-    {
-      'title': 'Funny Clips',
-      'image': 'assets/images/ent_clips.png',
-      'color': Colors.yellow
-    },
-    {
-      'title': 'Brain Teasers',
-      'image': 'assets/images/ent_teasers.png',
-      'color': Colors.teal
-    },
-    {
-      'title': 'Games',
-      'image': 'assets/images/ent_games.png',
-      'color': Colors.blue
-    },
-    {
-      'title': 'Cartoons',
-      'image': 'assets/images/ent_cartoons.png',
-      'color': Colors.indigo
-    },
-  ];
+  List<Map<String, dynamic>> get _items => entertainingItems;
 
   @override
   Widget build(BuildContext context) {
@@ -787,23 +817,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
 class BehavioralScreen extends StatelessWidget {
   const BehavioralScreen({super.key});
 
-  final List<Map<String, dynamic>> _values = const [
-    {'title': 'Giving', 'image': 'assets/images/behavior_giving.png'},
-    {'title': 'Respect', 'image': 'assets/images/behavior_respect.png'},
-    {'title': 'Tolerance', 'image': 'assets/images/behavior_tolerance.png'},
-    {'title': 'Kindness', 'image': 'assets/images/behavior_kindness.png'},
-    {'title': 'Cooperation', 'image': 'assets/images/behavior_cooperation.png'},
-    {
-      'title': 'Responsibility',
-      'image': 'assets/images/behavior_responsibility.png'
-    },
-    {'title': 'Honesty', 'image': 'assets/images/behavior_honesty.png'},
-    {'title': 'Patience', 'image': 'assets/images/behavior_patience.png'},
-    {'title': 'Courage', 'image': 'assets/images/behavior_courage.png'},
-    {'title': 'Gratitude', 'image': 'assets/images/behavior_gratitude.png'},
-    {'title': 'Peace', 'image': 'assets/images/behavior_peace.png'},
-    {'title': 'Love', 'image': 'assets/images/behavior_love.png'},
-  ];
+  List<Map<String, dynamic>> get _values => behavioralValues;
 
   @override
   Widget build(BuildContext context) {
@@ -921,18 +935,7 @@ class ValueDetailsScreen extends StatelessWidget {
   final String valueTitle;
   const ValueDetailsScreen({super.key, required this.valueTitle});
 
-  final List<Map<String, dynamic>> _methods = const [
-    {'title': 'Relaxation', 'image': 'assets/images/method_relaxation.png'},
-    {'title': 'Imagination', 'image': 'assets/images/method_imagination.png'},
-    {'title': 'Meditation', 'image': 'assets/images/method_meditation.png'},
-    {'title': 'Art Expression', 'image': 'assets/images/method_art.png'},
-    {'title': 'Social Bonding', 'image': 'assets/images/method_social.png'},
-    {'title': 'Self Development', 'image': 'assets/images/method_self_dev.png'},
-    {
-      'title': 'Social Justice Focus',
-      'image': 'assets/images/method_justice.png'
-    },
-  ];
+  List<Map<String, dynamic>> get _methods => behavioralMethods;
 
   @override
   Widget build(BuildContext context) {
@@ -1196,43 +1199,7 @@ class MethodContentScreen extends ConsumerWidget {
 class SkillfulScreen extends StatelessWidget {
   const SkillfulScreen({super.key});
 
-  final List<Map<String, dynamic>> _skills = const [
-    {
-      'title': 'Cooking',
-      'image': 'assets/images/skill_cooking.png',
-      'desc': 'Yummy food'
-    },
-    {
-      'title': 'Drawing',
-      'image': 'assets/images/skill_drawing.png',
-      'desc': 'Express art'
-    },
-    {
-      'title': 'Coloring',
-      'image': 'assets/images/skill_coloring.png',
-      'desc': 'Use colors'
-    },
-    {
-      'title': 'Music',
-      'image': 'assets/images/skill_music.png',
-      'desc': 'Play instruments'
-    },
-    {
-      'title': 'Singing',
-      'image': 'assets/images/skill_singing.png',
-      'desc': 'Learn songs'
-    },
-    {
-      'title': 'Handcrafts',
-      'image': 'assets/images/skill_handcrafts.png',
-      'desc': 'Cut & Paste'
-    },
-    {
-      'title': 'Sports',
-      'image': 'assets/images/skill_sports.png',
-      'desc': 'Stay fit'
-    },
-  ];
+  List<Map<String, dynamic>> get _skills => skillCatalog;
 
   @override
   Widget build(BuildContext context) {
@@ -1890,48 +1857,7 @@ class SkillVideoScreen extends StatelessWidget {
 class EducationalScreen extends StatelessWidget {
   const EducationalScreen({super.key});
 
-  final List<Map<String, dynamic>> _subjects = const [
-    {
-      'title': 'English',
-      'image': 'assets/images/edu_english.png',
-      'color': Colors.blueAccent
-    },
-    {
-      'title': 'Arabic',
-      'image': 'assets/images/edu_arabic.png',
-      'color': Colors.green
-    },
-    {
-      'title': 'Geography',
-      'image': 'assets/images/edu_geography.png',
-      'color': Colors.orange
-    },
-    {
-      'title': 'History',
-      'image': 'assets/images/edu_history.png',
-      'color': Colors.brown
-    },
-    {
-      'title': 'Science',
-      'image': 'assets/images/edu_science.png',
-      'color': Colors.purple
-    },
-    {
-      'title': 'Math',
-      'image': 'assets/images/edu_math.png',
-      'color': Colors.red
-    },
-    {
-      'title': 'Animals',
-      'image': 'assets/images/edu_animals.png',
-      'color': Colors.teal
-    },
-    {
-      'title': 'Plants',
-      'image': 'assets/images/edu_plants.png',
-      'color': Colors.lightGreen
-    },
-  ];
+  List<Map<String, dynamic>> get _subjects => educationalSubjects;
 
   @override
   Widget build(BuildContext context) {
@@ -2077,21 +2003,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
 
   List<Map<String, dynamic>> get _allLessons {
     final l10n = AppLocalizations.of(context)!;
-    return [
-      {
-        'title': l10n.lessonIntroductionToBasics,
-        'level': 'beginner',
-        'image': ''
-      },
-      {'title': l10n.lessonAdvancedConcepts, 'level': 'advanced', 'image': ''},
-      {
-        'title': l10n.lessonIntermediatePractice,
-        'level': 'intermediate',
-        'image': ''
-      },
-      {'title': l10n.lessonFunWithMath, 'level': 'beginner', 'image': ''},
-      {'title': l10n.lessonDeepDive, 'level': 'advanced', 'image': ''},
-    ];
+    return buildLegacyEducationalLessons(l10n);
   }
 
   List<Map<String, dynamic>> get _filteredLessons {
@@ -2562,23 +2474,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
   int? _selectedAnswerIndex;
   bool _showResult = false;
 
-  final List<Map<String, dynamic>> _quizData = const [
-    {
-      'question': 'What color is the sky?',
-      'options': ['Blue', 'Green', 'Red', 'Yellow'],
-      'correct': 0,
-    },
-    {
-      'question': 'How many legs does a dog have?',
-      'options': ['Two', 'Four', 'Six', 'Eight'],
-      'correct': 1,
-    },
-    {
-      'question': 'Which one is a fruit?',
-      'options': ['Carrot', 'Apple', 'Potato', 'Onion'],
-      'correct': 1,
-    },
-  ];
+  List<Map<String, dynamic>> get _quizData => lessonQuizQuestions;
 
   void _checkAnswer(int selectedIndex) {
     setState(() {

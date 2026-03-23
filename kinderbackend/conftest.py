@@ -1,9 +1,10 @@
 import os
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
+
+from test_client_compat import TestClient
 
 # Ensure tests have deterministic auth/admin env defaults before app imports.
 os.environ.setdefault("SECRET_KEY", "TEST_ONLY_PLACEHOLDER_SECRET")

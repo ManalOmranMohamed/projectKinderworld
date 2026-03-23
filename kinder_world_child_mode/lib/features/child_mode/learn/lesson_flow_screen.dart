@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +15,7 @@ import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
+import 'package:kinder_world/features/child_mode/learn/lesson_content_provider.dart';
 import 'package:kinder_world/router.dart';
 
 class LessonFlowScreen extends ConsumerStatefulWidget {
@@ -79,8 +82,8 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
     if (_isCompleting) return;
     final childProfile = ref.read(currentChildProvider);
     if (childProfile == null) return;
-    final l10n = AppLocalizations.of(context)!;
-    final lesson = _getMockLesson(l10n, widget.lessonId);
+    final lesson =
+        await ref.read(lessonContentProvider(widget.lessonId).future);
 
     setState(() {
       _isCompleting = true;
@@ -92,9 +95,9 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
           childId: childProfile.id,
           activityId: 'lesson_${widget.lessonId}',
           score: 100,
-          duration: lesson['duration'] as int,
-          xpEarned: lesson['xp'] as int,
-          notes: lesson['title'] as String,
+          duration: lesson.durationMinutes,
+          xpEarned: lesson.xpReward,
+          notes: lesson.title,
           completionStatus: CompletionStatus.completed,
           moodAfter: childProfile.currentMood,
         );
@@ -102,11 +105,11 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
     await ref.read(gamificationStateProvider.notifier).recordActivity(
           childId: childProfile.id,
           type: ActivityType.lesson,
-          category: _categoryForLesson(widget.lessonId),
+          category: lesson.category,
           score: 100,
           awardXp: false,
         );
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
 
     if (mounted) {
       context.go('/child/home');
@@ -115,77 +118,118 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final lesson = _getMockLesson(l10n, widget.lessonId);
+    final lessonAsync = ref.watch(lessonContentProvider(widget.lessonId));
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.close,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          onPressed: () => context.appBack(fallback: Routes.childLearn),
-        ),
-        title: AnimatedBuilder(
-          animation: _progressAnimation,
-          builder: (context, child) {
-            return LinearProgressIndicator(
-              value: _progressAnimation.value,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation<Color>(context.successColor),
-            );
-          },
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: _nextStep,
-            style: TextButton.styleFrom(minimumSize: const Size(82, 48)),
+    return lessonAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
             icon: Icon(
-              _currentStep == 4 ? Icons.check_circle : Icons.arrow_forward,
-              size: 18,
+              Icons.close,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-            label: Text(
-              _currentStep == 4 ? l10n.lessonFinish : l10n.next,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+            onPressed: () => context.appBack(fallback: Routes.childLearn),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.close,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            onPressed: () => context.appBack(fallback: Routes.childLearn),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              error.toString(),
+              textAlign: TextAlign.center,
             ),
           ),
-        ],
+        ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(24, 8, 24, 0),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  '${_currentStep + 1}/5',
+      data: (lesson) {
+        final l10n = AppLocalizations.of(context)!;
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(
+                Icons.close,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              onPressed: () => context.appBack(fallback: Routes.childLearn),
+            ),
+            title: AnimatedBuilder(
+              animation: _progressAnimation,
+              builder: (context, child) {
+                return LinearProgressIndicator(
+                  value: _progressAnimation.value,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(context.successColor),
+                );
+              },
+            ),
+            actions: [
+              TextButton.icon(
+                onPressed: _nextStep,
+                style: TextButton.styleFrom(minimumSize: const Size(82, 48)),
+                icon: Icon(
+                  _currentStep == 4 ? Icons.check_circle : Icons.arrow_forward,
+                  size: 18,
+                ),
+                label: Text(
+                  _currentStep == 4 ? l10n.lessonFinish : l10n.next,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
+            ],
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(24, 8, 24, 0),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      '${_currentStep + 1}/5',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _buildCurrentStep(context, lesson),
+                ),
+              ],
             ),
-            Expanded(
-              child: _buildCurrentStep(context, lesson),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildCurrentStep(BuildContext context, Map<String, dynamic> lesson) {
+  Widget _buildCurrentStep(BuildContext context, LearnLessonContent lesson) {
     switch (_currentStep) {
       case 0:
         return _buildIntroductionStep(context, lesson);
@@ -204,7 +248,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   Widget _buildIntroductionStep(
     BuildContext context,
-    Map<String, dynamic> lesson,
+    LearnLessonContent lesson,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -230,7 +274,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
           ),
           const SizedBox(height: 32),
           Text(
-            lesson['title'] as String,
+            lesson.title,
             style: TextStyle(
               fontSize: AppConstants.largeFontSize * 1.2,
               fontWeight: FontWeight.bold,
@@ -240,7 +284,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            lesson['description'] as String,
+            lesson.description,
             style: TextStyle(
               fontSize: AppConstants.fontSize,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -254,17 +298,17 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
               _StatItem(
                 icon: Icons.access_time,
                 label: l10n.lessonTime,
-                value: '${lesson['duration']} min',
+                value: '${lesson.durationMinutes} min',
               ),
               _StatItem(
                 icon: Icons.star,
                 label: l10n.xpReward,
-                value: '${lesson['xp']} XP',
+                value: '${lesson.xpReward} XP',
               ),
               _StatItem(
                 icon: Icons.trending_up,
                 label: l10n.difficulty,
-                value: lesson['difficulty'] as String,
+                value: lesson.difficulty,
               ),
             ],
           ),
@@ -283,7 +327,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   Widget _buildContentStep(
     BuildContext context,
-    Map<String, dynamic> lesson,
+    LearnLessonContent lesson,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -352,7 +396,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  lesson['content'] as String,
+                  lesson.content,
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -368,7 +412,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   Widget _buildInteractiveStep(
     BuildContext context,
-    Map<String, dynamic> lesson,
+    LearnLessonContent lesson,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -527,7 +571,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
 
   Widget _buildResultsStep(
     BuildContext context,
-    Map<String, dynamic> lesson,
+    LearnLessonContent lesson,
   ) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -596,7 +640,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                 _ResultItem(
                   icon: Icons.star,
                   label: l10n.xpEarned,
-                  value: '${lesson['xp']}',
+                  value: '${lesson.xpReward}',
                   color: context.childTheme.xp,
                 ),
                 _ResultItem(
@@ -620,30 +664,6 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
         ],
       ),
     );
-  }
-
-  Map<String, dynamic> _getMockLesson(
-    AppLocalizations l10n,
-    String lessonId,
-  ) {
-    return {
-      'id': lessonId,
-      'title': l10n.countingNumbers,
-      'description': l10n.countingNumbersDesc,
-      'duration': 15,
-      'xp': 50,
-      'difficulty': l10n.beginner,
-      'content': l10n.lessonContentFallback,
-    };
-  }
-
-  String _categoryForLesson(String lessonId) {
-    if (lessonId.startsWith('math_') ||
-        lessonId.startsWith('sci_') ||
-        lessonId.startsWith('read_')) {
-      return 'educational';
-    }
-    return 'skillful';
   }
 }
 

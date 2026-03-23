@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_child_record.dart';
+import 'package:kinder_world/core/models/admin_management_activity.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
@@ -27,9 +28,9 @@ class AdminChildDetailsScreen extends ConsumerStatefulWidget {
 class _AdminChildDetailsScreenState
     extends ConsumerState<AdminChildDetailsScreen> {
   AdminChildRecord? _child;
-  Map<String, dynamic>? _progress;
-  Map<String, dynamic>? _activityLog;
-  Map<String, dynamic>? _aiBuddySummary;
+  AdminChildProgressDetails? _progress;
+  AdminChildActivityLog? _activityLog;
+  AdminChildAiBuddySummary? _aiBuddySummary;
   bool _loading = true;
   String? _error;
 
@@ -63,9 +64,9 @@ class _AdminChildDetailsScreenState
       if (!mounted) return;
       setState(() {
         _child = results[0] as AdminChildRecord;
-        _progress = results[1] as Map<String, dynamic>;
-        _activityLog = results[2] as Map<String, dynamic>;
-        _aiBuddySummary = results[3] as Map<String, dynamic>;
+        _progress = results[1] as AdminChildProgressDetails;
+        _activityLog = results[2] as AdminChildActivityLog;
+        _aiBuddySummary = results[3] as AdminChildAiBuddySummary;
         _loading = false;
       });
     } catch (e) {
@@ -94,28 +95,12 @@ class _AdminChildDetailsScreenState
       );
     }
 
-    final summary =
-        Map<String, dynamic>.from(_progress?['summary'] as Map? ?? const {});
-    final milestones = List<Map<String, dynamic>>.from(
-      (_progress?['milestones'] as List<dynamic>? ?? const []).map(
-        (item) => Map<String, dynamic>.from(item as Map),
-      ),
-    );
-    final entries = List<Map<String, dynamic>>.from(
-      (_activityLog?['entries'] as List<dynamic>? ?? const []).map(
-        (item) => Map<String, dynamic>.from(item as Map),
-      ),
-    );
-    final aiSummary =
-        Map<String, dynamic>.from(_aiBuddySummary ?? const <String, dynamic>{});
-    final usageMetrics = Map<String, dynamic>.from(
-      aiSummary['usage_metrics'] as Map? ?? const {},
-    );
-    final recentFlags = List<Map<String, dynamic>>.from(
-      (aiSummary['recent_flags'] as List<dynamic>? ?? const []).map(
-        (item) => Map<String, dynamic>.from(item as Map),
-      ),
-    );
+    final summary = _progress?.summary;
+    final milestones = _progress?.milestones ?? const <AdminChildMilestone>[];
+    final entries = _activityLog?.entries ?? const <AdminChildActivityEntry>[];
+    final aiSummary = _aiBuddySummary;
+    final usageMetrics = aiSummary?.usageMetrics;
+    final recentFlags = aiSummary?.recentFlags ?? const <AdminChildAiBuddyFlag>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -155,13 +140,13 @@ class _AdminChildDetailsScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${l10n.adminChildrenProgressDaysMetric}: ${summary['days_since_profile_created'] ?? 0}',
+                      '${l10n.adminChildrenProgressDaysMetric}: ${summary?.daysSinceProfileCreated ?? 0}',
                     ),
                     Text(
-                      '${l10n.adminChildrenProgressEventsMetric}: ${summary['audit_events'] ?? 0}',
+                      '${l10n.adminChildrenProgressEventsMetric}: ${summary?.auditEvents ?? 0}',
                     ),
                     Text(
-                      '${l10n.adminUsersLastUpdatedMetric}: ${summary['last_updated_at'] ?? _child!.updatedAt ?? l10n.notAvailable}',
+                      '${l10n.adminUsersLastUpdatedMetric}: ${summary?.lastUpdatedAt ?? _child!.updatedAt ?? l10n.notAvailable}',
                     ),
                   ],
                 ),
@@ -183,9 +168,9 @@ class _AdminChildDetailsScreenState
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.flag_outlined),
                             title: Text(
-                              entry['title'] as String? ?? l10n.notAvailable,
+                              entry.title.isEmpty ? l10n.notAvailable : entry.title,
                             ),
-                            subtitle: Text(entry['timestamp'] as String? ?? ''),
+                            subtitle: Text(entry.timestamp ?? ''),
                           ),
                         )
                         .toList(),
@@ -197,16 +182,20 @@ class _AdminChildDetailsScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(aiSummary['parent_summary'] as String? ?? l10n.notAvailable),
+                Text(
+                  aiSummary?.parentSummary.isNotEmpty == true
+                      ? aiSummary!.parentSummary
+                      : l10n.notAvailable,
+                ),
                 const SizedBox(height: 12),
                 Text(
-                  '${l10n.analyticsTitle}: ${usageMetrics['sessions_count'] ?? 0} / ${usageMetrics['messages_count'] ?? 0}',
+                  '${l10n.analyticsTitle}: ${usageMetrics?.sessionsCount ?? 0} / ${usageMetrics?.messagesCount ?? 0}',
                 ),
                 Text(
-                  '${l10n.safety}: ${usageMetrics['refusal_count'] ?? 0} / ${usageMetrics['safe_redirect_count'] ?? 0}',
+                  '${l10n.safety}: ${usageMetrics?.refusalCount ?? 0} / ${usageMetrics?.safeRedirectCount ?? 0}',
                 ),
                 Text(
-                  '${l10n.activityReports}: ${aiSummary['visibility_mode'] ?? l10n.notAvailable}',
+                  '${l10n.activityReports}: ${aiSummary?.visibilityMode ?? l10n.notAvailable}',
                 ),
                 if (recentFlags.isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -216,10 +205,10 @@ class _AdminChildDetailsScreenState
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.shield_outlined),
                       title: Text(
-                        flag['topic'] as String? ?? l10n.notAvailable,
+                        flag.topic ?? l10n.notAvailable,
                       ),
                       subtitle: Text(
-                        flag['reason'] as String? ?? l10n.notAvailable,
+                        flag.reason ?? l10n.notAvailable,
                       ),
                     ),
                   ),
@@ -241,21 +230,14 @@ class _AdminChildDetailsScreenState
                           (entry) => ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: Icon(
-                              entry['type'] == 'audit'
+                              entry.isAudit
                                   ? Icons.history
                                   : Icons.notifications_outlined,
                             ),
                             title: Text(
-                              entry['title'] as String? ??
-                                  entry['action'] as String? ??
-                                  entry['type'] as String? ??
-                                  l10n.notAvailable,
+                              entry.displayTitle ?? l10n.notAvailable,
                             ),
-                            subtitle: Text(
-                              entry['created_at'] as String? ??
-                                  entry['timestamp'] as String? ??
-                                  '',
-                            ),
+                            subtitle: Text(entry.displayTimestamp),
                           ),
                         )
                         .toList(),

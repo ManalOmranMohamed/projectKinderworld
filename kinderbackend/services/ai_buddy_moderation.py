@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -191,9 +191,7 @@ class AiBuddyModerationService:
                     "لا أستطيع المساعدة في هذا الموضوع. إذا كان هناك شيء يقلقك، تحدث مع والدك أو مع شخص بالغ موثوق. "
                     "يمكنني بدلًا من ذلك أن أقترح نشاطًا هادئًا أو قصة قصيرة."
                 )
-            return (
-                "لنحافظ على الحديث آمنًا ومناسبًا. لا تشارك معلومات خاصة، وتعال نختار شيئًا آمنًا مثل قصة قصيرة أو لعبة تعليمية."
-            )
+            return "لنحافظ على الحديث آمنًا ومناسبًا. لا تشارك معلومات خاصة، وتعال نختار شيئًا آمنًا مثل قصة قصيرة أو لعبة تعليمية."
 
         if classification == "needs_refusal":
             return (

@@ -57,9 +57,10 @@ def refresh(
 def child_register(
     payload: ChildRegisterIn,
     db: Session = Depends(get_db),
+    parent: User = Depends(get_current_user),
     rate_limit_check: None = auth_rate_limit_check,
 ):
-    return register_child(payload, db)
+    return register_child(payload, parent, db)
 
 
 @router.post("/auth/child/login")

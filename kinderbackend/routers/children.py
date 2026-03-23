@@ -1,6 +1,4 @@
-from typing import Optional
-
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
@@ -20,10 +18,10 @@ router = APIRouter()
 @router.post("/children")
 def create_child(
     data: ChildCreate,
-    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
+    parent: User = Depends(get_current_user),
 ):
-    return create_child_profile(data, authorization, db)
+    return create_child_profile(data, parent, db)
 
 
 @router.get("/children")

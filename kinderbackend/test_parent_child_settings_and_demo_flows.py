@@ -6,12 +6,12 @@ support, subscription demo mode, and demo/static feature endpoints.
 from __future__ import annotations
 
 import pytest
-from fastapi.testclient import TestClient
 
 import admin_models  # noqa: F401
 from auth import create_access_token, hash_password
 from models import Notification, PrivacySetting, SupportTicket, User
 from plan_service import PLAN_FAMILY_PLUS, PLAN_FREE, PLAN_PREMIUM
+from test_client_compat import TestClient
 
 
 def _auth_header(user: User) -> dict[str, str]:
@@ -458,12 +458,12 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
     assert user.plan == PLAN_FREE
 
     manage = client.post("/subscription/manage", headers=headers)
-    assert manage.status_code == 501
-    assert "Billing portal is not configured yet" in manage.json()["detail"]
+    assert manage.status_code == 200
+    assert manage.json()["url"].startswith("https://example.invalid/mock-billing/")
 
     portal = client.post("/billing/portal", headers=headers)
-    assert portal.status_code == 501
-    assert "Billing portal is not configured yet" in portal.json()["detail"]
+    assert portal.status_code == 200
+    assert portal.json()["url"].startswith("https://example.invalid/mock-billing/")
 
 
 def test_feature_gated_demo_static_responses_match_current_behavior(client: TestClient, db):

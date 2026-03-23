@@ -10,6 +10,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
+import 'package:kinder_world/features/child_mode/learn/data/lesson_catalog.dart';
 import 'package:kinder_world/router.dart';
 
 class SubjectScreen extends ConsumerWidget {
@@ -280,7 +281,7 @@ final _subjectPathProvider =
       }
     }
 
-    final blueprints = _lessonBlueprintsForSubject(subject);
+    final blueprints = lessonsForSubject(subject);
     final completedLessonIds = completedActivityIds
         .where((id) => id.startsWith('lesson_'))
         .map((id) => id.replaceFirst('lesson_', ''))
@@ -299,7 +300,7 @@ final _subjectPathProvider =
         title: lesson.title,
         description: lesson.description,
         durationMinutes: lesson.durationMinutes,
-        difficulty: lesson.difficulty,
+        difficulty: _difficultyFromString(lesson.difficulty),
         xpReward: lesson.xpReward,
         prerequisites: lesson.prerequisites,
         missingPrerequisites: missingPrerequisites,
@@ -326,122 +327,6 @@ final _subjectPathProvider =
     );
   },
 );
-
-List<_LessonBlueprint> _lessonBlueprintsForSubject(String subject) {
-  switch (subject) {
-    case 'math':
-      return const [
-        _LessonBlueprint(
-          id: 'math_01',
-          title: 'Counting Numbers 1-10',
-          description: 'Learn to count from 1 to 10',
-          durationMinutes: 15,
-          difficulty: _Difficulty.beginner,
-          xpReward: 50,
-          prerequisites: [],
-        ),
-        _LessonBlueprint(
-          id: 'math_02',
-          title: 'Addition Basics',
-          description: 'Simple addition with small numbers',
-          durationMinutes: 20,
-          difficulty: _Difficulty.beginner,
-          xpReward: 70,
-          prerequisites: ['math_01'],
-        ),
-        _LessonBlueprint(
-          id: 'math_03',
-          title: 'Shapes and Patterns',
-          description: 'Recognize different shapes and patterns',
-          durationMinutes: 18,
-          difficulty: _Difficulty.intermediate,
-          xpReward: 85,
-          prerequisites: ['math_02'],
-        ),
-      ];
-    case 'science':
-      return const [
-        _LessonBlueprint(
-          id: 'sci_01',
-          title: 'Parts of a Plant',
-          description: 'Learn about roots, stem, leaves, and flowers',
-          durationMinutes: 12,
-          difficulty: _Difficulty.beginner,
-          xpReward: 50,
-          prerequisites: [],
-        ),
-        _LessonBlueprint(
-          id: 'sci_02',
-          title: 'Weather and Seasons',
-          description: 'Understand daily weather and seasons',
-          durationMinutes: 22,
-          difficulty: _Difficulty.intermediate,
-          xpReward: 75,
-          prerequisites: ['sci_01'],
-        ),
-        _LessonBlueprint(
-          id: 'sci_03',
-          title: 'Animal Habitats',
-          description: 'Where do different animals live?',
-          durationMinutes: 25,
-          difficulty: _Difficulty.advanced,
-          xpReward: 95,
-          prerequisites: ['sci_02'],
-        ),
-      ];
-    case 'reading':
-      return const [
-        _LessonBlueprint(
-          id: 'read_01',
-          title: 'Alphabet Fun',
-          description: 'Learn all the letters A-Z',
-          durationMinutes: 30,
-          difficulty: _Difficulty.beginner,
-          xpReward: 50,
-          prerequisites: [],
-        ),
-        _LessonBlueprint(
-          id: 'read_02',
-          title: 'Short Vowel Sounds',
-          description: 'Practice a, e, i, o, u sounds',
-          durationMinutes: 20,
-          difficulty: _Difficulty.beginner,
-          xpReward: 70,
-          prerequisites: ['read_01'],
-        ),
-        _LessonBlueprint(
-          id: 'read_03',
-          title: 'Simple Words',
-          description: 'Form simple three-letter words',
-          durationMinutes: 25,
-          difficulty: _Difficulty.intermediate,
-          xpReward: 90,
-          prerequisites: ['read_02'],
-        ),
-      ];
-    default:
-      return const [
-        _LessonBlueprint(
-          id: 'generic_01',
-          title: 'Starter Lesson',
-          description: 'A simple first lesson to get started',
-          durationMinutes: 15,
-          difficulty: _Difficulty.beginner,
-          xpReward: 40,
-          prerequisites: [],
-        ),
-        _LessonBlueprint(
-          id: 'generic_02',
-          title: 'Practice Lesson',
-          description: 'Build your confidence with practice',
-          durationMinutes: 18,
-          difficulty: _Difficulty.intermediate,
-          xpReward: 60,
-          prerequisites: ['generic_01'],
-        ),
-      ];
-  }
-}
 
 class _NextLessonCard extends StatelessWidget {
   const _NextLessonCard({
@@ -806,27 +691,18 @@ String _difficultyLabel(AppLocalizations l10n, _Difficulty difficulty) {
   }
 }
 
-enum _Difficulty { beginner, intermediate, advanced }
-
-class _LessonBlueprint {
-  const _LessonBlueprint({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.durationMinutes,
-    required this.difficulty,
-    required this.xpReward,
-    required this.prerequisites,
-  });
-
-  final String id;
-  final String title;
-  final String description;
-  final int durationMinutes;
-  final _Difficulty difficulty;
-  final int xpReward;
-  final List<String> prerequisites;
+_Difficulty _difficultyFromString(String difficulty) {
+  switch (difficulty) {
+    case 'beginner':
+      return _Difficulty.beginner;
+    case 'advanced':
+      return _Difficulty.advanced;
+    default:
+      return _Difficulty.intermediate;
+  }
 }
+
+enum _Difficulty { beginner, intermediate, advanced }
 
 class _LessonProgress {
   const _LessonProgress({

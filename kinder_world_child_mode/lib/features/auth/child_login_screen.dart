@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/data/child_avatar_catalog.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
@@ -20,22 +21,6 @@ import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
 import 'package:kinder_world/features/auth/widgets/child_login_picture_password_picker.dart';
 import 'package:kinder_world/router.dart';
-
-class _AvatarOption {
-  final String id;
-  final String assetPath;
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-
-  const _AvatarOption({
-    required this.id,
-    required this.assetPath,
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-  });
-}
 
 class ChildLoginScreen extends ConsumerStatefulWidget {
   const ChildLoginScreen({super.key});
@@ -56,107 +41,6 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
   bool _isLoading = false;
   String? _error;
   OverlayEntry? _topMessageEntry;
-
-  final List<_AvatarOption> _avatarOptions = const [
-    _AvatarOption(
-      id: 'assets/images/avatars/boy1.png',
-      assetPath: 'assets/images/avatars/boy1.png',
-      icon: Icons.face,
-      backgroundColor: Color(0xFFE3F2FD),
-      iconColor: Color(0xFF1E88E5),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy2.png',
-      assetPath: 'assets/images/avatars/boy2.png',
-      icon: Icons.sentiment_satisfied_alt,
-      backgroundColor: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFFB8C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy3.png',
-      assetPath: 'assets/images/avatars/boy3.png',
-      icon: Icons.face,
-      backgroundColor: Color(0xFFE1F5FE),
-      iconColor: Color(0xFF0277BD),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/boy4.png',
-      assetPath: 'assets/images/avatars/boy4.png',
-      icon: Icons.child_care,
-      backgroundColor: Color(0xFFFFE0B2),
-      iconColor: Color(0xFFF57C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl1.png',
-      assetPath: 'assets/images/avatars/girl1.png',
-      icon: Icons.emoji_emotions,
-      backgroundColor: Color(0xFFF3E5F5),
-      iconColor: Color(0xFF8E24AA),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl2.png',
-      assetPath: 'assets/images/avatars/girl2.png',
-      icon: Icons.mood,
-      backgroundColor: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF43A047),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl3.png',
-      assetPath: 'assets/images/avatars/girl3.png',
-      icon: Icons.face_retouching_natural,
-      backgroundColor: Color(0xFFFCE4EC),
-      iconColor: Color(0xFFC2185B),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/girl4.png',
-      assetPath: 'assets/images/avatars/girl4.png',
-      icon: Icons.girl,
-      backgroundColor: Color(0xFFF8BBD0),
-      iconColor: Color(0xFFE91E63),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av1.png',
-      assetPath: 'assets/images/avatars/av1.png',
-      icon: Icons.face_2_rounded,
-      backgroundColor: Color(0xFFEDE7F6),
-      iconColor: Color(0xFF7E57C2),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av2.png',
-      assetPath: 'assets/images/avatars/av2.png',
-      icon: Icons.tag_faces_rounded,
-      backgroundColor: Color(0xFFE8F5E9),
-      iconColor: Color(0xFF2E7D32),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av3.png',
-      assetPath: 'assets/images/avatars/av3.png',
-      icon: Icons.cruelty_free_rounded,
-      backgroundColor: Color(0xFFFFF3E0),
-      iconColor: Color(0xFFEF6C00),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av4.png',
-      assetPath: 'assets/images/avatars/av4.png',
-      icon: Icons.auto_awesome_rounded,
-      backgroundColor: Color(0xFFE1F5FE),
-      iconColor: Color(0xFF0277BD),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av5.png',
-      assetPath: 'assets/images/avatars/av5.png',
-      icon: Icons.pets_rounded,
-      backgroundColor: Color(0xFFFCE4EC),
-      iconColor: Color(0xFFAD1457),
-    ),
-    _AvatarOption(
-      id: 'assets/images/avatars/av6.png',
-      assetPath: 'assets/images/avatars/av6.png',
-      icon: Icons.emoji_emotions_rounded,
-      backgroundColor: Color(0xFFFFF8E1),
-      iconColor: Color(0xFFF9A825),
-    ),
-  ];
 
   final List<PicturePasswordOption> _pictureOptions = picturePasswordOptions;
 
@@ -214,7 +98,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
   Future<List<ChildProfile>> _loadChildren() async {
     final requestId = ++_childrenRequestId;
     return ref.read(childProfilesViewServiceProvider).loadAllChildren(
-          defaultAvatar: _avatarOptions.first.id,
+          defaultAvatar: defaultChildAvatarId,
           onRemoteSynced: (children) {
             if (!mounted || requestId != _childrenRequestId) return;
             setState(() {
@@ -335,16 +219,6 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     });
   }
 
-  _AvatarOption? _avatarForValue(String? value) {
-    if (value == null || value.isEmpty) return null;
-    for (final option in _avatarOptions) {
-      if (option.id == value || option.assetPath == value) {
-        return option;
-      }
-    }
-    return null;
-  }
-
   ChildProfile? _resolveSelectedChild(List<ChildProfile> children) {
     if (_selectedChildId == null) return null;
     if (_selectedChildProfile != null &&
@@ -407,7 +281,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         .ensureLocalChildProfile(
           childId: childId,
           selectedPictures: _selectedPictures,
-          defaultAvatar: _avatarOptions.first.id,
+          defaultAvatar: defaultChildAvatarId,
           childProfile: childProfile,
           fallbackName: fallbackName,
         );
@@ -494,7 +368,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     final childNameController = TextEditingController();
     final repo = ref.read(childRepositoryProvider);
     int? age;
-    String selectedAvatar = _avatarOptions.first.id;
+    String selectedAvatar = defaultChildAvatarId;
     final selectedPassword = <String>[];
     bool nameTouched = false;
     bool emailTouched = false;
@@ -629,7 +503,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: _avatarOptions.map((option) {
+                            children: childAvatarOptions.map((option) {
                               final isSelected = selectedAvatar == option.id;
                               return InkWell(
                                 onTap: () {
@@ -1377,7 +1251,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
     required double size,
     required Color backgroundColor,
   }) {
-    final option = _avatarForValue(avatarId ?? avatarPath);
+    final option = childAvatarOptionForValue(avatarId ?? avatarPath);
     final resolvedBackground = option?.backgroundColor ?? backgroundColor;
     final resolvedPath =
         option?.assetPath.isNotEmpty == true ? option!.assetPath : avatarPath;

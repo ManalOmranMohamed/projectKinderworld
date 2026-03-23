@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/models/faq_item.dart';
+import 'package:kinder_world/core/models/legal_content_payload.dart';
 import 'package:kinder_world/core/network/network_service.dart';
 import 'package:logger/logger.dart';
 
@@ -47,25 +48,27 @@ class ContentService {
   /// type can be: 'terms', 'privacy', 'coppa'
   Future<String> getLegal(String type) async {
     try {
+      final payload = await getLegalPayload(type);
+      return payload.resolvedBody;
+    } catch (e) {
+      _logger.w('Error getting legal content: $e');
+      return '';
+    }
+  }
+
+  Future<LegalContentPayload> getLegalPayload(String type) async {
+    try {
       final endpoint = switch (type) {
         'terms' => '/legal/terms',
         'privacy' => '/legal/privacy',
         'coppa' => '/legal/coppa',
         _ => '/legal/terms',
       };
-      final response =
-          await _networkService.get<Map<String, dynamic>>(endpoint);
-
-      if (response.data == null) {
-        return '';
-      }
-
-      return response.data!['body'] as String? ??
-          response.data!['content'] as String? ??
-          '';
+      final response = await _networkService.get<Map<String, dynamic>>(endpoint);
+      return LegalContentPayload.fromJson(response.data ?? const {});
     } catch (e) {
-      _logger.w('Error getting legal content: $e');
-      return '';
+      _logger.w('Error getting legal payload: $e');
+      return const LegalContentPayload();
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
@@ -37,7 +39,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
       begin: const Offset(0, 0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    _animController.forward();
+    unawaited(_animController.forward());
   }
 
   @override
@@ -69,7 +71,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
     });
 
     _animController.reset();
-    _animController.forward();
+    unawaited(_animController.forward());
   }
 
   void _showError(String message) {
@@ -532,7 +534,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
                 _parentEmailController.clear();
               });
               _animController.reset();
-              _animController.forward();
+              unawaited(_animController.forward());
             },
             child: Text(
               l10n.tryAgainDifferentInfo,

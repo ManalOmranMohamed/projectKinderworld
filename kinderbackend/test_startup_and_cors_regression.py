@@ -5,10 +5,10 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.testclient import TestClient
 
 import main
 from core.settings import Settings
+from test_client_compat import TestClient
 
 
 def test_run_startup_checks_skips_schema_verification_when_flag_enabled(

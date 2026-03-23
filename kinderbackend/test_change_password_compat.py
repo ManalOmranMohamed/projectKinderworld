@@ -6,11 +6,11 @@ Run with: pytest test_change_password_compat.py -v
 """
 
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from auth import create_access_token, hash_password, verify_password
 from models import User
+from test_client_compat import TestClient
 
 
 @pytest.fixture

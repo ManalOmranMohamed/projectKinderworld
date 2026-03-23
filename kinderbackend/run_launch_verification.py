@@ -4,7 +4,6 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass
-from datetime import timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -157,9 +156,11 @@ def _smoke_me(client: httpx.Client, token: str) -> CheckResult:
         "smoke_parent_me",
         "FAIL",
         reason=f"Unexpected status {response.status_code}",
-        details=response.json()
-        if response.headers.get("content-type", "").startswith("application/json")
-        else None,
+        details=(
+            response.json()
+            if response.headers.get("content-type", "").startswith("application/json")
+            else None
+        ),
     )
 
 
@@ -264,7 +265,9 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
         if response.headers.get("content-type", "").startswith("application/json")
         else None
     )
-    results.append(CheckResult("smoke_subscription_me", "PASS" if status == 200 else "FAIL", details=data))
+    results.append(
+        CheckResult("smoke_subscription_me", "PASS" if status == 200 else "FAIL", details=data)
+    )
 
     response = client.get("/subscription/history", headers=headers)
     status = response.status_code
@@ -273,7 +276,9 @@ def _smoke_subscription_and_payments(client: httpx.Client, token: str) -> list[C
         if response.headers.get("content-type", "").startswith("application/json")
         else None
     )
-    results.append(CheckResult("smoke_subscription_history", "PASS" if status == 200 else "FAIL", details=data))
+    results.append(
+        CheckResult("smoke_subscription_history", "PASS" if status == 200 else "FAIL", details=data)
+    )
 
     status, data = _post_json(
         client,

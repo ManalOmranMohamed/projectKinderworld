@@ -46,6 +46,14 @@ class _RecordingAdapter implements HttpClientAdapter {
   }
 }
 
+String _childSessionJwt() {
+  final header = base64Url.encode(utf8.encode('{"alg":"none","typ":"JWT"}'));
+  final payload = base64Url.encode(
+    utf8.encode('{"token_type":"child_session","exp":4102444800}'),
+  );
+  return '$header.$payload.signature';
+}
+
 void main() {
   test('network service injects general auth token when no override exists',
       () async {
@@ -112,6 +120,21 @@ void main() {
     final network = NetworkService(
       dio: dio,
       secureStorage: _TestSecureStorage('child_session_42'),
+      logger: Logger(),
+    );
+
+    await network.get('/anything');
+
+    expect(adapter.lastOptions?.headers.containsKey('Authorization'), isFalse);
+  });
+
+  test('network service never sends child session JWTs as bearer tokens',
+      () async {
+    final adapter = _RecordingAdapter();
+    final dio = Dio()..httpClientAdapter = adapter;
+    final network = NetworkService(
+      dio: dio,
+      secureStorage: _TestSecureStorage(_childSessionJwt()),
       logger: Logger(),
     );
 

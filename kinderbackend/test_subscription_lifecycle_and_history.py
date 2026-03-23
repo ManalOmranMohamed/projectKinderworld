@@ -78,14 +78,15 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
     assert cancel_payload["lifecycle"]["last_payment_status"] == "canceled"
 
     manage = client.post("/subscription/manage", headers=headers)
-    assert manage.status_code == 501
+    assert manage.status_code == 200
+    assert manage.json()["url"].startswith("https://example.invalid/mock-billing/")
 
     history_after_manage = client.get("/subscription/history", headers=headers)
     assert history_after_manage.status_code == 200
     final_event_types = [item["event_type"] for item in history_after_manage.json()["events"]]
     assert "cancel" in final_event_types
     assert "manage_request" in final_event_types
-    assert "failure" in final_event_types
+    assert "manage_link_created" in final_event_types
 
 
 def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_headers):
@@ -107,8 +108,7 @@ def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_he
     )
     assert activate.status_code == 409
     assert (
-        activate.json()["detail"]
-        == "Requested plan does not match the pending checkout selection"
+        activate.json()["detail"] == "Requested plan does not match the pending checkout selection"
     )
 
 

@@ -20,8 +20,9 @@ from models import (
     User,
 )
 from plan_service import get_plan_features, get_plan_limits, get_user_plan
-from services.premium_behavior_service import premium_behavior_service
 from serializers import child_to_json, user_to_json
+from services.child_service import child_service
+from services.premium_behavior_service import premium_behavior_service
 
 
 def build_admin_payload(admin, db: Session) -> dict[str, Any]:
@@ -119,7 +120,9 @@ def serialize_user_detail(user: User) -> dict[str, Any]:
 
 def serialize_child_detail(child: ChildProfile) -> dict[str, Any]:
     payload = child_to_json(child)
-    payload["picture_password_length"] = len(child.picture_password or [])
+    payload["picture_password_length"] = child_service.picture_password_length(
+        child.picture_password
+    )
     if child.parent is not None:
         payload["parent"] = {
             "id": child.parent.id,

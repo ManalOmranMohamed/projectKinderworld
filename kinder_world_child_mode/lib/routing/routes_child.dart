@@ -6,7 +6,6 @@ import 'package:kinder_world/features/child_mode/home/child_home_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/learn_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/lesson_flow_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/subject_screen.dart';
-import 'package:kinder_world/features/child_mode/play/category_screen.dart';
 import 'package:kinder_world/features/child_mode/play/play_screen.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_overview_screen.dart';
 
@@ -62,15 +61,6 @@ List<RouteBase> buildChildRoutes() {
             GoRoute(
               path: Routes.childPlay,
               builder: (context, state) => const PlayScreen(),
-              routes: [
-                GoRoute(
-                  path: 'category/:category',
-                  builder: (context, state) {
-                    final category = state.pathParameters['category']!;
-                    return CategoryScreen(category: category);
-                  },
-                ),
-              ],
             ),
           ],
         ),

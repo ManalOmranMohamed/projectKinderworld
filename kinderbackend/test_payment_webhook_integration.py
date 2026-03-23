@@ -7,7 +7,12 @@ import time
 from dataclasses import dataclass
 
 from plan_service import PLAN_FREE, PLAN_PREMIUM
-from services.payment_provider import CheckoutSessionResult, PaymentMethodReference, PortalSessionResult, RefundResult
+from services.payment_provider import (
+    CheckoutSessionResult,
+    PaymentMethodReference,
+    PortalSessionResult,
+    RefundResult,
+)
 from services.subscription_service import subscription_service
 
 
@@ -173,7 +178,9 @@ def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(
         parent = create_parent(email="checkout.webhook@example.com", plan=PLAN_FREE)
         headers = auth_headers(parent)
 
-        checkout = client.post("/subscription/checkout", json={"plan_type": "premium"}, headers=headers)
+        checkout = client.post(
+            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+        )
         assert checkout.status_code == 200
 
         event_payload = {
@@ -231,7 +238,9 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         parent = create_parent(email="invoice.webhook@example.com", plan=PLAN_FREE)
         headers = auth_headers(parent)
 
-        checkout = client.post("/subscription/checkout", json={"plan_type": "premium"}, headers=headers)
+        checkout = client.post(
+            "/subscription/checkout", json={"plan_type": "premium"}, headers=headers
+        )
         assert checkout.status_code == 200
 
         checkout_event = {
@@ -336,12 +345,26 @@ def test_invoice_paid_and_failed_and_subscription_deleted_webhooks_update_histor
         assert history.status_code == 200
         history_payload = history.json()
         assert any(item["event_type"] == "invoice_paid" for item in history_payload["events"])
-        assert any(item["event_type"] == "invoice_payment_failed" for item in history_payload["events"])
+        assert any(
+            item["event_type"] == "invoice_payment_failed" for item in history_payload["events"]
+        )
         assert any(item["event_type"] == "cancel" for item in history_payload["events"])
-        assert any(item["transaction_type"] in {"renewal", "invoice_paid"} for item in history_payload["billing_transactions"])
-        assert any(item["transaction_type"] == "invoice_failed" for item in history_payload["billing_transactions"])
-        assert any(item["provider_reference"] == "in_paid_123" for item in history_payload["payment_attempts"])
-        assert any(item["provider_reference"] == "in_failed_123" for item in history_payload["payment_attempts"])
+        assert any(
+            item["transaction_type"] in {"renewal", "invoice_paid"}
+            for item in history_payload["billing_transactions"]
+        )
+        assert any(
+            item["transaction_type"] == "invoice_failed"
+            for item in history_payload["billing_transactions"]
+        )
+        assert any(
+            item["provider_reference"] == "in_paid_123"
+            for item in history_payload["payment_attempts"]
+        )
+        assert any(
+            item["provider_reference"] == "in_failed_123"
+            for item in history_payload["payment_attempts"]
+        )
 
         final_snapshot = client.get("/subscription/me", headers=headers)
         assert final_snapshot.status_code == 200

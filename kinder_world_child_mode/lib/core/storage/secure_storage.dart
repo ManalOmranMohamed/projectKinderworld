@@ -33,7 +33,7 @@ class SecureStorage {
   static const String _keyUserId = 'user_id';
   static const String _keyUserEmail = 'user_email';
   static const String _keyUserRole = 'user_role';
-  static const String _keyParentPin = 'parent_pin';
+  static const String _keyLegacyParentPin = 'parent_pin';
   static const String _keyParentPinVerified = 'parent_pin_verified';
   static const String _keyChildSession = 'child_session';
   static const String _keyParentAccessToken = 'parent_access_token';
@@ -327,7 +327,7 @@ class SecureStorage {
 
   Future<String?> getParentPin() async {
     try {
-      return await _storage.read(key: _keyParentPin);
+      return await _storage.read(key: _keyLegacyParentPin);
     } catch (e) {
       return null;
     }
@@ -335,7 +335,7 @@ class SecureStorage {
 
   Future<bool> saveParentPin(String pin) async {
     try {
-      await _storage.write(key: _keyParentPin, value: pin);
+      await _storage.write(key: _keyLegacyParentPin, value: pin);
       return true;
     } catch (e) {
       return false;
@@ -344,20 +344,15 @@ class SecureStorage {
 
   Future<bool> deleteParentPin() async {
     try {
-      await _storage.delete(key: _keyParentPin);
+      await _storage.delete(key: _keyLegacyParentPin);
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  Future<bool> hasParentPin() async {
-    try {
-      final pin = await getParentPin();
-      return pin != null && pin.isNotEmpty;
-    } catch (e) {
-      return false;
-    }
+  Future<bool> deleteLegacyParentPin() async {
+    return deleteParentPin();
   }
 
   Future<bool> isParentPinVerified() async {
@@ -761,6 +756,7 @@ class SecureStorage {
       await _storage.delete(key: _keyUserEmail);
       await _storage.delete(key: _keyChildSession);
       await _storage.delete(key: _keyParentPinVerified);
+      await deleteLegacyParentPin();
       await _storage.delete(key: _keyIsPremium);
       await _storage.delete(key: _keyPlanType);
       await clearStoredParentSession();

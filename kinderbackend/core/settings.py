@@ -157,27 +157,23 @@ class Settings:
         stripe_publishable_key = (os.getenv("STRIPE_PUBLISHABLE_KEY") or "").strip() or None
         stripe_webhook_secret = (os.getenv("STRIPE_WEBHOOK_SECRET") or "").strip() or None
         stripe_checkout_success_url = (
-            (os.getenv("STRIPE_CHECKOUT_SUCCESS_URL") or "").strip() or None
-        )
-        stripe_checkout_cancel_url = (
-            (os.getenv("STRIPE_CHECKOUT_CANCEL_URL") or "").strip() or None
-        )
-        stripe_portal_return_url = (
-            (os.getenv("STRIPE_PORTAL_RETURN_URL") or "").strip() or None
-        )
+            os.getenv("STRIPE_CHECKOUT_SUCCESS_URL") or ""
+        ).strip() or None
+        stripe_checkout_cancel_url = (os.getenv("STRIPE_CHECKOUT_CANCEL_URL") or "").strip() or None
+        stripe_portal_return_url = (os.getenv("STRIPE_PORTAL_RETURN_URL") or "").strip() or None
         stripe_price_premium_monthly = (
-            (os.getenv("STRIPE_PRICE_PREMIUM_MONTHLY") or "").strip() or None
-        )
+            os.getenv("STRIPE_PRICE_PREMIUM_MONTHLY") or ""
+        ).strip() or None
         stripe_price_family_plus_monthly = (
-            (os.getenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY") or "").strip() or None
-        )
+            os.getenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY") or ""
+        ).strip() or None
         payment_reconciliation_enabled = _as_bool(
             os.getenv("PAYMENT_RECONCILIATION_ENABLED"),
             default=False,
         )
         payment_reconciliation_schedule = (
-            (os.getenv("PAYMENT_RECONCILIATION_SCHEDULE") or "").strip() or None
-        )
+            os.getenv("PAYMENT_RECONCILIATION_SCHEDULE") or ""
+        ).strip() or None
         ai_provider_mode = (os.getenv("AI_PROVIDER_MODE") or "fallback").strip().lower()
         ai_provider_api_key = (os.getenv("AI_PROVIDER_API_KEY") or "").strip() or None
 
@@ -249,9 +245,7 @@ class Settings:
             if environment == "production":
                 raise ValueError("CORS wildcard origins are not allowed in production.")
         if environment == "production" and allowed_origin_regex in {"*", ".*", "^.*$", "^.*"}:
-            raise ValueError(
-                "ALLOWED_ORIGIN_REGEX is too permissive for production."
-            )
+            raise ValueError("ALLOWED_ORIGIN_REGEX is too permissive for production.")
 
         if payment_reconciliation_enabled and not payment_reconciliation_schedule:
             raise ValueError(
@@ -259,9 +253,7 @@ class Settings:
             )
 
         if ai_provider_mode not in {"fallback", "external", "openai"}:
-            raise ValueError(
-                "AI_PROVIDER_MODE must be one of: fallback, external, openai."
-            )
+            raise ValueError("AI_PROVIDER_MODE must be one of: fallback, external, openai.")
         if ai_provider_mode != "fallback" and not ai_provider_api_key:
             raise ValueError(
                 "AI_PROVIDER_API_KEY is required when AI_PROVIDER_MODE is not 'fallback'."

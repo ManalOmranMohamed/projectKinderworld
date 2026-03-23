@@ -7,11 +7,10 @@ from core.settings import settings
 from services.payment_provider import (
     CheckoutSessionResult,
     PaymentMethodReference,
-    PaymentProviderActionRequiredError,
     PaymentProviderUnavailableError,
     PortalSessionResult,
-    RefundResult,
     ProviderSubscriptionSnapshot,
+    RefundResult,
 )
 
 
@@ -72,7 +71,15 @@ class InternalPaymentProvider:
         metadata: dict[str, str],
     ) -> PortalSessionResult:
         self._ensure_non_production()
-        raise PaymentProviderActionRequiredError("Billing portal is not configured yet")
+        user_id = metadata.get("user_id", "0")
+        session_id = f"mock_portal_{user_id}"
+        return PortalSessionResult(
+            provider=self.provider_key,
+            session_id=session_id,
+            url=f"https://example.invalid/mock-billing/{session_id}",
+            customer_id=customer_id,
+            raw={"mode": "internal", "metadata": metadata},
+        )
 
     def retrieve_subscription(self, *, subscription_id: str) -> ProviderSubscriptionSnapshot:
         self._ensure_non_production()
@@ -105,8 +112,21 @@ class InternalPaymentProvider:
         metadata: dict[str, str],
     ) -> RefundResult:
         self._ensure_non_production()
-        raise PaymentProviderActionRequiredError(
-            "Refunds are not supported by the current payment model"
+        user_id = metadata.get("user_id", "0")
+        refund_id = f"mock_refund_{user_id}"
+        return RefundResult(
+            provider=self.provider_key,
+            refund_id=refund_id,
+            status="succeeded",
+            amount_cents=amount_cents or 0,
+            currency="usd",
+            payment_intent_id=payment_intent_id,
+            charge_id=charge_id,
+            raw={
+                "mode": "internal",
+                "reason": reason,
+                "metadata": metadata,
+            },
         )
 
     def list_payment_methods(self, *, customer_id: str) -> list[PaymentMethodReference]:

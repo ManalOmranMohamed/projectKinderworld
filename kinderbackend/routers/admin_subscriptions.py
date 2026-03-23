@@ -172,9 +172,7 @@ def subscription_diagnostics(
     reconciliation_events = (
         db.query(SubscriptionEvent)
         .filter(
-            SubscriptionEvent.event_type.in_(
-                ["reconciliation_mismatch", "reconciliation_error"]
-            )
+            SubscriptionEvent.event_type.in_(["reconciliation_mismatch", "reconciliation_error"])
         )
         .order_by(SubscriptionEvent.occurred_at.desc())
         .limit(limit)

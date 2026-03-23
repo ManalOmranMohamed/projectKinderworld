@@ -28,7 +28,9 @@ class StripeWebhookVerifier:
             raise WebhookVerificationError("Invalid Stripe-Signature header")
 
         if abs(int(time.time()) - timestamp) > self.default_tolerance_seconds:
-            raise WebhookVerificationError("Stripe webhook signature timestamp is outside tolerance")
+            raise WebhookVerificationError(
+                "Stripe webhook signature timestamp is outside tolerance"
+            )
 
         signed_payload = f"{timestamp}.{payload.decode('utf-8')}".encode("utf-8")
         expected = hmac.new(

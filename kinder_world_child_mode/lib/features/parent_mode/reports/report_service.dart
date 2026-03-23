@@ -5,6 +5,7 @@ import 'package:kinder_world/core/api/reports_api.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:logger/logger.dart';
 
@@ -59,7 +60,7 @@ class ParentReportService {
     final authToken = await secureStorage.getAuthToken();
     if (authToken != null &&
         authToken.isNotEmpty &&
-        !authToken.startsWith('child_session_')) {
+        !isChildSessionToken(authToken)) {
       return authToken;
     }
     return null;

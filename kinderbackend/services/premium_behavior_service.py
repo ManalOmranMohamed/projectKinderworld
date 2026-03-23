@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from datetime import timedelta
 from math import floor
 from typing import Any
 
 from sqlalchemy.orm import Session, joinedload
 
-from core.time_utils import utc_now, utc_today, utc_start_of_day
+from core.time_utils import utc_now, utc_start_of_day, utc_today
 from models import (
     ChildActivityEvent,
     ChildDailyActivitySummary,
-    ChildProfile,
     ChildSessionLog,
     ContentItem,
     Notification,
@@ -40,6 +38,38 @@ _SUPPORT_SLA_HOURS = {
 
 
 class PremiumBehaviorService:
+    @staticmethod
+    def _demo_insights() -> list[dict[str, Any]]:
+        return [
+            {
+                "code": "behavioral_insight",
+                "severity": "info",
+                "title": "Start with short sessions",
+                "summary": "Short guided activities help establish a healthy routine.",
+                "recommended_action": "Begin with one lesson and one story this week.",
+            },
+            {
+                "code": "engagement_tip",
+                "severity": "info",
+                "title": "Mix content types",
+                "summary": "Alternating lessons and play content usually improves engagement.",
+                "recommended_action": "Rotate between learning and fun content in the next session.",
+            },
+        ]
+
+    @staticmethod
+    def _demo_smart_notifications() -> list[dict[str, Any]]:
+        return [
+            {
+                "id": "demo-behavioral-insight",
+                "type": "BEHAVIORAL_INSIGHT",
+                "severity": "info",
+                "message": "No recent activity data yet. Start one guided session to unlock smarter insights.",
+                "created_at": utc_now().isoformat(),
+                "rule_key": "demo_behavioral_insight",
+            }
+        ]
+
     def build_ai_insights(
         self,
         *,
@@ -56,8 +86,12 @@ class PremiumBehaviorService:
         children = list(payload.get("children") or [])
 
         insights: list[dict[str, Any]] = []
-        completion_rate = float(payload.get("completion_rate") or account_summary.get("completion_rate") or 0.0)
-        average_score = float(payload.get("average_score") or account_summary.get("average_score") or 0.0)
+        completion_rate = float(
+            payload.get("completion_rate") or account_summary.get("completion_rate") or 0.0
+        )
+        average_score = float(
+            payload.get("average_score") or account_summary.get("average_score") or 0.0
+        )
         top_content_type = payload.get("top_content_type")
         if children:
             inactive_children = [
@@ -117,6 +151,9 @@ class PremiumBehaviorService:
                         "recommended_action": "Use that content type as the first activity in the next session.",
                     }
                 )
+
+        if not insights:
+            insights = self._demo_insights()
 
         return {
             "insights": insights[:4],
@@ -254,11 +291,15 @@ class PremiumBehaviorService:
 
         notifications.sort(
             key=lambda item: (
-                {"warning": 3, "critical": 4, "positive": 2, "info": 1}.get(item.get("severity", "info"), 0),
+                {"warning": 3, "critical": 4, "positive": 2, "info": 1}.get(
+                    item.get("severity", "info"), 0
+                ),
                 item.get("created_at") or "",
             ),
             reverse=True,
         )
+        if not notifications:
+            notifications = self._demo_smart_notifications()
         return {
             "notifications": notifications[:8],
             "access_level": "smart",
@@ -276,7 +317,9 @@ class PremiumBehaviorService:
         item_limit = _DOWNLOAD_ITEM_LIMIT.get(plan, 0)
         child_ids = [child.id for child in analytics_service._children_for_parent(db, user.id)]
         recent = analytics_service._recent_sessions(db=db, child_ids=child_ids, days=30, limit=100)
-        distinct_titles = {str(item.get("title") or "").strip() for item in recent if item.get("title")}
+        distinct_titles = {
+            str(item.get("title") or "").strip() for item in recent if item.get("title")
+        }
         used_items = min(len(distinct_titles), item_limit)
         estimated_used_mb = min(quota_mb, used_items * 20)
         published_downloadable_items = (
@@ -290,7 +333,7 @@ class PremiumBehaviorService:
         )
 
         return {
-            "status": "eligible" if quota_mb > 0 else "not_available",
+            "status": "downloads enabled" if quota_mb > 0 else "not_available",
             "quota_mb": quota_mb,
             "used_mb": estimated_used_mb,
             "remaining_mb": max(quota_mb - estimated_used_mb, 0),
@@ -328,7 +371,9 @@ class PremiumBehaviorService:
                 if highest_priority is not None
                 else 12
             ),
-            "support_channels": ["email", "chat"] if user_plan == PLAN_FAMILY_PLUS else ["email"],
+            "support_channels": (
+                ["email", "chat", "phone"] if user_plan == PLAN_FAMILY_PLUS else ["email"]
+            ),
             "open_ticket_count": len(my_tickets),
             "highest_priority_ticket": (
                 self._priority_payload(highest_priority, include_queue_position=True)

@@ -15,6 +15,7 @@ The goal is simple:
 - run the same checks locally that CI will run
 - understand failures faster
 - keep quality tooling lightweight enough for everyday use
+- avoid relying on stale coverage files or old CI logs when reproducing failures
 
 ## 2. Recommended Local Entry Point
 
@@ -213,7 +214,21 @@ isort .
 - Coverage is currently a baseline gate, not a maturity signal.
 - Use the coverage summary to identify neglected repositories, services, and large screens.
 
-## 7. CI Parity
+## 7. Clean Re-Runs
+
+When local results look inconsistent with current code, prefer a clean rerun instead of comparing against old log files.
+
+Recommended cleanup targets:
+
+```bash
+rm -rf kinder_world_child_mode/coverage
+rm -rf kinder_world_child_mode/.dart_tool
+rm -rf .pytest_cache kinderbackend/htmlcov
+```
+
+Then rerun the canonical commands through `tools/dev.py`.
+
+## 8. CI Parity
 
 The local workflow is designed to map directly to CI:
 
@@ -224,7 +239,7 @@ The local workflow is designed to map directly to CI:
 
 If a command passes locally through `tools/dev.py`, it should be close to what CI will run.
 
-## 8. When to Run What
+## 9. When to Run What
 
 Run the fastest useful command for the scope of the change:
 
@@ -241,7 +256,7 @@ Run the fastest useful command for the scope of the change:
 - editing both stacks:
   - `python tools/dev.py all-checks`
 
-## 9. Recommended Next Step
+## 10. Recommended Next Step
 
 If the team adopts this workflow consistently, the next useful improvement is not another tool. It is:
 

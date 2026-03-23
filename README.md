@@ -496,7 +496,21 @@ The app supports overriding the backend base URL with a Dart define:
 flutter run --dart-define=API_BASE_URL=http://<HOST>:8000
 ```
 
-This is important because the current default fallback in code is a LAN IP address, which is not suitable for most environments.
+The app also supports environment-driven URLs:
+
+```bash
+flutter run \
+  --dart-define=APP_ENV=development \
+  --dart-define=DEV_API_BASE_URL=http://127.0.0.1:8000
+```
+
+For staging/production builds, prefer:
+
+```bash
+flutter build apk \
+  --dart-define=APP_ENV=staging \
+  --dart-define=STAGING_API_BASE_URL=https://staging.example.com
+```
 
 ### Run the App
 
@@ -608,6 +622,10 @@ The codebase currently recognizes at least the following environment variables.
 The frontend currently uses one important build-time setting:
 
 - `API_BASE_URL`
+- `APP_ENV`
+- `DEV_API_BASE_URL`
+- `STAGING_API_BASE_URL`
+- `PROD_API_BASE_URL`
 
 Example:
 
@@ -707,7 +725,7 @@ Runs on Flutter changes and currently performs:
 These points are based on the current codebase behavior.
 
 - Backend test suite is in better shape than the full Flutter test suite.
-- The Flutter app still uses a hardcoded LAN IP fallback for `API_BASE_URL` if no `--dart-define` is supplied.
+- Flutter API configuration is now environment-driven, but production/staging still require explicit `--dart-define` values.
 - Billing portal functionality is not fully implemented:
   - `POST /subscription/manage` returns `501`
   - `POST /billing/portal` returns `501`
@@ -719,7 +737,7 @@ These points are based on the current codebase behavior.
 - The backend has system flags for maintenance mode, registration toggle, and AI buddy availability, but not every feature toggle path is part of a complete frontend admin control surface yet.
 - Coverage gates are intentionally conservative today:
   - backend source coverage floor is `70%`
-  - Flutter non-generated coverage floor is `25%`
+  - Flutter non-generated coverage floor is `28%`
   These are baseline quality gates, not final maturity targets.
 
 ## Future Improvements

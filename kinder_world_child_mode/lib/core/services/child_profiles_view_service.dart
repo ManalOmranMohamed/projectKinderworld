@@ -10,6 +10,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/children_api_parsing.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
 class ChildProfilesViewService {
@@ -42,7 +43,7 @@ class ChildProfilesViewService {
     final token = _secureStorage.hasCachedAuthToken
         ? _secureStorage.cachedAuthToken
         : await _secureStorage.getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
+    if (token == null || isChildSessionToken(token)) {
       return childrenById.values.toList(growable: false);
     }
 
@@ -95,7 +96,7 @@ class ChildProfilesViewService {
     final token = _secureStorage.hasCachedAuthToken
         ? _secureStorage.cachedAuthToken
         : await _secureStorage.getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
+    if (token == null || isChildSessionToken(token)) {
       return childrenById.values.toList(growable: false);
     }
 

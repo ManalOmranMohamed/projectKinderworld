@@ -20,6 +20,7 @@ from routers.admin_audit import router as admin_audit_router
 from routers.admin_auth import router as admin_auth_router
 from routers.admin_children import router as admin_children_router
 from routers.admin_cms import router as admin_cms_router
+from routers.admin_diagnostics import router as admin_diagnostics_router
 from routers.admin_seed import SEED_ENABLED as ADMIN_SEED_ENABLED
 from routers.admin_seed import router as admin_seed_router
 from routers.admin_settings import router as admin_settings_router
@@ -42,7 +43,6 @@ from routers.subscription import billing_router as subscription_billing_router
 from routers.subscription import public_router as subscription_public_router
 from routers.subscription import router as subscription_router
 from routers.support import router as support_router
-from routers.admin_diagnostics import router as admin_diagnostics_router
 
 configure_logging(settings)
 

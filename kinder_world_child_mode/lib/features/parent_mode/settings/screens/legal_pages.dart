@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/legal/legal_default_documents.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/legal_content_payload.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 
 class ParentTermsScreen extends StatelessWidget {
@@ -68,7 +70,7 @@ class _ParentLegalPage extends ConsumerStatefulWidget {
 }
 
 class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
-  Future<Map<String, dynamic>>? _future;
+  Future<LegalContentPayload>? _future;
 
   @override
   void initState() {
@@ -76,11 +78,11 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
     _future = _loadContent();
   }
 
-  Future<Map<String, dynamic>> _loadContent() {
+  Future<LegalContentPayload> _loadContent() {
     return ref
         .read(networkServiceProvider)
         .get<Map<String, dynamic>>(widget.endpoint)
-        .then((value) => value.data ?? {});
+        .then((value) => LegalContentPayload.fromJson(value.data ?? const {}));
   }
 
   void _refresh() {
@@ -115,7 +117,7 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
         ],
       ),
       body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
+        child: FutureBuilder<LegalContentPayload>(
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -128,8 +130,18 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
                 textColor: colors.onSurfaceVariant,
               );
             }
-            final body = (snapshot.data?['body'] ?? snapshot.data?['content'])
-                ?.toString();
+            final languageCode = Localizations.localeOf(context).languageCode;
+            final payload = snapshot.data ?? const LegalContentPayload();
+            final fetchedBody =
+                payload.resolvedBodyForLanguageCode(languageCode);
+            final fallbackBody =
+                legalDefaultDocumentForType(_typeFromEndpoint())
+                    ?.bodyForLanguageCode(languageCode);
+            final body =
+                fetchedBody.isNotEmpty ? fetchedBody : (fallbackBody ?? '');
+            final isUsingDefaultBody = fetchedBody.isEmpty &&
+                fallbackBody != null &&
+                fallbackBody.isNotEmpty;
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               child: Column(
@@ -147,19 +159,43 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
                     title: config.sectionTitle,
                     icon: config.sectionIcon,
                     accent: config.accent,
-                    child: body == null || body.isEmpty
+                    child: body.isEmpty
                         ? _EmptyState(
                             message: widget.placeholder,
                             accent: config.accent,
                             textColor: colors.onSurfaceVariant,
                           )
-                        : Text(
-                            body,
-                            style: textTheme.bodyMedium?.copyWith(
-                              fontSize: 16,
-                              height: 1.6,
-                              color: colors.onSurface,
-                            ),
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (isUsingDefaultBody) ...[
+                                Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 14),
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        config.accent.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Text(
+                                    widget.placeholder,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              Text(
+                                body,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontSize: 16,
+                                  height: 1.6,
+                                  color: colors.onSurface,
+                                ),
+                              ),
+                            ],
                           ),
                   ),
                   const SizedBox(height: 16),
@@ -175,6 +211,19 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
         ),
       ),
     );
+  }
+
+  String _typeFromEndpoint() {
+    switch (widget.endpoint) {
+      case '/legal/terms':
+        return 'terms';
+      case '/legal/privacy':
+        return 'privacy';
+      case '/legal/coppa':
+        return 'coppa';
+      default:
+        return 'terms';
+    }
   }
 }
 
@@ -217,8 +266,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: parent.reward,
           heroGradient: LinearGradient(
             colors: [
-             parent.rewardLight,
-             colors.surfaceContainerLow,
+              parent.rewardLight,
+              colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -237,8 +286,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: parent.info,
           heroGradient: LinearGradient(
             colors: [
-               parent.infoLight,
-               colors.surfaceContainerLow,
+              parent.infoLight,
+              colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -257,8 +306,8 @@ extension _LegalStyleConfigExt on _LegalPageStyle {
           accent: parent.primary,
           heroGradient: LinearGradient(
             colors: [
-               parent.primaryLight,
-               colors.surfaceContainerLow,
+              parent.primaryLight,
+              colors.surfaceContainerLow,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,

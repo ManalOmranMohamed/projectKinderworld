@@ -13,6 +13,7 @@ import 'package:kinder_world/core/repositories/mood_repository.dart';
 import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:logger/logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -253,7 +254,7 @@ class MoodNotifier extends StateNotifier<MoodState> {
     final authToken = await _secureStorage.getAuthToken();
     if (authToken != null &&
         authToken.isNotEmpty &&
-        !authToken.startsWith('child_session_')) {
+        !isChildSessionToken(authToken)) {
       return authToken;
     }
     return null;

@@ -78,7 +78,9 @@ class SubscriptionProfile(Base):
     __tablename__ = "subscription_profiles"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
     current_plan_id = Column(
         String, nullable=False, default="FREE", server_default=text("'FREE'"), index=True
     )
@@ -97,9 +99,7 @@ class SubscriptionProfile(Base):
         server_default=text("'not_applicable'"),
         index=True,
     )
-    provider = Column(
-        String, nullable=False, default="internal", server_default=text("'internal'")
-    )
+    provider = Column(String, nullable=False, default="internal", server_default=text("'internal'"))
     provider_customer_id = Column(String, nullable=True, index=True)
     provider_subscription_id = Column(String, nullable=True, index=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
@@ -125,7 +125,9 @@ class SubscriptionEvent(Base):
     __tablename__ = "subscription_events"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     subscription_profile_id = Column(
         Integer,
         ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
@@ -154,7 +156,9 @@ class BillingTransaction(Base):
     __tablename__ = "billing_transactions"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     subscription_profile_id = Column(
         Integer,
         ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
@@ -172,14 +176,18 @@ class BillingTransaction(Base):
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="billing_transactions")
-    subscription_profile = relationship("SubscriptionProfile", back_populates="billing_transactions")
+    subscription_profile = relationship(
+        "SubscriptionProfile", back_populates="billing_transactions"
+    )
 
 
 class PaymentAttempt(Base):
     __tablename__ = "payment_attempts"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     subscription_profile_id = Column(
         Integer,
         ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
@@ -247,7 +255,7 @@ class ChildProfile(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    picture_password = Column(JSON, nullable=False)  # Stored as JSON array of strings
+    picture_password = Column(JSON, nullable=False)  # Legacy list or hashed JSON payload
     date_of_birth = Column(Date, nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(

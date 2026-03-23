@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
@@ -88,7 +90,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
       _syncStatusKey = 'syncStarting';
     });
 
-    _controller.repeat();
+    unawaited(_controller.repeat());
     final queue = ref.read(deferredOperationsQueueProvider);
     final network = ref.read(networkServiceProvider);
     final progressController = ref.read(progressControllerProvider.notifier);

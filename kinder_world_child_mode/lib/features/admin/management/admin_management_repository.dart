@@ -5,6 +5,7 @@ import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
 import 'package:kinder_world/core/models/admin_child_record.dart';
 import 'package:kinder_world/core/models/admin_cms_models.dart';
+import 'package:kinder_world/core/models/admin_management_activity.dart';
 import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/core/models/admin_rbac_models.dart';
 import 'package:kinder_world/core/models/admin_support_ticket.dart';
@@ -40,6 +41,18 @@ class AdminManagementRepository {
     });
   }
 
+  Map<String, dynamic> _body(Response<dynamic> response) {
+    return _jsonMap(response.data);
+  }
+
+  Map<String, dynamic> _item(Response<dynamic> response) {
+    return _jsonMap(_body(response)['item']);
+  }
+
+  List<Map<String, dynamic>> _items(Map<String, dynamic> body) {
+    return _jsonList(body['items']);
+  }
+
   Future<AdminPagedResponse<AdminParentUser>> fetchUsers({
     String search = '',
     String status = 'all',
@@ -54,15 +67,11 @@ class AdminManagementRepository {
       },
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    final items = (body['items'] as List<dynamic>? ?? const [])
-        .map((item) =>
-            AdminParentUser.fromJson(Map<String, dynamic>.from(item as Map)))
-        .toList();
+    final body = _body(response);
+    final items = _items(body).map(AdminParentUser.fromJson).toList();
     return AdminPagedResponse(
       items: items,
-      pagination:
-          Map<String, dynamic>.from(body['pagination'] as Map? ?? const {}),
+      pagination: _jsonMap(body['pagination']),
     );
   }
 
@@ -71,17 +80,15 @@ class AdminManagementRepository {
       '/admin/users/$userId',
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminParentUser.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminParentUser.fromJson(_item(response));
   }
 
-  Future<Map<String, dynamic>> fetchUserActivity(int userId) async {
+  Future<AdminUserActivityDetails> fetchUserActivity(int userId) async {
     final response = await _network.get(
       '/admin/users/$userId/activity',
       options: await _adminOptions(),
     );
-    return Map<String, dynamic>.from(response.data as Map);
+    return AdminUserActivityDetails.fromJson(_body(response));
   }
 
   Future<AdminParentUser> updateUser(
@@ -99,9 +106,7 @@ class AdminManagementRepository {
       },
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminParentUser.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminParentUser.fromJson(_item(response));
   }
 
   Future<AdminParentUser> setUserEnabled(int userId, bool enabled) async {
@@ -109,9 +114,7 @@ class AdminManagementRepository {
       '/admin/users/$userId/${enabled ? 'enable' : 'disable'}',
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminParentUser.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminParentUser.fromJson(_item(response));
   }
 
   Future<AdminPagedResponse<AdminChildRecord>> fetchChildren({
@@ -130,15 +133,11 @@ class AdminManagementRepository {
       queryParameters: query,
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    final items = (body['items'] as List<dynamic>? ?? const [])
-        .map((item) =>
-            AdminChildRecord.fromJson(Map<String, dynamic>.from(item as Map)))
-        .toList();
+    final body = _body(response);
+    final items = _items(body).map(AdminChildRecord.fromJson).toList();
     return AdminPagedResponse(
       items: items,
-      pagination:
-          Map<String, dynamic>.from(body['pagination'] as Map? ?? const {}),
+      pagination: _jsonMap(body['pagination']),
     );
   }
 
@@ -147,34 +146,31 @@ class AdminManagementRepository {
       '/admin/children/$childId',
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminChildRecord.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminChildRecord.fromJson(_item(response));
   }
 
-  Future<Map<String, dynamic>> fetchChildProgress(int childId) async {
+  Future<AdminChildProgressDetails> fetchChildProgress(int childId) async {
     final response = await _network.get(
       '/admin/children/$childId/progress',
       options: await _adminOptions(),
     );
-    return Map<String, dynamic>.from(response.data as Map);
+    return AdminChildProgressDetails.fromJson(_body(response));
   }
 
-  Future<Map<String, dynamic>> fetchChildActivityLog(int childId) async {
+  Future<AdminChildActivityLog> fetchChildActivityLog(int childId) async {
     final response = await _network.get(
       '/admin/children/$childId/activity-log',
       options: await _adminOptions(),
     );
-    return Map<String, dynamic>.from(response.data as Map);
+    return AdminChildActivityLog.fromJson(_body(response));
   }
 
-  Future<Map<String, dynamic>> fetchChildAiBuddySummary(int childId) async {
+  Future<AdminChildAiBuddySummary> fetchChildAiBuddySummary(int childId) async {
     final response = await _network.get(
       '/admin/children/$childId/ai-buddy-summary',
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return Map<String, dynamic>.from(body['item'] as Map? ?? const {});
+    return AdminChildAiBuddySummary.fromJson(_item(response));
   }
 
   Future<AdminChildRecord> updateChild(
@@ -192,9 +188,7 @@ class AdminManagementRepository {
       },
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminChildRecord.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminChildRecord.fromJson(_item(response));
   }
 
   Future<AdminChildRecord> deactivateChild(int childId) async {
@@ -202,9 +196,7 @@ class AdminManagementRepository {
       '/admin/children/$childId/deactivate',
       options: await _adminOptions(),
     );
-    final body = Map<String, dynamic>.from(response.data as Map);
-    return AdminChildRecord.fromJson(
-        Map<String, dynamic>.from(body['item'] as Map));
+    return AdminChildRecord.fromJson(_item(response));
   }
 
   Future<AdminPagedResponse<AdminAuditLog>> fetchAuditLogs({
@@ -837,3 +829,20 @@ final adminManagementRepositoryProvider =
   final storage = ref.watch(secureStorageProvider);
   return AdminManagementRepository(network: network, storage: storage);
 });
+
+Map<String, dynamic> _jsonMap(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return value;
+  }
+  if (value is Map) {
+    return Map<String, dynamic>.from(value);
+  }
+  return const <String, dynamic>{};
+}
+
+List<Map<String, dynamic>> _jsonList(Object? value) {
+  if (value is! List) {
+    return const <Map<String, dynamic>>[];
+  }
+  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+}

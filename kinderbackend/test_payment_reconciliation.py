@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-import pytest
-
 from core.time_utils import db_utc_now
 from models import PaymentAttempt, SubscriptionEvent, SubscriptionProfile
 from services.payment_provider import PaymentProviderError, ProviderSubscriptionSnapshot
@@ -84,11 +82,7 @@ def test_reconciliation_updates_profile_and_attempt(db, create_parent):
     assert profile.will_renew is True
     assert profile.expires_at is not None
 
-    updated_attempt = (
-        db.query(PaymentAttempt)
-        .filter(PaymentAttempt.id == attempt.id)
-        .first()
-    )
+    updated_attempt = db.query(PaymentAttempt).filter(PaymentAttempt.id == attempt.id).first()
     assert updated_attempt is not None
     assert updated_attempt.status == PAYMENT_STATUS_SUCCEEDED
     assert updated_attempt.completed_at is not None

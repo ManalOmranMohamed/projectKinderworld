@@ -3196,6 +3196,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchVideos => 'Search videos...';
 
   @override
+  String get playContentEmptyStateSubtitle =>
+      'Publish child-safe videos, stories, or activities from CMS.';
+
+  @override
+  String get playPublishedContent => 'Published Content';
+
+  @override
+  String get playNoBodyContentYet => 'No published body content yet.';
+
+  @override
+  String get playPublishedQuizzes => 'Published Quizzes';
+
+  @override
+  String get playTypeLesson => 'Lesson';
+
+  @override
+  String get playTypeStory => 'Story';
+
+  @override
+  String get playTypeVideo => 'Video';
+
+  @override
+  String get playTypeActivity => 'Activity';
+
+  @override
   String get fanFavourite => 'Fan Favourite';
 
   @override

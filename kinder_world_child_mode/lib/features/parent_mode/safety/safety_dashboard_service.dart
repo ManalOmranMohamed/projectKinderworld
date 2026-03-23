@@ -14,6 +14,7 @@ import 'package:kinder_world/core/repositories/child_repository.dart';
 import 'package:kinder_world/core/repositories/progress_repository.dart';
 import 'package:kinder_world/core/services/privacy_service.dart';
 import 'package:kinder_world/core/services/support_service.dart';
+import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:kinder_world/core/providers/support_controller.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_entry.dart';
@@ -298,7 +299,7 @@ class SafetyDashboardService {
     final childrenById = {for (final child in localChildren) child.id: child};
 
     final token = await _ref.read(secureStorageProvider).getAuthToken();
-    if (token == null || token.startsWith('child_session_')) {
+    if (token == null || isChildSessionToken(token)) {
       return childrenById.values.toList();
     }
 
