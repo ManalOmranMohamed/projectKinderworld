@@ -149,14 +149,14 @@ class AuthRepository {
 
       if (role == UserRoles.child) {
         final sessionToken = await _secureStorage.getAuthToken();
-        if (sessionToken == null || sessionToken.isEmpty) {
+        final childId = await _secureStorage.getChildSession();
+        if (sessionToken == null || sessionToken.isEmpty || childId == null) {
           return null;
         }
         if (isLegacyChildSessionMarker(sessionToken)) {
           await _secureStorage.clearAuthOnly();
           return null;
         }
-        final childId = await _secureStorage.getChildSession();
 
         final data = await _authApi.validateChildSession(
           sessionToken: sessionToken,
@@ -170,10 +170,6 @@ class AuthRepository {
             data['child_id']?.toString().trim().isNotEmpty == true
                 ? data['child_id'].toString()
                 : childId;
-        if (resolvedChildId == null || resolvedChildId.trim().isEmpty) {
-          await _secureStorage.clearAuthOnly();
-          return null;
-        }
         final resolvedName = _extractChildName(data);
         final now = DateTime.now();
         return User(
@@ -398,7 +394,8 @@ class AuthRepository {
     final currentAuthToken = _secureStorage.hasCachedAuthToken
         ? _secureStorage.cachedAuthToken
         : await _secureStorage.getAuthToken();
-    if (currentRole == UserRoles.parent && _isUsableParentToken(currentAuthToken)) {
+    if (currentRole == UserRoles.parent &&
+        _isUsableParentToken(currentAuthToken)) {
       return currentAuthToken;
     }
 
@@ -440,9 +437,8 @@ class AuthRepository {
       }
 
       final resolvedName = _extractChildName(data);
-      final resolvedChildId = payload.childId?.trim().isNotEmpty == true
-          ? payload.childId!
-          : childId;
+      final resolvedChildId =
+          payload.childId?.trim().isNotEmpty == true ? payload.childId! : childId;
       final sessionToken = payload.sessionToken?.trim();
       if (sessionToken == null || sessionToken.isEmpty) {
         _logger.e('Child login failed: missing session token');
@@ -475,8 +471,6 @@ class AuthRepository {
       _logger.e(
           'Child login error: ${e.response?.statusCode} - ${e.response?.data}');
       throw ChildLoginException(statusCode: e.response?.statusCode);
-    } on ChildLoginException {
-      rethrow;
     } catch (e) {
       _logger.e('Child login error: $e');
       throw const ChildLoginException();
@@ -728,10 +722,9 @@ class AuthRepository {
         pin: pin,
         confirmPin: confirmPin,
       );
-      final success = response['success'] == true;
-      await _secureStorage.saveParentPinVerified(success);
+      await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: success,
+        success: response['success'] == true,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
@@ -751,10 +744,9 @@ class AuthRepository {
   Future<ParentPinActionResult> verifyParentPin(String enteredPin) async {
     try {
       final response = await _authApi.parentPinVerify(pin: enteredPin);
-      final success = response['success'] == true;
-      await _secureStorage.saveParentPinVerified(success);
+      await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: success,
+        success: response['success'] == true,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
@@ -785,10 +777,9 @@ class AuthRepository {
         newPin: newPin,
         confirmPin: confirmPin,
       );
-      final success = response['success'] == true;
-      await _secureStorage.saveParentPinVerified(success);
+      await _secureStorage.saveParentPinVerified(true);
       return ParentPinActionResult(
-        success: success,
+        success: response['success'] == true,
         message: response['message']?.toString(),
       );
     } on DioException catch (e) {
