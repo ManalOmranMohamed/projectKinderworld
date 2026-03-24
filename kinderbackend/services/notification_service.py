@@ -9,7 +9,6 @@ from models import Notification, SupportTicket, User
 from serializers import notification_to_json
 from services.premium_behavior_service import premium_behavior_service
 
-
 NotificationPayload: TypeAlias = dict[str, Any]
 
 

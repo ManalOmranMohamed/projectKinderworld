@@ -4,11 +4,11 @@ Tables: admin_users, roles, permissions, role_permissions, admin_user_roles
 """
 
 from sqlalchemy import (
-    Index,
     JSON,
     Boolean,
     Column,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,

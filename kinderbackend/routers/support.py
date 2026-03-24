@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from deps import get_current_user, get_db
 from models import User
-from schemas.common import SuccessResponse
 from rate_limit import support_write_rate_limit
+from schemas.common import SuccessResponse
 from services.support_ticket_service import support_ticket_service
 
 router = APIRouter(tags=["support"])

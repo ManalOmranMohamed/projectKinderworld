@@ -1,10 +1,10 @@
 from sqlalchemy import (
-    Index,
     JSON,
     Boolean,
     Column,
     Date,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,

@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from routers.voice import router as voice_router
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -45,6 +45,7 @@ from routers.subscription import billing_router as subscription_billing_router
 from routers.subscription import public_router as subscription_public_router
 from routers.subscription import router as subscription_router
 from routers.support import router as support_router
+from routers.voice import router as voice_router
 
 configure_logging(settings)
 

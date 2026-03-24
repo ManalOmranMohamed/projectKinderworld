@@ -6,10 +6,10 @@ from auth import hash_password
 from core.time_utils import db_utc_now
 from models import (
     BillingTransaction,
+    PaymentAttempt,
     SubscriptionEvent,
     SubscriptionProfile,
     SupportTicket,
-    PaymentAttempt,
     User,
 )
 

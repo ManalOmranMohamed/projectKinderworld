@@ -15,8 +15,8 @@ from admin_utils import (
     serialize_child_detail,
     write_audit_log,
 )
-from core.avatar_validation import normalize_child_avatar
 from core.admin_security import require_sensitive_action_confirmation
+from core.avatar_validation import normalize_child_avatar
 from core.time_utils import db_utc_now
 from deps import get_db
 from models import ChildProfile, User

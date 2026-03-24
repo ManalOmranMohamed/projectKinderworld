@@ -5,9 +5,9 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from core.message_catalog import SubscriptionMessages
 from core.observability import emit_event
 from core.time_utils import db_utc_now
-from core.message_catalog import SubscriptionMessages
 from models import BillingTransaction, PaymentAttempt, PaymentMethod, SubscriptionProfile, User
 from services.payment_provider import (
     CheckoutSessionResult,
