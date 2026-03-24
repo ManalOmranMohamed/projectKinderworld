@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 
 class AdminPageHeader extends StatelessWidget {
   const AdminPageHeader({
@@ -93,32 +93,7 @@ class AdminLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: padding,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 40,
-              height: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context)!.loading,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.55),
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppLoadingState.admin(padding: padding);
   }
 }
 
@@ -134,78 +109,7 @@ class AdminErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    return Card(
-      color: colorScheme.errorContainer.withValues(alpha: 0.35),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: colorScheme.error.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.error_outline_rounded,
-                color: colorScheme.error,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.errorTitle,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colorScheme.error,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  if (onRetry != null) ...[
-                    const SizedBox(height: 12),
-                    FilledButton.tonalIcon(
-                      onPressed: onRetry,
-                      icon: const Icon(Icons.refresh_rounded, size: 16),
-                      label: Text(l10n.retry),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colorScheme.errorContainer,
-                        foregroundColor: colorScheme.error,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppErrorState.admin(message: message, onRetry: onRetry);
   }
 }
 
@@ -225,54 +129,12 @@ class AdminEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: colorScheme.onSurface.withValues(alpha: 0.4),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                message,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.55),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (action != null && actionLabel != null) ...[
-                const SizedBox(height: 16),
-                FilledButton.tonal(
-                  onPressed: action,
-                  child: Text(actionLabel!),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
+    return AppEmptyState.admin(
+      title: message,
+      subtitle: '',
+      icon: icon,
+      action: action,
+      actionLabel: actionLabel,
     );
   }
 }

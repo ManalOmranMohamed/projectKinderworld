@@ -33,6 +33,8 @@ void main() {
         'mode': 'internal_fallback',
         'status': 'fallback',
         'reason': 'Provider is not configured.',
+        'provider_key': 'internal',
+        'supports_activity_suggestions': true,
       },
     });
 
@@ -40,6 +42,8 @@ void main() {
     expect(conversation.messages.single.role, 'assistant');
     expect(conversation.provider.configured, isFalse);
     expect(conversation.provider.mode, 'internal_fallback');
+    expect(conversation.provider.effectiveProviderKey, 'internal');
+    expect(conversation.provider.supportsActivitySuggestions, isTrue);
     expect(conversation.session?.visibilityMode, 'summary_and_metrics');
   });
 
@@ -76,15 +80,18 @@ void main() {
         'safety_status': 'allowed',
       },
       'provider': {
-        'configured': false,
-        'mode': 'internal_fallback',
-        'status': 'fallback',
+        'configured': true,
+        'mode': 'openai',
+        'status': 'ready',
+        'provider_key': 'openai',
+        'model': 'gpt-4o-mini',
       },
     });
 
     expect(result.userMessage.isUser, isTrue);
     expect(result.assistantMessage.isUser, isFalse);
-    expect(result.provider.status, 'fallback');
+    expect(result.provider.isReady, isTrue);
+    expect(result.provider.model, 'gpt-4o-mini');
   });
 
   test('AiBuddyVisibilitySummary parses policy and safety metrics', () {

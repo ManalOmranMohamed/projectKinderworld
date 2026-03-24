@@ -50,8 +50,14 @@ class ReconciliationResult:
 
 
 class PaymentReconciliationService:
-    def __init__(self) -> None:
-        self._payment_provider_factory = get_payment_provider
+    def __init__(
+        self,
+        *,
+        payment_provider_factory=get_payment_provider,
+        subscription_service_instance=subscription_service,
+    ) -> None:
+        self._payment_provider_factory = payment_provider_factory
+        self._subscription_service = subscription_service_instance
 
     def reconcile_all(
         self,
@@ -188,7 +194,7 @@ class PaymentReconciliationService:
 
         for field_name, value in changes.items():
             if field_name == "user_plan" and user is not None:
-                subscription_service._sync_user_plan_projection(  # noqa: SLF001
+                self._subscription_service._sync_user_plan_projection(  # noqa: SLF001
                     user=user,
                     plan=value,
                     when=db_utc_now(),

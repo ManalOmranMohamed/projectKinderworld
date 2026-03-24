@@ -1,7 +1,15 @@
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
+import 'package:kinder_world/core/cache/app_cache_store.dart';
 
 enum ReportPeriod { week, month, year }
+
+enum ChildReportSource {
+  liveServer,
+  localDevice,
+  cachedSnapshot,
+  profileFallback,
+}
 
 extension ReportPeriodRange on ReportPeriod {
   int get days {
@@ -96,4 +104,25 @@ class ChildReportData {
   final List<ReportAchievement> achievements;
   final List<ReportRecentSession> recentSessions;
   final bool usesRecordedSessions;
+}
+
+class ChildReportLoadResult {
+  const ChildReportLoadResult({
+    required this.report,
+    required this.source,
+    this.cacheSnapshot,
+    this.hasPendingLocalChanges = false,
+  });
+
+  final ChildReportData report;
+  final ChildReportSource source;
+  final CacheSnapshot? cacheSnapshot;
+  final bool hasPendingLocalChanges;
+
+  bool get isOfflineLike => source != ChildReportSource.liveServer;
+  bool get isStale => cacheSnapshot?.freshness == CacheFreshness.cachedStale;
+  bool get isCachedSnapshot => source == ChildReportSource.cachedSnapshot;
+  bool get isDeviceOnly =>
+      source == ChildReportSource.localDevice ||
+      source == ChildReportSource.profileFallback;
 }

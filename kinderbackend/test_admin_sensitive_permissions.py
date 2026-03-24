@@ -60,7 +60,13 @@ def test_admin_user_plan_override_requires_permission_and_confirmation(
         },
     )
     assert resp.status_code == 403
-    assert resp.json()["detail"]["code"] == "PERMISSION_DENIED"
+    payload = resp.json()
+    assert payload["detail"]["code"] == "PERMISSION_DENIED"
+    assert payload["error"] == {
+        "message": "Permission 'admin.subscription.override' is required",
+        "code": "PERMISSION_DENIED",
+        "type": "authorization_error",
+    }
 
     super_admin = create_admin(
         email="super.admin.permissions@example.com",

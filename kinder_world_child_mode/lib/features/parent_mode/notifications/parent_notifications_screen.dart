@@ -6,7 +6,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
-import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_entry.dart';
@@ -72,13 +72,26 @@ class _ParentNotificationsScreenState
     return '${diff.inDays} ${l10n.daysAgo}';
   }
 
+  Widget _buildRefreshableState(Widget child) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      children: [
+        SizedBox(
+          height: 320,
+          child: child,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final plan =
-        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final plan = ref.watch(planInfoProvider).asData?.value ??
+        PlanInfo.fromTier(PlanTier.free);
     final isSmartLocked = !plan.hasAiInsights;
 
     return Scaffold(
@@ -116,7 +129,8 @@ class _ParentNotificationsScreenState
         child: FutureBuilder<List<ParentNotificationEntry>>(
           future: _notificationsFuture,
           builder: (context, snapshot) {
-            final notifications = snapshot.data ?? const <ParentNotificationEntry>[];
+            final notifications =
+                snapshot.data ?? const <ParentNotificationEntry>[];
             return Column(
               children: [
                 Padding(
@@ -161,14 +175,29 @@ class _ParentNotificationsScreenState
                     onRefresh: _refresh,
                     child: Builder(
                       builder: (context) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return _buildRefreshableState(
+                            const AppLoadingState.parent(
+                              padding: EdgeInsets.all(24),
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return _buildRefreshableState(
+                            AppErrorState.parent(
+                              message: snapshot.error.toString(),
+                              onRetry: _refresh,
+                            ),
+                          );
                         }
                         if (notifications.isEmpty) {
-                          return ParentEmptyState(
-                            icon: Icons.notifications_none_rounded,
-                            title: l10n.noNotifications,
-                            subtitle: l10n.allCaughtUp,
+                          return _buildRefreshableState(
+                            AppEmptyState.parent(
+                              icon: Icons.notifications_none_rounded,
+                              title: l10n.noNotifications,
+                              subtitle: l10n.allCaughtUp,
+                            ),
                           );
                         }
                         return ListView.separated(
@@ -180,7 +209,8 @@ class _ParentNotificationsScreenState
                             final notification = notifications[index];
                             return _NotificationCard(
                               notification: notification,
-                              timeLabel: _formatTime(l10n, notification.createdAt),
+                              timeLabel:
+                                  _formatTime(l10n, notification.createdAt),
                               onTap: () => _markRead(notification),
                             );
                           },
@@ -244,7 +274,8 @@ class _NotificationCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: _getTypeColor(context, notification.type).withValues(alpha: 0.1),
+                color: _getTypeColor(context, notification.type)
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(

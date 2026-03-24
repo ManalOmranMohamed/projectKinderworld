@@ -1,4 +1,9 @@
 from models import SystemSetting
+from services.ai_buddy_response_generator import (
+    AiBuddyGeneratedResponse,
+    AiBuddyProviderState,
+    AiBuddyResponseGenerator,
+)
 
 
 def test_ai_buddy_session_start_and_message_flow(
@@ -84,3 +89,105 @@ def test_ai_buddy_respects_system_disable_flag(
     assert response.status_code == 503
     detail = response.json()["detail"]
     assert detail["code"] == "AI_BUDDY_DISABLED"
+
+
+def test_ai_buddy_generator_uses_provider_backend_when_ready() -> None:
+    class ReadyProviderBackend:
+        def provider_state(self) -> AiBuddyProviderState:
+            return AiBuddyProviderState(
+                configured=True,
+                mode="openai",
+                status="ready",
+                reason=None,
+                provider_key="openai",
+                model="gpt-4o-mini",
+                supports_activity_suggestions=True,
+            )
+
+        def greeting(self, *, child_name: str | None = None) -> AiBuddyGeneratedResponse:
+            return AiBuddyGeneratedResponse(
+                content=f"Hello {child_name or 'friend'} from provider!",
+                intent="greeting",
+                response_source="provider_openai",
+                status="completed",
+                safety_status="allowed",
+                provider_state=self.provider_state(),
+                metadata_json={"model": "gpt-4o-mini"},
+            )
+
+        def generate(
+            self,
+            *,
+            child_name: str | None,
+            child_age: int | None,
+            message: str,
+            quick_action: str | None,
+            recent_messages,
+        ) -> AiBuddyGeneratedResponse:
+            return AiBuddyGeneratedResponse(
+                content=f"Provider reply to: {message}",
+                intent=quick_action or "general_help",
+                response_source="provider_openai",
+                status="completed",
+                safety_status="allowed",
+                provider_state=self.provider_state(),
+                metadata_json={"child_age": child_age},
+            )
+
+    generator = AiBuddyResponseGenerator(provider_backend=ReadyProviderBackend())
+
+    response = generator.generate(
+        child_name="Lina",
+        child_age=8,
+        message="Can you help me learn numbers?",
+        quick_action="recommend_lesson",
+        recent_messages=["Hi"],
+    )
+
+    assert response.response_source == "provider_openai"
+    assert response.provider_state.status == "ready"
+    assert response.provider_state.provider_key == "openai"
+    assert response.metadata_json["child_age"] == 8
+
+
+def test_ai_buddy_generator_falls_back_when_provider_backend_fails() -> None:
+    class FailingProviderBackend:
+        def provider_state(self) -> AiBuddyProviderState:
+            return AiBuddyProviderState(
+                configured=True,
+                mode="openai",
+                status="ready",
+                reason=None,
+                provider_key="openai",
+                model="gpt-4o-mini",
+                supports_activity_suggestions=True,
+            )
+
+        def greeting(self, *, child_name: str | None = None) -> AiBuddyGeneratedResponse:
+            raise RuntimeError("provider offline")
+
+        def generate(
+            self,
+            *,
+            child_name: str | None,
+            child_age: int | None,
+            message: str,
+            quick_action: str | None,
+            recent_messages,
+        ) -> AiBuddyGeneratedResponse:
+            raise RuntimeError("provider offline")
+
+    generator = AiBuddyResponseGenerator(provider_backend=FailingProviderBackend())
+
+    response = generator.generate(
+        child_name="Lina",
+        child_age=8,
+        message="Tell me a story",
+        quick_action="tell_story",
+        recent_messages=["Hello"],
+    )
+
+    assert response.response_source == "internal_fallback"
+    assert response.provider_state.status == "fallback"
+    assert "Live AI provider was unavailable" in (response.provider_state.reason or "")
+    assert "fallback_reason" in response.metadata_json

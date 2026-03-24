@@ -6,36 +6,20 @@ import 'package:kinder_world/core/localization/app_localizations.dart'
     as custom_localizations;
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/theme/app_theme.dart';
-import 'package:kinder_world/core/storage/secure_storage.dart';
-import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/providers/app_services.dart';
 import 'package:kinder_world/core/providers/connectivity_provider.dart';
 import 'package:kinder_world/core/providers/deferred_operations_provider.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/providers/sync_status_provider.dart';
 import 'package:kinder_world/router.dart';
-import 'package:logger/logger.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/providers/accessibility_provider.dart';
 import 'package:kinder_world/core/widgets/gamification_widgets.dart';
 
-// Providers
-final secureStorageProvider = Provider<SecureStorage>((ref) {
-  throw UnimplementedError('secureStorageProvider must be overridden');
-});
-
-final loggerProvider = Provider<Logger>((ref) {
-  throw UnimplementedError('loggerProvider must be overridden');
-});
-
-final networkServiceProvider = Provider<NetworkService>((ref) {
-  final secureStorage = ref.watch(secureStorageProvider);
-  final logger = ref.watch(loggerProvider);
-  return NetworkService(
-    secureStorage: secureStorage,
-    logger: logger,
-  );
-});
+export 'package:kinder_world/core/providers/app_services.dart'
+    show loggerProvider, networkServiceProvider, secureStorageProvider;
 
 class KinderWorldApp extends ConsumerStatefulWidget {
   const KinderWorldApp({super.key});
@@ -152,12 +136,14 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
     if (isOffline && !_isOffline) {
       _isOffline = true;
       _didShowOfflineHint = false;
+      ref.read(syncStatusProvider.notifier).setOffline();
       logger.w('event=connectivity.offline_entered');
       return;
     }
 
     if (!isOffline && _isOffline) {
       _isOffline = false;
+      final syncStatus = ref.read(syncStatusProvider.notifier);
       logger
           .i('event=connectivity.online_restored action=process_pending_sync');
       Future<void>(() async {
@@ -165,10 +151,27 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
         final network = ref.read(networkServiceProvider);
         final progressController =
             ref.read(progressControllerProvider.notifier);
-        final processed = await queue.processPending(network);
-        await progressController.syncWithServer();
-        logger.i('event=connectivity.sync_complete processed=$processed');
+        final pendingDeferred = await queue.pendingCount();
+        final pendingProgress =
+            await progressController.getRecordsNeedingSync();
+        if (pendingDeferred > 0 || pendingProgress.isNotEmpty) {
+          syncStatus.beginSync();
+        } else {
+          syncStatus.setOnline();
+        }
+        try {
+          final processed = await queue.processPending(network);
+          await progressController.syncWithServer();
+          logger.i('event=connectivity.sync_complete processed=$processed');
+        } finally {
+          syncStatus.setOnline();
+        }
       });
+      return;
+    }
+
+    if (!isOffline) {
+      ref.read(syncStatusProvider.notifier).setOnline();
     }
   }
 
@@ -205,8 +208,8 @@ class _ConnectivityGuardState extends ConsumerState<_ConnectivityGuard> {
           SnackBar(
             behavior: SnackBarBehavior.floating,
             content: Text(
-              l10n?.offlineMode ??
-                  'Offline mode. Some actions will sync when you reconnect.',
+              l10n?.offlineSyncHint ??
+                  'Some actions will sync when you reconnect.',
             ),
           ),
         );

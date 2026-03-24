@@ -20,12 +20,40 @@ def _alembic_ini_path() -> Path:
 def _build_alembic_config() -> Config:
     config = Config(str(_alembic_ini_path()))
     config.set_main_option("sqlalchemy.url", DATABASE_URL)
+    config.set_main_option("script_location", str(BASE_DIR / "alembic"))
+    config.set_main_option("prepend_sys_path", str(BASE_DIR))
     return config
 
 
 def _script_heads(config: Config) -> tuple[str, ...]:
     script = ScriptDirectory.from_config(config)
     return tuple(sorted(script.get_heads()))
+
+
+def _load_expected_heads(config: Config) -> tuple[str, ...]:
+    try:
+        heads = _script_heads(config)
+    except Exception as exc:
+        raise RuntimeError(
+            "Unable to load Alembic migration scripts. "
+            "Check alembic.ini path settings and keep migration files self-contained "
+            "(avoid importing runtime application modules)."
+        ) from exc
+
+    if not heads:
+        raise RuntimeError(
+            "Alembic did not report any head revisions. "
+            "Check the migration script location and revision chain."
+        )
+
+    if len(heads) > 1:
+        raise RuntimeError(
+            "Multiple Alembic heads detected: "
+            + ", ".join(heads)
+            + ". Merge the branches before starting the app."
+        )
+
+    return heads
 
 
 def _db_heads(engine: Engine) -> tuple[str, ...]:
@@ -50,7 +78,7 @@ def verify_database_schema(
     engine: Engine, logger: logging.Logger, *, auto_upgrade: bool = False
 ) -> None:
     config = _build_alembic_config()
-    expected_heads = _script_heads(config)
+    expected_heads = _load_expected_heads(config)
     current_heads = _db_heads(engine)
 
     if not current_heads and _is_legacy_schema_without_alembic_version(engine):

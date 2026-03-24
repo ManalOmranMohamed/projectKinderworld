@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
-import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/widgets/child_customizable_avatar.dart';
 
 class ChildHeader extends ConsumerWidget {
   final bool compact;
   final EdgeInsetsGeometry padding;
   final Color? avatarBackground;
+  final ChildProfile? child;
 
   const ChildHeader({
     super.key,
     this.compact = false,
     this.padding = const EdgeInsets.only(bottom: 16),
     this.avatarBackground,
+    this.child,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final child = ref.watch(currentChildProvider);
+    final resolvedChild = child ?? ref.watch(currentChildProvider);
     final l10n = AppLocalizations.of(context)!;
-    final name = (child?.name.isNotEmpty ?? false)
-        ? child!.name
-        : (child?.id ?? l10n.friendFallback);
-    final level = child?.level ?? 1;
+    final name = (resolvedChild?.name.isNotEmpty ?? false)
+        ? resolvedChild!.name
+        : (resolvedChild?.id ?? l10n.friendFallback);
+    final level = resolvedChild?.level ?? 1;
     final theme = Theme.of(context);
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontSize: compact ? AppConstants.fontSize : AppConstants.largeFontSize,
@@ -42,9 +45,9 @@ class ChildHeader extends ConsumerWidget {
       padding: padding,
       child: Row(
         children: [
-          if (child != null)
+          if (resolvedChild != null)
             ChildCustomizableAvatar(
-              child: child,
+              child: resolvedChild,
               radius: avatarRadius,
               backgroundColor:
                   avatarBackground ?? theme.colorScheme.surfaceContainerHighest,

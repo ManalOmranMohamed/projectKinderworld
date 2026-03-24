@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
@@ -13,6 +15,7 @@ import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/services/children_cache_service.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/widgets/app_connection_status.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
@@ -36,13 +39,15 @@ class ReportsScreen extends ConsumerStatefulWidget {
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   ReportPeriod _period = ReportPeriod.week;
   ChildProfile? _selectedChild;
-  Future<List<ChildProfile>>? _childrenFuture;
-  Future<ChildReportData>? _reportFuture;
+  String? _parentId;
+  Future<ChildrenCacheResult>? _childrenFuture;
+  Future<ChildReportLoadResult>? _reportFuture;
   Future<AiBuddyVisibilitySummary>? _aiBuddyFuture;
   bool _isResolvingParent = true;
   String? _reportKey;
   String? _aiBuddyKey;
-  final Map<String, ChildReportData> _reportCache = <String, ChildReportData>{};
+  final Map<String, ChildReportLoadResult> _reportCache =
+      <String, ChildReportLoadResult>{};
   final Map<String, AiBuddyVisibilitySummary> _aiBuddyCache =
       <String, AiBuddyVisibilitySummary>{};
 
@@ -58,6 +63,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       final parentId = await secureStorage.getParentId();
       if (!mounted) return;
       setState(() {
+        _parentId = parentId;
         _childrenFuture =
             parentId == null ? null : _loadChildrenForParent(parentId);
         _isResolvingParent = false;
@@ -65,28 +71,31 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     });
   }
 
-  Future<List<ChildProfile>> _loadChildrenForParent(String parentId) async {
+  Future<ChildrenCacheResult> _loadChildrenForParent(
+    String parentId, {
+    bool forceRefresh = false,
+  }) async {
     final cacheService = ref.read(childrenCacheServiceProvider);
     final secureStorage = ref.read(secureStorageProvider);
     final parentEmail = secureStorage.hasCachedUserEmail
         ? secureStorage.cachedUserEmail
         : await secureStorage.getParentEmail();
-    final result = await cacheService.loadChildrenForParent(
+    return cacheService.loadChildrenForParent(
       parentId,
       parentEmail: parentEmail,
+      forceRefresh: forceRefresh,
     );
-    return result.children;
   }
 
   String _reportCacheKey(String childId, ReportPeriod period) {
     return '$childId:${period.index}';
   }
 
-  Future<ChildReportData> _loadReport(
+  Future<ChildReportLoadResult> _loadReport(
     ChildProfile child,
     ReportPeriod period,
   ) async {
-    final report = await ref.read(parentReportServiceProvider).buildChildReport(
+    final report = await ref.read(parentReportServiceProvider).loadChildReport(
           child: child,
           period: period,
         );
@@ -94,7 +103,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     return report;
   }
 
-  Future<ChildReportData> _reportFutureFor(ChildProfile child) {
+  Future<ChildReportLoadResult> _reportFutureFor(ChildProfile child) {
     final key = _reportCacheKey(child.id, _period);
     if (_reportKey == key && _reportFuture != null) {
       return _reportFuture!;
@@ -102,12 +111,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final cached = _reportCache[key];
     if (cached != null) {
       _reportKey = key;
-      _reportFuture = Future<ChildReportData>.value(cached);
+      _reportFuture = Future<ChildReportLoadResult>.value(cached);
       return _reportFuture!;
     }
     _reportKey = key;
     _reportFuture = _loadReport(child, _period);
     return _reportFuture!;
+  }
+
+  Future<void> _refreshReportState() async {
+    final parentId = _parentId;
+    if (parentId == null || parentId.isEmpty) return;
+    setState(() {
+      _childrenFuture = _loadChildrenForParent(parentId, forceRefresh: true);
+      _reportFuture = null;
+      _reportKey = null;
+      _reportCache.clear();
+      _aiBuddyFuture = null;
+      _aiBuddyKey = null;
+    });
   }
 
   void _setSelectedChild(ChildProfile child) {
@@ -210,6 +232,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           l10n.reportsAndAnalytics,
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
+        actions: [
+          IconButton(
+            tooltip: l10n.retry,
+            onPressed: _isResolvingParent ? null : _refreshReportState,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isResolvingParent
@@ -222,7 +251,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     title: l10n.error,
                     subtitle: l10n.tryAgain,
                   )
-                : FutureBuilder<List<ChildProfile>>(
+                : FutureBuilder<ChildrenCacheResult>(
                     future: _childrenFuture,
                     builder: (context, childrenSnapshot) {
                       if (childrenSnapshot.connectionState ==
@@ -234,8 +263,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         );
                       }
 
+                      final childrenResult = childrenSnapshot.data;
                       final children =
-                          childrenSnapshot.data ?? const <ChildProfile>[];
+                          childrenResult?.children ?? const <ChildProfile>[];
                       if (children.isEmpty) {
                         return ParentEmptyState(
                           icon: Icons.bar_chart_rounded,
@@ -256,7 +286,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       );
                       _selectedChild = selectedChild;
 
-                      return FutureBuilder<ChildReportData>(
+                      return FutureBuilder<ChildReportLoadResult>(
                         future: _reportFutureFor(selectedChild),
                         builder: (context, reportSnapshot) {
                           if (reportSnapshot.connectionState ==
@@ -268,14 +298,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                             );
                           }
 
-                          final report = reportSnapshot.data;
-                          if (report == null) {
+                          final reportResult = reportSnapshot.data;
+                          if (reportResult == null) {
                             return ParentEmptyState(
                               icon: Icons.insert_chart_outlined_rounded,
                               title: l10n.error,
                               subtitle: l10n.tryAgain,
                             );
                           }
+                          final report = reportResult.report;
 
                           return SingleChildScrollView(
                             padding: const EdgeInsets.all(20),
@@ -298,8 +329,19 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                       TextStyle(color: colors.onSurfaceVariant),
                                 ),
                                 const SizedBox(height: 16),
+                                const AppConnectionStatusBanner.parent(),
                                 const PlanStatusBanner(),
                                 const SizedBox(height: 16),
+                                if (childrenResult != null &&
+                                    _shouldShowChildrenCacheBanner(
+                                      childrenResult,
+                                    )) ...[
+                                  _buildChildrenCacheBanner(
+                                    context,
+                                    childrenResult,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
                                 ParentCard(
                                   onTap: () => _showChildSelection(children),
                                   child: Row(
@@ -343,7 +385,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 const SizedBox(height: 16),
                                 _buildPeriodSelector(context),
                                 const SizedBox(height: 16),
-                                _buildSourceBanner(context, report),
+                                _buildSourceBanner(context, reportResult),
                                 const SizedBox(height: 16),
                                 _buildSummaryGrid(context, report),
                                 const SizedBox(height: 16),
@@ -580,34 +622,152 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _buildSourceBanner(BuildContext context, ChildReportData report) {
+  Widget _buildChildrenCacheBanner(
+    BuildContext context,
+    ChildrenCacheResult result,
+  ) {
+    final snapshot = result.snapshot;
+
+    final l10n = AppLocalizations.of(context)!;
+    final subtitleParts = <String>[l10n.childProfilesCachedRefreshHint];
+    final lastUpdated = _formatSnapshotTime(context, snapshot.lastFetchedAt);
+    if (lastUpdated != null) {
+      subtitleParts.add(l10n.reportLastUpdated(lastUpdated));
+    }
+
+    return _buildStatusCard(
+      context,
+      icon: snapshot.syncState == CacheSyncState.syncFailed
+          ? Icons.cloud_off_rounded
+          : Icons.inventory_2_outlined,
+      accent: snapshot.syncState == CacheSyncState.syncFailed
+          ? Theme.of(context).colorScheme.tertiary
+          : Theme.of(context).colorScheme.secondary,
+      title: l10n.childProfilesCachedTitle,
+      subtitle: subtitleParts.join(' | '),
+    );
+  }
+
+  bool _shouldShowChildrenCacheBanner(ChildrenCacheResult result) {
+    final snapshot = result.snapshot;
+    if (!snapshot.hasData) return false;
+    if (snapshot.freshness == CacheFreshness.freshServerBacked) return false;
+    if (snapshot.freshness == CacheFreshness.cachedFresh &&
+        snapshot.syncState == CacheSyncState.synced) {
+      return false;
+    }
+    return true;
+  }
+
+  Widget _buildSourceBanner(
+    BuildContext context,
+    ChildReportLoadResult result,
+  ) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final isRecorded = report.usesRecordedSessions;
+    final report = result.report;
+    late final IconData icon;
+    late final Color accent;
+    late final String title;
+    late final String subtitle;
+
+    switch (result.source) {
+      case ChildReportSource.liveServer:
+        icon = report.usesRecordedSessions
+            ? Icons.insights_rounded
+            : Icons.info_outline_rounded;
+        accent = report.usesRecordedSessions ? colors.primary : colors.tertiary;
+        title = report.usesRecordedSessions
+            ? l10n.reportUsingSyncedDataTitle
+            : l10n.noRecordedActivityYet;
+        subtitle = report.usesRecordedSessions
+            ? l10n.reportUsingSyncedDataSubtitle
+            : l10n.profileFallbackNotice;
+        break;
+      case ChildReportSource.localDevice:
+        icon = Icons.offline_bolt_rounded;
+        accent = colors.secondary;
+        title = l10n.reportUsingDeviceDataTitle;
+        subtitle = result.hasPendingLocalChanges
+            ? l10n.reportPendingSyncSubtitle
+            : l10n.reportUsingDeviceDataSubtitle;
+        break;
+      case ChildReportSource.cachedSnapshot:
+        icon = Icons.history_rounded;
+        accent = colors.tertiary;
+        final lastUpdated = _formatSnapshotTime(
+          context,
+          result.cacheSnapshot?.lastFetchedAt,
+        );
+        title = l10n.reportUsingCachedSnapshotTitle;
+        subtitle = lastUpdated == null
+            ? l10n.reportUsingCachedSnapshotSubtitle
+            : '${l10n.reportUsingCachedSnapshotSubtitle} | ${l10n.reportLastUpdated(lastUpdated)}';
+        break;
+      case ChildReportSource.profileFallback:
+        icon = Icons.info_outline_rounded;
+        accent = colors.tertiary;
+        title = l10n.reportUsingLimitedSummaryTitle;
+        subtitle = l10n.profileFallbackNotice;
+        break;
+    }
+
+    return _buildStatusCard(
+      context,
+      icon: icon,
+      accent: accent,
+      title: title,
+      subtitle: subtitle,
+    );
+  }
+
+  Widget _buildStatusCard(
+    BuildContext context, {
+    required IconData icon,
+    required Color accent,
+    required String title,
+    String? subtitle,
+  }) {
+    final colors = Theme.of(context).colorScheme;
     return ParentCard(
-      backgroundColor: (isRecorded ? colors.primary : colors.tertiary)
-          .withValues(alpha: 0.08),
+      backgroundColor: accent.withValues(alpha: 0.08),
       child: Row(
         children: [
-          Icon(
-            isRecorded ? Icons.insights_rounded : Icons.info_outline_rounded,
-            color: isRecorded ? colors.primary : colors.tertiary,
-          ),
+          Icon(icon, color: accent),
           const SizedBox(width: 12),
           Expanded(
-              child: Text(
-                isRecorded
-                  ? l10n.recordedSessionsNotice
-                  : l10n.noRecordedActivityYet,
-                style: TextStyle(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (subtitle != null && subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  String? _formatSnapshotTime(BuildContext context, DateTime? value) {
+    if (value == null) return null;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat('MMM d, h:mm a', locale).format(value.toLocal());
   }
 
   Widget _buildSummaryGrid(BuildContext context, ChildReportData report) {
@@ -835,7 +995,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final provider = summary.provider;
-    final isFallback = !provider.configured || provider.status == 'fallback';
+    final isFallback = provider.isFallback;
     return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -857,12 +1017,14 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 18, color: colors.tertiary),
+                  Icon(Icons.info_outline_rounded,
+                      size: 18, color: colors.tertiary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       provider.reason ?? l10n.aiBuddyFallbackSummary,
-                      style: TextStyle(color: colors.onTertiaryContainer, height: 1.3),
+                      style: TextStyle(
+                          color: colors.onTertiaryContainer, height: 1.3),
                     ),
                   ),
                 ],

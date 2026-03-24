@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 
@@ -14,7 +15,7 @@ class PlanStatusBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final planAsync = ref.watch(planInfoProvider);
+    final planAsync = ref.watch(planInfoStateProvider);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -127,7 +128,9 @@ class PlanStatusBanner extends ConsumerWidget {
       plan.isUnlimitedChildren
           ? l10n.planUnlimitedChildren
           : l10n.planChildLimit(plan.maxChildren),
-      plan.hasAdvancedReports ? l10n.planAdvancedReports : l10n.planBasicReports,
+      plan.hasAdvancedReports
+          ? l10n.planAdvancedReports
+          : l10n.planBasicReports,
     ];
     if (plan.hasAiInsights) {
       details.add(l10n.planAiInsightsPro);

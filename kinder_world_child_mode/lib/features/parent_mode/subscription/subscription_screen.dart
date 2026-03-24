@@ -185,6 +185,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
   Future<void> _startCheckout(PlanTier tier) async {
     if (_isProcessing) return;
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     setState(() {
       _isProcessing = true;
@@ -196,14 +197,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       final session = await service.startCheckout(tier);
       final uri = Uri.tryParse(session.checkoutUrl);
       if (uri == null) {
-        throw StateError('Invalid checkout URL');
+        throw StateError(l10n.subscriptionInvalidCheckoutUrl);
       }
 
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
-      if (!launched) throw StateError('Unable to launch checkout');
+      if (!launched) {
+        throw StateError(l10n.subscriptionUnableToLaunchCheckout);
+      }
 
       setState(() {
         _pendingSessionId = session.sessionId;
@@ -249,6 +252,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
   Future<void> _manageSubscription() async {
     if (_isProcessing) return;
+    final l10n = AppLocalizations.of(context)!;
     final messenger = ScaffoldMessenger.of(context);
     setState(() {
       _isProcessing = true;
@@ -259,12 +263,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
       final service = ref.read(subscriptionServiceProvider);
       final url = await service.manageCurrentSubscription();
       final uri = Uri.tryParse(url);
-      if (uri == null) throw StateError('Invalid portal URL');
+      if (uri == null) {
+        throw StateError(l10n.subscriptionInvalidPortalUrl);
+      }
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
-      if (!launched) throw StateError('Unable to open billing portal');
+      if (!launched) {
+        throw StateError(l10n.subscriptionUnableToOpenPortal);
+      }
       setState(() {
         _pendingReturnFlow = 'portal';
         _refreshOnResume = true;
@@ -310,13 +318,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     return '${amount.toStringAsFixed(2)} ${currency.toUpperCase()}';
   }
 
-  String _displayStatus(String raw) {
-    return raw
-        .replaceAll('_', ' ')
-        .split(' ')
-        .where((part) => part.isNotEmpty)
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
+  String _displayStatus(BuildContext context, String raw) {
+    return AppLocalizations.of(context)!.subscriptionStatusLabel(raw);
   }
 
   Color _statusColor(BuildContext context, String rawStatus) {
@@ -336,13 +339,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   Widget? _buildPaymentStatusBanner(SubscriptionLifecycle lifecycle) {
+    final l10n = AppLocalizations.of(context)!;
     final status = lifecycle.lastPaymentStatus.toLowerCase();
     if (status == 'not_applicable') return null;
     final colors = Theme.of(context).colorScheme;
     IconData icon = Icons.payments_outlined;
     Color bg = colors.surfaceContainerHighest;
     Color fg = colors.onSurface;
-    String label = 'Payment status: ${_displayStatus(status)}';
+    String label = l10n.subscriptionPaymentStatus(
+      _displayStatus(context, status),
+    );
 
     if (status.contains('pending')) {
       icon = Icons.schedule_rounded;
@@ -455,53 +461,52 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
     IconData icon = Icons.info_outline_rounded;
     Color bg = colors.surfaceContainerHighest;
     Color fg = colors.onSurface;
-    String title = 'Payment update';
-    String subtitle = 'We are syncing your latest billing status.';
+    final l10n = AppLocalizations.of(context)!;
+    String title = l10n.subscriptionProviderSyncTitle;
+    String subtitle = l10n.subscriptionProviderSyncSubtitle;
 
     if (hasPortalUnavailable) {
       icon = Icons.link_off_rounded;
       bg = colors.tertiaryContainer;
       fg = colors.onTertiaryContainer;
-      title = 'Billing portal unavailable';
-      subtitle =
-          'The provider portal is currently unavailable. Try again later.';
+      title = l10n.subscriptionPortalUnavailableTitle;
+      subtitle = l10n.subscriptionPortalUnavailableSubtitle;
     } else if (hasProviderUnavailable) {
       icon = Icons.cloud_off_rounded;
       bg = colors.tertiaryContainer;
       fg = colors.onTertiaryContainer;
-      title = 'Payment provider unavailable';
-      subtitle =
-          'We could not reach the payment provider. Your status will update once the provider is available.';
+      title = l10n.subscriptionProviderUnavailableTitle;
+      subtitle = l10n.subscriptionProviderUnavailableSubtitle;
     } else if (hasActionRequired) {
       icon = Icons.warning_amber_rounded;
       bg = colors.secondaryContainer;
       fg = colors.onSecondaryContainer;
-      title = 'Action required';
-      subtitle = 'Additional verification is needed to complete the payment.';
+      title = l10n.subscriptionActionRequiredTitle;
+      subtitle = l10n.subscriptionActionRequiredSubtitle;
     } else if (hasFailed) {
       icon = Icons.error_outline_rounded;
       bg = colors.errorContainer;
       fg = colors.onErrorContainer;
-      title = 'Payment failed';
-      subtitle = 'Please retry or update your payment method.';
+      title = l10n.subscriptionPaymentFailedTitle;
+      subtitle = l10n.subscriptionPaymentFailedSubtitle;
     } else if (hasRefunded) {
       icon = Icons.undo_rounded;
       bg = colors.secondaryContainer;
       fg = colors.onSecondaryContainer;
-      title = 'Payment refunded';
-      subtitle = 'The latest payment was refunded.';
+      title = l10n.subscriptionPaymentRefundedTitle;
+      subtitle = l10n.subscriptionPaymentRefundedSubtitle;
     } else if (hasCanceled) {
       icon = Icons.close_rounded;
       bg = colors.surfaceContainerHighest;
       fg = colors.onSurface;
-      title = 'Subscription canceled';
-      subtitle = 'Your plan is canceled and will not renew.';
+      title = l10n.subscriptionCanceledTitle;
+      subtitle = l10n.subscriptionCanceledSubtitle;
     } else if (hasPending) {
       icon = Icons.schedule_rounded;
       bg = colors.tertiaryContainer;
       fg = colors.onTertiaryContainer;
-      title = 'Payment pending';
-      subtitle = 'We are waiting for the provider to confirm the payment.';
+      title = l10n.subscriptionPaymentPendingTitle;
+      subtitle = l10n.subscriptionPaymentPendingSubtitle;
     }
 
     return ParentCard(
@@ -538,34 +543,35 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
 
   Widget? _buildReturnBanner(SubscriptionReturnPayload? payload) {
     if (payload == null) return null;
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     IconData icon = Icons.info_outline_rounded;
     Color bg = colors.surfaceContainerHighest;
     Color fg = colors.onSurface;
-    String title = 'Payment update';
-    String subtitle = 'We are refreshing your subscription status.';
+    String title = l10n.subscriptionProviderSyncTitle;
+    String subtitle = l10n.subscriptionProviderSyncSubtitle;
 
     switch (payload.result) {
       case 'success':
         icon = Icons.check_circle_rounded;
         bg = colors.secondaryContainer;
         fg = colors.onSecondaryContainer;
-        title = 'Payment completed';
-        subtitle = 'Your subscription will update shortly.';
+        title = l10n.subscriptionReturnSuccessTitle;
+        subtitle = l10n.subscriptionReturnSuccessSubtitle;
         break;
       case 'canceled':
         icon = Icons.close_rounded;
         bg = colors.surfaceContainerHighest;
         fg = colors.onSurface;
-        title = 'Checkout canceled';
-        subtitle = 'No changes were applied to your subscription.';
+        title = l10n.subscriptionReturnCanceledTitle;
+        subtitle = l10n.subscriptionReturnCanceledSubtitle;
         break;
       case 'failed':
         icon = Icons.error_outline_rounded;
         bg = colors.errorContainer;
         fg = colors.onErrorContainer;
-        title = 'Payment failed';
-        subtitle = 'Please retry or update your payment method.';
+        title = l10n.subscriptionPaymentFailedTitle;
+        subtitle = l10n.subscriptionPaymentFailedSubtitle;
         break;
       case 'pending':
       default:
@@ -573,11 +579,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         bg = colors.tertiaryContainer;
         fg = colors.onTertiaryContainer;
         title = payload.flow == 'portal'
-            ? 'Returned from billing portal'
-            : 'Payment pending';
+            ? l10n.subscriptionReturnPortalTitle
+            : l10n.subscriptionReturnPendingTitle;
         subtitle = payload.flow == 'portal'
-            ? 'We are syncing your latest billing updates.'
-            : 'We will update your subscription when payment completes.';
+            ? l10n.subscriptionReturnPortalSubtitle
+            : l10n.subscriptionReturnPendingSubtitle;
         break;
     }
 
@@ -702,7 +708,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Subscription state and history are synced from backend.',
+                            l10n.subscriptionBackendSyncNotice,
                             style: textTheme.bodySmall?.copyWith(
                               color: colors.onSurfaceVariant,
                               height: 1.4,
@@ -754,14 +760,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Status: ${_displayStatus(lifecycle.status)}',
+                                '${l10n.subscriptionLifecycleStatus}: ${_displayStatus(context, lifecycle.status)}',
                                 style: textTheme.bodySmall?.copyWith(
                                   fontSize: 13,
                                   color: colors.onSurfaceVariant,
                                 ),
                               ),
                               Text(
-                                'Last payment: ${_displayStatus(lifecycle.lastPaymentStatus)}',
+                                '${l10n.subscriptionLifecycleLastPaymentStatus}: ${_displayStatus(context, lifecycle.lastPaymentStatus)}',
                                 style: textTheme.bodySmall?.copyWith(
                                   fontSize: 13,
                                   color: colors.onSurfaceVariant,
@@ -771,7 +777,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                           ),
                         ),
                         _StatusChip(
-                          label: _displayStatus(lifecycle.status),
+                          label: _displayStatus(context, lifecycle.status),
                           color: _statusColor(context, lifecycle.status),
                         ),
                       ],
@@ -782,38 +788,45 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const ParentSectionHeader(title: 'Lifecycle'),
+                        ParentSectionHeader(
+                          title: l10n.subscriptionLifecycleTitle,
+                        ),
                         const SizedBox(height: 12),
                         _LifecycleRow(
-                          label: 'Current plan',
+                          label: l10n.subscriptionLifecycleCurrentPlan,
                           value: snapshot.currentPlanId,
                         ),
                         _LifecycleRow(
-                          label: 'Status',
-                          value: _displayStatus(lifecycle.status),
+                          label: l10n.subscriptionLifecycleStatus,
+                          value: _displayStatus(context, lifecycle.status),
                         ),
                         _LifecycleRow(
-                          label: 'Started at',
+                          label: l10n.subscriptionLifecycleStartedAt,
                           value: _formatDateTime(lifecycle.startedAt),
                         ),
                         _LifecycleRow(
-                          label: 'Expires at',
+                          label: l10n.subscriptionLifecycleExpiresAt,
                           value: _formatDateTime(lifecycle.expiresAt),
                         ),
                         _LifecycleRow(
-                          label: 'Cancel at',
+                          label: l10n.subscriptionLifecycleCancelAt,
                           value: _formatDateTime(lifecycle.cancelAt),
                         ),
                         _LifecycleRow(
-                          label: 'Will renew',
-                          value: lifecycle.willRenew ? 'Yes' : 'No',
+                          label: l10n.subscriptionLifecycleWillRenew,
+                          value: lifecycle.willRenew
+                              ? l10n.yesLabel
+                              : l10n.noLabel,
                         ),
                         _LifecycleRow(
-                          label: 'Last payment status',
-                          value: _displayStatus(lifecycle.lastPaymentStatus),
+                          label: l10n.subscriptionLifecycleLastPaymentStatus,
+                          value: _displayStatus(
+                            context,
+                            lifecycle.lastPaymentStatus,
+                          ),
                         ),
                         _LifecycleRow(
-                          label: 'Provider',
+                          label: l10n.subscriptionLifecycleProvider,
                           value: lifecycle.provider,
                           isLast: true,
                         ),
@@ -825,7 +838,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const ParentSectionHeader(title: 'History Summary'),
+                        ParentSectionHeader(
+                          title: l10n.subscriptionHistorySummaryTitle,
+                        ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,
@@ -833,18 +848,18 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                           children: [
                             _SummaryChip(
                               icon: Icons.timeline_rounded,
-                              label: 'Events',
+                              label: l10n.subscriptionEventsTitle,
                               value: '${snapshot.historySummary.eventCount}',
                             ),
                             _SummaryChip(
                               icon: Icons.receipt_long_rounded,
-                              label: 'Transactions',
+                              label: l10n.subscriptionBillingHistoryTitle,
                               value:
                                   '${snapshot.historySummary.billingTransactionCount}',
                             ),
                             _SummaryChip(
                               icon: Icons.credit_card_rounded,
-                              label: 'Attempts',
+                              label: l10n.subscriptionPaymentAttemptsTitle,
                               value:
                                   '${snapshot.historySummary.paymentAttemptCount}',
                             ),
@@ -929,7 +944,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   ),
                   const SizedBox(height: 20),
                   _HistorySectionCard(
-                    title: 'Recent Events',
+                    title: l10n.subscriptionEventsTitle,
                     icon: Icons.event_note_rounded,
                     loading: historyAsync.isLoading,
                     errorMessage: historyAsync.hasError
@@ -939,9 +954,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((event) => _HistoryTile(
                               title:
-                                  '${_displayStatus(event.eventType)} • ${event.planId}',
+                                  '${_displayStatus(context, event.eventType)} • ${event.planId}',
                               subtitle:
-                                  '${_displayStatus(event.status)} • ${event.source}',
+                                  '${_displayStatus(context, event.status)} • ${event.source}',
                               trailing: _formatDateTime(event.occurredAt),
                               icon: Icons.timeline_rounded,
                             ))
@@ -949,7 +964,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   ),
                   const SizedBox(height: 16),
                   _HistorySectionCard(
-                    title: 'Billing History',
+                    title: l10n.subscriptionBillingHistoryTitle,
                     icon: Icons.receipt_long_rounded,
                     loading: historyAsync.isLoading,
                     errorMessage: historyAsync.hasError
@@ -960,9 +975,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((transaction) => _HistoryTile(
                               title:
-                                  '${_displayStatus(transaction.transactionType)} • ${transaction.planId}',
+                                  '${_displayStatus(context, transaction.transactionType)} • ${transaction.planId}',
                               subtitle:
-                                  '${_formatAmount(transaction.amountCents, transaction.currency)} • ${_displayStatus(transaction.status)}',
+                                  '${_formatAmount(transaction.amountCents, transaction.currency)} • ${_displayStatus(context, transaction.status)}',
                               trailing:
                                   _formatDateTime(transaction.effectiveAt),
                               icon: Icons.receipt_rounded,
@@ -971,7 +986,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                   ),
                   const SizedBox(height: 16),
                   _HistorySectionCard(
-                    title: 'Payment Attempts',
+                    title: l10n.subscriptionPaymentAttemptsTitle,
                     icon: Icons.credit_score_rounded,
                     loading: historyAsync.isLoading,
                     errorMessage: historyAsync.hasError
@@ -982,11 +997,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                             .take(8)
                             .map((attempt) => _HistoryTile(
                                   title:
-                                      '${_displayStatus(attempt.attemptType)} • ${attempt.planId}',
+                                      '${_displayStatus(context, attempt.attemptType)} • ${attempt.planId}',
                                   subtitle: [
                                     _formatAmount(
                                         attempt.amountCents, attempt.currency),
-                                    _displayStatus(attempt.status),
+                                    _displayStatus(context, attempt.status),
                                     if (attempt.failureCode != null &&
                                         attempt.failureCode!.isNotEmpty)
                                       attempt.failureCode!,
@@ -1437,7 +1452,7 @@ class _HistorySectionCard extends StatelessWidget {
             )
           else if (children.isEmpty)
             Text(
-              'No records yet.',
+              AppLocalizations.of(context)!.subscriptionNoHistoryYet,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),

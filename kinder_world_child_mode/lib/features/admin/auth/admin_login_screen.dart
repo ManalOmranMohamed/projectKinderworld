@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
+import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
@@ -140,7 +141,12 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                               const SizedBox(height: 8),
                               if (authState.errorMessage != null) ...[
                                 const SizedBox(height: 8),
-                                _ErrorBanner(message: authState.errorMessage!),
+                                _ErrorBanner(
+                                  message: localizeAuthErrorMessage(
+                                    authState.errorMessage!,
+                                    l10n,
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 24),
                               FilledButton(

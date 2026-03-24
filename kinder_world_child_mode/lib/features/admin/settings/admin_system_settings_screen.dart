@@ -65,12 +65,12 @@ class _AdminSystemSettingsScreenState
     if (!(admin?.hasPermission('admin.settings.edit') ?? false)) {
       return const AdminPermissionPlaceholder();
     }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────────────────
           AdminPageHeader(
             title: l10n.adminSystemSettingsTitle,
             subtitle: l10n.adminSystemSettingsSubtitle,
@@ -83,13 +83,14 @@ class _AdminSystemSettingsScreenState
             ],
           ),
           const SizedBox(height: 24),
-
           if (_loading)
             const AdminLoadingState()
           else if (_error != null)
             AdminErrorState(message: _error!, onRetry: _load)
           else if (_payload != null)
-            _buildSettings(context, l10n, _payload!),
+            _buildSettings(context, l10n, _payload!)
+          else
+            AdminEmptyState(message: l10n.noSettingsFound),
         ],
       ),
     );
@@ -110,14 +111,15 @@ class _AdminSystemSettingsScreenState
         ? Map<String, dynamic>.from(effective['defaults'] as Map)
         : <String, dynamic>{};
     final defaultPlanController = TextEditingController(
-        text: defaults['default_plan']?.toString() ?? 'FREE');
+      text: defaults['default_plan']?.toString() ?? 'FREE',
+    );
     final childLimitController = TextEditingController(
-        text: defaults['default_child_limit']?.toString() ?? '1');
+      text: defaults['default_child_limit']?.toString() ?? '1',
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section: Global Toggles ──────────────────────────────────
         _SectionHeader(
           icon: Icons.tune_rounded,
           label: l10n.adminSettingsFeatureFlagsTitle,
@@ -136,14 +138,20 @@ class _AdminSystemSettingsScreenState
                   ),
                   child: Icon(Icons.build_rounded, size: 18, color: cs.error),
                 ),
-                title: Text(l10n.adminSettingsMaintenanceMode,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w500)),
-                subtitle: Text(l10n.adminSettingsMaintenanceModeHint,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+                title: Text(
+                  l10n.adminSettingsMaintenanceMode,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  l10n.adminSettingsMaintenanceModeHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
                 value: effective['maintenance_mode'] as bool? ?? false,
-                onChanged: (v) => _save({'maintenance_mode': v}),
+                onChanged: (value) => _save({'maintenance_mode': value}),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               SwitchListTile(
@@ -153,17 +161,26 @@ class _AdminSystemSettingsScreenState
                     color: cs.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.how_to_reg_rounded,
-                      size: 18, color: cs.primary),
+                  child: Icon(
+                    Icons.how_to_reg_rounded,
+                    size: 18,
+                    color: cs.primary,
+                  ),
                 ),
-                title: Text(l10n.adminSettingsRegistrationEnabled,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w500)),
-                subtitle: Text(l10n.adminSettingsRegistrationEnabledHint,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+                title: Text(
+                  l10n.adminSettingsRegistrationEnabled,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  l10n.adminSettingsRegistrationEnabledHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
                 value: effective['registration_enabled'] as bool? ?? true,
-                onChanged: (v) => _save({'registration_enabled': v}),
+                onChanged: (value) => _save({'registration_enabled': value}),
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               SwitchListTile(
@@ -173,23 +190,30 @@ class _AdminSystemSettingsScreenState
                     color: cs.tertiaryContainer,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.smart_toy_outlined,
-                      size: 18, color: cs.tertiary),
+                  child: Icon(
+                    Icons.smart_toy_outlined,
+                    size: 18,
+                    color: cs.tertiary,
+                  ),
                 ),
-                title: Text(l10n.adminSettingsAiBuddyEnabled,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w500)),
-                subtitle: Text(l10n.adminSettingsAiBuddyEnabledHint,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+                title: Text(
+                  l10n.adminSettingsAiBuddyEnabled,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  l10n.adminSettingsAiBuddyEnabledHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
                 value: effective['ai_buddy_enabled'] as bool? ?? true,
-                onChanged: (v) => _save({'ai_buddy_enabled': v}),
+                onChanged: (value) => _save({'ai_buddy_enabled': value}),
               ),
             ],
           ),
         ),
-
-        // ── Section: Feature Flags ───────────────────────────────────
         if (featureFlags.isNotEmpty) ...[
           const SizedBox(height: 24),
           _SectionHeader(
@@ -207,13 +231,16 @@ class _AdminSystemSettingsScreenState
                     SwitchListTile(
                       contentPadding:
                           const EdgeInsets.symmetric(horizontal: 16),
-                      title: Text(entry.key,
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w500)),
+                      title: Text(
+                        entry.key,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       value: entry.value as bool? ?? false,
-                      onChanged: (v) {
+                      onChanged: (value) {
                         final updated = Map<String, dynamic>.from(featureFlags)
-                          ..[entry.key] = v;
+                          ..[entry.key] = value;
                         _save({'feature_flags': updated});
                       },
                     ),
@@ -225,8 +252,6 @@ class _AdminSystemSettingsScreenState
             ),
           ),
         ],
-
-        // ── Section: Defaults ────────────────────────────────────────
         const SizedBox(height: 24),
         _SectionHeader(
           icon: Icons.settings_suggest_outlined,
@@ -271,7 +296,7 @@ class _AdminSystemSettingsScreenState
                             : defaultPlanController.text.trim().toUpperCase(),
                         'default_child_limit':
                             int.tryParse(childLimitController.text.trim()) ?? 1,
-                      }
+                      },
                     }),
                     icon: const Icon(Icons.save_rounded, size: 18),
                     label: Text(l10n.save),
@@ -286,8 +311,6 @@ class _AdminSystemSettingsScreenState
     );
   }
 }
-
-// ─────────────────────────── Section Header ───────────────────────────────────
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({

@@ -25,7 +25,13 @@ def test_access_token_is_revoked_after_logout(client, create_parent, auth_header
 
     after_logout = client.get("/auth/me", headers=headers)
     assert after_logout.status_code == 401
-    assert after_logout.json()["detail"] == "Token has been revoked"
+    payload = after_logout.json()
+    assert payload["detail"] == "Token has been revoked"
+    assert payload["error"] == {
+        "message": "Token has been revoked",
+        "code": "TOKEN_REVOKED",
+        "type": "authentication_error",
+    }
 
 
 def test_access_token_is_revoked_after_change_password(client):
@@ -90,6 +96,11 @@ def test_register_validation_returns_422_instead_of_500_for_trimmed_blank_value(
     assert response.status_code == 422
     payload = response.json()
     _assert_validation_payload_is_safe(payload)
+    assert payload["error"] == {
+        "message": "Request validation failed",
+        "code": "VALIDATION_ERROR",
+        "type": "validation_error",
+    }
     assert any(
         error["msg"] == "Value error, value must not be blank" for error in payload["detail"]
     )
@@ -121,6 +132,11 @@ def test_child_register_validation_returns_safe_json_errors(client):
     assert response.status_code == 422
     payload = response.json()
     _assert_validation_payload_is_safe(payload)
+    assert payload["error"] == {
+        "message": "Request validation failed",
+        "code": "VALIDATION_ERROR",
+        "type": "validation_error",
+    }
     assert any(
         error["msg"] == "Value error, picture_password entries must be non-empty strings"
         for error in payload["detail"]

@@ -13,11 +13,15 @@ class AdminAuthState {
   final AdminAuthStatus status;
   final AdminUser? admin;
   final String? errorMessage;
+  final bool requiresTwoFactor;
+  final String? twoFactorMethod;
 
   const AdminAuthState({
     this.status = AdminAuthStatus.initial,
     this.admin,
     this.errorMessage,
+    this.requiresTwoFactor = false,
+    this.twoFactorMethod,
   });
 
   bool get isAuthenticated =>
@@ -30,11 +34,19 @@ class AdminAuthState {
     String? errorMessage,
     bool clearAdmin = false,
     bool clearError = false,
+    bool? requiresTwoFactor,
+    bool clearTwoFactor = false,
+    String? twoFactorMethod,
   }) {
     return AdminAuthState(
       status: status ?? this.status,
       admin: clearAdmin ? null : (admin ?? this.admin),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      requiresTwoFactor: clearTwoFactor
+          ? false
+          : (requiresTwoFactor ?? this.requiresTwoFactor),
+      twoFactorMethod:
+          clearTwoFactor ? null : (twoFactorMethod ?? this.twoFactorMethod),
     );
   }
 
@@ -81,10 +93,22 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
   }
 
   /// Login with email + password.
-  Future<bool> login({required String email, required String password}) async {
-    state = state.copyWith(status: AdminAuthStatus.loading, clearError: true);
+  Future<bool> login({
+    required String email,
+    required String password,
+    String? twoFactorCode,
+  }) async {
+    state = state.copyWith(
+      status: AdminAuthStatus.loading,
+      clearError: true,
+      clearTwoFactor: true,
+    );
 
-    final result = await _repo.login(email: email, password: password);
+    final result = await _repo.login(
+      email: email,
+      password: password,
+      twoFactorCode: twoFactorCode,
+    );
 
     if (result.success && result.admin != null) {
       state = AdminAuthState(
@@ -96,6 +120,8 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
       state = AdminAuthState(
         status: AdminAuthStatus.unauthenticated,
         errorMessage: result.error,
+        requiresTwoFactor: result.requiresTwoFactor,
+        twoFactorMethod: result.twoFactorMethod,
       );
       return false;
     }
@@ -146,7 +172,7 @@ class AdminAuthNotifier extends StateNotifier<AdminAuthState> {
 
   /// Clear any error message without changing auth status.
   void clearError() {
-    state = state.copyWith(clearError: true);
+    state = state.copyWith(clearError: true, clearTwoFactor: true);
   }
 
   /// Check if the current admin has a specific permission.

@@ -5,7 +5,6 @@ import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
-import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/services/ai_buddy_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
@@ -115,7 +114,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   }
 
   Future<void> _loadConversation({bool forceNew = false}) async {
-    final childId = int.tryParse(ref.read(currentChildIdProvider) ?? '');
+    final childId = int.tryParse(ref.read(aiBuddyCurrentChildIdProvider) ?? '');
     if (childId == null) {
       setState(() {
         _isLoading = false;
@@ -164,7 +163,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     String? quickAction,
   }) async {
     if (_isSending) return;
-    final childId = int.tryParse(ref.read(currentChildIdProvider) ?? '');
+    final childId = int.tryParse(ref.read(aiBuddyCurrentChildIdProvider) ?? '');
     if (childId == null) {
       setState(() {
         _unavailable = AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
@@ -263,8 +262,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             _buildHeader(colors, l10n),
             _buildQuickActions(context, colors, l10n),
             if (_conversation?.provider != null &&
-                (!_conversation!.provider.configured ||
-                    _conversation!.provider.status != 'ready'))
+                _conversation!.provider.isFallback)
               _buildProviderBanner(colors, _conversation!.provider, l10n),
             const Divider(height: 1),
             Expanded(child: _buildBody(colors, l10n)),
@@ -278,11 +276,10 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
   Widget _buildHeader(ColorScheme colors, AppLocalizations l10n) {
     final childTheme = context.childTheme;
     final textTheme = Theme.of(context).textTheme;
-    final child = ref.watch(currentChildProvider);
+    final child = ref.watch(aiBuddyCurrentChildProvider);
     final provider = _conversation?.provider;
-    final isFallback =
-        provider != null && (!provider.configured || provider.status == 'fallback');
-    final isUnavailable = provider != null && provider.status == 'unavailable';
+    final isFallback = provider?.isFallback ?? false;
+    final isUnavailable = provider?.isUnavailable ?? false;
     final statusText = provider == null
         ? l10n.aiBuddyOnline
         : isUnavailable
@@ -311,9 +308,13 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              ChildHeader(compact: true, padding: EdgeInsets.zero),
+              ChildHeader(
+                compact: true,
+                padding: EdgeInsets.zero,
+                child: child,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -492,8 +493,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     AiBuddyProviderStatus provider,
     AppLocalizations l10n,
   ) {
-    final isFallback = !provider.configured || provider.status == 'fallback';
-    final isUnavailable = provider.status == 'unavailable';
+    final isFallback = provider.isFallback;
+    final isUnavailable = provider.isUnavailable;
     final title = isUnavailable
         ? l10n.aiBuddyBannerUnavailableTitle
         : isFallback
@@ -605,8 +606,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     final childTheme = context.childTheme;
     final disabled = _isLoading || _isSending || _unavailable != null;
     final provider = _conversation?.provider;
-    final isFallback =
-        provider != null && (!provider.configured || provider.status == 'fallback');
+    final isFallback = provider?.isFallback ?? false;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

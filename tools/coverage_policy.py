@@ -52,6 +52,7 @@ BACKEND_CRITICAL_AREAS: dict[str, tuple[float, tuple[str, ...]]] = {
 
 
 FLUTTER_EXCLUDED_SUFFIXES = (".g.dart",)
+FLUTTER_MIN_TOTAL = 28.0
 
 
 @dataclass(frozen=True)
@@ -284,7 +285,7 @@ def main() -> int:
 
     flutter = subparsers.add_parser("flutter")
     flutter.add_argument("--coverage-file", required=True)
-    flutter.add_argument("--min-total", type=float, default=25.0)
+    flutter.add_argument("--min-total", type=float, default=FLUTTER_MIN_TOTAL)
     flutter.add_argument("--top-n", type=int, default=10)
     flutter.add_argument("--summary-file")
 

@@ -63,6 +63,7 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
   Future<AdminAuthResult> login({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
     lastLoginEmail = email;
     lastLoginPassword = password;
@@ -142,7 +143,8 @@ Future<ProviderContainer> _pumpApp(
   return container;
 }
 
-Future<void> _pumpRouter(WidgetTester tester, [Duration duration = const Duration(milliseconds: 350)]) async {
+Future<void> _pumpRouter(WidgetTester tester,
+    [Duration duration = const Duration(milliseconds: 350)]) async {
   await tester.pump();
   await tester.pump(duration);
 }

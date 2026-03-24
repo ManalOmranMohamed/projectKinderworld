@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 from admin_auth import ADMIN_TOKEN_TYPE, create_admin_access_token, create_admin_refresh_token
 from admin_utils import build_admin_payload, write_audit_log
 from auth import decode_token, verify_password
+from core.message_catalog import AdminAuthMessages
 from core.settings import settings
 from core.time_utils import db_utc_now, ensure_utc, utc_now
+from services.two_factor_service import two_factor_service
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +48,7 @@ class AdminAuthService:
                 status_code=status.HTTP_423_LOCKED,
                 detail={
                     "code": "ADMIN_TEMP_LOCKED",
-                    "message": "Too many failed login attempts. Try again later.",
+                    "message": AdminAuthMessages.ADMIN_TEMP_LOCKED,
                     "locked_until": ensure_utc(admin.locked_until).isoformat(),
                 },
             )
@@ -100,7 +102,7 @@ class AdminAuthService:
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password",
+                detail=AdminAuthMessages.INVALID_EMAIL_OR_PASSWORD,
             )
 
         if not admin.is_active:
@@ -120,10 +122,11 @@ class AdminAuthService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "ADMIN_DISABLED",
-                    "message": "This admin account has been disabled. Contact a super admin.",
+                    "message": AdminAuthMessages.ADMIN_DISABLED_CONTACT_SUPER_ADMIN,
                 },
             )
 
+        two_factor_service.require_admin_login_code(account=admin, code=payload.two_factor_code)
         suspicious_ip_change = bool(
             admin.last_login_ip and client_host and admin.last_login_ip != client_host
         )
@@ -187,13 +190,13 @@ class AdminAuthService:
             logger.warning("Admin refresh token decode failed: %s", exc)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired refresh token",
+                detail=AdminAuthMessages.INVALID_OR_EXPIRED_REFRESH_TOKEN,
             )
 
         if decoded.get("token_type") != ADMIN_TOKEN_TYPE:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token type",
+                detail=AdminAuthMessages.INVALID_REFRESH_TOKEN_TYPE,
             )
 
         admin_id_str = decoded.get("sub")
@@ -203,14 +206,14 @@ class AdminAuthService:
         except (ValueError, TypeError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token payload",
+                detail=AdminAuthMessages.INVALID_REFRESH_TOKEN_PAYLOAD,
             )
 
         admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
         if not admin:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Admin not found",
+                detail=AdminAuthMessages.ADMIN_ACCOUNT_NOT_FOUND,
             )
 
         try:
@@ -218,13 +221,13 @@ class AdminAuthService:
         except (TypeError, ValueError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token payload",
+                detail=AdminAuthMessages.INVALID_REFRESH_TOKEN_PAYLOAD,
             )
 
         if stored_version_value != int(admin.token_version or 0):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Refresh token has been revoked",
+                detail=AdminAuthMessages.REFRESH_TOKEN_REVOKED,
             )
 
         if not admin.is_active:
@@ -232,7 +235,7 @@ class AdminAuthService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "ADMIN_DISABLED",
-                    "message": "This admin account has been disabled",
+                    "message": AdminAuthMessages.ADMIN_DISABLED,
                 },
             )
 
@@ -259,10 +262,37 @@ class AdminAuthService:
         db.commit()
 
         logger.info("Admin logout: %s (id=%s)", admin.email, admin.id)
-        return {"success": True, "message": "Logged out successfully"}
+        return {"success": True, "message": AdminAuthMessages.LOGGED_OUT_SUCCESSFULLY}
 
     def current_profile(self, *, admin, db: Session) -> dict:
         return {"admin": build_admin_payload(admin, db)}
+
+    def two_factor_status(self, *, admin) -> dict:
+        return two_factor_service.status_payload(account=admin)
+
+    def two_factor_setup(self, *, admin, db: Session) -> dict:
+        payload = two_factor_service.setup_totp(account=admin)
+        admin.updated_at = db_utc_now()
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+        return payload
+
+    def enable_two_factor(self, *, admin, code: str | None, db: Session) -> dict:
+        payload = two_factor_service.enable_totp(account=admin, code=code)
+        admin.updated_at = db_utc_now()
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+        return payload
+
+    def disable_two_factor(self, *, admin, db: Session) -> dict:
+        payload = two_factor_service.disable_two_factor(account=admin)
+        admin.updated_at = db_utc_now()
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+        return payload
 
 
 admin_auth_service = AdminAuthService()

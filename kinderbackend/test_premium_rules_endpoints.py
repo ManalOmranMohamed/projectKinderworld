@@ -115,6 +115,27 @@ def test_premium_rules_endpoints_use_backend_data(
     assert offline_payload["remaining_mb"] <= 500
 
 
+def test_ai_insights_sparse_activity_use_real_rule_outputs(
+    client,
+    create_parent,
+    create_child,
+    auth_headers,
+):
+    parent = create_parent(email="premium.baseline@example.com", plan="PREMIUM")
+    create_child(parent_id=parent.id, name="Mila", age=6)
+    headers = auth_headers(parent)
+
+    insights = client.get("/ai/insights", headers=headers)
+    assert insights.status_code == 200
+    insights_payload = insights.json()
+    assert insights_payload["data_source"] == "backend_rules"
+    assert insights_payload["summary"]["child_count"] == 1
+    codes = {item["code"] for item in insights_payload["insights"]}
+    assert "inactivity_watch" in codes
+    assert "behavioral_insight" not in codes
+    assert "engagement_tip" not in codes
+
+
 def test_priority_support_and_admin_queue_are_rules_based(
     client,
     db,

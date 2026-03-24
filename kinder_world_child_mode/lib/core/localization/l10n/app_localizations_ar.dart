@@ -1,4 +1,4 @@
-﻿import 'app_localizations_en.dart';
+import 'app_localizations_en.dart';
 
 class AppLocalizationsAr extends AppLocalizationsEn {
   // ── Common ──
@@ -121,6 +121,9 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get passwordSpecialRequired =>
       'يجب أن تحتوي كلمة المرور على رمز خاص (!@#\$%^&*)';
+  @override
+  String get passwordPolicyRequirement =>
+      'يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف كبير ورقم ورمز خاص';
   @override
   String get confirmPasswordHint => 'تأكيد كلمة المرور';
   @override
@@ -609,6 +612,34 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get noRecordedActivityYet =>
       'لا توجد جلسات مسجلة لهذا النطاق الزمني بعد.';
+  @override
+  @override
+  String get childProfilesCachedTitle => 'عرض ملفات الأطفال المحفوظة';
+  @override
+  String get childProfilesCachedRefreshHint =>
+      'حدّث لتحميل أحدث تغييرات الحساب.';
+  @override
+  String get reportUsingSyncedDataTitle => 'عرض بيانات التقرير المتزامنة';
+  @override
+  String get reportUsingSyncedDataSubtitle =>
+      'تم تحديث هذه الرؤى من بيانات حسابك.';
+  @override
+  String get reportUsingDeviceDataTitle => 'عرض النشاط المحفوظ على هذا الجهاز';
+  @override
+  String get reportUsingDeviceDataSubtitle =>
+      'يستخدم هذا التقرير النشاط المحفوظ محليًا على هذا الجهاز.';
+  @override
+  String get reportPendingSyncSubtitle =>
+      'لا يزال بعض نشاط الجهاز بانتظار المزامنة.';
+  @override
+  String get reportUsingCachedSnapshotTitle => 'عرض آخر نسخة تقرير محفوظة';
+  @override
+  String get reportUsingCachedSnapshotSubtitle =>
+      'قد تكون هذه البيانات قديمة حتى تتم المحاولة التالية للتحديث.';
+  @override
+  String get reportUsingLimitedSummaryTitle => 'عرض ملخص محلي محدود';
+  @override
+  String reportLastUpdated(String value) => 'آخر تحديث $value';
   @override
   String ageLabel(int age) => 'العمر $age';
 
@@ -1277,6 +1308,10 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get dataSyncTitle => 'مزامنة البيانات';
   @override
   String get syncReady => 'جاهز للمزامنة';
+  @override
+  String get offlineSyncHint => 'ستتم مزامنة بعض الإجراءات عند عودة الاتصال.';
+  @override
+  String get syncInProgress => 'جارٍ مزامنة أحدث التغييرات';
   @override
   String get syncStarting => 'جاري بدء المزامنة...';
   @override
@@ -2810,6 +2845,176 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get upToThreeChildren => 'حتى 3 أطفال';
   @override
+  String get yesLabel => 'نعم';
+  @override
+  String get noLabel => 'لا';
+  @override
+  String get authInvalidEmailOrPassword =>
+      'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+  @override
+  String get authTwoFactorCodeRequired => 'رمز التحقق الثنائي مطلوب';
+  @override
+  String get authInvalidTwoFactorCode => 'رمز التحقق الثنائي غير صحيح';
+  @override
+  String get adminAccountNotFoundMessage => 'تعذر العثور على حساب المشرف';
+  @override
+  String get notAuthenticatedMessage => 'غير مسجل الدخول';
+  @override
+  String get requestFailedMessage => 'فشل الطلب';
+  @override
+  String get networkErrorMessage => 'خطأ في الشبكة';
+  @override
+  String subscriptionPaymentStatus(String status) => 'حالة الدفع: $status';
+  @override
+  String get subscriptionLifecycleTitle => 'دورة الاشتراك';
+  @override
+  String get subscriptionLifecycleCurrentPlan => 'الخطة الحالية';
+  @override
+  String get subscriptionLifecycleStatus => 'الحالة';
+  @override
+  String get subscriptionLifecycleStartedAt => 'بدأ في';
+  @override
+  String get subscriptionLifecycleExpiresAt => 'ينتهي في';
+  @override
+  String get subscriptionLifecycleCancelAt => 'الإلغاء في';
+  @override
+  String get subscriptionLifecycleWillRenew => 'سيتم التجديد';
+  @override
+  String get subscriptionLifecycleLastPaymentStatus => 'حالة آخر دفعة';
+  @override
+  String get subscriptionLifecycleProvider => 'المزوّد';
+  @override
+  String get subscriptionHistorySummaryTitle => 'ملخص السجل';
+  @override
+  String get subscriptionEventsTitle => 'أحدث الأحداث';
+  @override
+  String get subscriptionBillingHistoryTitle => 'سجل الفواتير';
+  @override
+  String get subscriptionPaymentAttemptsTitle => 'محاولات الدفع';
+  @override
+  String get subscriptionBackendSyncNotice =>
+      'تتم مزامنة حالة الاشتراك والسجل من الخادم.';
+  @override
+  String get subscriptionNoHistoryYet => 'لا توجد سجلات بعد.';
+  @override
+  String get subscriptionProviderSyncTitle => 'تحديث الدفع';
+  @override
+  String get subscriptionProviderSyncSubtitle =>
+      'نقوم بمزامنة أحدث حالة للفواتير.';
+  @override
+  String get subscriptionPortalUnavailableTitle => 'بوابة الفوترة غير متاحة';
+  @override
+  String get subscriptionPortalUnavailableSubtitle =>
+      'بوابة المزوّد غير متاحة حاليًا. حاول مرة أخرى لاحقًا.';
+  @override
+  String get subscriptionProviderUnavailableTitle => 'مزوّد الدفع غير متاح';
+  @override
+  String get subscriptionProviderUnavailableSubtitle =>
+      'تعذر الوصول إلى مزوّد الدفع. ستتحدث حالتك عند عودة الخدمة.';
+  @override
+  String get subscriptionActionRequiredTitle => 'مطلوب إجراء';
+  @override
+  String get subscriptionActionRequiredSubtitle =>
+      'هناك تحقق إضافي مطلوب لإكمال عملية الدفع.';
+  @override
+  String get subscriptionPaymentFailedTitle => 'فشل الدفع';
+  @override
+  String get subscriptionPaymentFailedSubtitle =>
+      'يرجى إعادة المحاولة أو تحديث وسيلة الدفع.';
+  @override
+  String get subscriptionPaymentRefundedTitle => 'تم رد المبلغ';
+  @override
+  String get subscriptionPaymentRefundedSubtitle => 'تم رد آخر دفعة.';
+  @override
+  String get subscriptionCanceledTitle => 'تم إلغاء الاشتراك';
+  @override
+  String get subscriptionCanceledSubtitle => 'تم إلغاء خطتك ولن يتم تجديدها.';
+  @override
+  String get subscriptionPaymentPendingTitle => 'الدفع قيد الانتظار';
+  @override
+  String get subscriptionPaymentPendingSubtitle =>
+      'ننتظر تأكيد الدفع من المزوّد.';
+  @override
+  String get subscriptionReturnSuccessTitle => 'اكتمل الدفع';
+  @override
+  String get subscriptionReturnSuccessSubtitle =>
+      'سيتم تحديث اشتراكك بعد قليل.';
+  @override
+  String get subscriptionReturnCanceledTitle => 'تم إلغاء الدفع';
+  @override
+  String get subscriptionReturnCanceledSubtitle =>
+      'لم يتم تطبيق أي تغييرات على اشتراكك.';
+  @override
+  String get subscriptionReturnPortalTitle => 'تمت العودة من بوابة الفوترة';
+  @override
+  String get subscriptionReturnPortalSubtitle =>
+      'نقوم بمزامنة آخر تحديثات الفوترة.';
+  @override
+  String get subscriptionReturnPendingTitle => 'الدفع قيد الانتظار';
+  @override
+  String get subscriptionReturnPendingSubtitle =>
+      'سنحدّث اشتراكك عند اكتمال الدفع.';
+  @override
+  String get subscriptionInvalidCheckoutUrl => 'رابط الدفع غير صالح';
+  @override
+  String get subscriptionUnableToLaunchCheckout => 'تعذر فتح صفحة الدفع';
+  @override
+  String get subscriptionInvalidPortalUrl => 'رابط بوابة الفوترة غير صالح';
+  @override
+  String get subscriptionUnableToOpenPortal => 'تعذر فتح بوابة الفوترة';
+  @override
+  String subscriptionStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'نشط';
+      case 'canceled':
+        return 'ملغي';
+      case 'failed':
+        return 'فشل';
+      case 'past_due':
+        return 'متأخر';
+      case 'pending_activation':
+        return 'بانتظار التفعيل';
+      case 'pending':
+        return 'قيد الانتظار';
+      case 'action_required':
+        return 'إجراء مطلوب';
+      case 'refunded':
+        return 'تم رد المبلغ';
+      case 'succeeded':
+        return 'ناجح';
+      case 'paid':
+        return 'مدفوع';
+      case 'failure':
+        return 'إخفاق';
+      case 'activation_failed':
+        return 'فشل التفعيل';
+      case 'checkout_failed':
+        return 'فشل الدفع';
+      case 'refund_failed':
+        return 'فشل رد المبلغ';
+      case 'not_applicable':
+        return 'غير منطبق';
+      case 'refund':
+        return 'استرجاع';
+      case 'charge':
+        return 'تحصيل';
+      case 'checkout':
+        return 'الدفع';
+      case 'portal':
+        return 'البوابة';
+      case 'billing_portal':
+        return 'بوابة الفوترة';
+      default:
+        return status
+            .replaceAll('_', ' ')
+            .split(' ')
+            .where((part) => part.isNotEmpty)
+            .join(' ');
+    }
+  }
+
+  @override
   String get updatePassword => 'تحديث كلمة المرور';
   @override
   String get upgradePlan => 'قم بترقية خطتك';
@@ -2887,8 +3092,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get largeFontMode => 'خط كبير';
 
   @override
-  String get largeFontModeSubtitle =>
-      'يكبّر حجم النص في واجهة الطفل بالكامل';
+  String get largeFontModeSubtitle => 'يكبّر حجم النص في واجهة الطفل بالكامل';
 
   @override
   String get highContrastMode => 'تباين عالٍ';
@@ -2993,13 +3197,15 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get setAsDefault => 'تعيين كافتراضي';
 
   @override
-  String get paymentProviderMethodIdOptional => 'معرّف وسيلة الدفع لدى المزود (اختياري)';
+  String get paymentProviderMethodIdOptional =>
+      'معرّف وسيلة الدفع لدى المزود (اختياري)';
 
   @override
   String get paymentMethodDefaultLabel => 'افتراضي';
 
   @override
-  String aiCompanionSubtitleWithName(String name) => '$name، رفيقك التعليمي الذكي';
+  String aiCompanionSubtitleWithName(String name) =>
+      '$name، رفيقك التعليمي الذكي';
 
   @override
   String get aiBuddyStatusUnavailable => 'غير متاح';
@@ -3336,7 +3542,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get rewardStoreVerifyAction => 'تحقق';
 
   @override
-  String get rewardStoreParentVerificationSuccess => 'تم التحقق من الوالد بنجاح';
+  String get rewardStoreParentVerificationSuccess =>
+      'تم التحقق من الوالد بنجاح';
 
   @override
   String get rewardStoreInvalidPin => 'رقم PIN غير صحيح';
@@ -3351,7 +3558,8 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String rewardStoreItemEquipped(String name) => 'تم تجهيز $name';
 
   @override
-  String rewardStorePendingApprovals(int count) => 'طلبات موافقة الوالد ($count)';
+  String rewardStorePendingApprovals(int count) =>
+      'طلبات موافقة الوالد ($count)';
 
   @override
   String get rewardStoreParentUnlock => 'فتح الوالد';
@@ -3390,10 +3598,12 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get rewardStoreRedeemAction => 'استبدال';
 
   @override
-  String get parentSessionMissing => 'جلسة الوالد غير موجودة. يرجى تسجيل الدخول مرة أخرى.';
+  String get parentSessionMissing =>
+      'جلسة الوالد غير موجودة. يرجى تسجيل الدخول مرة أخرى.';
 
   @override
-  String get deletedOfflineWillSync => 'تم الحذف بدون اتصال. ستتم المزامنة عند عودة الإنترنت.';
+  String get deletedOfflineWillSync =>
+      'تم الحذف بدون اتصال. ستتم المزامنة عند عودة الإنترنت.';
 
   @override
   String get aiBuddyFallbackSummary =>

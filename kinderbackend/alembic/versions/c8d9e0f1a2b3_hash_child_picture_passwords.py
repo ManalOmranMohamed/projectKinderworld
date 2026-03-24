@@ -11,10 +11,9 @@ from __future__ import annotations
 import json
 from typing import Sequence, Union
 
+import bcrypt
 import sqlalchemy as sa
 from alembic import op
-
-from auth import hash_password
 
 
 # revision identifiers, used by Alembic.
@@ -26,11 +25,17 @@ depends_on: Union[str, Sequence[str], None] = None
 _SCHEME = "bcrypt_json_v1"
 
 
+def _hash_password(value: str) -> str:
+    # Keep the migration self-contained so historical revisions remain replayable.
+    hashed = bcrypt.hashpw(value.encode("utf-8"), bcrypt.gensalt())
+    return hashed.decode("utf-8")
+
+
 def _hash_picture_password(items: list[str]) -> dict[str, str | int]:
     canonical = json.dumps(items, separators=(",", ":"), ensure_ascii=True)
     return {
         "scheme": _SCHEME,
-        "hash": hash_password(canonical),
+        "hash": _hash_password(canonical),
         "length": len(items),
     }
 

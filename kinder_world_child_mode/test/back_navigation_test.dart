@@ -39,6 +39,7 @@ class _FakeAdminAuthRepository extends AdminAuthRepository {
   Future<AdminAuthResult> login({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
     return AdminAuthResult.ok(admin: restoredAdmin ?? _superAdmin);
   }

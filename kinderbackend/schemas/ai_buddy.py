@@ -10,6 +10,9 @@ class AiBuddyProviderOut(BaseModel):
     mode: str
     status: str
     reason: str | None = None
+    provider_key: str | None = None
+    model: str | None = None
+    supports_activity_suggestions: bool = False
 
 
 class AiBuddyMessageOut(BaseModel):

@@ -38,122 +38,41 @@ _SUPPORT_SLA_HOURS = {
 
 
 class PremiumBehaviorService:
-    @staticmethod
-    def _demo_insights() -> list[dict[str, Any]]:
-        return [
-            {
-                "code": "behavioral_insight",
-                "severity": "info",
-                "title": "Start with short sessions",
-                "summary": "Short guided activities help establish a healthy routine.",
-                "recommended_action": "Begin with one lesson and one story this week.",
-            },
-            {
-                "code": "engagement_tip",
-                "severity": "info",
-                "title": "Mix content types",
-                "summary": "Alternating lessons and play content usually improves engagement.",
-                "recommended_action": "Rotate between learning and fun content in the next session.",
-            },
-        ]
-
-    @staticmethod
-    def _demo_smart_notifications() -> list[dict[str, Any]]:
-        return [
-            {
-                "id": "demo-behavioral-insight",
-                "type": "BEHAVIORAL_INSIGHT",
-                "severity": "info",
-                "message": "No recent activity data yet. Start one guided session to unlock smarter insights.",
-                "created_at": utc_now().isoformat(),
-                "rule_key": "demo_behavioral_insight",
-            }
-        ]
-
     def build_ai_insights(
         self,
         *,
         db: Session,
         user: User,
     ) -> dict[str, Any]:
-        report = analytics_service.build_advanced_report(db=db, user=user, days=30)
-        payload = dict(report.get("reports") or {})
-        child_summaries = list(payload.get("child_summaries") or [])
-        recent_sessions = list(payload.get("recent_sessions") or [])
-        mood_counts = dict(payload.get("mood_counts") or {})
-        achievements = dict(payload.get("achievements") or {})
-        account_summary = dict(payload.get("account_summary") or {})
-        children = list(payload.get("children") or [])
+        report_sections = self._advanced_report_sections(db=db, user=user)
+        child_summaries = report_sections["child_summaries"]
+        recent_sessions = report_sections["recent_sessions"]
+        mood_counts = report_sections["mood_counts"]
+        achievements = report_sections["achievements"]
+        children = report_sections["children"]
+        completion_rate = report_sections["completion_rate"]
+        average_score = report_sections["average_score"]
+        top_content_type = report_sections["top_content_type"]
+        dominant_mood = self._dominant_mood(mood_counts)
 
-        insights: list[dict[str, Any]] = []
-        completion_rate = float(
-            payload.get("completion_rate") or account_summary.get("completion_rate") or 0.0
+        insights = self._rule_based_ai_insights(
+            child_summaries=child_summaries,
+            recent_sessions=recent_sessions,
+            achievements=achievements,
+            children=children,
+            completion_rate=completion_rate,
+            average_score=average_score,
+            top_content_type=top_content_type,
+            dominant_mood=dominant_mood,
         )
-        average_score = float(
-            payload.get("average_score") or account_summary.get("average_score") or 0.0
-        )
-        top_content_type = payload.get("top_content_type")
-        if children:
-            inactive_children = [
-                item["name"]
-                for item in child_summaries
-                if int(item.get("activities_completed_7d") or 0) == 0
-                and int(item.get("screen_time_minutes_7d") or 0) == 0
-            ]
-            if inactive_children:
-                insights.append(
-                    {
-                        "code": "inactivity_watch",
-                        "severity": "warning",
-                        "title": "Activity slowdown detected",
-                        "summary": f"{', '.join(inactive_children[:2])} had no recorded activity in the last 7 days.",
-                        "recommended_action": "Open a short lesson or story to restart engagement.",
-                    }
-                )
-            if completion_rate < 0.55 and recent_sessions:
-                insights.append(
-                    {
-                        "code": "completion_support",
-                        "severity": "medium",
-                        "title": "Completion rate needs support",
-                        "summary": f"Completion rate is {round(completion_rate * 100)}% across the last 30 days.",
-                        "recommended_action": "Favor shorter activities and repeat the strongest content type this week.",
-                    }
-                )
-            if average_score >= 80 and int(achievements.get("total_unlocked") or 0) > 0:
-                insights.append(
-                    {
-                        "code": "strong_progress",
-                        "severity": "positive",
-                        "title": "Strong recent progress",
-                        "summary": f"Average score is {round(average_score)}% with {int(achievements.get('total_unlocked') or 0)} unlocked achievements.",
-                        "recommended_action": "Keep the current routine and add one harder challenge.",
-                    }
-                )
-            dominant_mood = self._dominant_mood(mood_counts)
-            if dominant_mood in {"sad", "tired"}:
-                insights.append(
-                    {
-                        "code": "mood_support",
-                        "severity": "warning",
-                        "title": "Mood trend needs a gentler pace",
-                        "summary": f"The most common recent mood is {dominant_mood}.",
-                        "recommended_action": "Try calmer activities and shorter sessions for the next few days.",
-                    }
-                )
-            if top_content_type:
-                insights.append(
-                    {
-                        "code": "content_affinity",
-                        "severity": "info",
-                        "title": "Content preference detected",
-                        "summary": f"Recent activity leans toward {top_content_type}.",
-                        "recommended_action": "Use that content type as the first activity in the next session.",
-                    }
-                )
 
         if not insights:
-            insights = self._demo_insights()
+            insights = self._baseline_ai_insights(
+                child_summaries=child_summaries,
+                children=children,
+                recent_sessions=recent_sessions,
+                top_content_type=top_content_type,
+            )
 
         return {
             "insights": insights[:4],
@@ -162,7 +81,7 @@ class PremiumBehaviorService:
                 "completion_rate": completion_rate,
                 "average_score": average_score,
                 "top_content_type": top_content_type,
-                "dominant_mood": self._dominant_mood(mood_counts),
+                "dominant_mood": dominant_mood,
             },
             "data_source": "backend_rules",
             "access_level": "premium",
@@ -228,67 +147,326 @@ class PremiumBehaviorService:
         user: User,
     ) -> dict[str, Any]:
         children = analytics_service._children_for_parent(db, user.id)
-        notifications: list[dict[str, Any]] = []
         now = utc_now()
+        notifications = self._smart_notifications_for_children(
+            db=db,
+            children=children,
+            now=now,
+        )
+        if not notifications:
+            notifications = self._baseline_smart_notifications(
+                db=db,
+                user=user,
+                children=children,
+                now=now,
+            )
+        return {
+            "notifications": notifications[:8],
+            "access_level": "smart",
+            "data_source": "backend_rules",
+        }
 
+    def _advanced_report_sections(self, *, db: Session, user: User) -> dict[str, Any]:
+        report = analytics_service.build_advanced_report(db=db, user=user, days=30)
+        payload = dict(report.get("reports") or {})
+        account_summary = dict(payload.get("account_summary") or {})
+        return {
+            "child_summaries": list(payload.get("child_summaries") or []),
+            "recent_sessions": list(payload.get("recent_sessions") or []),
+            "mood_counts": dict(payload.get("mood_counts") or {}),
+            "achievements": dict(payload.get("achievements") or {}),
+            "children": list(payload.get("children") or []),
+            "completion_rate": float(
+                payload.get("completion_rate") or account_summary.get("completion_rate") or 0.0
+            ),
+            "average_score": float(
+                payload.get("average_score") or account_summary.get("average_score") or 0.0
+            ),
+            "top_content_type": payload.get("top_content_type"),
+        }
+
+    def _rule_based_ai_insights(
+        self,
+        *,
+        child_summaries: list[dict[str, Any]],
+        recent_sessions: list[dict[str, Any]],
+        achievements: dict[str, Any],
+        children: list[dict[str, Any]],
+        completion_rate: float,
+        average_score: float,
+        top_content_type: Any,
+        dominant_mood: str | None,
+    ) -> list[dict[str, Any]]:
+        if not children:
+            return []
+
+        insights: list[dict[str, Any]] = []
+        self._append_inactivity_insight(insights=insights, child_summaries=child_summaries)
+        self._append_completion_support_insight(
+            insights=insights,
+            completion_rate=completion_rate,
+            recent_sessions=recent_sessions,
+        )
+        self._append_progress_insight(
+            insights=insights,
+            average_score=average_score,
+            achievements=achievements,
+        )
+        self._append_mood_support_insight(insights=insights, dominant_mood=dominant_mood)
+        self._append_content_affinity_insight(
+            insights=insights,
+            top_content_type=top_content_type,
+        )
+        return insights
+
+    def _append_inactivity_insight(
+        self,
+        *,
+        insights: list[dict[str, Any]],
+        child_summaries: list[dict[str, Any]],
+    ) -> None:
+        inactive_children = [
+            item["name"]
+            for item in child_summaries
+            if int(item.get("activities_completed_7d") or 0) == 0
+            and int(item.get("screen_time_minutes_7d") or 0) == 0
+        ]
+        if not inactive_children:
+            return
+        insights.append(
+            {
+                "code": "inactivity_watch",
+                "severity": "warning",
+                "title": "Activity slowdown detected",
+                "summary": f"{', '.join(inactive_children[:2])} had no recorded activity in the last 7 days.",
+                "recommended_action": "Open a short lesson or story to restart engagement.",
+            }
+        )
+
+    def _append_completion_support_insight(
+        self,
+        *,
+        insights: list[dict[str, Any]],
+        completion_rate: float,
+        recent_sessions: list[dict[str, Any]],
+    ) -> None:
+        if completion_rate >= 0.55 or not recent_sessions:
+            return
+        insights.append(
+            {
+                "code": "completion_support",
+                "severity": "medium",
+                "title": "Completion rate needs support",
+                "summary": f"Completion rate is {round(completion_rate * 100)}% across the last 30 days.",
+                "recommended_action": "Favor shorter activities and repeat the strongest content type this week.",
+            }
+        )
+
+    def _append_progress_insight(
+        self,
+        *,
+        insights: list[dict[str, Any]],
+        average_score: float,
+        achievements: dict[str, Any],
+    ) -> None:
+        total_unlocked = int(achievements.get("total_unlocked") or 0)
+        if average_score < 80 or total_unlocked <= 0:
+            return
+        insights.append(
+            {
+                "code": "strong_progress",
+                "severity": "positive",
+                "title": "Strong recent progress",
+                "summary": f"Average score is {round(average_score)}% with {total_unlocked} unlocked achievements.",
+                "recommended_action": "Keep the current routine and add one harder challenge.",
+            }
+        )
+
+    def _append_mood_support_insight(
+        self,
+        *,
+        insights: list[dict[str, Any]],
+        dominant_mood: str | None,
+    ) -> None:
+        if dominant_mood not in {"sad", "tired"}:
+            return
+        insights.append(
+            {
+                "code": "mood_support",
+                "severity": "warning",
+                "title": "Mood trend needs a gentler pace",
+                "summary": f"The most common recent mood is {dominant_mood}.",
+                "recommended_action": "Try calmer activities and shorter sessions for the next few days.",
+            }
+        )
+
+    def _append_content_affinity_insight(
+        self,
+        *,
+        insights: list[dict[str, Any]],
+        top_content_type: Any,
+    ) -> None:
+        if not top_content_type:
+            return
+        insights.append(
+            {
+                "code": "content_affinity",
+                "severity": "info",
+                "title": "Content preference detected",
+                "summary": f"Recent activity leans toward {top_content_type}.",
+                "recommended_action": "Use that content type as the first activity in the next session.",
+            }
+        )
+
+    def _smart_notifications_for_children(
+        self,
+        *,
+        db: Session,
+        children: list[Any],
+        now,
+    ) -> list[dict[str, Any]]:
+        notifications: list[dict[str, Any]] = []
         for child in children:
-            last_activity = self._last_activity_at(db=db, child_id=child.id)
-            if last_activity is None or last_activity <= now - timedelta(days=3):
-                notifications.append(
-                    {
-                        "id": f"inactivity-{child.id}",
-                        "type": "INACTIVITY_ALERT",
-                        "severity": "warning",
-                        "message": f"{child.name} has been inactive for at least 3 days.",
-                        "child_id": child.id,
-                        "created_at": now.isoformat(),
-                        "rule_key": "inactivity_3d",
-                    }
+            notifications.extend(
+                self._smart_notifications_for_child(
+                    db=db,
+                    child=child,
+                    now=now,
                 )
+            )
+        return self._sort_smart_notifications(notifications)
 
-            streak = self._activity_streak_days(db=db, child_id=child.id)
-            if streak in {3, 7, 14}:
-                notifications.append(
-                    {
-                        "id": f"streak-{child.id}-{streak}",
-                        "type": "STREAK_MILESTONE",
-                        "severity": "positive",
-                        "message": f"{child.name} reached a {streak}-day activity streak.",
-                        "child_id": child.id,
-                        "created_at": now.isoformat(),
-                        "rule_key": "activity_streak",
-                    }
-                )
+    def _smart_notifications_for_child(
+        self,
+        *,
+        db: Session,
+        child: Any,
+        now,
+    ) -> list[dict[str, Any]]:
+        notifications: list[dict[str, Any]] = []
+        self._append_inactivity_notification(
+            notifications=notifications,
+            db=db,
+            child=child,
+            now=now,
+        )
+        self._append_streak_notification(
+            notifications=notifications,
+            db=db,
+            child=child,
+            now=now,
+        )
+        self._append_mood_trend_notification(
+            notifications=notifications,
+            db=db,
+            child=child,
+            now=now,
+        )
+        self._append_lesson_milestone_notification(
+            notifications=notifications,
+            db=db,
+            child=child,
+            now=now,
+        )
+        return notifications
 
-            mood_counts = analytics_service._mood_counts(db=db, child_ids=[child.id], days=7)
-            dominant_mood = self._dominant_mood(mood_counts)
-            if dominant_mood in {"sad", "tired"} and sum(mood_counts.values()) >= 2:
-                notifications.append(
-                    {
-                        "id": f"mood-{child.id}",
-                        "type": "MOOD_TREND",
-                        "severity": "warning",
-                        "message": f"{child.name} has shown more {dominant_mood} moods recently.",
-                        "child_id": child.id,
-                        "created_at": now.isoformat(),
-                        "rule_key": "mood_trend",
-                    }
-                )
+    def _append_inactivity_notification(
+        self,
+        *,
+        notifications: list[dict[str, Any]],
+        db: Session,
+        child: Any,
+        now,
+    ) -> None:
+        last_activity = self._last_activity_at(db=db, child_id=child.id)
+        if last_activity is not None and last_activity > now - timedelta(days=3):
+            return
+        notifications.append(
+            {
+                "id": f"inactivity-{child.id}",
+                "type": "INACTIVITY_ALERT",
+                "severity": "warning",
+                "message": f"{child.name} has been inactive for at least 3 days.",
+                "child_id": child.id,
+                "created_at": now.isoformat(),
+                "rule_key": "inactivity_3d",
+            }
+        )
 
-            lessons_7d = self._lessons_completed(db=db, child_id=child.id, days=7)
-            if lessons_7d >= 3:
-                notifications.append(
-                    {
-                        "id": f"lessons-{child.id}",
-                        "type": "LEARNING_MILESTONE",
-                        "severity": "positive",
-                        "message": f"{child.name} completed {lessons_7d} lessons in the last 7 days.",
-                        "child_id": child.id,
-                        "created_at": now.isoformat(),
-                        "rule_key": "lesson_milestone",
-                    }
-                )
+    def _append_streak_notification(
+        self,
+        *,
+        notifications: list[dict[str, Any]],
+        db: Session,
+        child: Any,
+        now,
+    ) -> None:
+        streak = self._activity_streak_days(db=db, child_id=child.id)
+        if streak not in {3, 7, 14}:
+            return
+        notifications.append(
+            {
+                "id": f"streak-{child.id}-{streak}",
+                "type": "STREAK_MILESTONE",
+                "severity": "positive",
+                "message": f"{child.name} reached a {streak}-day activity streak.",
+                "child_id": child.id,
+                "created_at": now.isoformat(),
+                "rule_key": "activity_streak",
+            }
+        )
 
+    def _append_mood_trend_notification(
+        self,
+        *,
+        notifications: list[dict[str, Any]],
+        db: Session,
+        child: Any,
+        now,
+    ) -> None:
+        mood_counts = analytics_service._mood_counts(db=db, child_ids=[child.id], days=7)
+        dominant_mood = self._dominant_mood(mood_counts)
+        if dominant_mood not in {"sad", "tired"} or sum(mood_counts.values()) < 2:
+            return
+        notifications.append(
+            {
+                "id": f"mood-{child.id}",
+                "type": "MOOD_TREND",
+                "severity": "warning",
+                "message": f"{child.name} has shown more {dominant_mood} moods recently.",
+                "child_id": child.id,
+                "created_at": now.isoformat(),
+                "rule_key": "mood_trend",
+            }
+        )
+
+    def _append_lesson_milestone_notification(
+        self,
+        *,
+        notifications: list[dict[str, Any]],
+        db: Session,
+        child: Any,
+        now,
+    ) -> None:
+        lessons_7d = self._lessons_completed(db=db, child_id=child.id, days=7)
+        if lessons_7d < 3:
+            return
+        notifications.append(
+            {
+                "id": f"lessons-{child.id}",
+                "type": "LEARNING_MILESTONE",
+                "severity": "positive",
+                "message": f"{child.name} completed {lessons_7d} lessons in the last 7 days.",
+                "child_id": child.id,
+                "created_at": now.isoformat(),
+                "rule_key": "lesson_milestone",
+            }
+        )
+
+    def _sort_smart_notifications(
+        self,
+        notifications: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         notifications.sort(
             key=lambda item: (
                 {"warning": 3, "critical": 4, "positive": 2, "info": 1}.get(
@@ -298,13 +476,7 @@ class PremiumBehaviorService:
             ),
             reverse=True,
         )
-        if not notifications:
-            notifications = self._demo_smart_notifications()
-        return {
-            "notifications": notifications[:8],
-            "access_level": "smart",
-            "data_source": "backend_rules",
-        }
+        return notifications
 
     def build_offline_downloads(
         self,
@@ -359,7 +531,10 @@ class PremiumBehaviorService:
         queue = self.rank_support_tickets(
             db.query(SupportTicket)
             .options(joinedload(SupportTicket.user), joinedload(SupportTicket.assigned_admin))
-            .filter(SupportTicket.status.in_(("open", "in_progress", "resolved")))
+            .filter(
+                SupportTicket.deleted_at.is_(None),
+                SupportTicket.status.in_(("open", "in_progress", "resolved")),
+            )
             .all()
         )
         my_tickets = [item for item in queue if item["ticket"].user_id == user.id]
@@ -555,6 +730,126 @@ class PremiumBehaviorService:
         if not mood_counts:
             return None
         return max(mood_counts.items(), key=lambda item: item[1])[0]
+
+    def _baseline_ai_insights(
+        self,
+        *,
+        child_summaries: list[dict[str, Any]],
+        children: list[dict[str, Any]],
+        recent_sessions: list[dict[str, Any]],
+        top_content_type: Any,
+    ) -> list[dict[str, Any]]:
+        if not children:
+            return [
+                {
+                    "code": "setup_required",
+                    "severity": "info",
+                    "title": "Add a child profile to unlock insights",
+                    "summary": "No child profiles are linked to this account yet.",
+                    "recommended_action": "Create a child profile to start collecting learning and wellbeing data.",
+                },
+                {
+                    "code": "insight_baseline_pending",
+                    "severity": "info",
+                    "title": "Insight baseline not established",
+                    "summary": "The system needs at least one active child profile before it can detect progress trends.",
+                    "recommended_action": "After adding a child profile, complete one guided session to generate the first insight snapshot.",
+                },
+            ]
+
+        inactive_names = [
+            item["name"]
+            for item in child_summaries
+            if int(item.get("activities_completed_7d") or 0) == 0
+            and int(item.get("screen_time_minutes_7d") or 0) == 0
+        ]
+        if not recent_sessions and (inactive_names or not child_summaries):
+            names_preview = ", ".join(inactive_names[:2]) or f"{len(children)} child profiles"
+            return [
+                {
+                    "code": "activity_baseline_pending",
+                    "severity": "info",
+                    "title": "More activity is needed for personalized insights",
+                    "summary": (
+                        f"{names_preview} {'has' if len(children) == 1 else 'have'} no recorded sessions in the last 30 days."
+                    ),
+                    "recommended_action": "Start one lesson or story this week to establish a behavioral baseline.",
+                },
+                {
+                    "code": "routine_seed",
+                    "severity": "info",
+                    "title": "Build a simple weekly routine",
+                    "summary": "Consistent short sessions make future progress and mood trends more reliable.",
+                    "recommended_action": "Aim for two short guided sessions on separate days before checking insights again.",
+                },
+            ]
+
+        return [
+            {
+                "code": "healthy_routine_detected",
+                "severity": "positive",
+                "title": "No urgent insight flags right now",
+                "summary": "Recent activity does not show a strong risk pattern that needs immediate action.",
+                "recommended_action": (
+                    f"Keep the current routine and review {top_content_type} progress again next week."
+                    if top_content_type
+                    else "Keep the current routine and add one more guided session this week."
+                ),
+            }
+        ]
+
+    def _baseline_smart_notifications(
+        self,
+        *,
+        db: Session,
+        user: User,
+        children: list[Any],
+        now,
+    ) -> list[dict[str, Any]]:
+        if not children:
+            return [
+                {
+                    "id": f"smart-setup-{user.id}",
+                    "type": "BEHAVIORAL_INSIGHT",
+                    "severity": "info",
+                    "message": "No child profiles are connected yet. Add one profile to start receiving smart alerts.",
+                    "created_at": now.isoformat(),
+                    "rule_key": "account_setup_required",
+                }
+            ]
+
+        inactive_children = [
+            child
+            for child in children
+            if (last_activity := self._last_activity_at(db=db, child_id=child.id)) is None
+            or last_activity <= now - timedelta(days=3)
+        ]
+        if inactive_children:
+            names_preview = ", ".join(child.name for child in inactive_children[:2])
+            return [
+                {
+                    "id": f"smart-baseline-{user.id}",
+                    "type": "BEHAVIORAL_INSIGHT",
+                    "severity": "info",
+                    "message": (
+                        f"{names_preview} {'has' if len(inactive_children) == 1 else 'have'} no recent activity baseline yet. "
+                        "Start one guided session to unlock smarter alerts."
+                    ),
+                    "created_at": now.isoformat(),
+                    "rule_key": "activity_baseline_pending",
+                }
+            ]
+
+        return [
+            {
+                "id": f"smart-stable-{user.id}",
+                "type": "BEHAVIORAL_INSIGHT",
+                "severity": "positive",
+                "message": "No urgent smart alerts right now. Recent activity looks stable across your account.",
+                "created_at": now.isoformat(),
+                "rule_key": "stable_activity_window",
+            }
+        ]
 
 
 premium_behavior_service = PremiumBehaviorService()

@@ -6,6 +6,10 @@ import json
 import time
 from dataclasses import dataclass
 
+import pytest
+from fastapi import HTTPException
+
+from models import PaymentWebhookEvent
 from plan_service import PLAN_FREE, PLAN_PREMIUM
 from services.payment_provider import (
     CheckoutSessionResult,
@@ -13,6 +17,8 @@ from services.payment_provider import (
     PortalSessionResult,
     RefundResult,
 )
+from services.payment_webhook_service import PaymentWebhookService
+from services.payment_webhook_verifier import WebhookVerificationError
 from services.subscription_service import subscription_service
 
 
@@ -161,6 +167,26 @@ def test_stripe_webhook_rejects_invalid_signature(client):
         assert "Invalid Stripe webhook signature" in response.json()["detail"]
     finally:
         _restore_webhook_secret(original)
+
+
+def test_webhook_service_accepts_injected_verifier(db) -> None:
+    class FailingVerifier:
+        def verify(self, *, payload: bytes, signature: str | None):
+            raise WebhookVerificationError("Invalid Stripe webhook signature")
+
+    service = PaymentWebhookService(
+        stripe_verifier=FailingVerifier(),
+        subscription_service_instance=subscription_service,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        service.handle_stripe_webhook(db=db, payload=b"{}", signature="bad")
+
+    assert exc_info.value.status_code == 400
+    record = db.query(PaymentWebhookEvent).order_by(PaymentWebhookEvent.id.desc()).first()
+    assert record is not None
+    assert record.event_type == "signature_invalid"
+    assert record.signature_valid is False
 
 
 def test_checkout_completed_webhook_updates_lifecycle_and_deduplicates(

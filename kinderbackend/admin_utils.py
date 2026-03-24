@@ -60,6 +60,13 @@ def build_admin_payload(admin, db: Session) -> dict[str, Any]:
         "suspicious_access_count": int(admin.suspicious_access_count or 0),
         "is_flagged_suspicious": bool(admin.is_flagged_suspicious),
         "locked_until": admin.locked_until.isoformat() if admin.locked_until else None,
+        "two_factor_enabled": bool(getattr(admin, "two_factor_enabled", False)),
+        "two_factor_method": getattr(admin, "two_factor_method", None),
+        "two_factor_confirmed_at": (
+            admin.two_factor_confirmed_at.isoformat()
+            if getattr(admin, "two_factor_confirmed_at", None)
+            else None
+        ),
         "created_at": admin.created_at.isoformat() if admin.created_at else None,
         "updated_at": admin.updated_at.isoformat() if admin.updated_at else None,
     }
@@ -289,6 +296,7 @@ def serialize_support_ticket(
         "email": ticket.email,
         "category": ticket.category,
         "status": ticket.status,
+        "deleted_at": ticket.deleted_at.isoformat() if ticket.deleted_at else None,
         "assigned_admin_id": ticket.assigned_admin_id,
         "assigned_admin": _ticket_assignee_payload(ticket),
         "requester": _ticket_requester_payload(ticket),

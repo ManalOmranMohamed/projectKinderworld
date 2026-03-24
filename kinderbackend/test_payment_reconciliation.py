@@ -69,8 +69,7 @@ def test_reconciliation_updates_profile_and_attempt(db, create_parent):
                 raw={},
             )
 
-    service = PaymentReconciliationService()
-    service._payment_provider_factory = lambda: StubProvider()  # noqa: SLF001
+    service = PaymentReconciliationService(payment_provider_factory=lambda: StubProvider())
 
     issue = service.reconcile_profile(db=db, profile=profile)
     assert issue is not None
@@ -109,8 +108,7 @@ def test_reconciliation_records_error(db, create_parent):
         def retrieve_subscription(self, *, subscription_id: str) -> ProviderSubscriptionSnapshot:
             raise PaymentProviderError("provider unavailable")
 
-    service = PaymentReconciliationService()
-    service._payment_provider_factory = lambda: StubProvider()  # noqa: SLF001
+    service = PaymentReconciliationService(payment_provider_factory=lambda: StubProvider())
 
     issue = service.reconcile_profile(db=db, profile=profile)
     assert issue is not None

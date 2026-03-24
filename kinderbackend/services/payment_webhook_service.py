@@ -8,7 +8,8 @@ from uuid import uuid4
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from core.observability import emit_event
+from core.logging_utils import log_with_context
+from core.observability import emit_event, observe_duration
 from core.time_utils import db_utc_now
 from models import PaymentAttempt, PaymentWebhookEvent, SubscriptionProfile, User
 from plan_service import PLAN_FREE
@@ -30,9 +31,14 @@ logger = logging.getLogger(__name__)
 
 
 class PaymentWebhookService:
-    def __init__(self) -> None:
-        self._stripe_verifier = stripe_webhook_verifier
-        self._subscription_service: SubscriptionService = subscription_service
+    def __init__(
+        self,
+        *,
+        stripe_verifier=stripe_webhook_verifier,
+        subscription_service_instance: SubscriptionService = subscription_service,
+    ) -> None:
+        self._stripe_verifier = stripe_verifier
+        self._subscription_service: SubscriptionService = subscription_service_instance
 
     def handle_stripe_webhook(
         self,
@@ -41,157 +47,181 @@ class PaymentWebhookService:
         payload: bytes,
         signature: str | None,
     ) -> dict[str, Any]:
-        try:
-            event = self._stripe_verifier.verify(payload=payload, signature=signature)
-        except WebhookVerificationError as exc:
-            emit_event(
-                "payment.webhook.signature_invalid",
-                category="payment",
-                severity="warn",
-                provider="stripe",
-                reason=str(exc),
-            )
-            record = PaymentWebhookEvent(
-                provider="stripe",
-                event_id=f"invalid_{uuid4()}",
-                event_type="signature_invalid",
-                status="failed",
-                signature_valid=False,
-                error_message=str(exc),
-                payload_json=None,
-                received_at=db_utc_now(),
-            )
-            db.add(record)
-            db.commit()
-            logger.warning(
-                "webhook_signature_invalid provider=stripe error=%s",
-                str(exc),
-            )
-            raise HTTPException(status_code=400, detail=str(exc))
-
-        event_id = str(event.get("id") or "").strip()
-        event_type = str(event.get("type") or "").strip()
-        if not event_id or not event_type:
-            raise HTTPException(status_code=400, detail="Webhook event is missing id or type")
-
-        emit_event(
-            "payment.webhook.received",
-            category="payment",
-            provider="stripe",
-            event_id=event_id,
-            event_type=event_type,
-        )
-        record = self._get_webhook_record(db=db, provider="stripe", event_id=event_id)
-        if record is not None and record.status in {
-            "processed",
-            "ignored",
-            "duplicate",
-            "processing",
-        }:
-            logger.info(
-                "webhook_duplicate provider=stripe event_id=%s event_type=%s status=%s",
-                event_id,
-                event_type,
-                record.status,
-            )
-            emit_event(
-                "payment.webhook.duplicate",
-                category="payment",
-                severity="warn",
-                provider="stripe",
-                event_id=event_id,
-                event_type=event_type,
-                status=record.status,
-            )
-            return {
-                "received": True,
-                "provider": "stripe",
-                "event_id": event_id,
-                "event_type": event_type,
-                "status": "duplicate",
-            }
-
-        now = db_utc_now()
-        if record is None:
-            record = PaymentWebhookEvent(
-                provider="stripe",
-                event_id=event_id,
-                event_type=event_type,
-                status="processing",
-                signature_valid=True,
-                payload_json=event,
-                received_at=now,
-            )
-        else:
-            record.status = "processing"
-            record.signature_valid = True
-            record.payload_json = event
-            record.error_message = None
-        db.add(record)
-        db.flush()
-
-        try:
-            result = self._dispatch_verified_event(db=db, event=event, record=record)
-            record.status = result["status"]
-            record.processed_at = db_utc_now()
-            record.provider_customer_id = result.get("provider_customer_id")
-            record.provider_subscription_id = result.get("provider_subscription_id")
-            record.provider_invoice_id = result.get("provider_invoice_id")
-            record.provider_session_id = result.get("provider_session_id")
-            record.subscription_profile_id = result.get("subscription_profile_id")
-            db.add(record)
-            db.commit()
-            logger.info(
-                "webhook_processed provider=stripe event_id=%s event_type=%s status=%s profile_id=%s",
-                event_id,
-                event_type,
-                record.status,
-                record.subscription_profile_id,
-            )
-            emit_event(
-                "payment.webhook.processed",
-                category="payment",
-                provider="stripe",
-                event_id=event_id,
-                event_type=event_type,
-                status=result["status"],
-                subscription_profile_id=record.subscription_profile_id,
-            )
-            return {
-                "received": True,
-                "provider": "stripe",
-                "event_id": event_id,
-                "event_type": event_type,
-                "status": result["status"],
-            }
-        except HTTPException:
-            db.rollback()
-            raise
-        except Exception as exc:
-            db.rollback()
-            record = self._get_webhook_record(db=db, provider="stripe", event_id=event_id)
-            if record is not None:
-                record.status = "failed"
-                record.error_message = str(exc)
-                record.processed_at = db_utc_now()
+        with observe_duration("payment.webhook.handle", category="payment", provider="stripe"):
+            try:
+                event = self._stripe_verifier.verify(payload=payload, signature=signature)
+            except WebhookVerificationError as exc:
+                emit_event(
+                    "payment.webhook.signature_invalid",
+                    category="payment",
+                    severity="warn",
+                    provider="stripe",
+                    reason=str(exc),
+                )
+                record = PaymentWebhookEvent(
+                    provider="stripe",
+                    event_id=f"invalid_{uuid4()}",
+                    event_type="signature_invalid",
+                    status="failed",
+                    signature_valid=False,
+                    error_message=str(exc),
+                    payload_json=None,
+                    received_at=db_utc_now(),
+                )
                 db.add(record)
                 db.commit()
-            logger.exception(
-                "webhook_failed provider=stripe event_id=%s event_type=%s error=%s",
-                event_id,
-                event_type,
-                str(exc),
-            )
+                log_with_context(
+                    logger,
+                    logging.WARNING,
+                    "webhook_signature_invalid",
+                    event="webhook_signature_invalid",
+                    category="payment",
+                    provider="stripe",
+                    outcome="signature_invalid",
+                    reason=str(exc),
+                    exception_type=type(exc).__name__,
+                )
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            event_id = str(event.get("id") or "").strip()
+            event_type = str(event.get("type") or "").strip()
+            if not event_id or not event_type:
+                raise HTTPException(status_code=400, detail="Webhook event is missing id or type")
+
             emit_event(
-                "payment.webhook.failed",
+                "payment.webhook.received",
                 category="payment",
-                severity="error",
                 provider="stripe",
                 event_id=event_id,
                 event_type=event_type,
-                reason=str(exc),
             )
-            raise
+            record = self._get_webhook_record(db=db, provider="stripe", event_id=event_id)
+            if record is not None and record.status in {
+                "processed",
+                "ignored",
+                "duplicate",
+                "processing",
+            }:
+                log_with_context(
+                    logger,
+                    logging.INFO,
+                    "webhook_duplicate",
+                    event="webhook_duplicate",
+                    category="payment",
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    outcome=record.status,
+                )
+                emit_event(
+                    "payment.webhook.duplicate",
+                    category="payment",
+                    severity="warn",
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    status=record.status,
+                )
+                return {
+                    "received": True,
+                    "provider": "stripe",
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "status": "duplicate",
+                }
+
+            now = db_utc_now()
+            if record is None:
+                record = PaymentWebhookEvent(
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    status="processing",
+                    signature_valid=True,
+                    payload_json=event,
+                    received_at=now,
+                )
+            else:
+                record.status = "processing"
+                record.signature_valid = True
+                record.payload_json = event
+                record.error_message = None
+            db.add(record)
+            db.flush()
+
+            try:
+                result = self._dispatch_verified_event(db=db, event=event, record=record)
+                record.status = result["status"]
+                record.processed_at = db_utc_now()
+                record.provider_customer_id = result.get("provider_customer_id")
+                record.provider_subscription_id = result.get("provider_subscription_id")
+                record.provider_invoice_id = result.get("provider_invoice_id")
+                record.provider_session_id = result.get("provider_session_id")
+                record.subscription_profile_id = result.get("subscription_profile_id")
+                db.add(record)
+                db.commit()
+                log_with_context(
+                    logger,
+                    logging.INFO,
+                    "webhook_processed",
+                    event="webhook_processed",
+                    category="payment",
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    outcome=record.status,
+                    subscription_profile_id=record.subscription_profile_id,
+                )
+                emit_event(
+                    "payment.webhook.processed",
+                    category="payment",
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    status=result["status"],
+                    subscription_profile_id=record.subscription_profile_id,
+                )
+                return {
+                    "received": True,
+                    "provider": "stripe",
+                    "event_id": event_id,
+                    "event_type": event_type,
+                    "status": result["status"],
+                }
+            except HTTPException:
+                db.rollback()
+                raise
+            except Exception as exc:
+                db.rollback()
+                record = self._get_webhook_record(db=db, provider="stripe", event_id=event_id)
+                if record is not None:
+                    record.status = "failed"
+                    record.error_message = str(exc)
+                    record.processed_at = db_utc_now()
+                    db.add(record)
+                    db.commit()
+                logger.exception(
+                    "webhook_failed",
+                    extra={
+                        "event": "webhook_failed",
+                        "category": "payment",
+                        "provider": "stripe",
+                        "event_id": event_id,
+                        "event_type": event_type,
+                        "outcome": "failed",
+                        "exception_type": type(exc).__name__,
+                    },
+                )
+                emit_event(
+                    "payment.webhook.failed",
+                    category="payment",
+                    severity="error",
+                    provider="stripe",
+                    event_id=event_id,
+                    event_type=event_type,
+                    reason=str(exc),
+                )
+                raise
 
     def _dispatch_verified_event(
         self,

@@ -74,6 +74,15 @@ def _as_int(value: str | None, default: int) -> int:
         return default
 
 
+def _as_float(value: str | None, default: float) -> float:
+    if value is None:
+        return default
+    try:
+        return float(value.strip())
+    except (TypeError, ValueError):
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     environment: str
@@ -85,9 +94,14 @@ class Settings:
     jwt_active_secret: str
     jwt_previous_secrets: tuple[str, ...]
     jwt_active_kid: str | None
+    data_encryption_key: str | None
+    data_encryption_previous_keys: tuple[str, ...]
     app_log_file: str | None
     skip_schema_verify: bool
     auto_run_migrations: bool
+    cache_enabled: bool
+    redis_url: str | None
+    admin_analytics_cache_ttl_seconds: int
     admin_auth_max_failed_attempts: int
     admin_auth_lockout_minutes: int
     admin_suspicious_failed_threshold: int
@@ -105,6 +119,9 @@ class Settings:
     payment_reconciliation_schedule: str | None
     ai_provider_mode: str
     ai_provider_api_key: str | None
+    ai_model: str
+    ai_max_tokens: int
+    ai_temperature: float
 
     @property
     def is_production(self) -> bool:
@@ -133,9 +150,21 @@ class Settings:
             if secret and secret != jwt_active_secret
         )
         jwt_active_kid = (os.getenv("JWT_ACTIVE_KID") or "").strip() or None
+        data_encryption_key = (os.getenv("DATA_ENCRYPTION_KEY") or "").strip() or None
+        data_encryption_previous_keys = tuple(
+            secret
+            for secret in _as_list(os.getenv("DATA_ENCRYPTION_PREVIOUS_KEYS"))
+            if secret and secret != data_encryption_key
+        )
         app_log_file = (os.getenv("APP_LOG_FILE") or "").strip() or None
         skip_schema_verify = _as_bool(os.getenv("SKIP_SCHEMA_VERIFY"), default=False)
         auto_run_migrations = _as_bool(os.getenv("AUTO_RUN_MIGRATIONS"), default=False)
+        cache_enabled = _as_bool(os.getenv("CACHE_ENABLED"), default=False)
+        redis_url = (os.getenv("REDIS_URL") or "").strip() or None
+        admin_analytics_cache_ttl_seconds = max(
+            _as_int(os.getenv("ADMIN_ANALYTICS_CACHE_TTL_SECONDS"), 30),
+            1,
+        )
         admin_auth_max_failed_attempts = max(
             _as_int(os.getenv("ADMIN_AUTH_MAX_FAILED_ATTEMPTS"), 5),
             1,
@@ -176,6 +205,9 @@ class Settings:
         ).strip() or None
         ai_provider_mode = (os.getenv("AI_PROVIDER_MODE") or "fallback").strip().lower()
         ai_provider_api_key = (os.getenv("AI_PROVIDER_API_KEY") or "").strip() or None
+        ai_model = (os.getenv("AI_MODEL") or "gpt-4o-mini").strip() or "gpt-4o-mini"
+        ai_max_tokens = max(_as_int(os.getenv("AI_MAX_TOKENS"), 500), 64)
+        ai_temperature = min(max(_as_float(os.getenv("AI_TEMPERATURE"), 0.7), 0.0), 2.0)
 
         if not jwt_active_secret:
             raise ValueError(
@@ -269,9 +301,14 @@ class Settings:
             jwt_active_secret=jwt_active_secret,
             jwt_previous_secrets=previous,
             jwt_active_kid=jwt_active_kid,
+            data_encryption_key=data_encryption_key,
+            data_encryption_previous_keys=data_encryption_previous_keys,
             app_log_file=app_log_file,
             skip_schema_verify=skip_schema_verify,
             auto_run_migrations=auto_run_migrations,
+            cache_enabled=cache_enabled,
+            redis_url=redis_url,
+            admin_analytics_cache_ttl_seconds=admin_analytics_cache_ttl_seconds,
             admin_auth_max_failed_attempts=admin_auth_max_failed_attempts,
             admin_auth_lockout_minutes=admin_auth_lockout_minutes,
             admin_suspicious_failed_threshold=admin_suspicious_failed_threshold,
@@ -289,6 +326,9 @@ class Settings:
             payment_reconciliation_schedule=payment_reconciliation_schedule,
             ai_provider_mode=ai_provider_mode,
             ai_provider_api_key=ai_provider_api_key,
+            ai_model=ai_model,
+            ai_max_tokens=ai_max_tokens,
+            ai_temperature=ai_temperature,
         )
 
 

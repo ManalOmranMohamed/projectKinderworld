@@ -390,3 +390,7 @@ final planInfoProvider = FutureProvider<PlanInfo>((ref) async {
   final snapshot = await ref.watch(subscriptionSnapshotProvider.future);
   return snapshot.planInfo;
 });
+
+final planInfoStateProvider = Provider<AsyncValue<PlanInfo>>((ref) {
+  return ref.watch(planInfoProvider);
+});

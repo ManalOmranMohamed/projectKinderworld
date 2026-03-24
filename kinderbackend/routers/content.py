@@ -134,6 +134,14 @@ def _get_published_page_or_404(*, db: Session, slug: str) -> ContentItem:
     return page
 
 
+def _get_published_page(*, db: Session, slug: str) -> ContentItem | None:
+    return (
+        _published_content_query(db)
+        .filter(ContentItem.content_type == "page", ContentItem.slug == slug.lower())
+        .first()
+    )
+
+
 def _body_from_page(page: ContentItem) -> str:
     return (page.body_en or page.body_ar or "").strip()
 
@@ -176,7 +184,14 @@ def get_public_page(slug: str, db: Session = Depends(get_db)):
 
 @router.get("/content/help-faq")
 def help_faq(db: Session = Depends(get_db)):
-    page = _get_published_page_or_404(db=db, slug=PUBLIC_PAGE_SLUGS["faq"])
+    page = _get_published_page(db=db, slug=PUBLIC_PAGE_SLUGS["faq"])
+    if page is None:
+        return {
+            "title": "FAQ",
+            "body": "",
+            "items": [],
+            "item": None,
+        }
     return {
         "title": page.title_en,
         "body": _body_from_page(page),

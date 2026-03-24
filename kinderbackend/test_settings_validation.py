@@ -132,3 +132,42 @@ def test_internal_provider_allowed_in_development():
         assert settings.payment_provider == "internal"
     finally:
         _restore_env(original)
+
+
+def test_data_encryption_settings_are_loaded():
+    original = _with_env(
+        {
+            "ENVIRONMENT": "development",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "DATA_ENCRYPTION_KEY": "field-secret-v2",
+            "DATA_ENCRYPTION_PREVIOUS_KEYS": "field-secret-v1,field-secret-v0",
+        }
+    )
+    try:
+        settings = Settings.from_env()
+        assert settings.data_encryption_key == "field-secret-v2"
+        assert settings.data_encryption_previous_keys == (
+            "field-secret-v1",
+            "field-secret-v0",
+        )
+    finally:
+        _restore_env(original)
+
+
+def test_ai_provider_generation_settings_are_loaded() -> None:
+    original = _with_env(
+        {
+            "ENVIRONMENT": "development",
+            "KINDER_JWT_SECRET": "TEST_ONLY_PLACEHOLDER_SECRET",
+            "AI_MODEL": "gpt-4o-mini",
+            "AI_MAX_TOKENS": "700",
+            "AI_TEMPERATURE": "0.4",
+        }
+    )
+    try:
+        settings = Settings.from_env()
+        assert settings.ai_model == "gpt-4o-mini"
+        assert settings.ai_max_tokens == 700
+        assert settings.ai_temperature == 0.4
+    finally:
+        _restore_env(original)

@@ -7,6 +7,7 @@ import 'package:kinder_world/core/models/admin_analytics_overview.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
 import 'package:kinder_world/core/models/admin_subscription_models.dart';
 import 'package:kinder_world/core/models/admin_support_ticket.dart';
+import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
@@ -37,64 +38,80 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
 
   Future<void> _loadDashboard({bool refresh = false}) async {
     if (!mounted) return;
+    _setDashboardLoadingState(refresh: refresh);
+    final admin = ref.read(currentAdminProvider);
+    final repo = ref.read(adminManagementRepositoryProvider);
+    final snapshot = await _fetchDashboardSnapshot(
+      admin: admin,
+      repo: repo,
+    );
+
+    if (!mounted) return;
+    _applyDashboardSnapshot(snapshot);
+  }
+
+  bool _canLoad(dynamic admin, String permission) {
+    if (admin == null) return false;
+    return admin.isSuperAdmin || admin.hasPermission(permission);
+  }
+
+  void _setDashboardLoadingState({required bool refresh}) {
     setState(() {
       _loading = !refresh;
       _refreshing = refresh;
       _error = null;
     });
-    final admin = ref.read(currentAdminProvider);
-    final repo = ref.read(adminManagementRepositoryProvider);
+  }
+
+  Future<_AdminDashboardSnapshot> _fetchDashboardSnapshot({
+    required dynamic admin,
+    required AdminManagementRepository repo,
+  }) async {
     final sectionErrors = <String>[];
 
-    Future<T?> safe<T>(Future<T> Function() loader, String section) async {
-      try {
-        return await loader();
-      } catch (e) {
-        sectionErrors.add('$section: $e');
-        return null;
-      }
-    }
-
-    final overviewFuture = _canLoad(admin, 'admin.analytics.view')
-        ? safe(() => repo.fetchAnalyticsOverview(), 'overview')
-        : Future<AdminAnalyticsOverview?>.value(null);
-
-    final auditFuture = _canLoad(admin, 'admin.audit.view')
-        ? safe(() => repo.fetchAuditLogs(page: 1), 'audit')
-        : Future<AdminPagedResponse<AdminAuditLog>?>.value(null);
-
-    final openTicketsFuture = _canLoad(admin, 'admin.support.view')
-        ? safe(
-            () => repo.fetchSupportTickets(status: 'open', page: 1),
-            'support_open',
-          )
-        : Future<AdminPagedResponse<AdminSupportTicket>?>.value(null);
-
-    final inProgressTicketsFuture = _canLoad(admin, 'admin.support.view')
-        ? safe(
-            () => repo.fetchSupportTickets(status: 'in_progress', page: 1),
-            'support_in_progress',
-          )
-        : Future<AdminPagedResponse<AdminSupportTicket>?>.value(null);
-
-    final subscriptionsFuture = _canLoad(admin, 'admin.subscription.view')
-        ? safe(() => repo.fetchSubscriptions(page: 1), 'subscriptions')
-        : Future<AdminPagedResponse<AdminSubscriptionRecord>?>.value(null);
-
-    final reviewContentFuture = _canLoad(admin, 'admin.content.view')
-        ? safe(
-            () => repo.fetchContents(status: 'review', page: 1),
-            'content_review',
-          )
-        : Future<AdminPagedResponse<dynamic>?>.value(null);
-
     final results = await Future.wait<dynamic>([
-      overviewFuture,
-      auditFuture,
-      openTicketsFuture,
-      inProgressTicketsFuture,
-      subscriptionsFuture,
-      reviewContentFuture,
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.analytics.view',
+        section: 'overview',
+        loader: () => repo.fetchAnalyticsOverview(),
+        errors: sectionErrors,
+      ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.audit.view',
+        section: 'audit',
+        loader: () => repo.fetchAuditLogs(page: 1),
+        errors: sectionErrors,
+      ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.support.view',
+        section: 'support_open',
+        loader: () => repo.fetchSupportTickets(status: 'open', page: 1),
+        errors: sectionErrors,
+      ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.support.view',
+        section: 'support_in_progress',
+        loader: () => repo.fetchSupportTickets(status: 'in_progress', page: 1),
+        errors: sectionErrors,
+      ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.subscription.view',
+        section: 'subscriptions',
+        loader: () => repo.fetchSubscriptions(page: 1),
+        errors: sectionErrors,
+      ),
+      _loadOptionalSection(
+        admin: admin,
+        permission: 'admin.content.view',
+        section: 'content_review',
+        loader: () => repo.fetchContents(status: 'review', page: 1),
+        errors: sectionErrors,
+      ),
     ]);
 
     final overview = results[0] as AdminAnalyticsOverview?;
@@ -107,44 +124,68 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         results[4] as AdminPagedResponse<AdminSubscriptionRecord>?;
     final reviewContentResponse = results[5] as AdminPagedResponse<dynamic>?;
 
-    final mergedPending = <int, AdminSupportTicket>{};
-    for (final ticket in [
-      ...?openTicketResponse?.items,
-      ...?inProgressTicketResponse?.items,
-    ]) {
-      mergedPending[ticket.id] = ticket;
-    }
-    final pendingTickets = mergedPending.values.toList()
-      ..sort((a, b) => _parseDate(b.updatedAt ?? b.createdAt)
-          .compareTo(_parseDate(a.updatedAt ?? a.createdAt)));
-
-    final reviewCount = (reviewContentResponse?.pagination['total'] as int?) ??
-        reviewContentResponse?.items.length ??
-        0;
-
-    final snapshot = _AdminDashboardSnapshot(
+    return _AdminDashboardSnapshot(
       overview: overview,
       auditLogs: auditResponse?.items ?? const [],
-      pendingTickets: pendingTickets,
+      pendingTickets: _mergePendingTickets(
+        openTickets: openTicketResponse?.items ?? const [],
+        inProgressTickets: inProgressTicketResponse?.items ?? const [],
+      ),
       subscriptions: subscriptionResponse?.items ?? const [],
-      reviewContentCount: reviewCount,
+      reviewContentCount: _reviewContentCount(reviewContentResponse),
       sectionErrors: sectionErrors,
     );
+  }
 
-    if (!mounted) return;
+  Future<T?> _loadOptionalSection<T>({
+    required dynamic admin,
+    required String permission,
+    required String section,
+    required Future<T> Function() loader,
+    required List<String> errors,
+  }) async {
+    if (!_canLoad(admin, permission)) {
+      return null;
+    }
+    try {
+      return await loader();
+    } catch (e) {
+      errors.add('$section: $e');
+      return null;
+    }
+  }
+
+  List<AdminSupportTicket> _mergePendingTickets({
+    required List<AdminSupportTicket> openTickets,
+    required List<AdminSupportTicket> inProgressTickets,
+  }) {
+    final mergedPending = <int, AdminSupportTicket>{};
+    for (final ticket in [...openTickets, ...inProgressTickets]) {
+      mergedPending[ticket.id] = ticket;
+    }
+    final pendingTickets = mergedPending.values.toList();
+    pendingTickets.sort(
+      (a, b) => _parseDate(b.updatedAt ?? b.createdAt)
+          .compareTo(_parseDate(a.updatedAt ?? a.createdAt)),
+    );
+    return pendingTickets;
+  }
+
+  int _reviewContentCount(AdminPagedResponse<dynamic>? reviewContentResponse) {
+    return (reviewContentResponse?.pagination['total'] as int?) ??
+        reviewContentResponse?.items.length ??
+        0;
+  }
+
+  void _applyDashboardSnapshot(_AdminDashboardSnapshot snapshot) {
     setState(() {
       _snapshot = snapshot;
       _loading = false;
       _refreshing = false;
-      if (!snapshot.hasVisibleData && sectionErrors.isNotEmpty) {
-        _error = sectionErrors.join('\n');
+      if (!snapshot.hasVisibleData && snapshot.sectionErrors.isNotEmpty) {
+        _error = snapshot.sectionErrors.join('\n');
       }
     });
-  }
-
-  bool _canLoad(dynamic admin, String permission) {
-    if (admin == null) return false;
-    return admin.isSuperAdmin || admin.hasPermission(permission);
   }
 
   static DateTime _parseDate(String? value) {
@@ -287,7 +328,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                     width: cardWidth,
                     icon: Icons.people_outline,
                     label: l10n.adminSidebarUsers,
-                    value: _loading ? '-' : _formatCompact(totalUsers),
+                    value: _formatCompact(totalUsers),
+                    isLoading: _loading,
                     color: colorScheme.primaryContainer,
                     iconColor: colorScheme.onPrimaryContainer,
                   ),
@@ -295,7 +337,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                     width: cardWidth,
                     icon: Icons.child_care_outlined,
                     label: l10n.adminSidebarChildren,
-                    value: _loading ? '-' : _formatCompact(totalChildren),
+                    value: _formatCompact(totalChildren),
+                    isLoading: _loading,
                     color: colorScheme.secondaryContainer,
                     iconColor: colorScheme.onSecondaryContainer,
                   ),
@@ -303,7 +346,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                     width: cardWidth,
                     icon: Icons.subscriptions_outlined,
                     label: l10n.adminSidebarSubscriptions,
-                    value: _loading ? '-' : _formatCompact(subscriptionTotal),
+                    value: _formatCompact(subscriptionTotal),
+                    isLoading: _loading,
                     color: colorScheme.tertiaryContainer,
                     iconColor: colorScheme.onTertiaryContainer,
                   ),
@@ -311,7 +355,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                     width: cardWidth,
                     icon: Icons.support_agent_outlined,
                     label: l10n.adminSidebarSupport,
-                    value: _loading ? '-' : _formatCompact(openTickets),
+                    value: _formatCompact(openTickets),
+                    isLoading: _loading,
                     color: colorScheme.errorContainer,
                     iconColor: colorScheme.onErrorContainer,
                   ),
@@ -319,8 +364,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
               ),
               const SizedBox(height: 24),
               if (_loading)
-                const AdminLoadingState(
-                    padding: EdgeInsets.symmetric(vertical: 36))
+                const AdminOverviewSkeleton()
               else if (_error != null)
                 AdminErrorState(
                   message: _error!,
@@ -438,6 +482,7 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.isLoading = false,
     required this.color,
     required this.iconColor,
   });
@@ -446,6 +491,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool isLoading;
   final Color color;
   final Color iconColor;
 
@@ -470,13 +516,21 @@ class _StatCard extends StatelessWidget {
                 child: Icon(icon, size: 20, color: iconColor),
               ),
               const SizedBox(height: 14),
-              Text(
-                value,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: compact ? 24 : null,
+              if (isLoading)
+                const AppSkeletonBox(
+                  width: 72,
+                  height: 28,
+                  radius: 12,
+                  variant: AppSkeletonVariant.admin,
+                )
+              else
+                Text(
+                  value,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: compact ? 24 : null,
+                  ),
                 ),
-              ),
               const SizedBox(height: 4),
               Text(
                 label,

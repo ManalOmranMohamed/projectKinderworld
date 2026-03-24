@@ -463,10 +463,15 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
 
     portal = client.post("/billing/portal", headers=headers)
     assert portal.status_code == 200
-    assert portal.json()["url"].startswith("https://example.invalid/mock-billing/")
+    portal_payload = portal.json()
+    assert portal_payload["operation"] == "billing_portal"
+    assert portal_payload["current_plan_id"] == PLAN_FREE
+    assert portal_payload["status"] == "pending_activation"
+    assert portal_payload["provider"] == "internal"
+    assert portal_payload["url"].startswith("https://example.invalid/mock-billing/")
 
 
-def test_feature_gated_demo_static_responses_match_current_behavior(client: TestClient, db):
+def test_feature_gated_sparse_data_responses_use_real_account_state(client: TestClient, db):
     premium_user = _create_parent(db, email="premium.demo@gmail.com", plan=PLAN_PREMIUM)
     family_user = _create_parent(db, email="family.demo@gmail.com", plan=PLAN_FAMILY_PLUS)
 
@@ -477,11 +482,20 @@ def test_feature_gated_demo_static_responses_match_current_behavior(client: Test
     assert smart_notifications.status_code == 200
     smart_payload = smart_notifications.json()
     assert smart_payload["access_level"] == "smart"
+    assert smart_payload["data_source"] == "backend_rules"
     assert smart_payload["notifications"][0]["type"] == "BEHAVIORAL_INSIGHT"
+    assert smart_payload["notifications"][0]["rule_key"] == "account_setup_required"
+    assert "No child profiles" in smart_payload["notifications"][0]["message"]
 
     ai_insights = client.get("/ai/insights", headers=premium_headers)
     assert ai_insights.status_code == 200
-    assert len(ai_insights.json()["insights"]) == 2
+    insights_payload = ai_insights.json()
+    assert insights_payload["data_source"] == "backend_rules"
+    assert insights_payload["summary"]["child_count"] == 0
+    assert {item["code"] for item in insights_payload["insights"]} == {
+        "setup_required",
+        "insight_baseline_pending",
+    }
 
     offline = client.get("/downloads/offline", headers=premium_headers)
     assert offline.status_code == 200

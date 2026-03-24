@@ -2,54 +2,152 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/core/api/api_providers.dart';
 import 'package:kinder_world/core/api/reports_api.dart';
+import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
+import 'package:kinder_world/core/providers/cache_provider.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/repositories/progress_repository.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/core/utils/session_token_utils.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:logger/logger.dart';
 
+typedef FetchBasicReports = Future<Map<String, dynamic>> Function({
+  int? childId,
+  int days,
+  String? parentAccessToken,
+});
+typedef FetchAdvancedReports = Future<Map<String, dynamic>> Function({
+  int? childId,
+  int days,
+  String? parentAccessToken,
+});
+typedef LoadProgressRecords = Future<List<ProgressRecord>> Function(
+    String childId);
+
+const _reportCacheScope = 'parent_reports';
+const _reportCacheStaleAfter = Duration(minutes: 15);
+
 class ParentReportService {
   ParentReportService({
     required this.secureStorage,
     required this.reportsApi,
+    required this.cacheStore,
     required this.logger,
-  });
+    this.progressRepository,
+    FetchBasicReports? fetchBasicReports,
+    FetchAdvancedReports? fetchAdvancedReports,
+    LoadProgressRecords? loadProgressRecords,
+  })  : _fetchBasicReports = fetchBasicReports ?? reportsApi.getBasicReports,
+        _fetchAdvancedReports =
+            fetchAdvancedReports ?? reportsApi.getAdvancedReports,
+        _loadProgressRecords =
+            loadProgressRecords ?? progressRepository!.getProgressForChild,
+        assert(
+          progressRepository != null || loadProgressRecords != null,
+          'progressRepository or loadProgressRecords must be provided',
+        );
 
   final SecureStorage secureStorage;
   final ReportsApi reportsApi;
+  final ProgressRepository? progressRepository;
+  final AppCacheStore cacheStore;
   final Logger logger;
+  final FetchBasicReports _fetchBasicReports;
+  final FetchAdvancedReports _fetchAdvancedReports;
+  final LoadProgressRecords _loadProgressRecords;
 
   Future<ChildReportData> buildChildReport({
     required ChildProfile child,
     required ReportPeriod period,
   }) async {
+    final result = await loadChildReport(
+      child: child,
+      period: period,
+    );
+    return result.report;
+  }
+
+  Future<ChildReportLoadResult> loadChildReport({
+    required ChildProfile child,
+    required ReportPeriod period,
+    bool forceRefresh = false,
+  }) async {
     final childId = int.tryParse(child.id);
     final parentAccessToken = await _resolveParentAccessToken();
-
-    final basicPayload = await reportsApi.getBasicReports(
-      childId: childId,
-      days: period.days,
-      parentAccessToken: parentAccessToken,
+    final cacheKey = _reportCacheKey(child.id, period);
+    final cacheSnapshot = cacheStore.snapshot(
+      scope: _reportCacheScope,
+      key: cacheKey,
+      staleAfter: _reportCacheStaleAfter,
     );
 
-    Map<String, dynamic> advancedPayload = const {};
+    if ((parentAccessToken == null || parentAccessToken.isEmpty) &&
+        !forceRefresh) {
+      return _buildFallbackResult(
+        child: child,
+        period: period,
+        cacheSnapshot: cacheSnapshot,
+      );
+    }
+
     try {
-      advancedPayload = await reportsApi.getAdvancedReports(
+      final basicPayload = await _fetchBasicReports(
         childId: childId,
         days: period.days,
         parentAccessToken: parentAccessToken,
       );
-    } catch (e) {
-      logger.w('Advanced reports unavailable for child ${child.id}: $e');
-    }
 
-    return ParentReportService.buildReportFromBackend(
-      child: child,
-      period: period,
-      basicPayload: basicPayload,
-      advancedPayload: advancedPayload,
-    );
+      Map<String, dynamic> advancedPayload = const {};
+      try {
+        advancedPayload = await _fetchAdvancedReports(
+          childId: childId,
+          days: period.days,
+          parentAccessToken: parentAccessToken,
+        );
+      } catch (e) {
+        logger.w('Advanced reports unavailable for child ${child.id}: $e');
+      }
+
+      final report = ParentReportService.buildReportFromBackend(
+        child: child,
+        period: period,
+        basicPayload: basicPayload,
+        advancedPayload: advancedPayload,
+      );
+      await cacheStore.storeMap(
+        scope: _reportCacheScope,
+        key: cacheKey,
+        payload: _serializeReport(report),
+      );
+      final storedSnapshot = cacheStore.snapshot(
+        scope: _reportCacheScope,
+        key: cacheKey,
+        staleAfter: _reportCacheStaleAfter,
+      );
+      return ChildReportLoadResult(
+        report: report,
+        source: ChildReportSource.liveServer,
+        cacheSnapshot: CacheSnapshot(
+          hasData: true,
+          freshness: CacheFreshness.freshServerBacked,
+          syncState: storedSnapshot.syncState,
+          lastFetchedAt: storedSnapshot.lastFetchedAt,
+          lastSyncedAt: storedSnapshot.lastSyncedAt,
+          lastMutationAt: storedSnapshot.lastMutationAt,
+        ),
+      );
+    } catch (e) {
+      logger.w(
+        'Report refresh unavailable for child ${child.id}, using local fallback: $e',
+      );
+      return _buildFallbackResult(
+        child: child,
+        period: period,
+        cacheSnapshot: cacheSnapshot,
+      );
+    }
   }
 
   Future<String?> _resolveParentAccessToken() async {
@@ -64,6 +162,56 @@ class ParentReportService {
       return authToken;
     }
     return null;
+  }
+
+  Future<ChildReportLoadResult> _buildFallbackResult({
+    required ChildProfile child,
+    required ReportPeriod period,
+    required CacheSnapshot cacheSnapshot,
+  }) async {
+    final localRecords = await _loadProgressRecords(child.id);
+    if (localRecords.isNotEmpty) {
+      final report = ParentReportService.buildReportFromRecords(
+        child: child,
+        period: period,
+        allRecords: localRecords,
+      );
+      return ChildReportLoadResult(
+        report: report,
+        source: ChildReportSource.localDevice,
+        cacheSnapshot: cacheSnapshot.hasData ? cacheSnapshot : null,
+        hasPendingLocalChanges: localRecords.any((record) => record.needsSync),
+      );
+    }
+
+    final cachedPayload = cacheStore.readMap(
+      scope: _reportCacheScope,
+      key: _reportCacheKey(child.id, period),
+    );
+    if (cachedPayload != null && cachedPayload.isNotEmpty) {
+      return ChildReportLoadResult(
+        report: ParentReportService.buildReportFromCache(
+          child: child,
+          period: period,
+          payload: cachedPayload,
+        ),
+        source: ChildReportSource.cachedSnapshot,
+        cacheSnapshot: cacheSnapshot,
+      );
+    }
+
+    return ChildReportLoadResult(
+      report: ParentReportService.buildReportFromRecords(
+        child: child,
+        period: period,
+        allRecords: const <ProgressRecord>[],
+      ),
+      source: ChildReportSource.profileFallback,
+    );
+  }
+
+  static String _reportCacheKey(String childId, ReportPeriod period) {
+    return '$childId:${period.index}';
   }
 
   static ChildReportData buildReportFromBackend({
@@ -96,7 +244,8 @@ class ParentReportService {
         .map((item) => Map<String, dynamic>.from(item))
         .map(
           (item) => ReportDailyPoint(
-            date: DateTime.tryParse(item['date']?.toString() ?? '') ?? DateTime.now(),
+            date: DateTime.tryParse(item['date']?.toString() ?? '') ??
+                DateTime.now(),
             activitiesCompleted: _readInt(item['activities_completed']),
             lessonsCompleted: _readInt(item['lessons_completed']),
             screenTimeMinutes: _readInt(item['screen_time_minutes']),
@@ -114,33 +263,39 @@ class ParentReportService {
             score: _readInt(item['score']),
             durationMinutes: _readInt(item['duration_minutes']),
             completedAt:
-                DateTime.tryParse(item['completed_at']?.toString() ?? '') ?? DateTime.now(),
-            completionStatus: item['completion_status']?.toString() ?? CompletionStatus.completed,
+                DateTime.tryParse(item['completed_at']?.toString() ?? '') ??
+                    DateTime.now(),
+            completionStatus: item['completion_status']?.toString() ??
+                CompletionStatus.completed,
           ),
         )
         .toList(growable: false);
 
-    final achievements = (achievementSource['recent_unlocks'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .map(
-          (item) => ReportAchievement(
-            titleKey: item['achievement_key']?.toString() ?? 'achievement',
-            detail: item['activity_name']?.toString() ??
-                item['occurred_at']?.toString() ??
-                '',
-            achieved: true,
-          ),
-        )
-        .toList(growable: false);
+    final achievements =
+        (achievementSource['recent_unlocks'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .map(
+              (item) => ReportAchievement(
+                titleKey: item['achievement_key']?.toString() ?? 'achievement',
+                detail: item['activity_name']?.toString() ??
+                    item['occurred_at']?.toString() ??
+                    '',
+                achieved: true,
+              ),
+            )
+            .toList(growable: false);
 
     final moodCounts = {
       for (final entry in moodCountsSource.entries)
-        entry.key: entry.value is int ? entry.value as int : int.tryParse('${entry.value}') ?? 0,
+        entry.key: entry.value is int
+            ? entry.value as int
+            : int.tryParse('${entry.value}') ?? 0,
     };
     final currentMood = moodCounts.entries.isEmpty
         ? null
-        : (moodCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
+        : (moodCounts.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value)))
             .first
             .key;
 
@@ -166,15 +321,17 @@ class ParentReportService {
         period.days,
       ),
       averageScore: _readDouble(
-        advancedReports['account_summary'] is Map
-            ? Map<String, dynamic>.from(advancedReports['account_summary'] as Map)['average_score']
-            : null,
-      ) ??
+            advancedReports['account_summary'] is Map
+                ? Map<String, dynamic>.from(
+                    advancedReports['account_summary'] as Map)['average_score']
+                : null,
+          ) ??
           _readDouble(basicSummary['average_score']) ??
           0.0,
       completionRate: _readDouble(
             advancedReports['account_summary'] is Map
-                ? Map<String, dynamic>.from(advancedReports['account_summary'] as Map)['completion_rate']
+                ? Map<String, dynamic>.from(advancedReports['account_summary']
+                    as Map)['completion_rate']
                 : null,
           ) ??
           _readDouble(basicSummary['completion_rate']) ??
@@ -185,7 +342,8 @@ class ParentReportService {
       achievements: achievements,
       recentSessions: recentSessions,
       usesRecordedSessions: (basicPayload['data_availability'] as Map?) != null
-          ? ((basicPayload['data_availability'] as Map)['screen_time'] == true ||
+          ? ((basicPayload['data_availability'] as Map)['screen_time'] ==
+                  true ||
               (basicPayload['data_availability'] as Map)['activities'] == true)
           : false,
     );
@@ -216,6 +374,128 @@ class ParentReportService {
     return 0;
   }
 
+  static ChildReportData buildReportFromCache({
+    required ChildProfile child,
+    required ReportPeriod period,
+    required Map<String, dynamic> payload,
+  }) {
+    final dailyPoints = (payload['daily_points'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .map(
+          (item) => ReportDailyPoint(
+            date: DateTime.tryParse(item['date']?.toString() ?? '') ??
+                DateTime.now(),
+            activitiesCompleted: _readInt(item['activities_completed']),
+            lessonsCompleted: _readInt(item['lessons_completed']),
+            screenTimeMinutes: _readInt(item['screen_time_minutes']),
+          ),
+        )
+        .toList(growable: false);
+
+    final recentSessions = (payload['recent_sessions'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .map(
+          (item) => ReportRecentSession(
+            title: item['title']?.toString() ?? 'Activity',
+            contentType: item['content_type']?.toString() ?? 'other',
+            score: _readInt(item['score']),
+            durationMinutes: _readInt(item['duration_minutes']),
+            completedAt:
+                DateTime.tryParse(item['completed_at']?.toString() ?? '') ??
+                    DateTime.now(),
+            completionStatus: item['completion_status']?.toString() ??
+                CompletionStatus.completed,
+          ),
+        )
+        .toList(growable: false);
+
+    final achievements = (payload['achievements'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .map(
+          (item) => ReportAchievement(
+            titleKey: item['title_key']?.toString() ?? 'achievement',
+            detail: item['detail']?.toString() ?? '',
+            achieved: item['achieved'] == true,
+          ),
+        )
+        .toList(growable: false);
+
+    final moodCounts = <String, int>{
+      for (final entry in Map<String, dynamic>.from(
+              payload['mood_counts'] as Map? ?? const {})
+          .entries)
+        entry.key: _readInt(entry.value),
+    };
+
+    return ChildReportData(
+      child: child,
+      period: period,
+      filteredRecords: const <ProgressRecord>[],
+      dailyPoints: dailyPoints,
+      totalActivitiesCompleted: _readInt(payload['total_activities_completed']),
+      totalSessions: _readInt(payload['total_sessions']),
+      totalLessonsCompleted: _readInt(payload['total_lessons_completed']),
+      totalScreenTimeMinutes: _readInt(payload['total_screen_time_minutes']),
+      averageScore: _readDouble(payload['average_score']) ?? 0.0,
+      completionRate: _readDouble(payload['completion_rate']) ?? 0.0,
+      topContentType: payload['top_content_type']?.toString(),
+      moodCounts: moodCounts,
+      currentMood: payload['current_mood']?.toString(),
+      achievements: achievements,
+      recentSessions: recentSessions,
+      usesRecordedSessions: payload['uses_recorded_sessions'] == true,
+    );
+  }
+
+  static Map<String, dynamic> _serializeReport(ChildReportData report) {
+    return <String, dynamic>{
+      'total_activities_completed': report.totalActivitiesCompleted,
+      'total_sessions': report.totalSessions,
+      'total_lessons_completed': report.totalLessonsCompleted,
+      'total_screen_time_minutes': report.totalScreenTimeMinutes,
+      'average_score': report.averageScore,
+      'completion_rate': report.completionRate,
+      'top_content_type': report.topContentType,
+      'current_mood': report.currentMood,
+      'uses_recorded_sessions': report.usesRecordedSessions,
+      'mood_counts': report.moodCounts,
+      'daily_points': report.dailyPoints
+          .map(
+            (point) => <String, dynamic>{
+              'date': point.date.toIso8601String(),
+              'activities_completed': point.activitiesCompleted,
+              'lessons_completed': point.lessonsCompleted,
+              'screen_time_minutes': point.screenTimeMinutes,
+            },
+          )
+          .toList(growable: false),
+      'achievements': report.achievements
+          .map(
+            (achievement) => <String, dynamic>{
+              'title_key': achievement.titleKey,
+              'detail': achievement.detail,
+              'achieved': achievement.achieved,
+            },
+          )
+          .toList(growable: false),
+      'recent_sessions': report.recentSessions
+          .map(
+            (session) => <String, dynamic>{
+              'title': session.title,
+              'content_type': session.contentType,
+              'score': session.score,
+              'duration_minutes': session.durationMinutes,
+              'completed_at': session.completedAt.toIso8601String(),
+              'completion_status': session.completionStatus,
+            },
+          )
+          .toList(growable: false),
+    };
+  }
+
   static ChildReportData buildReportFromRecords({
     required ChildProfile child,
     required ReportPeriod period,
@@ -234,7 +514,8 @@ class ParentReportService {
       ..sort((a, b) => b.date.compareTo(a.date));
 
     final completedRecords = filteredRecords
-        .where((record) => record.completionStatus == CompletionStatus.completed)
+        .where(
+            (record) => record.completionStatus == CompletionStatus.completed)
         .toList();
 
     final totalLessonsCompleted = completedRecords
@@ -298,8 +579,9 @@ class ParentReportService {
         days: period.days,
         records: filteredRecords,
       ),
-      totalActivitiesCompleted:
-          completedRecords.isNotEmpty ? completedRecords.length : child.activitiesCompleted,
+      totalActivitiesCompleted: completedRecords.isNotEmpty
+          ? completedRecords.length
+          : child.activitiesCompleted,
       totalSessions: filteredRecords.length,
       totalLessonsCompleted: totalLessonsCompleted,
       totalScreenTimeMinutes: filteredRecords.isNotEmpty
@@ -330,14 +612,16 @@ class ParentReportService {
             record.date.day == day.day;
       }).toList();
       final completedCount = dayRecords
-          .where((record) => record.completionStatus == CompletionStatus.completed)
+          .where(
+              (record) => record.completionStatus == CompletionStatus.completed)
           .length;
       final lessonCount = dayRecords
           .where((record) =>
               record.completionStatus == CompletionStatus.completed &&
               inferContentType(record.activityId) == 'lessons')
           .length;
-      final screenTime = dayRecords.fold<int>(0, (sum, record) => sum + record.duration);
+      final screenTime =
+          dayRecords.fold<int>(0, (sum, record) => sum + record.duration);
       points.add(
         ReportDailyPoint(
           date: day,
@@ -415,6 +699,8 @@ final parentReportServiceProvider = Provider<ParentReportService>((ref) {
   return ParentReportService(
     secureStorage: ref.watch(secureStorageProvider),
     reportsApi: ref.watch(reportsApiProvider),
+    progressRepository: ref.watch(progressRepositoryProvider),
+    cacheStore: ref.watch(appCacheStoreProvider),
     logger: ref.watch(loggerProvider),
   );
 });

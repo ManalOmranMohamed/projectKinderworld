@@ -103,8 +103,6 @@ def flutter_test(*, coverage: bool) -> None:
                 "flutter",
                 "--coverage-file",
                 str(FLUTTER_DIR / "coverage" / "lcov.info"),
-                "--min-total",
-                "25",
             ]
         )
 

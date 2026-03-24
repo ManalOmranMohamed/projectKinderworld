@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from admin_auth import ADMIN_TOKEN_TYPE
 from auth import decode_token
 from core.errors import http_error, not_found, unauthorized
+from core.message_catalog import AuthMessages, FeatureMessages
 from database import SessionLocal
 from models import User
 
@@ -40,21 +41,21 @@ def get_db() -> Generator[Session, None, None]:
 
 def decode_bearer(authorization: Optional[str]) -> str:
     if not authorization or not authorization.startswith("Bearer "):
-        raise unauthorized("Authentication required")
+        raise unauthorized(AuthMessages.AUTHENTICATION_REQUIRED)
     token = authorization.replace("Bearer ", "").strip()
     try:
         payload = decode_token(token)
         token_type = payload.get("token_type")
         if token_type == ADMIN_TOKEN_TYPE:
-            raise unauthorized("Invalid token type")
+            raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
         if token_type == "child_session":
-            raise unauthorized("Invalid token type")
+            raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
         subject = payload.get("sub")
         if not isinstance(subject, str) or not subject:
-            raise unauthorized("Invalid token payload")
+            raise unauthorized(AuthMessages.INVALID_TOKEN_PAYLOAD)
         return subject
     except JWTError:
-        raise unauthorized("Invalid token")
+        raise unauthorized(AuthMessages.INVALID_TOKEN)
 
 
 def get_current_user(
@@ -62,31 +63,31 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if creds is None or not creds.credentials:
-        raise unauthorized("Authentication required")
+        raise unauthorized(AuthMessages.AUTHENTICATION_REQUIRED)
 
     token = creds.credentials
     try:
         payload = decode_token(token)
         token_type = payload.get("token_type")
         if token_type == ADMIN_TOKEN_TYPE:
-            raise unauthorized("Invalid token type")
+            raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
         if token_type == "child_session":
-            raise unauthorized("Invalid token type")
+            raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
         user_id = payload.get("sub")
         token_version = _coerce_token_version(payload.get("token_version"))
     except JWTError:
-        raise unauthorized("Invalid token")
+        raise unauthorized(AuthMessages.INVALID_TOKEN)
 
     if not user_id:
-        raise unauthorized("Invalid token payload")
+        raise unauthorized(AuthMessages.INVALID_TOKEN_PAYLOAD)
     if token_version is None:
-        raise unauthorized("Token has been revoked")
+        raise unauthorized(AuthMessages.TOKEN_REVOKED)
 
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
-        raise not_found("User not found")
+        raise not_found(AuthMessages.USER_NOT_FOUND)
     if token_version != int(user.token_version or 0):
-        raise unauthorized("Token has been revoked")
+        raise unauthorized(AuthMessages.TOKEN_REVOKED)
     return user
 
 
@@ -118,12 +119,12 @@ def require_feature(feature_name: str) -> Callable[[User], User]:
             )
             raise http_error(
                 status_code=403,
-                message=f"Feature '{feature_name}' not available in {plan} plan",
+                message=FeatureMessages.feature_not_available(feature_name, plan),
                 code="FEATURE_NOT_AVAILABLE",
                 extra={
                     "feature": feature_name,
                     "current_plan": plan,
-                    "hint": f"Upgrade to access {feature_name}",
+                    "hint": FeatureMessages.upgrade_hint(feature_name),
                 },
             )
         return user

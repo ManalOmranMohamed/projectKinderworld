@@ -104,6 +104,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncReady => 'Ready to sync';
 
   @override
+  String get offlineSyncHint => 'Some actions will sync when you reconnect.';
+
+  @override
+  String get syncInProgress => 'Syncing your latest changes';
+
+  @override
   String get syncStarting => 'Starting sync...';
 
   @override
@@ -710,6 +716,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get passwordSpecialRequired =>
       'Password must include special character (!@#\$%^&*)';
+
+  @override
+  String get passwordPolicyRequirement =>
+      'Password must be at least 8 characters and include uppercase, number, and special character';
 
   @override
   String get confirmPasswordHint => 'Confirm your password';
@@ -1516,6 +1526,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'No recorded sessions yet for this period.';
 
   @override
+  String get childProfilesCachedTitle => 'Showing saved child profiles';
+
+  @override
+  String get childProfilesCachedRefreshHint =>
+      'Refresh to load the latest account changes.';
+
+  @override
+  String get reportUsingSyncedDataTitle => 'Showing synced report data';
+
+  @override
+  String get reportUsingSyncedDataSubtitle =>
+      'These insights were refreshed from your account data.';
+
+  @override
+  String get reportUsingDeviceDataTitle =>
+      'Showing saved activity from this device';
+
+  @override
+  String get reportUsingDeviceDataSubtitle =>
+      'This report is using activity stored locally on this device.';
+
+  @override
+  String get reportPendingSyncSubtitle =>
+      'Recent device activity is still waiting to sync.';
+
+  @override
+  String get reportUsingCachedSnapshotTitle =>
+      'Showing your last saved report snapshot';
+
+  @override
+  String get reportUsingCachedSnapshotSubtitle =>
+      'This report may be out of date until the next refresh.';
+
+  @override
+  String get reportUsingLimitedSummaryTitle =>
+      'Showing a limited local summary';
+
+  @override
+  String reportLastUpdated(String value) => 'Last updated $value';
+
+  @override
   String get contentRestrictionsAndScreenTime =>
       'Content Restrictions & Screen Time';
 
@@ -2319,6 +2370,232 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upToThreeChildren => 'Up to 3 children';
+
+  @override
+  String get yesLabel => 'Yes';
+
+  @override
+  String get noLabel => 'No';
+
+  @override
+  String get authInvalidEmailOrPassword => 'Invalid email or password';
+
+  @override
+  String get authTwoFactorCodeRequired =>
+      'Two-factor authentication code is required';
+
+  @override
+  String get authInvalidTwoFactorCode =>
+      'Invalid two-factor authentication code';
+
+  @override
+  String get adminAccountNotFoundMessage => 'Admin account not found';
+
+  @override
+  String get notAuthenticatedMessage => 'Not authenticated';
+
+  @override
+  String get requestFailedMessage => 'Request failed';
+
+  @override
+  String get networkErrorMessage => 'Network error';
+
+  @override
+  String subscriptionPaymentStatus(String status) => 'Payment status: $status';
+
+  @override
+  String get subscriptionLifecycleTitle => 'Lifecycle';
+
+  @override
+  String get subscriptionLifecycleCurrentPlan => 'Current plan';
+
+  @override
+  String get subscriptionLifecycleStatus => 'Status';
+
+  @override
+  String get subscriptionLifecycleStartedAt => 'Started at';
+
+  @override
+  String get subscriptionLifecycleExpiresAt => 'Expires at';
+
+  @override
+  String get subscriptionLifecycleCancelAt => 'Cancel at';
+
+  @override
+  String get subscriptionLifecycleWillRenew => 'Will renew';
+
+  @override
+  String get subscriptionLifecycleLastPaymentStatus => 'Last payment status';
+
+  @override
+  String get subscriptionLifecycleProvider => 'Provider';
+
+  @override
+  String get subscriptionHistorySummaryTitle => 'History Summary';
+
+  @override
+  String get subscriptionEventsTitle => 'Recent Events';
+
+  @override
+  String get subscriptionBillingHistoryTitle => 'Billing History';
+
+  @override
+  String get subscriptionPaymentAttemptsTitle => 'Payment Attempts';
+  @override
+  String get subscriptionBackendSyncNotice =>
+      'Subscription state and history are synced from backend.';
+  @override
+  String get subscriptionNoHistoryYet => 'No records yet.';
+
+  @override
+  String get subscriptionProviderSyncTitle => 'Payment update';
+
+  @override
+  String get subscriptionProviderSyncSubtitle =>
+      'We are syncing your latest billing status.';
+
+  @override
+  String get subscriptionPortalUnavailableTitle => 'Billing portal unavailable';
+
+  @override
+  String get subscriptionPortalUnavailableSubtitle =>
+      'The provider portal is currently unavailable. Try again later.';
+
+  @override
+  String get subscriptionProviderUnavailableTitle =>
+      'Payment provider unavailable';
+
+  @override
+  String get subscriptionProviderUnavailableSubtitle =>
+      'We could not reach the payment provider. Your status will update once the provider is available.';
+
+  @override
+  String get subscriptionActionRequiredTitle => 'Action required';
+
+  @override
+  String get subscriptionActionRequiredSubtitle =>
+      'Additional verification is needed to complete the payment.';
+
+  @override
+  String get subscriptionPaymentFailedTitle => 'Payment failed';
+
+  @override
+  String get subscriptionPaymentFailedSubtitle =>
+      'Please retry or update your payment method.';
+
+  @override
+  String get subscriptionPaymentRefundedTitle => 'Payment refunded';
+
+  @override
+  String get subscriptionPaymentRefundedSubtitle =>
+      'The latest payment was refunded.';
+
+  @override
+  String get subscriptionCanceledTitle => 'Subscription canceled';
+
+  @override
+  String get subscriptionCanceledSubtitle =>
+      'Your plan is canceled and will not renew.';
+
+  @override
+  String get subscriptionPaymentPendingTitle => 'Payment pending';
+
+  @override
+  String get subscriptionPaymentPendingSubtitle =>
+      'We are waiting for the provider to confirm the payment.';
+
+  @override
+  String get subscriptionReturnSuccessTitle => 'Payment completed';
+
+  @override
+  String get subscriptionReturnSuccessSubtitle =>
+      'Your subscription will update shortly.';
+
+  @override
+  String get subscriptionReturnCanceledTitle => 'Checkout canceled';
+
+  @override
+  String get subscriptionReturnCanceledSubtitle =>
+      'No changes were applied to your subscription.';
+
+  @override
+  String get subscriptionReturnPortalTitle => 'Returned from billing portal';
+
+  @override
+  String get subscriptionReturnPortalSubtitle =>
+      'We are syncing your latest billing updates.';
+
+  @override
+  String get subscriptionReturnPendingTitle => 'Payment pending';
+
+  @override
+  String get subscriptionReturnPendingSubtitle =>
+      'We will update your subscription when payment completes.';
+
+  @override
+  String get subscriptionInvalidCheckoutUrl => 'Invalid checkout URL';
+
+  @override
+  String get subscriptionUnableToLaunchCheckout => 'Unable to launch checkout';
+
+  @override
+  String get subscriptionInvalidPortalUrl => 'Invalid portal URL';
+
+  @override
+  String get subscriptionUnableToOpenPortal => 'Unable to open billing portal';
+
+  @override
+  String subscriptionStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'Active';
+      case 'canceled':
+        return 'Canceled';
+      case 'failed':
+        return 'Failed';
+      case 'past_due':
+        return 'Past Due';
+      case 'pending_activation':
+        return 'Pending Activation';
+      case 'pending':
+        return 'Pending';
+      case 'action_required':
+        return 'Action Required';
+      case 'refunded':
+        return 'Refunded';
+      case 'succeeded':
+        return 'Succeeded';
+      case 'paid':
+        return 'Paid';
+      case 'failure':
+        return 'Failure';
+      case 'activation_failed':
+        return 'Activation Failed';
+      case 'checkout_failed':
+        return 'Checkout Failed';
+      case 'refund_failed':
+        return 'Refund Failed';
+      case 'not_applicable':
+        return 'Not Applicable';
+      case 'refund':
+        return 'Refund';
+      case 'charge':
+        return 'Charge';
+      case 'checkout':
+        return 'Checkout';
+      case 'portal':
+        return 'Portal';
+      case 'billing_portal':
+        return 'Billing Portal';
+      default:
+        return status
+            .replaceAll('_', ' ')
+            .split(' ')
+            .where((part) => part.isNotEmpty)
+            .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+            .join(' ');
+    }
+  }
 
   @override
   String get paletteDefault => 'Default';
@@ -5011,8 +5288,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get achievementsUnlockedTitle => 'Unlocked Achievements';
 
   @override
-  String get achievementsUnlockedSubtitle =>
-      'Keep going for more achievements';
+  String get achievementsUnlockedSubtitle => 'Keep going for more achievements';
 
   @override
   String get achievementsEmpty => 'No achievements yet';
@@ -5304,7 +5580,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parent session is missing. Please sign in again.';
 
   @override
-  String get deletedOfflineWillSync => 'Deleted offline. Will sync when online.';
+  String get deletedOfflineWillSync =>
+      'Deleted offline. Will sync when online.';
 
   @override
   String get aiBuddyFallbackSummary =>

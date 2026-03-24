@@ -159,6 +159,9 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
     monkeypatch.setenv("STRIPE_PRICE_FAMILY_PLUS_MONTHLY", "price_placeholder_family")
     monkeypatch.setenv("AUTO_RUN_MIGRATIONS", "true")
     monkeypatch.setenv("SKIP_SCHEMA_VERIFY", "true")
+    monkeypatch.setenv("CACHE_ENABLED", "true")
+    monkeypatch.setenv("REDIS_URL", "redis://cache.example.invalid/0")
+    monkeypatch.setenv("ADMIN_ANALYTICS_CACHE_TTL_SECONDS", "45")
 
     settings = Settings.from_env()
 
@@ -172,6 +175,9 @@ def test_settings_from_env_parses_cors_and_runtime_flags(
     assert settings.cors_allow_credentials is False
     assert settings.auto_run_migrations is True
     assert settings.skip_schema_verify is True
+    assert settings.cache_enabled is True
+    assert settings.redis_url == "redis://cache.example.invalid/0"
+    assert settings.admin_analytics_cache_ttl_seconds == 45
 
 
 def test_settings_rejects_invalid_allowed_origin(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
-import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/ai_buddy_provider.dart';
-import 'package:kinder_world/core/theme/app_theme.dart';
-import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/features/child_mode/ai_buddy/ai_buddy_screen.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/services/ai_buddy_service.dart';
-import 'test_shared_preferences.dart';
+import 'support/test_harness.dart';
 
 class FakeAiBuddyService implements AiBuddyService {
   FakeAiBuddyService()
@@ -196,13 +191,8 @@ Future<void> _pumpAiBuddy(WidgetTester tester) async {
   };
   addTearDown(() => FlutterError.onError = previousOnError);
 
-  tester.view.physicalSize = const Size(1600, 2400);
-  tester.view.devicePixelRatio = 1.0;
-  addTearDown(tester.view.resetPhysicalSize);
-  addTearDown(tester.view.resetDevicePixelRatio);
-
   final child = ChildProfile(
-    id: 'child-1',
+    id: '1',
     name: 'Lina',
     age: 7,
     avatar: 'assets/images/avatars/av1.png',
@@ -220,33 +210,18 @@ Future<void> _pumpAiBuddy(WidgetTester tester) async {
     activitiesCompleted: 4,
     avatarPath: 'assets/images/avatars/av1.png',
   );
-  final sharedPreferencesOverrides = await createSharedPreferencesOverrides();
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        currentChildProvider.overrideWithValue(child),
-        aiBuddyServiceProvider.overrideWithValue(FakeAiBuddyService()),
-        ...sharedPreferencesOverrides,
-      ],
-      child: MaterialApp(
-        locale: const Locale('en'),
-        theme: AppTheme.lightTheme(palette: ThemePalettes.defaultPalette),
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en'),
-          Locale('ar'),
-        ],
-        home: const AiBuddyScreen(),
-      ),
-    ),
+  final harness = await TestHarness.create(
+    currentChild: child,
+    overrides: [
+      aiBuddyServiceProvider.overrideWithValue(FakeAiBuddyService()),
+    ],
   );
-  await tester.pump(const Duration(milliseconds: 100));
+
+  await harness.pumpApp(
+    tester,
+    home: const AiBuddyScreen(),
+    surfaceSize: const Size(1600, 2400),
+  );
 }
 
 void main() {
@@ -258,7 +233,8 @@ void main() {
       tester.element(find.byType(AiBuddyScreen)),
     )!;
 
-    expect(find.textContaining('Safe fallback mode'), findsOneWidget);
+    expect(
+        find.textContaining(l10n.aiBuddyBannerFallbackTitle), findsOneWidget);
     expect(find.text(l10n.aiBuddyName), findsOneWidget);
     expect(find.text(l10n.quickActions), findsOneWidget);
     expect(find.text(l10n.recommendLesson), findsOneWidget);
@@ -276,6 +252,7 @@ void main() {
     await tester.ensureVisible(find.text(l10n.recommendLesson));
     await tester.tap(find.text(l10n.recommendLesson));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Safe fallback response.'), findsOneWidget);
   });
@@ -288,6 +265,7 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.send_rounded));
     await tester.tap(find.byIcon(Icons.send_rounded));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('math game'), findsOneWidget);
     expect(find.text('Safe fallback response.'), findsOneWidget);

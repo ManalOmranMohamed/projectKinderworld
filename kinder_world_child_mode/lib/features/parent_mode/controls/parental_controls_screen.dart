@@ -182,23 +182,34 @@ class _ParentalControlsScreenState
                             _saveControls();
                           },
                         ),
-                        _buildSliderSetting(
-                          l10n.hoursPerDay,
-                          _hoursPerDay,
-                          0,
-                          6,
-                          (value) {
-                            setState(() => _hoursPerDay = value);
-                            _saveControls();
-                          },
-                        ),
-                        _buildToggleSetting(
-                          l10n.breakReminders,
-                          _breakRemindersEnabled,
-                          (value) {
-                            setState(() => _breakRemindersEnabled = value);
-                            _saveControls();
-                          },
+                        _buildDisabledControlGroup(
+                          enabled: _dailyLimitEnabled,
+                          child: Column(
+                            children: [
+                              _buildSliderSetting(
+                                l10n.hoursPerDay,
+                                _hoursPerDay,
+                                0,
+                                6,
+                                (value) {
+                                  setState(() => _hoursPerDay = value);
+                                  _saveControls();
+                                },
+                                enabled: _dailyLimitEnabled,
+                              ),
+                              _buildToggleSetting(
+                                l10n.breakReminders,
+                                _breakRemindersEnabled,
+                                (value) {
+                                  setState(
+                                    () => _breakRemindersEnabled = value,
+                                  );
+                                  _saveControls();
+                                },
+                                enabled: _dailyLimitEnabled,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -400,6 +411,7 @@ class _ParentalControlsScreenState
     String title,
     bool value,
     ValueChanged<bool> onChanged,
+    {bool enabled = true}
   ) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -414,7 +426,7 @@ class _ParentalControlsScreenState
           ),
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
             activeThumbColor: colors.primary,
           ),
         ],
@@ -428,6 +440,7 @@ class _ParentalControlsScreenState
     double min,
     double max,
     ValueChanged<double> onChanged,
+    {bool enabled = true}
   ) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
@@ -467,10 +480,23 @@ class _ParentalControlsScreenState
             value: value,
             min: min,
             max: max,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
             activeColor: colors.primary,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDisabledControlGroup({
+    required bool enabled,
+    required Widget child,
+  }) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: IgnorePointer(
+        ignoring: !enabled,
+        child: child,
       ),
     );
   }

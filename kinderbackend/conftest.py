@@ -68,13 +68,18 @@ def client(db):
 def reset_global_state():
     # Keep tests independent if/when route dependencies start using this state.
     from rate_limit import rate_limiter
+    from services.auth_service import _PARENT_LOGIN_FAILED_ATTEMPTS, _PARENT_LOGIN_LOCKOUT_UNTIL
     from services.child_service import _DEVICE_BINDINGS, _FAILED_ATTEMPTS
 
     rate_limiter.requests.clear()
+    _PARENT_LOGIN_FAILED_ATTEMPTS.clear()
+    _PARENT_LOGIN_LOCKOUT_UNTIL.clear()
     _FAILED_ATTEMPTS.clear()
     _DEVICE_BINDINGS.clear()
     yield
     rate_limiter.requests.clear()
+    _PARENT_LOGIN_FAILED_ATTEMPTS.clear()
+    _PARENT_LOGIN_LOCKOUT_UNTIL.clear()
     _FAILED_ATTEMPTS.clear()
     _DEVICE_BINDINGS.clear()
 

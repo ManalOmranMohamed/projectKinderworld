@@ -8,6 +8,8 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/widgets/app_connection_status.dart';
+import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
@@ -265,11 +267,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
     if (sessionState.isLoading) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
+        body: const ChildHomeSkeleton(),
       );
     }
 
@@ -360,6 +358,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const AppConnectionStatusBanner.child(),
                 const SizedBox(height: 8),
 
                 // 1. Hero greeting + XP

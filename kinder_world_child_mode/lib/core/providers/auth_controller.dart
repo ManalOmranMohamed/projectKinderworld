@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/api/api_providers.dart';
+import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/models/user.dart';
 import 'package:kinder_world/core/repositories/auth_repository.dart';
 import 'package:kinder_world/core/services/auth_service.dart';
@@ -16,12 +17,16 @@ class AuthState {
   final bool isLoading;
   final String? error;
   final bool isAuthenticated;
+  final bool requiresTwoFactor;
+  final String? twoFactorMethod;
 
   const AuthState({
     this.user,
     this.isLoading = false,
     this.error,
     this.isAuthenticated = false,
+    this.requiresTwoFactor = false,
+    this.twoFactorMethod,
   });
 
   AuthState copyWith({
@@ -29,12 +34,18 @@ class AuthState {
     bool? isLoading,
     Object? error = _sentinel,
     bool? isAuthenticated,
+    bool? requiresTwoFactor,
+    Object? twoFactorMethod = _sentinel,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       error: identical(error, _sentinel) ? this.error : error as String?,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      requiresTwoFactor: requiresTwoFactor ?? this.requiresTwoFactor,
+      twoFactorMethod: identical(twoFactorMethod, _sentinel)
+          ? this.twoFactorMethod
+          : twoFactorMethod as String?,
     );
   }
 
@@ -85,13 +96,20 @@ class AuthController extends StateNotifier<AuthState> {
   Future<bool> loginParent({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      requiresTwoFactor: false,
+      twoFactorMethod: null,
+    );
 
     try {
       final user = await _authRepository.loginParent(
         email: email.trim().toLowerCase(),
         password: password,
+        twoFactorCode: twoFactorCode,
       );
 
       if (user != null) {
@@ -99,13 +117,17 @@ class AuthController extends StateNotifier<AuthState> {
           user: user,
           isAuthenticated: true,
           isLoading: false,
+          requiresTwoFactor: false,
+          twoFactorMethod: null,
         );
         _logger.d('Parent login successful: ${user.id}');
         return true;
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: 'Invalid email or password',
+          error: AuthUiMessages.invalidEmailOrPassword,
+          requiresTwoFactor: false,
+          twoFactorMethod: null,
         );
         return false;
       }
@@ -113,13 +135,17 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         error: _formatParentAuthError(e),
+        requiresTwoFactor: e.requiresTwoFactor,
+        twoFactorMethod: e.twoFactorMethod,
       );
       return false;
     } catch (e) {
       _logger.e('Parent login error: $e');
       state = state.copyWith(
         isLoading: false,
-        error: 'Login failed. Please try again.',
+        error: AuthUiMessages.loginFailedTryAgain,
+        requiresTwoFactor: false,
+        twoFactorMethod: null,
       );
       return false;
     }
@@ -153,7 +179,7 @@ class AuthController extends StateNotifier<AuthState> {
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: 'Registration failed. Please check your information.',
+          error: AuthUiMessages.registrationFailedCheckInfo,
         );
         return false;
       }
@@ -167,7 +193,7 @@ class AuthController extends StateNotifier<AuthState> {
       _logger.e('Parent registration error: $e');
       state = state.copyWith(
         isLoading: false,
-        error: 'Registration failed. Please try again.',
+        error: AuthUiMessages.registrationFailedTryAgain,
       );
       return false;
     }
@@ -202,7 +228,7 @@ class AuthController extends StateNotifier<AuthState> {
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: 'child_login_failed',
+          error: AuthUiMessages.childLoginFailed,
         );
         return false;
       }
@@ -216,7 +242,7 @@ class AuthController extends StateNotifier<AuthState> {
       _logger.e('Child login error: $e');
       state = state.copyWith(
         isLoading: false,
-        error: 'child_login_failed',
+        error: AuthUiMessages.childLoginFailed,
       );
       return false;
     }
@@ -250,7 +276,7 @@ class AuthController extends StateNotifier<AuthState> {
 
       state = state.copyWith(
         isLoading: false,
-        error: 'child_register_failed',
+        error: AuthUiMessages.childRegisterFailed,
       );
       return null;
     } on ChildRegisterException catch (e) {
@@ -264,7 +290,7 @@ class AuthController extends StateNotifier<AuthState> {
       _logger.e('Child register error: $e');
       state = state.copyWith(
         isLoading: false,
-        error: 'child_register_failed',
+        error: AuthUiMessages.childRegisterFailed,
       );
       return null;
     }
@@ -292,7 +318,7 @@ class AuthController extends StateNotifier<AuthState> {
       _logger.e('Error during logout: $e');
       state = state.copyWith(
         isLoading: false,
-        error: 'Logout failed',
+        error: AuthUiMessages.logoutFailed,
       );
     }
   }
@@ -345,7 +371,11 @@ class AuthController extends StateNotifier<AuthState> {
 
   /// Clear error state
   void clearError() {
-    state = state.copyWith(error: null);
+    state = state.copyWith(
+      error: null,
+      requiresTwoFactor: false,
+      twoFactorMethod: null,
+    );
   }
 
   String _childLoginErrorForStatus(int? statusCode) {
@@ -357,7 +387,7 @@ class AuthController extends StateNotifier<AuthState> {
       case 422:
         return 'child_login_422';
       default:
-        return 'child_login_failed';
+        return AuthUiMessages.childLoginFailed;
     }
   }
 
@@ -374,16 +404,17 @@ class AuthController extends StateNotifier<AuthState> {
       case 422:
         return 'child_register_422';
       default:
-        return 'child_register_failed';
+        return AuthUiMessages.childRegisterFailed;
     }
   }
 
   String _formatParentAuthError(ParentAuthException e) {
     final message = e.message.trim();
     final statusCode = e.statusCode;
-    if (statusCode == null) return message;
-    if (message.isEmpty) return '[$statusCode] Request failed';
-    return '[$statusCode] $message';
+    return AuthUiMessages.formatStatusMessage(
+      statusCode: statusCode,
+      message: message,
+    );
   }
 
   /// Validate token

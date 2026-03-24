@@ -1,8 +1,24 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
+import 'support/test_harness.dart';
 
 void main() {
+  test('test harness can override plan info for provider tests', () async {
+    final harness = await TestHarness.create(
+      initializeHive: false,
+      planInfoState: AsyncData(PlanInfo.fromTier(PlanTier.premium)),
+    );
+    final container = harness.createContainer();
+    addTearDown(container.dispose);
+
+    final plan = container.read(planInfoStateProvider).requireValue;
+
+    expect(plan.tier, PlanTier.premium);
+    expect(plan.hasAiInsights, isTrue);
+  });
+
   test('planInfoFromSubscriptionSnapshot maps backend premium payload', () {
     final plan = planInfoFromSubscriptionSnapshot(
       planId: 'PREMIUM',

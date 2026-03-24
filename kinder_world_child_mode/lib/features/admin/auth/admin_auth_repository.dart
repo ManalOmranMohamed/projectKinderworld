@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kinder_world/core/api/admin_api.dart';
+import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/models/admin_user.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 
@@ -9,6 +10,8 @@ class AdminAuthResult {
   final AdminUser? admin;
   final String? accessToken;
   final String? refreshToken;
+  final bool requiresTwoFactor;
+  final String? twoFactorMethod;
 
   const AdminAuthResult({
     required this.success,
@@ -16,6 +19,8 @@ class AdminAuthResult {
     this.admin,
     this.accessToken,
     this.refreshToken,
+    this.requiresTwoFactor = false,
+    this.twoFactorMethod,
   });
 
   factory AdminAuthResult.ok({
@@ -31,8 +36,17 @@ class AdminAuthResult {
     );
   }
 
-  factory AdminAuthResult.fail(String error) {
-    return AdminAuthResult(success: false, error: error);
+  factory AdminAuthResult.fail(
+    String error, {
+    bool requiresTwoFactor = false,
+    String? twoFactorMethod,
+  }) {
+    return AdminAuthResult(
+      success: false,
+      error: error,
+      requiresTwoFactor: requiresTwoFactor,
+      twoFactorMethod: twoFactorMethod,
+    );
   }
 }
 
@@ -49,9 +63,14 @@ class AdminAuthRepository {
   Future<AdminAuthResult> login({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
     try {
-      final body = await _adminApi.login(email: email, password: password);
+      final body = await _adminApi.login(
+        email: email,
+        password: password,
+        twoFactorCode: twoFactorCode,
+      );
       final accessToken = body['access_token'] as String;
       final refreshToken = body['refresh_token'] as String;
       final adminJson = Map<String, dynamic>.from(body['admin'] as Map);
@@ -65,9 +84,13 @@ class AdminAuthRepository {
         refreshToken: refreshToken,
       );
     } on DioException catch (e) {
-      return AdminAuthResult.fail(_extractError(e));
+      return AdminAuthResult.fail(
+        _extractError(e),
+        requiresTwoFactor: _isTwoFactorRequired(e),
+        twoFactorMethod: _extractTwoFactorMethod(e),
+      );
     } catch (e) {
-      return AdminAuthResult.fail('Unexpected error: $e');
+      return AdminAuthResult.fail(AdminAuthUiMessages.unexpectedError(e));
     }
   }
 
@@ -75,7 +98,9 @@ class AdminAuthRepository {
     try {
       final storedRefresh = await _storage.getAdminRefreshToken();
       if (storedRefresh == null || storedRefresh.isEmpty) {
-        return AdminAuthResult.fail('No refresh token stored');
+        return AdminAuthResult.fail(
+          AdminAuthUiMessages.noRefreshTokenStored,
+        );
       }
 
       final body = await _adminApi.refresh(refreshToken: storedRefresh);
@@ -87,7 +112,7 @@ class AdminAuthRepository {
     } on DioException catch (e) {
       return AdminAuthResult.fail(_extractError(e));
     } catch (e) {
-      return AdminAuthResult.fail('Unexpected error: $e');
+      return AdminAuthResult.fail(AdminAuthUiMessages.unexpectedError(e));
     }
   }
 
@@ -108,7 +133,7 @@ class AdminAuthRepository {
     try {
       final token = await _storage.getAdminToken();
       if (token == null || token.isEmpty) {
-        return AdminAuthResult.fail('Not authenticated');
+        return AdminAuthResult.fail(AdminAuthUiMessages.notAuthenticated);
       }
 
       final body = await _adminApi.me(accessToken: token);
@@ -124,7 +149,7 @@ class AdminAuthRepository {
     } on DioException catch (e) {
       return AdminAuthResult.fail(_extractError(e));
     } catch (e) {
-      return AdminAuthResult.fail('Unexpected error: $e');
+      return AdminAuthResult.fail(AdminAuthUiMessages.unexpectedError(e));
     }
   }
 
@@ -169,6 +194,14 @@ class AdminAuthRepository {
   }
 
   String _extractError(DioException e) {
+    if (_isTwoFactorRequired(e)) {
+      return _extractDetailMessage(e) ??
+          AdminAuthUiMessages.twoFactorCodeRequired;
+    }
+    if (_extractDetailCode(e) == 'ADMIN_INVALID_TWO_FACTOR_CODE') {
+      return _extractDetailMessage(e) ??
+          AdminAuthUiMessages.invalidTwoFactorCode;
+    }
     final data = e.response?.data;
     if (data is Map) {
       final detail = data['detail'];
@@ -176,18 +209,69 @@ class AdminAuthRepository {
         return detail;
       }
       if (detail is Map) {
-        return detail['message'] as String? ?? 'Request failed';
+        return detail['message'] as String? ??
+            AdminAuthUiMessages.requestFailed;
       }
     }
     switch (e.response?.statusCode) {
       case 401:
-        return 'Invalid email or password';
+        return AdminAuthUiMessages.invalidEmailOrPassword;
       case 403:
-        return 'Admin account is disabled';
+        return AdminAuthUiMessages.adminAccountDisabled;
       case 404:
-        return 'Admin account not found';
+        return AdminAuthUiMessages.adminAccountNotFound;
       default:
-        return e.message ?? 'Network error';
+        return e.message ?? AdminAuthUiMessages.networkError;
     }
+  }
+
+  String? _extractDetailMessage(DioException e) {
+    final detail = _extractDetailMap(e);
+    final message = detail?['message'];
+    if (message == null) {
+      return null;
+    }
+    final normalizedMessage = message.toString().trim();
+    return normalizedMessage.isEmpty ? null : normalizedMessage;
+  }
+
+  Map<String, dynamic>? _extractDetailMap(DioException e) {
+    final data = e.response?.data;
+    if (data is! Map) {
+      return null;
+    }
+    final detail = data['detail'];
+    if (detail is Map) {
+      return Map<String, dynamic>.from(detail);
+    }
+    final error = data['error'];
+    if (error is Map) {
+      return Map<String, dynamic>.from(error);
+    }
+    return null;
+  }
+
+  String? _extractDetailCode(DioException e) {
+    final detail = _extractDetailMap(e);
+    final code = detail?['code'];
+    if (code == null) {
+      return null;
+    }
+    final normalizedCode = code.toString().trim();
+    return normalizedCode.isEmpty ? null : normalizedCode;
+  }
+
+  String? _extractTwoFactorMethod(DioException e) {
+    final detail = _extractDetailMap(e);
+    final method = detail?['two_factor_method'];
+    if (method == null) {
+      return null;
+    }
+    final normalizedMethod = method.toString().trim();
+    return normalizedMethod.isEmpty ? null : normalizedMethod;
+  }
+
+  bool _isTwoFactorRequired(DioException e) {
+    return _extractDetailCode(e) == 'ADMIN_TWO_FACTOR_REQUIRED';
   }
 }

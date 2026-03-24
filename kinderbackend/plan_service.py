@@ -20,12 +20,11 @@ PLAN_LIMITS: Dict[str, Optional[int]] = {
 
 PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
     PLAN_FREE: {
-        # Basic features available to all free users
         "basic_reports": True,
         "basic_notifications": True,
         "basic_parental_controls": True,
-        # Premium-only features
-        "advanced_reports": False,  # ✓ FIXED: was True
+        # Premium-only features stay disabled on the free tier.
+        "advanced_reports": False,
         "ai_insights": False,
         "smart_notifications": False,
         "offline_downloads": False,
@@ -33,11 +32,9 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "priority_support": False,
     },
     PLAN_PREMIUM: {
-        # Inherits all free tier features
         "basic_reports": True,
         "basic_notifications": True,
         "basic_parental_controls": True,
-        # Premium-specific features
         "advanced_reports": True,
         "ai_insights": True,
         "smart_notifications": True,
@@ -46,7 +43,6 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "priority_support": False,
     },
     PLAN_FAMILY_PLUS: {
-        # All features enabled
         "basic_reports": True,
         "basic_notifications": True,
         "basic_parental_controls": True,

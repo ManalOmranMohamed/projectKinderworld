@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/services/auth_service.dart';
+import 'package:kinder_world/core/utils/password_policy.dart';
 import 'package:logger/logger.dart';
 import 'package:kinder_world/app.dart';
 
@@ -20,9 +22,6 @@ final changePasswordControllerProvider = StateNotifierProvider.autoDispose<
 class ChangePasswordController extends StateNotifier<AsyncValue<void>> {
   final AuthService _authService;
   final Logger _logger;
-  static final RegExp _strongPassword = RegExp(
-    r'''^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]).{8,}$''',
-  );
 
   ChangePasswordController({
     required AuthService authService,
@@ -30,6 +29,10 @@ class ChangePasswordController extends StateNotifier<AsyncValue<void>> {
   })  : _authService = authService,
         _logger = logger,
         super(const AsyncValue.data(null));
+
+  void setValidationError(String message) {
+    state = AsyncValue.error(message, StackTrace.current);
+  }
 
   Future<bool> changePassword({
     required String currentPassword,
@@ -39,34 +42,33 @@ class ChangePasswordController extends StateNotifier<AsyncValue<void>> {
     // Validation
     if (currentPassword.trim().isEmpty) {
       state = AsyncValue.error(
-          'Current password cannot be empty', StackTrace.current);
-      return false;
-    }
-
-    if (newPassword.trim().isEmpty) {
-      state =
-          AsyncValue.error('New password cannot be empty', StackTrace.current);
-      return false;
-    }
-
-    if (newPassword.length < 6) {
-      state = AsyncValue.error(
-        'Password must be at least 8 characters',
+        AuthUiMessages.currentPasswordCannotBeEmpty,
         StackTrace.current,
       );
       return false;
     }
 
-    if (!_strongPassword.hasMatch(newPassword)) {
+    if (newPassword.trim().isEmpty) {
       state = AsyncValue.error(
-        'Password must include uppercase, number, and special character',
+        AuthUiMessages.newPasswordCannotBeEmpty,
+        StackTrace.current,
+      );
+      return false;
+    }
+
+    if (!PasswordPolicy.isSatisfied(newPassword)) {
+      state = AsyncValue.error(
+        AuthUiMessages.passwordStrengthRequirement,
         StackTrace.current,
       );
       return false;
     }
 
     if (newPassword != confirmPassword) {
-      state = AsyncValue.error('Passwords do not match', StackTrace.current);
+      state = AsyncValue.error(
+        AuthUiMessages.passwordsDoNotMatch,
+        StackTrace.current,
+      );
       return false;
     }
 
@@ -84,7 +86,7 @@ class ChangePasswordController extends StateNotifier<AsyncValue<void>> {
         return true;
       } else {
         state = AsyncValue.error(
-          'Failed to change password. Please check your current password.',
+          AuthUiMessages.failedToChangePasswordCheckCurrent,
           StackTrace.current,
         );
         return false;
@@ -92,7 +94,7 @@ class ChangePasswordController extends StateNotifier<AsyncValue<void>> {
     } catch (e, st) {
       _logger.e('Error changing password: $e', stackTrace: st);
       state = AsyncValue.error(
-        'An error occurred while changing password',
+        AuthUiMessages.changePasswordUnexpected,
         st,
       );
       return false;

@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from admin_deps import require_permission
-from core.observability import get_recent_events, summarize_events
+from core.observability import get_metrics, get_recent_events, summarize_events, summarize_metrics
 from core.settings import settings
 from deps import get_db
 from models import PaymentAttempt, PaymentWebhookEvent, SubscriptionEvent
@@ -115,5 +115,27 @@ def diagnostics_events(
             "category": category,
             "name_prefix": name_prefix,
             "min_severity": min_severity,
+        },
+    }
+
+
+@router.get("/metrics")
+def diagnostics_metrics(
+    limit: int = Query(200, ge=1, le=1000),
+    category: str = Query(""),
+    name_prefix: str = Query(""),
+    admin=Depends(require_permission("admin.settings.edit")),
+):
+    metrics = get_metrics(
+        limit=limit,
+        category=category or None,
+        name_prefix=name_prefix or None,
+    )
+    return {
+        "items": metrics,
+        "summary": summarize_metrics(metrics),
+        "filters": {
+            "category": category,
+            "name_prefix": name_prefix,
         },
     }

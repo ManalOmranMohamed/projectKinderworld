@@ -21,7 +21,7 @@ class PlanGuard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final planAsync = ref.watch(planInfoProvider);
+    final planAsync = ref.watch(planInfoStateProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return planAsync.when(

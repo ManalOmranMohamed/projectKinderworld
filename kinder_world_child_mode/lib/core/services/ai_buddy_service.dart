@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:kinder_world/core/api/ai_buddy_api.dart';
+import 'package:kinder_world/core/messages/app_messages.dart';
 import 'package:kinder_world/core/models/ai_buddy_models.dart';
 import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -134,25 +135,35 @@ class AiBuddyService {
   }
 
   Future<String> _requireParentAccessToken() async {
-    final token = await _secureStorage.getParentAccessToken();
-    if (token == null || token.isEmpty) {
-      throw const AiBuddyUnavailableException(
-        'Parent authentication is required to use AI Buddy in child mode.',
-      );
+    final parentToken = await _secureStorage.getParentAccessToken();
+    if (parentToken != null && parentToken.isNotEmpty) {
+      return parentToken;
     }
-    return token;
+
+    final authToken = await _secureStorage.getAuthToken();
+    if (authToken != null && authToken.isNotEmpty) {
+      return authToken;
+    }
+
+    throw const AiBuddyUnavailableException(
+      AiBuddyUiMessages.authenticationRequired,
+    );
   }
 
   Exception _mapDioError(DioException error) {
     final data = error.response?.data;
-    _logger.e('AI Buddy request failed: ${error.response?.statusCode} ${error.message}');
+    _logger.e(
+      'AI Buddy request failed: ${error.response?.statusCode} ${error.message}',
+    );
     if (data is Map) {
       final detail = data['detail'];
       if (detail is Map) {
         final code = detail['code']?.toString();
         final message = detail['message']?.toString();
         if (code == 'AI_BUDDY_DISABLED') {
-          return AiBuddyUnavailableException(message ?? 'AI Buddy is currently unavailable.');
+          return AiBuddyUnavailableException(
+            message ?? AiBuddyUiMessages.unavailable,
+          );
         }
         if (message != null && message.isNotEmpty) {
           return Exception(message);
@@ -165,6 +176,6 @@ class AiBuddyService {
     if (error.message != null && error.message!.trim().isNotEmpty) {
       return Exception(error.message!.trim());
     }
-    return Exception('AI Buddy request failed.');
+    return Exception(AiBuddyUiMessages.requestFailed);
   }
 }

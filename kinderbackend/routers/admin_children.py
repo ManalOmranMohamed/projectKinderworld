@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session, joinedload
 
 from admin_deps import require_permission
@@ -15,6 +15,7 @@ from admin_utils import (
     serialize_child_detail,
     write_audit_log,
 )
+from core.avatar_validation import normalize_child_avatar
 from core.admin_security import require_sensitive_action_confirmation
 from core.time_utils import db_utc_now
 from deps import get_db
@@ -29,6 +30,11 @@ class ChildUpdateRequest(BaseModel):
     age: Optional[int] = None
     avatar: Optional[str] = None
     date_of_birth: Optional[str] = None
+
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def _normalize_avatar(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_child_avatar(value)
 
 
 def _get_child_or_404(child_id: int, db: Session) -> ChildProfile:

@@ -51,13 +51,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.profileUpdated),
-            backgroundColor: context.parentTheme.success,
-          ),
-        );
-        if (mounted) context.pop();
+        context.go(Routes.parentSettings);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

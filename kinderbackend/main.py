@@ -1,15 +1,17 @@
 import logging
 from contextlib import asynccontextmanager
-
+from routers.voice import router as voice_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Import admin_models so SQLAlchemy registers the tables with Base.metadata
 import admin_models  # noqa: F401
-from core.exception_handlers import register_exception_handlers
-from core.logging_utils import configure_logging
+from core.exception_handlers import build_error_body, register_exception_handlers
+from core.logging_utils import configure_logging, log_with_context
+from core.message_catalog import MaintenanceMessages
 from core.request_id_middleware import RequestIdMiddleware
+from core.security_headers import apply_security_headers
 from core.settings import settings
 from core.system_settings import is_maintenance_mode
 from database import SessionLocal, engine
@@ -71,7 +73,15 @@ _MAINTENANCE_BYPASS_PATHS = {
 
 def _run_startup_checks() -> None:
     if settings.skip_schema_verify:
-        logger.warning("Skipping database schema verification (SKIP_SCHEMA_VERIFY enabled)")
+        log_with_context(
+            logger,
+            logging.WARNING,
+            "schema_verification_skipped",
+            event="schema_verification_skipped",
+            category="app",
+            environment=getattr(settings, "environment", None),
+            outcome="skipped",
+        )
         return
     verify_database_schema(
         engine,
@@ -88,19 +98,26 @@ def _cors_config() -> dict[str, object]:
         allowed_origin_regex = _DEV_CORS_ORIGIN_REGEX
 
     if settings.is_production and not allowed_origins and not allowed_origin_regex:
-        logger.warning(
-            "CORS is effectively disabled in production because no ALLOWED_ORIGINS "
-            "or ALLOWED_ORIGIN_REGEX values were configured."
+        log_with_context(
+            logger,
+            logging.WARNING,
+            "cors_effectively_disabled",
+            event="cors_effectively_disabled",
+            category="app",
+            environment=getattr(settings, "environment", None),
+            outcome="warning",
         )
 
-    logger.info(
-        "CORS configured",
-        extra={
-            "allowed_origins_count": len(allowed_origins),
-            "has_origin_regex": bool(allowed_origin_regex),
-            "allow_credentials": settings.cors_allow_credentials,
-            "environment": settings.environment,
-        },
+    log_with_context(
+        logger,
+        logging.INFO,
+        "cors_configured",
+        event="cors_configured",
+        category="app",
+        environment=getattr(settings, "environment", None),
+        allowed_origins_count=len(allowed_origins),
+        has_origin_regex=bool(allowed_origin_regex),
+        allow_credentials=settings.cors_allow_credentials,
     )
 
     return {
@@ -112,12 +129,26 @@ def _cors_config() -> dict[str, object]:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    logger.info("Application startup initialized")
+    log_with_context(
+        logger,
+        logging.INFO,
+        "application_startup_initialized",
+        event="application_startup_initialized",
+        category="app",
+        environment=getattr(settings, "environment", None),
+    )
     _run_startup_checks()
     try:
         yield
     finally:
-        logger.info("Application shutdown complete")
+        log_with_context(
+            logger,
+            logging.INFO,
+            "application_shutdown_complete",
+            event="application_shutdown_complete",
+            category="app",
+            environment=getattr(settings, "environment", None),
+        )
 
 
 app = FastAPI(lifespan=lifespan)
@@ -146,6 +177,13 @@ app.add_middleware(
 
 
 @app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    response = await call_next(request)
+    apply_security_headers(request, response, is_production=settings.is_production)
+    return response
+
+
+@app.middleware("http")
 async def maintenance_mode_guard(request, call_next):
     path = request.url.path
     if request.method == "OPTIONS":
@@ -160,12 +198,13 @@ async def maintenance_mode_guard(request, call_next):
         if is_maintenance_mode(db):
             return JSONResponse(
                 status_code=503,
-                content={
-                    "detail": {
-                        "message": "Service temporarily unavailable: maintenance mode",
+                content=build_error_body(
+                    status_code=503,
+                    detail={
+                        "message": MaintenanceMessages.SERVICE_TEMPORARILY_UNAVAILABLE,
                         "code": "APP_MAINTENANCE_MODE",
-                    }
-                },
+                    },
+                ),
             )
     finally:
         db.close()
@@ -192,6 +231,7 @@ app.include_router(support_router)
 app.include_router(features_router)
 app.include_router(parental_controls_router)
 app.include_router(ai_buddy_router)
+app.include_router(voice_router)
 app.include_router(payment_webhooks_router)
 app.include_router(health_router)
 
@@ -207,5 +247,13 @@ app.include_router(admin_subscriptions_router)
 app.include_router(admin_settings_router)
 app.include_router(admin_diagnostics_router)
 if ADMIN_SEED_ENABLED:
-    logger.warning("Admin seed endpoint is enabled for this environment")
+    log_with_context(
+        logger,
+        logging.WARNING,
+        "admin_seed_endpoint_enabled",
+        event="admin_seed_endpoint_enabled",
+        category="app",
+        environment=getattr(settings, "environment", None),
+        outcome="warning",
+    )
     app.include_router(admin_seed_router)

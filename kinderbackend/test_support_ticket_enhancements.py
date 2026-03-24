@@ -115,6 +115,77 @@ def test_parent_support_validation_and_cross_user_access(client, db, create_pare
     assert reply_closed.json()["detail"]["code"] == "TICKET_CLOSED"
 
 
+def test_parent_soft_delete_hides_ticket_but_preserves_record(
+    client, db, create_parent, auth_headers, seed_builtin_rbac, create_admin, admin_headers
+):
+    seed_builtin_rbac()
+    owner = create_parent(email="soft.delete.owner@gmail.com")
+    admin = create_admin(email="support.viewer@gmail.com", role_names=["super_admin"])
+    headers = auth_headers(owner)
+
+    create = client.post(
+        "/support/contact",
+        json={
+            "subject": "Delete me later",
+            "message": "This ticket should be hidden without losing the stored record.",
+            "category": "general_inquiry",
+        },
+        headers=headers,
+    )
+    assert create.status_code == 200
+    ticket_id = create.json()["item"]["id"]
+
+    deleted = client.delete(f"/support/tickets/{ticket_id}", headers=headers)
+    assert deleted.status_code == 200
+    assert deleted.json()["success"] is True
+
+    hidden_from_user = client.get(f"/support/tickets/{ticket_id}", headers=headers)
+    assert hidden_from_user.status_code == 404
+
+    history = client.get("/support/tickets", headers=headers)
+    assert history.status_code == 200
+    assert history.json()["items"] == []
+    assert history.json()["summary"]["total"] == 0
+
+    hidden_from_admin_default = client.get(
+        f"/admin/support/tickets/{ticket_id}",
+        headers=admin_headers(admin),
+    )
+    assert hidden_from_admin_default.status_code == 404
+
+    visible_to_admin = client.get(
+        f"/admin/support/tickets/{ticket_id}",
+        params={"include_deleted": "true"},
+        headers=admin_headers(admin),
+    )
+    assert visible_to_admin.status_code == 200
+    assert visible_to_admin.json()["item"]["deleted_at"] is not None
+    assert visible_to_admin.json()["item"]["status"] == "closed"
+
+    admin_list_default = client.get("/admin/support/tickets", headers=admin_headers(admin))
+    assert admin_list_default.status_code == 200
+    assert admin_list_default.json()["items"] == []
+
+    admin_list_with_deleted = client.get(
+        "/admin/support/tickets",
+        params={"include_deleted": "true"},
+        headers=admin_headers(admin),
+    )
+    assert admin_list_with_deleted.status_code == 200
+    assert len(admin_list_with_deleted.json()["items"]) == 1
+    assert admin_list_with_deleted.json()["items"][0]["deleted_at"] is not None
+
+    stored_ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).one()
+    assert stored_ticket.deleted_at is not None
+
+    reply_after_delete = client.post(
+        f"/support/tickets/{ticket_id}/reply",
+        json={"message": "This should not reach a deleted ticket."},
+        headers=headers,
+    )
+    assert reply_after_delete.status_code == 404
+
+
 def test_admin_support_filters_resolve_and_closed_reply_guard(
     client, db, seed_builtin_rbac, create_admin, create_parent, admin_headers, auth_headers
 ):

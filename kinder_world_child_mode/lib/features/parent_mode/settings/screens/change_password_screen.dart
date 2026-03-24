@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/change_password_controller.dart';
+import 'package:kinder_world/core/utils/password_policy.dart';
+import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/router.dart';
 
 class ParentChangePasswordScreen extends ConsumerStatefulWidget {
@@ -29,14 +31,21 @@ class _ParentChangePasswordScreenState
     _currentPasswordController = TextEditingController();
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
+    _newPasswordController.addListener(_handlePasswordChanged);
   }
 
   @override
   void dispose() {
+    _newPasswordController.removeListener(_handlePasswordChanged);
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _handlePasswordChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
@@ -94,9 +103,7 @@ class _ParentChangePasswordScreenState
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _showNewPassword
-                        ? Icons.visibility
-                        : Icons.visibility_off,
+                    _showNewPassword ? Icons.visibility : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(() {
@@ -106,6 +113,7 @@ class _ParentChangePasswordScreenState
                 ),
               ),
             ),
+            PasswordStrengthIndicator(password: _newPasswordController.text),
             const SizedBox(height: 16),
 
             // Confirm password field
@@ -149,7 +157,10 @@ class _ParentChangePasswordScreenState
                 ),
                 child: Text(
                   passwordState.maybeWhen(
-                    error: (err, _) => err.toString(),
+                    error: (err, _) => PasswordPolicy.localizeControllerMessage(
+                      err.toString(),
+                      l10n,
+                    ),
                     orElse: () => '',
                   ),
                   style: TextStyle(color: colors.onErrorContainer),
@@ -164,6 +175,14 @@ class _ParentChangePasswordScreenState
                 onPressed: passwordState.maybeWhen(
                   loading: () => null,
                   orElse: () => () async {
+                    final inlineValidationError = _validateInputs(l10n);
+                    if (inlineValidationError != null) {
+                      ref
+                          .read(changePasswordControllerProvider.notifier)
+                          .setValidationError(inlineValidationError);
+                      return;
+                    }
+
                     final messenger = ScaffoldMessenger.of(context);
                     final successMsg = l10n.passwordUpdatedSuccess;
 
@@ -195,7 +214,8 @@ class _ParentChangePasswordScreenState
                     width: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(colors.onPrimary),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(colors.onPrimary),
                     ),
                   ),
                   orElse: () => Text(l10n.updatePassword),
@@ -206,5 +226,26 @@ class _ParentChangePasswordScreenState
         ),
       ),
     );
+  }
+
+  String? _validateInputs(AppLocalizations l10n) {
+    if (_currentPasswordController.text.trim().isEmpty) {
+      return l10n.currentPasswordRequired;
+    }
+    final passwordError = PasswordPolicy.validateForUi(
+      password: _newPasswordController.text,
+      l10n: l10n,
+      emptyMessage: l10n.newPasswordRequired,
+    );
+    if (passwordError != null) {
+      return passwordError;
+    }
+    if (_confirmPasswordController.text.trim().isEmpty) {
+      return l10n.confirmNewPasswordRequired;
+    }
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      return l10n.passwordsDoNotMatch;
+    }
+    return null;
   }
 }

@@ -4,6 +4,7 @@ Tables: admin_users, roles, permissions, role_permissions, admin_user_roles
 """
 
 from sqlalchemy import (
+    Index,
     JSON,
     Boolean,
     Column,
@@ -17,6 +18,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
+from core.field_encryption import EncryptedString
 from core.sqlalchemy_types import UTCDateTime
 from database import Base
 
@@ -38,17 +40,21 @@ class AdminUser(Base):
     # Bump token_version on logout to invalidate all existing refresh tokens
     token_version = Column(Integer, default=0, nullable=False, server_default=text("0"))
     last_login_at = Column(UTCDateTime(), nullable=True)
-    last_login_ip = Column(String, nullable=True)
-    last_login_user_agent = Column(String, nullable=True)
+    last_login_ip = Column(EncryptedString(), nullable=True)
+    last_login_user_agent = Column(EncryptedString(), nullable=True)
     last_failed_login_at = Column(UTCDateTime(), nullable=True)
-    last_failed_login_ip = Column(String, nullable=True)
-    last_failed_login_user_agent = Column(String, nullable=True)
+    last_failed_login_ip = Column(EncryptedString(), nullable=True)
+    last_failed_login_user_agent = Column(EncryptedString(), nullable=True)
     failed_login_attempts = Column(Integer, default=0, nullable=False, server_default=text("0"))
     suspicious_access_count = Column(Integer, default=0, nullable=False, server_default=text("0"))
     is_flagged_suspicious = Column(
         Boolean, default=False, nullable=False, server_default=text("false")
     )
     locked_until = Column(UTCDateTime(), nullable=True)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    two_factor_method = Column(String, nullable=True)
+    two_factor_secret = Column(EncryptedString(), nullable=True)
+    two_factor_confirmed_at = Column(UTCDateTime(), nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
@@ -58,7 +64,7 @@ class AdminUser(Base):
     admin_user_roles = relationship(
         "AdminUserRole", back_populates="admin_user", cascade="all, delete-orphan"
     )
-    audit_logs = relationship("AuditLog", back_populates="admin_user", cascade="all, delete-orphan")
+    audit_logs = relationship("AuditLog", back_populates="admin_user")
 
 
 class Role(Base):
@@ -149,6 +155,9 @@ class AuditLog(Base):
     """
 
     __tablename__ = "audit_logs"
+    __table_args__ = (
+        Index("ix_audit_logs_entity_type_entity_id_created_at", "entity_type", "entity_id", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     admin_user_id = Column(

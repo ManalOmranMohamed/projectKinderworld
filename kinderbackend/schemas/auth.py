@@ -1,7 +1,9 @@
 from datetime import date
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from core.avatar_validation import normalize_child_avatar
 
 
 def _clean_picture_password(value: List[str]) -> List[str]:
@@ -36,6 +38,14 @@ class AuthSchemaBase(BaseModel):
         if not normalized:
             raise ValueError("value must not be blank")
         return normalized
+
+    @field_validator("two_factor_code", mode="before", check_fields=False)
+    @classmethod
+    def _normalize_two_factor_code(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = "".join(char for char in value.strip() if char.isdigit())
+        return normalized or None
 
     @field_validator(
         "picture_password",
@@ -75,6 +85,10 @@ class RegisterIn(AuthSchemaBase):
 class LoginIn(AuthSchemaBase):
     email: EmailStr
     password: str = Field(..., min_length=1)
+    two_factor_code: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("two_factor_code", "twoFactorCode"),
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -88,6 +102,14 @@ class LoginIn(AuthSchemaBase):
 
 class RefreshIn(AuthSchemaBase):
     refresh_token: str = Field(..., min_length=1)
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh.token",
+            }
+        }
+    )
 
 
 class ChildLoginIn(AuthSchemaBase):
@@ -126,6 +148,11 @@ class ChildRegisterIn(AuthSchemaBase):
         }
     )
 
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def _normalize_avatar(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_child_avatar(value)
+
 
 class ChildChangePasswordIn(AuthSchemaBase):
     child_id: int = Field(..., gt=0)
@@ -149,7 +176,91 @@ class ChildChangePasswordIn(AuthSchemaBase):
         ),
     )
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "child_id": 1,
+                "name": "Alice",
+                "current_picture_password": ["cat", "dog", "apple"],
+                "new_picture_password": ["sun", "moon", "star"],
+            }
+        }
+    )
+
 
 class ChildSessionValidateIn(AuthSchemaBase):
     session_token: str = Field(..., min_length=1)
     device_id: Optional[str] = None
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "session_token": "child-session-token",
+                "device_id": "tablet-kid-a",
+            }
+        }
+    )
+
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    role: str
+    name: str | None = None
+    is_active: bool
+    plan: str
+    limits: dict[str, Any]
+    features: dict[str, Any]
+    two_factor_enabled: bool
+    two_factor_method: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    user: UserOut
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access.token",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh.token",
+                "token_type": "bearer",
+                "user": {
+                    "id": 1,
+                    "email": "parent@example.com",
+                    "role": "parent",
+                    "name": "Parent Name",
+                    "is_active": True,
+                    "plan": "FREE",
+                    "limits": {"children": 1},
+                    "features": {"advanced_reports": False},
+                    "two_factor_enabled": False,
+                    "two_factor_method": None,
+                    "created_at": "2026-03-24T10:00:00+00:00",
+                    "updated_at": "2026-03-24T10:00:00+00:00",
+                },
+            }
+        }
+    )
+
+
+class AccessTokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access.token",
+                "token_type": "bearer",
+            }
+        }
+    )
+
+
+class CurrentUserResponse(BaseModel):
+    user: UserOut

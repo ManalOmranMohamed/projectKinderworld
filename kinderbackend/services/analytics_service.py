@@ -637,6 +637,7 @@ class AnalyticsService:
             db.query(SupportTicket)
             .filter(
                 SupportTicket.user_id == user.id,
+                SupportTicket.deleted_at.is_(None),
                 SupportTicket.status.in_(("open", "in_progress")),
             )
             .count()

@@ -254,9 +254,27 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         assert attach_method.status_code == 200
         assert attach_method.json()["method"]["provider_method_id"] == "pm_card_amex"
 
+        manage = client.post("/subscription/manage", headers=headers)
+        assert manage.status_code == 200
+        manage_payload = manage.json()
+        assert manage_payload["operation"] == "billing_portal"
+        assert manage_payload["current_plan_id"] == PLAN_PREMIUM
+        assert manage_payload["status"] == "active"
+        assert manage_payload["provider"] == "stripe"
+        assert manage_payload["provider_subscription_id"] == fake_provider.state.subscription_id
+        assert manage_payload["customer_id"] == fake_provider.state.customer_id
+        assert manage_payload["url"] == "https://billing.stripe.test/portal"
+
         portal = client.post("/billing/portal", headers=headers)
         assert portal.status_code == 200
-        assert portal.json()["url"] == "https://billing.stripe.test/portal"
+        portal_payload = portal.json()
+        assert portal_payload["operation"] == "billing_portal"
+        assert portal_payload["current_plan_id"] == PLAN_PREMIUM
+        assert portal_payload["status"] == "active"
+        assert portal_payload["provider"] == "stripe"
+        assert portal_payload["provider_subscription_id"] == fake_provider.state.subscription_id
+        assert portal_payload["customer_id"] == fake_provider.state.customer_id
+        assert portal_payload["url"] == "https://billing.stripe.test/portal"
 
         history_after_portal = client.get("/subscription/history", headers=headers)
         assert history_after_portal.status_code == 200

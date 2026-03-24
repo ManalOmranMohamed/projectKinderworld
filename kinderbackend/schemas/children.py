@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from core.avatar_validation import normalize_child_avatar
+
 
 class ChildCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -38,6 +40,11 @@ class ChildCreate(BaseModel):
             raise ValueError("picture_password entries must be non-empty strings")
         return cleaned
 
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def _normalize_avatar(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_child_avatar(value)
+
 
 class ChildUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=100)
@@ -65,3 +72,8 @@ class ChildUpdate(BaseModel):
         if len(cleaned) != len(value):
             raise ValueError("picture_password entries must be non-empty strings")
         return cleaned
+
+    @field_validator("avatar", mode="before")
+    @classmethod
+    def _normalize_avatar(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_child_avatar(value)

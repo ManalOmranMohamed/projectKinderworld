@@ -79,7 +79,13 @@ def test_subscription_lifecycle_and_history_flow(client, db, create_parent, auth
 
     manage = client.post("/subscription/manage", headers=headers)
     assert manage.status_code == 200
-    assert manage.json()["url"].startswith("https://example.invalid/mock-billing/")
+    manage_payload = manage.json()
+    assert manage_payload["operation"] == "billing_portal"
+    assert manage_payload["current_plan_id"] == PLAN_FREE
+    assert manage_payload["status"] == "canceled"
+    assert manage_payload["last_payment_status"] == "canceled"
+    assert manage_payload["url"].startswith("https://example.invalid/mock-billing/")
+    assert manage_payload["customer_id"].startswith("mock_customer")
 
     history_after_manage = client.get("/subscription/history", headers=headers)
     assert history_after_manage.status_code == 200
@@ -110,6 +116,63 @@ def test_activate_rejects_mismatched_pending_plan(client, create_parent, auth_he
     assert (
         activate.json()["detail"] == "Requested plan does not match the pending checkout selection"
     )
+
+
+def test_manage_subscription_rejects_accounts_without_billing_customer(
+    client,
+    create_parent,
+    auth_headers,
+):
+    parent = create_parent(email="manage.empty@example.com", plan=PLAN_FREE)
+    headers = auth_headers(parent)
+
+    manage = client.post("/subscription/manage", headers=headers)
+    assert manage.status_code == 409
+    assert manage.json()["detail"] == "No billing customer is available for this account"
+
+    history = client.get("/subscription/history", headers=headers)
+    assert history.status_code == 200
+    history_payload = history.json()
+    event_types = [item["event_type"] for item in history_payload["events"]]
+    assert "manage_request" in event_types
+    assert "failure" in event_types
+    failure_event = next(item for item in history_payload["events"] if item["event_type"] == "failure")
+    assert failure_event["details_json"]["operation"] == "billing_portal"
+    assert failure_event["details_json"]["code"] == "NO_CUSTOMER"
+
+
+def test_manage_subscription_requires_authentication(client):
+    manage = client.post("/subscription/manage")
+    assert manage.status_code == 401
+
+
+def test_billing_portal_rejects_accounts_without_billing_customer(
+    client,
+    create_parent,
+    auth_headers,
+):
+    parent = create_parent(email="portal.empty@example.com", plan=PLAN_FREE)
+    headers = auth_headers(parent)
+
+    portal = client.post("/billing/portal", headers=headers)
+    assert portal.status_code == 409
+    assert portal.json()["detail"] == "No billing customer is available for this account"
+
+    history = client.get("/subscription/history", headers=headers)
+    assert history.status_code == 200
+    history_payload = history.json()
+    event_types = [item["event_type"] for item in history_payload["events"]]
+    assert "manage_request" in event_types
+    assert "failure" in event_types
+    failure_event = next(item for item in history_payload["events"] if item["event_type"] == "failure")
+    assert failure_event["source"] == "billing_portal"
+    assert failure_event["details_json"]["operation"] == "billing_portal"
+    assert failure_event["details_json"]["code"] == "NO_CUSTOMER"
+
+
+def test_billing_portal_requires_authentication(client):
+    portal = client.post("/billing/portal")
+    assert portal.status_code == 401
 
 
 def test_admin_subscription_detail_exposes_lifecycle_and_history(

@@ -65,8 +65,13 @@ class AuthService {
   Future<User?> loginParent({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
-    return await _repository.loginParent(email: email, password: password);
+    return await _repository.loginParent(
+      email: email,
+      password: password,
+      twoFactorCode: twoFactorCode,
+    );
   }
 
   Future<User?> registerParent({

@@ -1,27 +1,58 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypedDict
 
 from fastapi import HTTPException, Request
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Query, Session, joinedload
 
 from admin_utils import build_pagination_payload, serialize_support_ticket, write_audit_log
 from core.time_utils import db_utc_now
 from models import SupportTicket, SupportTicketMessage, User
-from notification_service import notify_support_ticket_updated
+from services.notification_service import notify_support_ticket_updated
 from services.premium_behavior_service import premium_behavior_service
 
 if TYPE_CHECKING:
     from admin_models import AdminUser
 
-SUPPORT_TICKET_CATEGORIES = {
+SerializedPayload: TypeAlias = dict[str, Any]
+
+
+class SupportTicketSummaryPayload(TypedDict):
+    total: int
+    open: int
+    in_progress: int
+    resolved: int
+    closed: int
+
+
+class SupportTicketListPayload(TypedDict):
+    items: list[SerializedPayload]
+    summary: SupportTicketSummaryPayload
+
+
+class SupportTicketPagePayload(TypedDict):
+    items: list[SerializedPayload]
+    pagination: dict[str, Any]
+    filters: dict[str, str]
+
+
+class SupportTicketItemPayload(TypedDict):
+    item: SerializedPayload
+
+
+class SupportTicketMutationPayload(TypedDict):
+    success: bool
+    item: SerializedPayload
+
+
+SUPPORT_TICKET_CATEGORIES: set[str] = {
     "login_issue",
     "billing_issue",
     "child_content_issue",
     "technical_issue",
     "general_inquiry",
 }
-SUPPORT_TICKET_STATUSES = {
+SUPPORT_TICKET_STATUSES: set[str] = {
     "open",
     "in_progress",
     "resolved",
@@ -45,13 +76,21 @@ class SupportTicketAssignPayload(Protocol):
 
 
 class SupportTicketService:
-    def ticket_query(self, db: Session):
-        return db.query(SupportTicket).options(
+    def ticket_query(
+        self,
+        db: Session,
+        *,
+        include_deleted: bool = False,
+    ) -> Query[SupportTicket]:
+        query = db.query(SupportTicket).options(
             joinedload(SupportTicket.user),
             joinedload(SupportTicket.assigned_admin),
             joinedload(SupportTicket.thread_messages).joinedload(SupportTicketMessage.admin_user),
             joinedload(SupportTicket.thread_messages).joinedload(SupportTicketMessage.user),
         )
+        if not include_deleted:
+            query = query.filter(SupportTicket.deleted_at.is_(None))
+        return query
 
     def normalize_category(self, value: str) -> str:
         normalized = value.strip().lower()
@@ -113,8 +152,18 @@ class SupportTicketService:
             raise HTTPException(status_code=404, detail="Support ticket not found")
         return ticket
 
-    def get_ticket_or_404(self, *, ticket_id: int, db: Session) -> SupportTicket:
-        ticket = self.ticket_query(db).filter(SupportTicket.id == ticket_id).first()
+    def get_ticket_or_404(
+        self,
+        *,
+        ticket_id: int,
+        db: Session,
+        include_deleted: bool = False,
+    ) -> SupportTicket:
+        ticket = (
+            self.ticket_query(db, include_deleted=include_deleted)
+            .filter(SupportTicket.id == ticket_id)
+            .first()
+        )
         if not ticket:
             raise HTTPException(status_code=404, detail="Support ticket not found")
         return ticket
@@ -125,7 +174,7 @@ class SupportTicketService:
         payload: SupportTicketCreatePayload,
         user: User,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         subject, message = self.validate_support_text(payload.subject, payload.message)
         category = self.normalize_category(payload.category)
         email = payload.email or user.email
@@ -146,7 +195,7 @@ class SupportTicketService:
             "item": serialize_support_ticket(ticket, include_thread=True),
         }
 
-    def list_user_tickets(self, *, user: User, db: Session) -> dict[str, object]:
+    def list_user_tickets(self, *, user: User, db: Session) -> SupportTicketListPayload:
         items = self.ticket_query(db).filter(SupportTicket.user_id == user.id).all()
         ranked = premium_behavior_service.rank_support_tickets(items)
         return {
@@ -160,9 +209,27 @@ class SupportTicketService:
             },
         }
 
-    def get_user_ticket(self, *, ticket_id: int, user: User, db: Session) -> dict[str, object]:
+    def get_user_ticket(self, *, ticket_id: int, user: User, db: Session) -> SupportTicketItemPayload:
         ticket = self.get_user_ticket_or_404(ticket_id=ticket_id, user_id=user.id, db=db)
         return {"item": serialize_support_ticket(ticket, include_thread=True)}
+
+    def soft_delete_as_user(
+        self,
+        *,
+        ticket_id: int,
+        user: User,
+        db: Session,
+    ) -> dict[str, bool]:
+        ticket = self.get_user_ticket_or_404(ticket_id=ticket_id, user_id=user.id, db=db)
+        now = db_utc_now()
+        ticket.deleted_at = now
+        ticket.updated_at = now
+        if ticket.status != "closed":
+            ticket.status = "closed"
+            ticket.closed_at = now
+        db.add(ticket)
+        db.commit()
+        return {"success": True}
 
     def reply_as_user(
         self,
@@ -171,7 +238,7 @@ class SupportTicketService:
         payload: SupportTicketReplyPayload,
         user: User,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         message = payload.message.strip()
         if len(message) < 3:
             raise HTTPException(
@@ -220,9 +287,10 @@ class SupportTicketService:
         category: str,
         page: int,
         page_size: int,
+        include_deleted: bool,
         db: Session,
-    ) -> dict[str, object]:
-        query = self.ticket_query(db)
+    ) -> SupportTicketPagePayload:
+        query = self.ticket_query(db, include_deleted=include_deleted)
         normalized_status = status.strip().lower()
         if normalized_status:
             if normalized_status not in SUPPORT_TICKET_STATUSES:
@@ -243,8 +311,14 @@ class SupportTicketService:
             "filters": {"status": normalized_status, "category": normalized_category},
         }
 
-    def get_admin_ticket(self, *, ticket_id: int, db: Session) -> dict[str, object]:
-        ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
+    def get_admin_ticket(
+        self,
+        *,
+        ticket_id: int,
+        db: Session,
+        include_deleted: bool = False,
+    ) -> SupportTicketItemPayload:
+        ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db, include_deleted=include_deleted)
         return {"item": serialize_support_ticket(ticket, include_thread=True)}
 
     def reply_as_admin(
@@ -255,7 +329,7 @@ class SupportTicketService:
         request: Request,
         admin: AdminUser,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         message = payload.message.strip()
         if not message:
             raise HTTPException(status_code=400, detail="Reply message is required")
@@ -306,7 +380,7 @@ class SupportTicketService:
         request: Request,
         admin: AdminUser,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
         if ticket.status == "closed":
             raise HTTPException(status_code=400, detail="Closed tickets cannot be resolved")
@@ -348,7 +422,7 @@ class SupportTicketService:
         request: Request,
         admin: AdminUser,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)
         if ticket.status == "closed":
             raise HTTPException(status_code=400, detail="Ticket is already closed")
@@ -391,7 +465,7 @@ class SupportTicketService:
         request: Request,
         admin: AdminUser,
         db: Session,
-    ) -> dict[str, object]:
+    ) -> SupportTicketMutationPayload:
         from admin_models import AdminUser
 
         ticket = self.get_ticket_or_404(ticket_id=ticket_id, db=db)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
@@ -98,7 +99,6 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
   }
 
   void _showError(String message) {
-    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -107,24 +107,19 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
             const Icon(Icons.error_outline_rounded,
                 color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Expanded(child: Text(_localizeErrorMessage(message, l10n))),
+            Expanded(
+              child: Text(
+                localizeAuthErrorMessage(
+                  message,
+                  AppLocalizations.of(context)!,
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: colors.error,
       ),
     );
-  }
-
-  String _localizeErrorMessage(String message, AppLocalizations l10n) {
-    final normalized = message.toLowerCase();
-    if (normalized.contains('connection refused') ||
-        normalized.contains('connection errored') ||
-        normalized.contains('socketexception') ||
-        normalized.contains('failed host lookup') ||
-        normalized.contains('connection error')) {
-      return l10n.connectionError;
-    }
-    return message;
   }
 
   @override

@@ -36,6 +36,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
@@ -50,7 +51,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
           iconSize: 24,
         ),
         title: Text(
-          AppLocalizations.of(context)!.helpSupportTitle,
+          l10n.helpSupportTitle,
           style: textTheme.titleMedium?.copyWith(
             fontSize: AppConstants.fontSize,
             fontWeight: FontWeight.bold,
@@ -94,14 +95,14 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppLocalizations.of(context)!.helpNeedHelpTitle,
+                            l10n.helpNeedHelpTitle,
                             style: textTheme.titleLarge?.copyWith(
                               fontSize: AppConstants.largeFontSize,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            AppLocalizations.of(context)!.weAreHereToSupportYou,
+                            l10n.weAreHereToSupportYou,
                             style: textTheme.bodyMedium?.copyWith(
                               fontSize: 16,
                               color: colors.onSurfaceVariant,
@@ -117,7 +118,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
 
               // FAQ Section
               Text(
-                AppLocalizations.of(context)!.helpFaqTitle,
+                l10n.helpFaqTitle,
                 style: textTheme.titleMedium?.copyWith(
                   fontSize: AppConstants.fontSize,
                   fontWeight: FontWeight.bold,
@@ -129,7 +130,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                 builder: (context, snapshot) {
                   final items = snapshot.data?.isNotEmpty == true
                       ? snapshot.data!
-                      : _fallbackFaqs(AppLocalizations.of(context)!);
+                      : _fallbackFaqs(l10n);
                   return Column(
                     children: [
                       for (var index = 0; index < items.length; index++) ...[
@@ -137,7 +138,8 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                           question: items[index].question,
                           answer: items[index].answer,
                         ),
-                        if (index != items.length - 1) const SizedBox(height: 12),
+                        if (index != items.length - 1)
+                          const SizedBox(height: 12),
                       ],
                     ],
                   );
@@ -148,7 +150,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
 
               // Contact Support
               Text(
-                AppLocalizations.of(context)!.helpContactSupportTitle,
+                l10n.helpContactSupportTitle,
                 style: textTheme.titleMedium?.copyWith(
                   fontSize: AppConstants.fontSize,
                   fontWeight: FontWeight.bold,
@@ -173,8 +175,8 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   children: [
                     _ContactOption(
                       icon: Icons.email,
-                      title: AppLocalizations.of(context)!.emailSupport,
-                      subtitle: 'support@kinderworld.app',
+                      title: l10n.emailSupport,
+                      subtitle: l10n.contactEmailValue,
                       onTap: () {
                         // Open email client
                       },
@@ -182,8 +184,8 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     const SizedBox(height: 16),
                     _ContactOption(
                       icon: Icons.chat,
-                      title: AppLocalizations.of(context)!.liveChat,
-                      subtitle: AppLocalizations.of(context)!.available247,
+                      title: l10n.liveChat,
+                      subtitle: l10n.available247,
                       onTap: () {
                         // Open chat
                       },
@@ -191,8 +193,8 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     const SizedBox(height: 16),
                     _ContactOption(
                       icon: Icons.phone,
-                      title: AppLocalizations.of(context)!.phoneSupport,
-                      subtitle: AppLocalizations.of(context)!.phoneNumber,
+                      title: l10n.phoneSupport,
+                      subtitle: l10n.contactPhoneValue,
                       onTap: () {
                         // Make phone call
                       },
@@ -205,7 +207,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
 
               // Additional Resources
               Text(
-                AppLocalizations.of(context)!.additionalResources,
+                l10n.additionalResources,
                 style: textTheme.titleMedium?.copyWith(
                   fontSize: AppConstants.fontSize,
                   fontWeight: FontWeight.bold,
@@ -230,7 +232,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   children: [
                     _ResourceItem(
                       icon: Icons.description,
-                      title: AppLocalizations.of(context)!.helpUserGuide,
+                      title: l10n.helpUserGuide,
                       onTap: () {
                         context.go('/legal?type=guide');
                       },
@@ -238,8 +240,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     const SizedBox(height: 16),
                     _ResourceItem(
                       icon: Icons.privacy_tip,
-                      title:
-                          AppLocalizations.of(context)!.privacyPolicyResource,
+                      title: l10n.privacyPolicyResource,
                       onTap: () {
                         context.go('/legal?type=privacy');
                       },
@@ -247,8 +248,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     const SizedBox(height: 16),
                     _ResourceItem(
                       icon: Icons.gavel,
-                      title:
-                          AppLocalizations.of(context)!.termsOfServiceResource,
+                      title: l10n.termsOfServiceResource,
                       onTap: () {
                         context.go('/legal?type=terms');
                       },
@@ -256,7 +256,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                     const SizedBox(height: 16),
                     _ResourceItem(
                       icon: Icons.update,
-                      title: AppLocalizations.of(context)!.helpAppUpdates,
+                      title: l10n.helpAppUpdates,
                       onTap: () {
                         // Check for updates
                       },
@@ -270,8 +270,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
               // App version
               Center(
                 child: Text(
-                  AppLocalizations.of(context)!
-                      .appVersionLabel(AppConstants.appVersion),
+                  l10n.appVersionLabel(AppConstants.appVersion),
                   style: textTheme.bodySmall?.copyWith(
                     fontSize: 14,
                     color: colors.onSurfaceVariant,

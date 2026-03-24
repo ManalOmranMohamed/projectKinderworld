@@ -48,12 +48,15 @@ class AuthApi {
   Future<AuthSessionPayload> login({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
     final response = await _network.post<Map<String, dynamic>>(
       '/auth/login',
       data: {
         'email': email.trim().toLowerCase(),
         'password': password,
+        if (twoFactorCode != null && twoFactorCode.trim().isNotEmpty)
+          'two_factor_code': twoFactorCode.trim(),
       },
     );
     return _toSessionPayload(response.data);

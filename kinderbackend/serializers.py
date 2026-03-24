@@ -40,6 +40,8 @@ def user_to_json(user: User) -> Dict:
         "plan": plan,
         "limits": get_plan_limits(plan),
         "features": get_plan_features(plan),
+        "two_factor_enabled": bool(getattr(user, "two_factor_enabled", False)),
+        "two_factor_method": getattr(user, "two_factor_method", None),
         "created_at": _iso_z(user.created_at),
         "updated_at": _iso_z(user.updated_at),
     }

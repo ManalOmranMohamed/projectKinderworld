@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeAlias
 
 from core.settings import settings
+
+MetadataPayload: TypeAlias = dict[str, str]
+RawProviderPayload: TypeAlias = dict[str, Any]
 
 
 class PaymentProviderError(Exception):
@@ -30,7 +33,7 @@ class CheckoutSessionResult:
     subscription_id: str | None = None
     payment_intent_id: str | None = None
     payment_method_id: str | None = None
-    raw: dict[str, Any] = field(default_factory=dict)
+    raw: RawProviderPayload = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -39,7 +42,7 @@ class PortalSessionResult:
     session_id: str
     url: str
     customer_id: str | None = None
-    raw: dict[str, Any] = field(default_factory=dict)
+    raw: RawProviderPayload = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -51,7 +54,7 @@ class RefundResult:
     currency: str
     payment_intent_id: str | None = None
     charge_id: str | None = None
-    raw: dict[str, Any] = field(default_factory=dict)
+    raw: RawProviderPayload = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -64,7 +67,7 @@ class ProviderSubscriptionSnapshot:
     cancel_at_period_end: bool
     latest_invoice_id: str | None = None
     latest_invoice_status: str | None = None
-    raw: dict[str, Any] = field(default_factory=dict)
+    raw: RawProviderPayload = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -79,11 +82,13 @@ class PaymentMethodReference:
     exp_year: int | None
     is_default: bool
     fingerprint: str | None = None
-    metadata_json: dict[str, Any] = field(default_factory=dict)
+    metadata_json: RawProviderPayload = field(default_factory=dict)
 
     @property
     def label(self) -> str:
-        pieces = [part for part in (self.brand, self.last4 and f"ending {self.last4}") if part]
+        pieces: list[str] = [
+            part for part in (self.brand, self.last4 and f"ending {self.last4}") if part
+        ]
         return " ".join(pieces) if pieces else self.method_id
 
 
@@ -98,7 +103,7 @@ class PaymentProviderAdapter(Protocol):
         user_email: str,
         user_name: str | None,
         customer_id: str | None,
-        metadata: dict[str, str],
+        metadata: MetadataPayload,
     ) -> CheckoutSessionResult: ...
 
     def retrieve_checkout_session(self, *, session_id: str) -> CheckoutSessionResult: ...
@@ -109,10 +114,10 @@ class PaymentProviderAdapter(Protocol):
         self,
         *,
         customer_id: str,
-        metadata: dict[str, str],
+        metadata: MetadataPayload,
     ) -> PortalSessionResult: ...
 
-    def cancel_subscription(self, *, subscription_id: str) -> dict[str, Any]: ...
+    def cancel_subscription(self, *, subscription_id: str) -> RawProviderPayload: ...
 
     def refund_payment(
         self,
@@ -121,7 +126,7 @@ class PaymentProviderAdapter(Protocol):
         charge_id: str | None,
         amount_cents: int | None,
         reason: str | None,
-        metadata: dict[str, str],
+        metadata: MetadataPayload,
     ) -> RefundResult: ...
 
     def list_payment_methods(self, *, customer_id: str) -> list[PaymentMethodReference]: ...
@@ -134,7 +139,7 @@ class PaymentProviderAdapter(Protocol):
         set_default: bool,
     ) -> PaymentMethodReference: ...
 
-    def detach_payment_method(self, *, payment_method_id: str) -> dict[str, Any]: ...
+    def detach_payment_method(self, *, payment_method_id: str) -> RawProviderPayload: ...
 
 
 def get_payment_provider() -> PaymentProviderAdapter:

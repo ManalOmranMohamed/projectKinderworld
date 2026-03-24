@@ -5,6 +5,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/payment_method_record.dart';
 import 'package:kinder_world/core/providers/subscription_provider.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaymentMethodsScreen extends ConsumerStatefulWidget {
@@ -44,19 +45,17 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
     super.didChangeAppLifecycleState(state);
   }
 
-  Future<List<PaymentMethodRecord>> _loadMethods({bool forceRefresh = false}) async {
-    try {
-      final service = ref.read(subscriptionServiceProvider);
-      return await service.listPaymentMethods(forceRefresh: forceRefresh);
-    } catch (_) {
-      return const [];
-    }
+  Future<List<PaymentMethodRecord>> _loadMethods({
+    bool forceRefresh = false,
+  }) async {
+    final service = ref.read(subscriptionServiceProvider);
+    return service.listPaymentMethods(forceRefresh: forceRefresh);
   }
 
   Future<void> _addPaymentMethod(AppLocalizations l10n) async {
     final labelController = TextEditingController();
     final providerIdController = TextEditingController();
-    bool setDefault = false;
+    var setDefault = false;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -123,10 +122,15 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
 
   Future<void> _openPaymentPortal(AppLocalizations l10n) async {
     try {
-      final url = await ref.read(subscriptionServiceProvider).manageCurrentSubscription();
+      final url = await ref
+          .read(subscriptionServiceProvider)
+          .manageCurrentSubscription();
       final uri = Uri.tryParse(url);
       if (uri == null) throw StateError('Invalid portal URL');
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) throw StateError('Unable to open portal');
       setState(() {
         _refreshOnResume = true;
@@ -152,7 +156,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               Expanded(
@@ -160,21 +164,29 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                   future: _methodsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const AppLoadingState.child();
                     }
-                    final methods = snapshot.data ?? [];
-                    if (methods.isEmpty) {
-                      return Center(
-                        child: Text(
-                          l10n.paymentMethodsEmpty,
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontSize: AppConstants.fontSize,
-                            color: colors.onSurfaceVariant,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                    if (snapshot.hasError) {
+                      return AppErrorState.child(
+                        message: snapshot.error.toString(),
+                        onRetry: () {
+                          setState(() {
+                            _methodsFuture = _loadMethods(forceRefresh: true);
+                          });
+                        },
                       );
                     }
+
+                    final methods = snapshot.data ?? [];
+                    if (methods.isEmpty) {
+                      return AppEmptyState.child(
+                        emoji: '💳',
+                        title: l10n.paymentMethodsEmpty,
+                        subtitle:
+                            '${l10n.addPaymentMethod} • ${l10n.openPaymentPortal}',
+                      );
+                    }
+
                     return ListView.separated(
                       itemCount: methods.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -242,8 +254,8 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                                           ),
                                           child: Text(
                                             'Default',
-                                            style: textTheme.labelSmall
-                                                ?.copyWith(
+                                            style:
+                                                textTheme.labelSmall?.copyWith(
                                               color: AppColors.primary,
                                               fontWeight: FontWeight.w800,
                                             ),

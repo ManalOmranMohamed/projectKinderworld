@@ -6,11 +6,11 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:kinder_world/core/providers/app_services.dart';
 import 'package:kinder_world/core/models/achievement.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/repositories/gamification_repository.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
-import 'package:logger/logger.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INFRASTRUCTURE PROVIDERS
@@ -25,9 +25,10 @@ final gamificationBoxProvider = Provider<Box>((ref) {
 /// Provides the [GamificationRepository] singleton.
 final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
   final box = ref.watch(gamificationBoxProvider);
+  final logger = ref.watch(loggerProvider);
   return GamificationRepository(
     gamificationBox: box,
-    logger: Logger(),
+    logger: logger,
   );
 });
 
@@ -35,10 +36,11 @@ final gamificationRepositoryProvider = Provider<GamificationRepository>((ref) {
 final gamificationServiceProvider = Provider<GamificationService>((ref) {
   final gamificationRepo = ref.watch(gamificationRepositoryProvider);
   final childRepo = ref.watch(childRepositoryProvider);
+  final logger = ref.watch(loggerProvider);
   return GamificationService(
     gamificationRepository: gamificationRepo,
     childRepository: childRepo,
-    logger: Logger(),
+    logger: logger,
   );
 });
 

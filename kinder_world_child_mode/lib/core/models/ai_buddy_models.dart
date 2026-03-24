@@ -4,12 +4,23 @@ class AiBuddyProviderStatus {
     required this.mode,
     required this.status,
     required this.reason,
+    this.providerKey,
+    this.model,
+    this.supportsActivitySuggestions = false,
   });
 
   final bool configured;
   final String mode;
   final String status;
   final String? reason;
+  final String? providerKey;
+  final String? model;
+  final bool supportsActivitySuggestions;
+
+  bool get isReady => configured && status == 'ready';
+  bool get isFallback => !isReady;
+  bool get isUnavailable => status == 'unavailable';
+  String get effectiveProviderKey => providerKey ?? mode;
 
   factory AiBuddyProviderStatus.fromJson(Map<String, dynamic> json) {
     return AiBuddyProviderStatus(
@@ -17,6 +28,10 @@ class AiBuddyProviderStatus {
       mode: json['mode'] as String? ?? 'internal_fallback',
       status: json['status'] as String? ?? 'fallback',
       reason: json['reason'] as String?,
+      providerKey: json['provider_key'] as String?,
+      model: json['model'] as String?,
+      supportsActivitySuggestions:
+          json['supports_activity_suggestions'] as bool? ?? false,
     );
   }
 }

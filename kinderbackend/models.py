@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    Index,
     JSON,
     Boolean,
     Column,
@@ -14,6 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
+from core.field_encryption import EncryptedString
 from core.sqlalchemy_types import UTCDateTime
 from database import Base
 
@@ -37,6 +39,10 @@ class User(Base):
     )
     parent_pin_locked_until = Column(UTCDateTime(), nullable=True)
     parent_pin_updated_at = Column(UTCDateTime(), nullable=True)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False, server_default=false())
+    two_factor_method = Column(String, nullable=True)
+    two_factor_secret = Column(EncryptedString(), nullable=True)
+    two_factor_confirmed_at = Column(UTCDateTime(), nullable=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
@@ -50,9 +56,7 @@ class User(Base):
     privacy_setting = relationship(
         "PrivacySetting", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
-    support_tickets = relationship(
-        "SupportTicket", back_populates="user", cascade="all, delete-orphan"
-    )
+    support_tickets = relationship("SupportTicket", back_populates="user")
     payment_methods = relationship("PaymentMethod", cascade="all, delete-orphan")
     subscription_profile = relationship(
         "SubscriptionProfile",
@@ -60,15 +64,9 @@ class User(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
-    subscription_events = relationship(
-        "SubscriptionEvent", back_populates="user", cascade="all, delete-orphan"
-    )
-    billing_transactions = relationship(
-        "BillingTransaction", back_populates="user", cascade="all, delete-orphan"
-    )
-    payment_attempts = relationship(
-        "PaymentAttempt", back_populates="user", cascade="all, delete-orphan"
-    )
+    subscription_events = relationship("SubscriptionEvent", back_populates="user")
+    billing_transactions = relationship("BillingTransaction", back_populates="user")
+    payment_attempts = relationship("PaymentAttempt", back_populates="user")
     ai_buddy_sessions = relationship(
         "AiBuddySession", back_populates="parent_user", cascade="all, delete-orphan"
     )
@@ -108,30 +106,32 @@ class SubscriptionProfile(Base):
     )
 
     user = relationship("User", back_populates="subscription_profile")
-    events = relationship(
-        "SubscriptionEvent", back_populates="subscription_profile", cascade="all, delete-orphan"
-    )
+    events = relationship("SubscriptionEvent", back_populates="subscription_profile")
     billing_transactions = relationship(
         "BillingTransaction",
         back_populates="subscription_profile",
-        cascade="all, delete-orphan",
     )
-    payment_attempts = relationship(
-        "PaymentAttempt", back_populates="subscription_profile", cascade="all, delete-orphan"
-    )
+    payment_attempts = relationship("PaymentAttempt", back_populates="subscription_profile")
 
 
 class SubscriptionEvent(Base):
     __tablename__ = "subscription_events"
+    __table_args__ = (
+        Index(
+            "ix_subscription_events_profile_occurred_at",
+            "subscription_profile_id",
+            "occurred_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     subscription_profile_id = Column(
         Integer,
-        ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("subscription_profiles.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     event_type = Column(String, nullable=False, index=True)
@@ -154,15 +154,22 @@ class SubscriptionEvent(Base):
 
 class BillingTransaction(Base):
     __tablename__ = "billing_transactions"
+    __table_args__ = (
+        Index(
+            "ix_billing_transactions_profile_effective_at",
+            "subscription_profile_id",
+            "effective_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     subscription_profile_id = Column(
         Integer,
-        ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("subscription_profiles.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     plan_id = Column(String, nullable=False, index=True)
@@ -183,15 +190,22 @@ class BillingTransaction(Base):
 
 class PaymentAttempt(Base):
     __tablename__ = "payment_attempts"
+    __table_args__ = (
+        Index(
+            "ix_payment_attempts_profile_requested_at",
+            "subscription_profile_id",
+            "requested_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     subscription_profile_id = Column(
         Integer,
-        ForeignKey("subscription_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("subscription_profiles.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     plan_id = Column(String, nullable=False, index=True)
@@ -251,6 +265,14 @@ class PaymentWebhookEvent(Base):
 
 class ChildProfile(Base):
     __tablename__ = "child_profiles"
+    __table_args__ = (
+        Index(
+            "ix_child_profiles_parent_deleted_created_at",
+            "parent_id",
+            "deleted_at",
+            "created_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -312,6 +334,14 @@ class ChildProfile(Base):
 
 class ChildSessionLog(Base):
     __tablename__ = "child_session_logs"
+    __table_args__ = (
+        Index(
+            "ix_child_session_logs_child_archived_started_at",
+            "child_id",
+            "archived_at",
+            "started_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     child_id = Column(
@@ -332,6 +362,14 @@ class ChildSessionLog(Base):
 
 class ChildActivityEvent(Base):
     __tablename__ = "child_activity_events"
+    __table_args__ = (
+        Index(
+            "ix_child_activity_events_child_archived_occurred_at",
+            "child_id",
+            "archived_at",
+            "occurred_at",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     child_id = Column(
@@ -542,7 +580,7 @@ class AiBuddySession(Base):
         server_default=text("'summary_and_metrics'"),
         index=True,
     )
-    parent_summary = Column(String, nullable=True)
+    parent_summary = Column(EncryptedString(), nullable=True)
     started_at = Column(UTCDateTime(), nullable=False, server_default=func.now(), index=True)
     last_message_at = Column(UTCDateTime(), nullable=True, index=True)
     ended_at = Column(UTCDateTime(), nullable=True, index=True)
@@ -575,7 +613,7 @@ class AiBuddyMessage(Base):
         Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False, index=True
     )
     role = Column(String, nullable=False, index=True)
-    content = Column(String, nullable=False)
+    content = Column(EncryptedString(), nullable=False)
     intent = Column(String, nullable=True, index=True)
     response_source = Column(
         String,
@@ -636,6 +674,10 @@ class ChildDailyActivitySummary(Base):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = (
+        Index("ix_notifications_user_created_at", "user_id", "created_at"),
+        Index("ix_notifications_user_is_read_created_at", "user_id", "is_read", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -666,9 +708,9 @@ class SupportTicket(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    subject = Column(String, nullable=False)
-    message = Column(String, nullable=False)
-    email = Column(String, nullable=True)
+    subject = Column(EncryptedString(), nullable=False)
+    message = Column(EncryptedString(), nullable=False)
+    email = Column(EncryptedString(), nullable=True)
     category = Column(
         String,
         nullable=False,
@@ -683,6 +725,7 @@ class SupportTicket(Base):
         Integer, ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     closed_at = Column(UTCDateTime(), nullable=True)
+    deleted_at = Column(UTCDateTime(), nullable=True, index=True)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
@@ -711,7 +754,7 @@ class SupportTicketMessage(Base):
     user_id = Column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
-    message = Column(String, nullable=False)
+    message = Column(EncryptedString(), nullable=False)
     created_at = Column(UTCDateTime(), server_default=func.now(), nullable=False)
 
     ticket = relationship("SupportTicket", back_populates="thread_messages")

@@ -162,16 +162,24 @@ class _FakeAuthApi extends AuthApi {
   Map<String, dynamic>? logoutPayload;
   Map<String, dynamic>? childRegisterPayload;
   Map<String, dynamic>? parentPinStatusPayload;
+  Object? loginError;
+  int childSessionValidationCalls = 0;
   Object? logoutError;
   int logoutCalls = 0;
   String? lastChildRegisterAuthorization;
+  String? lastLoginTwoFactorCode;
   int parentPinStatusCalls = 0;
 
   @override
   Future<AuthSessionPayload> login({
     required String email,
     required String password,
+    String? twoFactorCode,
   }) async {
+    lastLoginTwoFactorCode = twoFactorCode;
+    if (loginError != null) {
+      throw loginError!;
+    }
     return loginPayload!;
   }
 
@@ -205,6 +213,7 @@ class _FakeAuthApi extends AuthApi {
   Future<Map<String, dynamic>> validateChildSession({
     required String sessionToken,
   }) async {
+    childSessionValidationCalls += 1;
     return childSessionValidationPayload ?? const {};
   }
 
@@ -402,7 +411,9 @@ void main() {
     expect(user.name, 'Mira');
   });
 
-  test('getCurrentUser clears legacy child markers', () async {
+  test(
+      'getCurrentUser clears legacy child markers even when childSession is missing',
+      () async {
     storage.userRole = UserRoles.child;
     storage.authToken = 'child_session_child-7';
 
@@ -411,6 +422,21 @@ void main() {
     expect(user, isNull);
     expect(storage.authToken, isNull);
     expect(storage.userRole, isNull);
+  });
+
+  test(
+      'getCurrentUser preserves non-legacy child auth when childSession is missing',
+      () async {
+    final sessionToken = _childSessionJwt();
+    storage.userRole = UserRoles.child;
+    storage.authToken = sessionToken;
+
+    final user = await repository.getCurrentUser();
+
+    expect(user, isNull);
+    expect(storage.authToken, sessionToken);
+    expect(storage.userRole, UserRoles.child);
+    expect(authApi.childSessionValidationCalls, 0);
   });
 
   test('logout notifies backend for parent sessions before clearing local auth',
@@ -473,7 +499,8 @@ void main() {
     expect(storage.parentPinVerified, isFalse);
   });
 
-  test('registerChild uses current parent auth token for secured child creation',
+  test(
+      'registerChild uses current parent auth token for secured child creation',
       () async {
     storage.authToken = 'parent.jwt';
     storage.userRole = UserRoles.parent;
@@ -515,7 +542,8 @@ void main() {
     expect(authApi.lastChildRegisterAuthorization, 'stored.parent.jwt');
   });
 
-  test('registerChild fails fast when no parent session is available', () async {
+  test('registerChild fails fast when no parent session is available',
+      () async {
     expect(
       () => repository.registerChild(
         name: 'Noor',
@@ -538,7 +566,8 @@ void main() {
     expect(authApi.parentPinStatusCalls, 0);
   });
 
-  test('getParentPinStatus uses API for authenticated parent sessions', () async {
+  test('getParentPinStatus uses API for authenticated parent sessions',
+      () async {
     storage.authToken = 'parent.jwt';
     storage.userRole = UserRoles.parent;
     authApi.parentPinStatusPayload = const {
@@ -552,5 +581,66 @@ void main() {
     expect(status.hasPin, isTrue);
     expect(status.failedAttempts, 2);
     expect(authApi.parentPinStatusCalls, 1);
+  });
+
+  test('loginParent surfaces two-factor challenge details from backend',
+      () async {
+    authApi.loginError = DioException(
+      requestOptions: RequestOptions(path: '/auth/login'),
+      response: Response(
+        requestOptions: RequestOptions(path: '/auth/login'),
+        statusCode: 401,
+        data: const {
+          'detail': {
+            'code': 'PARENT_TWO_FACTOR_REQUIRED',
+            'message': 'Two-factor authentication code is required',
+            'two_factor_method': 'totp',
+          },
+        },
+      ),
+    );
+
+    expect(
+      () => repository.loginParent(
+        email: 'parent@example.com',
+        password: 'Password123!',
+      ),
+      throwsA(
+        isA<ParentAuthException>()
+            .having((e) => e.requiresTwoFactor, 'requiresTwoFactor', isTrue)
+            .having((e) => e.twoFactorMethod, 'twoFactorMethod', 'totp')
+            .having(
+              (e) => e.message,
+              'message',
+              'Two-factor authentication code is required',
+            ),
+      ),
+    );
+  });
+
+  test('loginParent forwards optional two-factor code to auth API', () async {
+    authApi.loginPayload = AuthSessionPayload(
+      accessToken: 'parent.jwt',
+      refreshToken: 'refresh.jwt',
+      user: Map<String, dynamic>.from(
+        _parentAuthRaw(
+          accessToken: 'parent.jwt',
+          refreshToken: 'refresh.jwt',
+        )['user'] as Map<String, dynamic>,
+      ),
+      raw: _parentAuthRaw(
+        accessToken: 'parent.jwt',
+        refreshToken: 'refresh.jwt',
+      ),
+    );
+
+    final user = await repository.loginParent(
+      email: 'parent@example.com',
+      password: 'Password123!',
+      twoFactorCode: '123456',
+    );
+
+    expect(user, isNotNull);
+    expect(authApi.lastLoginTwoFactorCode, '123456');
   });
 }

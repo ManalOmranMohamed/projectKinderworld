@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from admin_auth import ADMIN_TOKEN_TYPE
 from auth import decode_token
+from core.message_catalog import AdminAuthMessages
 from deps import get_db
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ def get_current_admin(
     if creds is None or not creds.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin authentication required",
+            detail=AdminAuthMessages.AUTHENTICATION_REQUIRED,
         )
 
     token = creds.credentials
@@ -63,21 +64,21 @@ def get_current_admin(
         logger.warning("Admin JWT decode failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired admin token",
+            detail=AdminAuthMessages.INVALID_OR_EXPIRED_ADMIN_TOKEN,
         )
 
     # Enforce token_type separation — admin tokens must carry token_type='admin'
     if payload.get("token_type") != ADMIN_TOKEN_TYPE:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid admin token type",
+            detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_TYPE,
         )
 
     admin_id_str = payload.get("sub")
     if not admin_id_str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
+            detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_PAYLOAD,
         )
 
     try:
@@ -85,14 +86,14 @@ def get_current_admin(
     except (ValueError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
+            detail=AdminAuthMessages.INVALID_ADMIN_TOKEN_PAYLOAD,
         )
 
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
     if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin account not found",
+            detail=AdminAuthMessages.ADMIN_ACCOUNT_NOT_FOUND,
         )
 
     token_version = payload.get("token_version")
@@ -103,7 +104,7 @@ def get_current_admin(
     if token_version_value is None or token_version_value != int(admin.token_version or 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin token has been revoked",
+            detail=AdminAuthMessages.ADMIN_TOKEN_REVOKED,
         )
 
     # Disabled admins are blocked even with a valid token
@@ -113,7 +114,7 @@ def get_current_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "ADMIN_DISABLED",
-                "message": "This admin account has been disabled",
+                "message": AdminAuthMessages.ADMIN_DISABLED,
             },
         )
 

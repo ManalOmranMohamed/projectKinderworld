@@ -25,6 +25,7 @@ class SupportAssignRequest(BaseModel):
 def list_support_tickets(
     status: str = Query("", description="Filter by open, in_progress, resolved, closed"),
     category: str = Query("", description="Filter by ticket category"),
+    include_deleted: bool = Query(False, description="Include soft-deleted tickets"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -35,6 +36,7 @@ def list_support_tickets(
         category=category,
         page=page,
         page_size=page_size,
+        include_deleted=include_deleted,
         db=db,
     )
 
@@ -42,10 +44,15 @@ def list_support_tickets(
 @router.get("/{ticket_id}")
 def get_support_ticket(
     ticket_id: int,
+    include_deleted: bool = Query(False, description="Include soft-deleted tickets"),
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.support.view")),
 ):
-    return support_ticket_service.get_admin_ticket(ticket_id=ticket_id, db=db)
+    return support_ticket_service.get_admin_ticket(
+        ticket_id=ticket_id,
+        db=db,
+        include_deleted=include_deleted,
+    )
 
 
 @router.post("/{ticket_id}/reply")

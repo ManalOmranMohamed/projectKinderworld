@@ -1,8 +1,67 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kinder_world/core/api/reports_api.dart';
+import 'package:kinder_world/core/cache/app_cache_store.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/network/network_service.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
+import 'package:kinder_world/core/storage/secure_storage.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
+import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeSecureStorage extends SecureStorage {
+  _FakeSecureStorage({
+    this.parentAccessToken,
+  });
+
+  final String? parentAccessToken;
+
+  @override
+  Future<String?> getParentAccessToken() async => parentAccessToken;
+
+  @override
+  Future<String?> getAuthToken() async => null;
+}
+
+class _FakeReportsApi extends ReportsApi {
+  _FakeReportsApi()
+      : super(
+          NetworkService(
+            secureStorage: _FakeSecureStorage(),
+            logger: Logger(),
+          ),
+        );
+
+  Map<String, dynamic> basicResponse = const <String, dynamic>{};
+  Map<String, dynamic> advancedResponse = const <String, dynamic>{};
+  Object? basicError;
+  Object? advancedError;
+
+  @override
+  Future<Map<String, dynamic>> getBasicReports({
+    int? childId,
+    int days = 7,
+    String? parentAccessToken,
+  }) async {
+    if (basicError != null) {
+      throw basicError!;
+    }
+    return basicResponse;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAdvancedReports({
+    int? childId,
+    int days = 30,
+    String? parentAccessToken,
+  }) async {
+    if (advancedError != null) {
+      throw advancedError!;
+    }
+    return advancedResponse;
+  }
+}
 
 ChildProfile _child({
   int activitiesCompleted = 2,
@@ -107,9 +166,12 @@ void main() {
     expect(report.recentSessions.first.title, 'Counting Numbers');
   });
 
-  test('buildReportFromRecords falls back to child profile totals when no records exist', () {
+  test(
+      'buildReportFromRecords falls back to child profile totals when no records exist',
+      () {
     final report = ParentReportService.buildReportFromRecords(
-      child: _child(activitiesCompleted: 4, totalTimeSpent: 90, currentMood: 'calm'),
+      child: _child(
+          activitiesCompleted: 4, totalTimeSpent: 90, currentMood: 'calm'),
       period: ReportPeriod.month,
       allRecords: const [],
     );
@@ -122,7 +184,9 @@ void main() {
     expect(report.recentSessions, isEmpty);
   });
 
-  test('buildReportFromBackend maps backend analytics payloads without local fallback', () {
+  test(
+      'buildReportFromBackend maps backend analytics payloads without local fallback',
+      () {
     final report = ParentReportService.buildReportFromBackend(
       child: _child(currentMood: null),
       period: ReportPeriod.week,
@@ -201,5 +265,92 @@ void main() {
     expect(report.usesRecordedSessions, isTrue);
     expect(report.achievements, hasLength(1));
     expect(report.recentSessions.first.title, 'Numbers');
+  });
+
+  test(
+      'loadChildReport falls back to local device data when backend refresh fails',
+      () async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final api = _FakeReportsApi()..basicError = Exception('offline');
+    final service = ParentReportService(
+      secureStorage: _FakeSecureStorage(parentAccessToken: 'parent-token'),
+      reportsApi: api,
+      cacheStore: AppCacheStore(preferences),
+      logger: Logger(),
+      loadProgressRecords: (_) async => <ProgressRecord>[
+        _record(
+          id: 'offline-1',
+          activityId: 'lesson_math_2',
+          date: DateTime.now().subtract(const Duration(days: 1)),
+          score: 88,
+          duration: 18,
+          xpEarned: 35,
+        ),
+      ],
+    );
+
+    final result = await service.loadChildReport(
+      child: _child(),
+      period: ReportPeriod.week,
+    );
+
+    expect(result.source, ChildReportSource.localDevice);
+    expect(result.hasPendingLocalChanges, isTrue);
+    expect(result.report.totalActivitiesCompleted, 1);
+    expect(result.report.usesRecordedSessions, isTrue);
+  });
+
+  test('loadChildReport reuses a cached report snapshot when offline',
+      () async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final cacheStore = AppCacheStore(preferences);
+    final seedApi = _FakeReportsApi()
+      ..basicResponse = <String, dynamic>{
+        'summary': <String, dynamic>{
+          'activities_completed_7d': 4,
+          'lessons_completed_7d': 2,
+          'screen_time_minutes_7d': 40,
+          'average_score': 93,
+          'completion_rate': 0.8,
+        },
+        'data_availability': <String, dynamic>{
+          'screen_time': true,
+          'activities': true,
+        },
+      };
+    final warmService = ParentReportService(
+      secureStorage: _FakeSecureStorage(parentAccessToken: 'parent-token'),
+      reportsApi: seedApi,
+      cacheStore: cacheStore,
+      logger: Logger(),
+      loadProgressRecords: (_) async => const <ProgressRecord>[],
+    );
+
+    final initial = await warmService.loadChildReport(
+      child: _child(),
+      period: ReportPeriod.week,
+    );
+    expect(initial.source, ChildReportSource.liveServer);
+
+    final offlineApi = _FakeReportsApi()..basicError = Exception('offline');
+    final offlineService = ParentReportService(
+      secureStorage: _FakeSecureStorage(parentAccessToken: 'parent-token'),
+      reportsApi: offlineApi,
+      cacheStore: cacheStore,
+      logger: Logger(),
+      loadProgressRecords: (_) async => const <ProgressRecord>[],
+    );
+
+    final result = await offlineService.loadChildReport(
+      child: _child(),
+      period: ReportPeriod.week,
+    );
+
+    expect(result.source, ChildReportSource.cachedSnapshot);
+    expect(result.report.totalActivitiesCompleted, 4);
+    expect(result.report.averageScore, 93);
+    expect(result.isCachedSnapshot, isTrue);
   });
 }

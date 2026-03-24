@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
+import 'package:kinder_world/core/utils/password_policy.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 
@@ -138,7 +140,6 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
   }
 
   void _showError(String message) {
-    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -146,7 +147,14 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
             const Icon(Icons.error_outline_rounded,
                 color: Colors.white, size: 18),
             const SizedBox(width: 10),
-            Expanded(child: Text(_localizeErrorMessage(message, l10n))),
+            Expanded(
+              child: Text(
+                localizeAuthErrorMessage(
+                  message,
+                  AppLocalizations.of(context)!,
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -155,18 +163,6 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );
-  }
-
-  String _localizeErrorMessage(String message, AppLocalizations l10n) {
-    final normalized = message.toLowerCase();
-    if (normalized.contains('connection refused') ||
-        normalized.contains('connection errored') ||
-        normalized.contains('socketexception') ||
-        normalized.contains('failed host lookup') ||
-        normalized.contains('connection error')) {
-      return l10n.connectionError;
-    }
-    return message;
   }
 
   @override
@@ -302,13 +298,11 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                                   () => _obscurePassword = !_obscurePassword),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return l10n.passwordRequired;
-                              }
-                              if (value.length < 8) {
-                                return l10n.passwordTooShortRegister;
-                              }
-                              return null;
+                              return PasswordPolicy.validateForUi(
+                                password: value ?? '',
+                                l10n: l10n,
+                                emptyMessage: l10n.passwordRequired,
+                              );
                             },
                           ),
 

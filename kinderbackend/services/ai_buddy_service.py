@@ -6,7 +6,8 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from core.observability import emit_event
+from core.logging_utils import log_with_context
+from core.observability import emit_event, observe_duration
 from core.system_settings import require_ai_buddy_enabled
 from models import AiBuddyMessage, AiBuddySession, AiInteraction, ChildProfile, User
 from services.ai_buddy_moderation import ai_buddy_moderation_service
@@ -18,6 +19,21 @@ logger = logging.getLogger(__name__)
 
 
 class AiBuddyService:
+    def __init__(
+        self,
+        *,
+        require_enabled=require_ai_buddy_enabled,
+        persistence_service=ai_buddy_persistence_service,
+        moderation_service=ai_buddy_moderation_service,
+        response_generator=ai_buddy_response_generator,
+        visibility_service=ai_buddy_visibility_service,
+    ) -> None:
+        self._require_enabled = require_enabled
+        self._persistence_service = persistence_service
+        self._moderation_service = moderation_service
+        self._response_generator = response_generator
+        self._visibility_service = visibility_service
+
     def start_session(
         self,
         *,
@@ -27,8 +43,8 @@ class AiBuddyService:
         force_new: bool = False,
         title: str | None = None,
     ) -> dict[str, Any]:
-        require_ai_buddy_enabled(db)
-        child = ai_buddy_persistence_service.get_child_for_parent(
+        self._require_enabled(db)
+        child = self._persistence_service.get_child_for_parent(
             db=db,
             parent=parent,
             child_id=child_id,
@@ -36,16 +52,18 @@ class AiBuddyService:
         session = (
             None
             if force_new
-            else ai_buddy_persistence_service.get_current_session(
+            else self._persistence_service.get_current_session(
                 db=db,
                 parent=parent,
                 child_id=child.id,
             )
         )
-        provider_state = ai_buddy_response_generator.provider_state()
+        provider_state = self._response_generator.provider_state()
 
         if session is None:
-            session = ai_buddy_persistence_service.create_session(
+            greeting = self._response_generator.greeting(child_name=child.name)
+            provider_state = greeting.provider_state
+            session = self._persistence_service.create_session(
                 db=db,
                 parent=parent,
                 child=child,
@@ -55,14 +73,13 @@ class AiBuddyService:
                 unavailable_reason=provider_state.reason,
                 metadata_json={
                     "message_persistence_policy": "stored_for_30_days",
-                    "parental_visibility_mode": ai_buddy_visibility_service.visibility_mode,
+                    "parental_visibility_mode": self._visibility_service.visibility_mode,
                     "transcript_visible_to_parent": False,
                     "experience_mode": provider_state.mode,
                     "experience_status": provider_state.status,
                 },
             )
-            greeting = ai_buddy_response_generator.greeting(child_name=child.name)
-            ai_buddy_persistence_service.add_message(
+            self._persistence_service.add_message(
                 db=db,
                 session=session,
                 role="assistant",
@@ -73,10 +90,10 @@ class AiBuddyService:
                 safety_status=greeting.safety_status,
                 metadata_json=greeting.metadata_json,
             )
-            ai_buddy_visibility_service.update_session_summary(
+            self._visibility_service.update_session_summary(
                 session=session,
                 child_name=child.name,
-                messages=ai_buddy_persistence_service.list_messages(db=db, session=session),
+                messages=self._persistence_service.list_messages(db=db, session=session),
             )
             self._record_ai_interaction(
                 db=db,
@@ -87,7 +104,7 @@ class AiBuddyService:
                 response_category="greeting",
                 safety_status="allowed",
                 safety_flags_json={
-                    "visibility_mode": ai_buddy_visibility_service.visibility_mode,
+                    "visibility_mode": self._visibility_service.visibility_mode,
                 },
                 metadata_json={
                     "session_id": session.id,
@@ -105,15 +122,20 @@ class AiBuddyService:
                 provider_mode=provider_state.mode,
                 provider_status=provider_state.status,
             )
-            logger.info(
-                "ai_buddy_session_started parent_id=%s child_id=%s session_id=%s provider_mode=%s",
-                parent.id,
-                child.id,
-                session.id,
-                provider_state.mode,
+            log_with_context(
+                logger,
+                logging.INFO,
+                "ai_buddy_session_started",
+                event="ai_buddy_session_started",
+                category="ai",
+                user_id=parent.id,
+                child_id=child.id,
+                session_id=session.id,
+                outcome="created",
+                provider=provider_state.mode,
             )
 
-        messages = ai_buddy_persistence_service.list_messages(db=db, session=session)
+        messages = self._persistence_service.list_messages(db=db, session=session)
         return self._serialize_conversation(
             session=session,
             messages=messages,
@@ -127,10 +149,10 @@ class AiBuddyService:
         parent: User,
         child_id: int,
     ) -> dict[str, Any]:
-        require_ai_buddy_enabled(db)
-        ai_buddy_persistence_service.get_child_for_parent(db=db, parent=parent, child_id=child_id)
-        provider_state = ai_buddy_response_generator.provider_state()
-        session = ai_buddy_persistence_service.get_current_session(
+        self._require_enabled(db)
+        self._persistence_service.get_child_for_parent(db=db, parent=parent, child_id=child_id)
+        provider_state = self._response_generator.provider_state()
+        session = self._persistence_service.get_current_session(
             db=db,
             parent=parent,
             child_id=child_id,
@@ -141,7 +163,7 @@ class AiBuddyService:
                 messages=[],
                 provider_state=provider_state,
             )
-        messages = ai_buddy_persistence_service.list_messages(db=db, session=session)
+        messages = self._persistence_service.list_messages(db=db, session=session)
         return self._serialize_conversation(
             session=session,
             messages=messages,
@@ -155,14 +177,14 @@ class AiBuddyService:
         parent: User,
         session_id: int,
     ) -> dict[str, Any]:
-        require_ai_buddy_enabled(db)
-        session = ai_buddy_persistence_service.get_session_for_parent(
+        self._require_enabled(db)
+        session = self._persistence_service.get_session_for_parent(
             db=db,
             parent=parent,
             session_id=session_id,
         )
-        provider_state = ai_buddy_response_generator.provider_state()
-        messages = ai_buddy_persistence_service.list_messages(db=db, session=session)
+        provider_state = self._response_generator.provider_state()
+        messages = self._persistence_service.list_messages(db=db, session=session)
         return self._serialize_conversation(
             session=session,
             messages=messages,
@@ -180,13 +202,13 @@ class AiBuddyService:
         client_message_id: str | None = None,
         quick_action: str | None = None,
     ) -> dict[str, Any]:
-        require_ai_buddy_enabled(db)
-        child = ai_buddy_persistence_service.get_child_for_parent(
+        self._require_enabled(db)
+        child = self._persistence_service.get_child_for_parent(
             db=db,
             parent=parent,
             child_id=child_id,
         )
-        session = ai_buddy_persistence_service.get_session_for_parent(
+        session = self._persistence_service.get_session_for_parent(
             db=db,
             parent=parent,
             session_id=session_id,
@@ -196,13 +218,17 @@ class AiBuddyService:
                 status_code=400, detail="Session does not belong to requested child"
             )
 
-        moderation = ai_buddy_moderation_service.moderate_input(text=content)
-        logger.info(
-            "ai_buddy_input_moderated parent_id=%s child_id=%s session_id=%s status=%s",
-            parent.id,
-            child.id,
-            session.id,
-            moderation.classification,
+        moderation = self._moderation_service.moderate_input(text=content)
+        log_with_context(
+            logger,
+            logging.INFO,
+            "ai_buddy_input_moderated",
+            event="ai_buddy_input_moderated",
+            category="ai",
+            user_id=parent.id,
+            child_id=child.id,
+            session_id=session.id,
+            outcome=moderation.classification,
         )
         emit_event(
             "ai.moderation.input",
@@ -229,7 +255,7 @@ class AiBuddyService:
                 else "intercept_before_generation"
             ),
         }
-        user_message = ai_buddy_persistence_service.add_message(
+        user_message = self._persistence_service.add_message(
             db=db,
             session=session,
             role="child",
@@ -243,180 +269,205 @@ class AiBuddyService:
         )
         recent_messages = [
             item.content
-            for item in ai_buddy_persistence_service.list_messages(db=db, session=session, limit=6)
+            for item in self._persistence_service.list_messages(db=db, session=session, limit=6)
             if item.role == "child"
         ]
 
-        provider_state = ai_buddy_response_generator.provider_state()
-        assistant_response_source = "internal_fallback"
-        assistant_status = "completed"
-        assistant_intent = quick_action or "general_help"
-        assistant_safety_status = moderation.classification
-        assistant_metadata: dict[str, Any] = {
-            "topic": moderation.topic,
-            "moderation_reason": moderation.reason,
-            "moderation_flags": list(moderation.matched_rules),
-        }
-        assistant_content = moderation.safe_response or ""
+        provider_state = self._response_generator.provider_state()
+        with observe_duration(
+            "ai.send_message",
+            category="ai",
+            provider_mode=provider_state.mode,
+            moderation_classification=moderation.classification,
+        ):
+            assistant_response_source = "internal_fallback"
+            assistant_status = "completed"
+            assistant_intent = quick_action or "general_help"
+            assistant_safety_status = moderation.classification
+            assistant_metadata: dict[str, Any] = {
+                "topic": moderation.topic,
+                "moderation_reason": moderation.reason,
+                "moderation_flags": list(moderation.matched_rules),
+            }
+            assistant_content = moderation.safe_response or ""
 
-        if moderation.classification == "allowed":
-            generated = ai_buddy_response_generator.generate(
-                child_name=child.name,
-                message=content,
-                quick_action=quick_action,
-                recent_messages=recent_messages,
-            )
-            output_moderation = ai_buddy_moderation_service.moderate_output(text=generated.content)
-            logger.info(
-                "ai_buddy_output_moderated parent_id=%s child_id=%s session_id=%s status=%s",
-                parent.id,
-                child.id,
-                session.id,
-                output_moderation.classification,
-            )
-            emit_event(
-                "ai.moderation.output",
-                category="ai",
-                user_id=parent.id,
-                child_id=child.id,
-                session_id=session.id,
-                classification=output_moderation.classification,
-                topic=output_moderation.topic,
-            )
-            provider_state = generated.provider_state
-            if output_moderation.classification == "allowed":
-                assistant_content = generated.content
-                assistant_response_source = generated.response_source
-                assistant_status = generated.status
-                assistant_intent = generated.intent
-                assistant_safety_status = generated.safety_status
-                assistant_metadata = {
-                    **generated.metadata_json,
-                    "topic": output_moderation.topic,
-                    "moderation_reason": output_moderation.reason,
-                    "moderation_flags": list(output_moderation.matched_rules),
-                    "action_taken": "generated_response",
-                }
-            else:
-                assistant_content = (
-                    output_moderation.safe_response or moderation.safe_response or ""
+            if moderation.classification == "allowed":
+                generated = self._response_generator.generate(
+                    child_name=child.name,
+                    child_age=getattr(child, "age", None),
+                    message=content,
+                    quick_action=quick_action,
+                    recent_messages=recent_messages,
                 )
+                output_moderation = self._moderation_service.moderate_output(
+                    text=generated.content
+                )
+                log_with_context(
+                    logger,
+                    logging.INFO,
+                    "ai_buddy_output_moderated",
+                    event="ai_buddy_output_moderated",
+                    category="ai",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    outcome=output_moderation.classification,
+                )
+                emit_event(
+                    "ai.moderation.output",
+                    category="ai",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    classification=output_moderation.classification,
+                    topic=output_moderation.topic,
+                )
+                provider_state = generated.provider_state
+                if output_moderation.classification == "allowed":
+                    assistant_content = generated.content
+                    assistant_response_source = generated.response_source
+                    assistant_status = generated.status
+                    assistant_intent = generated.intent
+                    assistant_safety_status = generated.safety_status
+                    assistant_metadata = {
+                        **generated.metadata_json,
+                        "topic": output_moderation.topic,
+                        "moderation_reason": output_moderation.reason,
+                        "moderation_flags": list(output_moderation.matched_rules),
+                        "action_taken": "generated_response",
+                    }
+                else:
+                    assistant_content = (
+                        output_moderation.safe_response or moderation.safe_response or ""
+                    )
+                    assistant_response_source = "safety_policy"
+                    assistant_intent = "safety_response"
+                    assistant_safety_status = output_moderation.classification
+                    assistant_metadata = {
+                        **generated.metadata_json,
+                        "topic": output_moderation.topic,
+                        "moderation_reason": output_moderation.reason,
+                        "moderation_flags": list(output_moderation.matched_rules),
+                        "action_taken": "replace_generated_response",
+                    }
+            else:
                 assistant_response_source = "safety_policy"
                 assistant_intent = "safety_response"
-                assistant_safety_status = output_moderation.classification
-                assistant_metadata = {
-                    **generated.metadata_json,
-                    "topic": output_moderation.topic,
-                    "moderation_reason": output_moderation.reason,
-                    "moderation_flags": list(output_moderation.matched_rules),
-                    "action_taken": "replace_generated_response",
-                }
-        else:
-            assistant_response_source = "safety_policy"
-            assistant_intent = "safety_response"
-            assistant_metadata["action_taken"] = (
-                "refusal" if moderation.classification == "needs_refusal" else "safe_redirect"
-            )
-            logger.warning(
-                "ai_buddy_input_blocked parent_id=%s child_id=%s session_id=%s classification=%s",
-                parent.id,
-                child.id,
-                session.id,
-                moderation.classification,
-            )
-            emit_event(
-                "ai.safety.blocked",
-                category="ai",
-                severity="warn",
-                user_id=parent.id,
-                child_id=child.id,
-                session_id=session.id,
-                classification=moderation.classification,
-                topic=moderation.topic,
-            )
+                assistant_metadata["action_taken"] = (
+                    "refusal"
+                    if moderation.classification == "needs_refusal"
+                    else "safe_redirect"
+                )
+                log_with_context(
+                    logger,
+                    logging.WARNING,
+                    "ai_buddy_input_blocked",
+                    event="ai_buddy_input_blocked",
+                    category="ai",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    outcome=moderation.classification,
+                )
+                emit_event(
+                    "ai.safety.blocked",
+                    category="ai",
+                    severity="warn",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    classification=moderation.classification,
+                    topic=moderation.topic,
+                )
 
-        session.provider_mode = provider_state.mode
-        session.provider_status = provider_state.status
-        session.unavailable_reason = provider_state.reason
-        db.add(session)
-        assistant_message = ai_buddy_persistence_service.add_message(
-            db=db,
-            session=session,
-            role="assistant",
-            content=assistant_content,
-            intent=assistant_intent,
-            response_source=assistant_response_source,
-            status=assistant_status,
-            safety_status=assistant_safety_status,
-            metadata_json=assistant_metadata,
-        )
-        ai_buddy_visibility_service.update_session_summary(
-            session=session,
-            child_name=child.name,
-            messages=ai_buddy_persistence_service.list_messages(db=db, session=session),
-        )
-        if provider_state.status != "ready":
-            logger.warning(
-                "ai_buddy_fallback parent_id=%s child_id=%s session_id=%s reason=%s",
-                parent.id,
-                child.id,
-                session.id,
-                provider_state.reason,
+            session.provider_mode = provider_state.mode
+            session.provider_status = provider_state.status
+            session.unavailable_reason = provider_state.reason
+            db.add(session)
+            assistant_message = self._persistence_service.add_message(
+                db=db,
+                session=session,
+                role="assistant",
+                content=assistant_content,
+                intent=assistant_intent,
+                response_source=assistant_response_source,
+                status=assistant_status,
+                safety_status=assistant_safety_status,
+                metadata_json=assistant_metadata,
             )
+            self._visibility_service.update_session_summary(
+                session=session,
+                child_name=child.name,
+                messages=self._persistence_service.list_messages(db=db, session=session),
+            )
+            if provider_state.status != "ready":
+                log_with_context(
+                    logger,
+                    logging.WARNING,
+                    "ai_buddy_fallback",
+                    event="ai_buddy_fallback",
+                    category="ai",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    outcome="fallback",
+                    provider=provider_state.mode,
+                    reason=provider_state.reason,
+                )
+                emit_event(
+                    "ai.fallback",
+                    category="ai",
+                    severity="warn",
+                    user_id=parent.id,
+                    child_id=child.id,
+                    session_id=session.id,
+                    provider_mode=provider_state.mode,
+                    provider_status=provider_state.status,
+                    reason=provider_state.reason,
+                )
+            self._record_ai_interaction(
+                db=db,
+                child=child,
+                interaction_type=(
+                    "safety_intervention"
+                    if assistant_safety_status != "allowed"
+                    else "conversation_turn"
+                ),
+                intent=assistant_intent,
+                input_preview=content[:180],
+                response_category=assistant_intent,
+                safety_status=assistant_safety_status,
+                safety_flags_json={
+                    "input_classification": moderation.classification,
+                    "topic": assistant_metadata.get("topic"),
+                    "action_taken": assistant_metadata.get("action_taken"),
+                },
+                metadata_json={
+                    "session_id": session.id,
+                    "user_message_id": user_message.id,
+                    "assistant_message_id": assistant_message.id,
+                    "provider_mode": provider_state.mode,
+                    "provider_status": provider_state.status,
+                },
+            )
+            db.commit()
+            db.refresh(session)
             emit_event(
-                "ai.fallback",
+                "ai.message.completed",
                 category="ai",
-                severity="warn",
                 user_id=parent.id,
                 child_id=child.id,
                 session_id=session.id,
-                provider_mode=provider_state.mode,
-                provider_status=provider_state.status,
-                reason=provider_state.reason,
+                safety_status=assistant_safety_status,
+                response_source=assistant_response_source,
+                intent=assistant_intent,
             )
-        self._record_ai_interaction(
-            db=db,
-            child=child,
-            interaction_type=(
-                "safety_intervention"
-                if assistant_safety_status != "allowed"
-                else "conversation_turn"
-            ),
-            intent=assistant_intent,
-            input_preview=content[:180],
-            response_category=assistant_intent,
-            safety_status=assistant_safety_status,
-            safety_flags_json={
-                "input_classification": moderation.classification,
-                "topic": assistant_metadata.get("topic"),
-                "action_taken": assistant_metadata.get("action_taken"),
-            },
-            metadata_json={
-                "session_id": session.id,
-                "user_message_id": user_message.id,
-                "assistant_message_id": assistant_message.id,
-                "provider_mode": provider_state.mode,
-                "provider_status": provider_state.status,
-            },
-        )
-        db.commit()
-        db.refresh(session)
-        emit_event(
-            "ai.message.completed",
-            category="ai",
-            user_id=parent.id,
-            child_id=child.id,
-            session_id=session.id,
-            safety_status=assistant_safety_status,
-            response_source=assistant_response_source,
-            intent=assistant_intent,
-        )
-        return {
-            "session": self._serialize_session(session),
-            "user_message": self._serialize_message(user_message),
-            "assistant_message": self._serialize_message(assistant_message),
-            "provider": self._serialize_provider(provider_state),
-        }
+            return {
+                "session": self._serialize_session(session),
+                "user_message": self._serialize_message(user_message),
+                "assistant_message": self._serialize_message(assistant_message),
+                "provider": self._serialize_provider(provider_state),
+            }
 
     def get_parent_visibility_summary(
         self,
@@ -425,7 +476,7 @@ class AiBuddyService:
         parent: User,
         child_id: int,
     ) -> dict[str, Any]:
-        return ai_buddy_visibility_service.build_parent_summary(
+        return self._visibility_service.build_parent_summary(
             db=db,
             parent=parent,
             child_id=child_id,
@@ -438,12 +489,12 @@ class AiBuddyService:
         parent: User,
         child_id: int,
     ) -> dict[str, Any]:
-        child = ai_buddy_persistence_service.get_child_for_parent(
+        child = self._persistence_service.get_child_for_parent(
             db=db,
             parent=parent,
             child_id=child_id,
         )
-        payload = ai_buddy_visibility_service.delete_child_history(
+        payload = self._visibility_service.delete_child_history(
             db=db,
             parent=parent,
             child_id=child_id,
