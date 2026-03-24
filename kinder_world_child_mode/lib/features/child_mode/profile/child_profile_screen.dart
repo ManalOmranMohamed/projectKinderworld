@@ -20,6 +20,7 @@ import 'package:kinder_world/core/widgets/child_customizable_avatar.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/widgets/gamification_widgets.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/app.dart';

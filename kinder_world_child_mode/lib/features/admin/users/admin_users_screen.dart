@@ -13,6 +13,7 @@ import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -118,7 +119,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
+                  DropdownButtonFormFieldCompat<String>(
                     initialValue: plan,
                     items: _planItems(l10n),
                     onChanged: (value) => setState(() => plan = value ?? plan),
@@ -237,7 +238,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                   ),
                   SizedBox(
                     width: 160,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormFieldCompat<String>(
                       initialValue: _status,
                       isExpanded: true,
                       isDense: true,

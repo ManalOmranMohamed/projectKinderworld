@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/support_ticket_record.dart';
 import 'package:kinder_world/core/providers/support_controller.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 class ParentContactUsScreen extends ConsumerStatefulWidget {
   const ParentContactUsScreen({super.key});
@@ -88,7 +89,7 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
                   ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
+            DropdownButtonFormFieldCompat<String>(
               initialValue: _selectedCategory,
               decoration: InputDecoration(
                 labelText: l10n.supportCategoryLabel,

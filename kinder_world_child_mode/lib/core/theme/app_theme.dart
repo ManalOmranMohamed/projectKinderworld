@@ -150,7 +150,7 @@ class AppTheme {
         centerTitle: false,
         toolbarHeight: 60,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: _buildCardThemeCompat(
         color: scheme.surface,
         elevation: 0,
         shadowColor: scheme.shadow.withValuesCompat(alpha: 0.08),
@@ -367,7 +367,7 @@ class AppTheme {
         elevation: 4,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: _buildDialogThemeCompat(
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
         shadowColor: scheme.shadow.withValuesCompat(alpha: 0.14),
@@ -460,7 +460,7 @@ class AppTheme {
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-      tabBarTheme: TabBarThemeData(
+      tabBarTheme: _buildTabBarThemeCompat(
         labelColor: scheme.primary,
         unselectedLabelColor: textSecondary,
         indicatorColor: scheme.primary,
@@ -526,7 +526,7 @@ class AppTheme {
         iconTheme: IconThemeData(color: textPrimary, size: 24),
         actionsIconTheme: IconThemeData(color: textPrimary, size: 24),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: _buildCardThemeCompat(
         color: scheme.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -722,4 +722,63 @@ class AppTheme {
       ),
     );
   }
+}
+
+dynamic _buildCardThemeCompat({
+  Color? color,
+  double? elevation,
+  Color? shadowColor,
+  EdgeInsetsGeometry? margin,
+  Color? surfaceTintColor,
+  ShapeBorder? shape,
+}) {
+  final dynamic baseTheme = ThemeData(useMaterial3: true).cardTheme;
+  return baseTheme.copyWith(
+    color: color,
+    elevation: elevation,
+    shadowColor: shadowColor,
+    margin: margin,
+    surfaceTintColor: surfaceTintColor,
+    shape: shape,
+  );
+}
+
+dynamic _buildDialogThemeCompat({
+  Color? backgroundColor,
+  Color? surfaceTintColor,
+  Color? shadowColor,
+  ShapeBorder? shape,
+  TextStyle? titleTextStyle,
+  TextStyle? contentTextStyle,
+}) {
+  final dynamic baseTheme = ThemeData(useMaterial3: true).dialogTheme;
+  return baseTheme.copyWith(
+    backgroundColor: backgroundColor,
+    surfaceTintColor: surfaceTintColor,
+    shadowColor: shadowColor,
+    shape: shape,
+    titleTextStyle: titleTextStyle,
+    contentTextStyle: contentTextStyle,
+  );
+}
+
+dynamic _buildTabBarThemeCompat({
+  Color? labelColor,
+  Color? unselectedLabelColor,
+  Color? indicatorColor,
+  TabBarIndicatorSize? indicatorSize,
+  Color? dividerColor,
+  TextStyle? labelStyle,
+  TextStyle? unselectedLabelStyle,
+}) {
+  final dynamic baseTheme = ThemeData(useMaterial3: true).tabBarTheme;
+  return baseTheme.copyWith(
+    labelColor: labelColor,
+    unselectedLabelColor: unselectedLabelColor,
+    indicatorColor: indicatorColor,
+    indicatorSize: indicatorSize,
+    dividerColor: dividerColor,
+    labelStyle: labelStyle,
+    unselectedLabelStyle: unselectedLabelStyle,
+  );
 }

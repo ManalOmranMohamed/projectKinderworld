@@ -10,6 +10,7 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 class AdminSubscriptionsScreen extends ConsumerStatefulWidget {
   const AdminSubscriptionsScreen({super.key});
@@ -162,7 +163,7 @@ class _AdminSubscriptionsScreenState
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
               title: Text(l10n.adminSubscriptionsOverrideTitle),
-              content: DropdownButtonFormField<String>(
+              content: DropdownButtonFormFieldCompat<String>(
                 initialValue: plan,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: _planItems(l10n),
@@ -296,7 +297,7 @@ class _AdminSubscriptionsScreenState
                   ),
                   SizedBox(
                     width: 180,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormFieldCompat<String>(
                       initialValue: _status,
                       isExpanded: true,
                       isDense: true,
@@ -332,7 +333,7 @@ class _AdminSubscriptionsScreenState
                   ),
                   SizedBox(
                     width: 180,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormFieldCompat<String>(
                       initialValue: _plan,
                       isExpanded: true,
                       isDense: true,

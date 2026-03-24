@@ -11,6 +11,7 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 class AdminSupportTicketsScreen extends ConsumerStatefulWidget {
   const AdminSupportTicketsScreen({super.key});
@@ -232,7 +233,7 @@ class _AdminSupportTicketsScreenState
                 children: [
                   SizedBox(
                     width: 220,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormFieldCompat<String>(
                       initialValue: _status,
                       isExpanded: true,
                       isDense: true,
@@ -278,7 +279,7 @@ class _AdminSupportTicketsScreenState
                   ),
                   SizedBox(
                     width: 240,
-                    child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormFieldCompat<String>(
                       initialValue: _category,
                       isExpanded: true,
                       isDense: true,

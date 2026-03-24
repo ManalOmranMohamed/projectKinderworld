@@ -10,6 +10,7 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -455,7 +456,7 @@ class _AdminAdminManagementScreenState
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
               title: Text(l10n.adminAdminsAssignRoleTitle),
-              content: DropdownButtonFormField<int>(
+              content: DropdownButtonFormFieldCompat<int>(
                 initialValue: selectedRoleId,
                 items: availableRoles
                     .map(
@@ -794,7 +795,7 @@ class _AdminAdminManagementScreenState
                 ),
                 SizedBox(
                   width: dropdownWidth,
-                  child: DropdownButtonFormField<String>(
+                  child: DropdownButtonFormFieldCompat<String>(
                     initialValue: _status,
                     isDense: true,
                     decoration: InputDecoration(

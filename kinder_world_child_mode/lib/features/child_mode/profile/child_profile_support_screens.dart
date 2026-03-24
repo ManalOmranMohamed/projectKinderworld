@@ -718,7 +718,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
       required bool value,
       required ValueChanged<bool> onChanged}) {
     final colors = Theme.of(context).colorScheme;
-    return SwitchListTile(
+    return SwitchListTileCompat(
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       secondary: Container(
         width: 40,

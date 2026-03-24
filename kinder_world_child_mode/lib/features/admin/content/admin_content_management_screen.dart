@@ -13,6 +13,7 @@ import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
+import 'package:kinder_world/core/widgets/material_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -356,7 +357,7 @@ class _AdminContentManagementScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      DropdownButtonFormField<int?>(
+                      DropdownButtonFormFieldCompat<int?>(
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsCategoryLabel),
@@ -391,7 +392,7 @@ class _AdminContentManagementScreenState
                       const SizedBox(height: 12),
                       Row(children: [
                         Expanded(
-                          child: DropdownButtonFormField<String>(
+                          child: DropdownButtonFormFieldCompat<String>(
                             initialValue: selectedType,
                             decoration: InputDecoration(
                                 labelText: l10n.adminCmsTypeLabel),
@@ -402,7 +403,7 @@ class _AdminContentManagementScreenState
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
+                          child: DropdownButtonFormFieldCompat<String>(
                             initialValue: selectedStatus,
                             decoration: InputDecoration(
                                 labelText: l10n.adminCmsStatusLabel),
@@ -867,7 +868,7 @@ class _AdminContentManagementScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      DropdownButtonFormField<int?>(
+                      DropdownButtonFormFieldCompat<int?>(
                         initialValue: selectedCategoryId,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsCategoryLabel),
@@ -884,7 +885,7 @@ class _AdminContentManagementScreenState
                             setStateDialog(() => selectedCategoryId = value),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<int?>(
+                      DropdownButtonFormFieldCompat<int?>(
                         initialValue: selectedContentId,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsLinkedContentLabel),
@@ -899,7 +900,7 @@ class _AdminContentManagementScreenState
                             setStateDialog(() => selectedContentId = value),
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
+                      DropdownButtonFormFieldCompat<String>(
                         initialValue: selectedStatus,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsStatusLabel),
@@ -1300,7 +1301,7 @@ class _AdminContentManagementScreenState
           ),
           SizedBox(
             width: dropdownWidth,
-            child: DropdownButtonFormField<String>(
+            child: DropdownButtonFormFieldCompat<String>(
               initialValue: _contentStatus,
               decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
               items: [
@@ -1320,7 +1321,7 @@ class _AdminContentManagementScreenState
           ),
           SizedBox(
             width: categoryWidth,
-            child: DropdownButtonFormField<int?>(
+            child: DropdownButtonFormFieldCompat<int?>(
               initialValue: _contentCategoryId,
               decoration:
                   InputDecoration(labelText: l10n.adminCmsCategoryLabel),
@@ -1446,7 +1447,7 @@ class _AdminContentManagementScreenState
         AdminFilterBar(children: [
           SizedBox(
             width: dropdownWidth,
-            child: DropdownButtonFormField<String>(
+            child: DropdownButtonFormFieldCompat<String>(
               initialValue: _quizStatus,
               decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
               items: [
@@ -1466,7 +1467,7 @@ class _AdminContentManagementScreenState
           ),
           SizedBox(
             width: categoryWidth,
-            child: DropdownButtonFormField<int?>(
+            child: DropdownButtonFormFieldCompat<int?>(
               initialValue: _quizCategoryId,
               decoration:
                   InputDecoration(labelText: l10n.adminCmsCategoryLabel),
