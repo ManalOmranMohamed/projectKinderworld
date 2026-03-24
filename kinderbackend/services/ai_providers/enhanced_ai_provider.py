@@ -108,7 +108,7 @@ class EnhancedAIProvider:
     ) -> EnhancedAIResponse:
         """Generate a child-friendly response."""
         client = self._get_client()
-        
+
         messages = self._build_messages(
             child_name=child_name,
             message=message,

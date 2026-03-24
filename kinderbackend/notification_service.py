@@ -1,9 +1,9 @@
-from __future__ import annotations
-
 """Compatibility shim for legacy imports.
 
 Notification logic lives in services.notification_service.
 """
+
+from __future__ import annotations
 
 from services.notification_service import (
     create_notification,

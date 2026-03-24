@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field, replace
-from typing import Any, Iterable, Protocol
+from typing import Iterable, Protocol
 
 from core.settings import settings
 from services.ai_buddy_content_service import ai_buddy_content_service
