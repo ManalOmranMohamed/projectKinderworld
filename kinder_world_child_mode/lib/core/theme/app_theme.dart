@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AppTheme {
   AppTheme._();
@@ -128,7 +129,7 @@ class AppTheme {
       canvasColor: scheme.surface,
       cardColor: scheme.surface,
       shadowColor: scheme.shadow,
-      dividerColor: scheme.outlineVariant.withValues(alpha: 0.55),
+      dividerColor: scheme.outlineVariant.withValuesCompat(alpha: 0.55),
       splashFactory: InkRipple.splashFactory,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
@@ -136,7 +137,7 @@ class AppTheme {
         foregroundColor: textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0.8,
-        shadowColor: scheme.shadow.withValues(alpha: 0.08),
+        shadowColor: scheme.shadow.withValuesCompat(alpha: 0.08),
         surfaceTintColor: Colors.transparent,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
@@ -152,19 +153,22 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: scheme.surface,
         elevation: 0,
-        shadowColor: scheme.shadow.withValues(alpha: 0.08),
+        shadowColor: scheme.shadow.withValuesCompat(alpha: 0.08),
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.18),
+            color: scheme.outlineVariant
+                .withValuesCompat(alpha: isDark ? 0.28 : 0.18),
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerLowest,
+        fillColor: isDark
+            ? scheme.surfaceContainerHigh
+            : scheme.surfaceContainerLowest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -176,7 +180,7 @@ class AppTheme {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.6),
+            color: scheme.outlineVariant.withValuesCompat(alpha: 0.6),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -191,11 +195,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: scheme.error, width: 1.8),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: textTheme.bodyMedium?.copyWith(color: textSecondary),
-        floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: scheme.primary),
+        floatingLabelStyle:
+            textTheme.bodyMedium?.copyWith(color: scheme.primary),
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: textSecondary.withValues(alpha: 0.72),
+          color: textSecondary.withValuesCompat(alpha: 0.72),
         ),
         prefixIconColor: textSecondary,
         suffixIconColor: textSecondary,
@@ -248,7 +254,8 @@ class AppTheme {
           disabledForegroundColor: textSecondary,
           minimumSize: const Size(double.infinity, 52),
           side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.92 : 0.75),
+            color: scheme.outlineVariant
+                .withValuesCompat(alpha: isDark ? 0.92 : 0.75),
             width: 1.4,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -281,7 +288,7 @@ class AppTheme {
         secondarySelectedColor: scheme.secondaryContainer,
         disabledColor: scheme.surfaceContainerLow,
         side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.62),
+          color: scheme.outlineVariant.withValuesCompat(alpha: 0.62),
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -293,7 +300,7 @@ class AppTheme {
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant.withValues(alpha: 0.55),
+        color: scheme.outlineVariant.withValuesCompat(alpha: 0.55),
         thickness: 1,
         space: 1,
       ),
@@ -326,8 +333,9 @@ class AppTheme {
             color: states.contains(WidgetState.selected)
                 ? scheme.primary
                 : textSecondary,
-            fontWeight:
-                states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
           );
         }),
       ),
@@ -345,7 +353,8 @@ class AppTheme {
         type: BottomNavigationBarType.fixed,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? scheme.surfaceContainerHighest : scheme.inverseSurface,
+        backgroundColor:
+            isDark ? scheme.surfaceContainerHighest : scheme.inverseSurface,
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: isDark ? scheme.onSurface : scheme.onInverseSurface,
           fontWeight: FontWeight.w500,
@@ -361,11 +370,11 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        shadowColor: scheme.shadow.withValues(alpha: 0.14),
+        shadowColor: scheme.shadow.withValuesCompat(alpha: 0.14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.24),
+            color: scheme.outlineVariant.withValuesCompat(alpha: 0.24),
           ),
         ),
         titleTextStyle: textTheme.titleLarge?.copyWith(
@@ -402,7 +411,9 @@ class AppTheme {
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? scheme.primary : Colors.transparent;
+          return states.contains(WidgetState.selected)
+              ? scheme.primary
+              : Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(scheme.onPrimary),
         side: BorderSide(color: scheme.outlineVariant, width: 1.4),
@@ -410,7 +421,9 @@ class AppTheme {
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? scheme.primary : scheme.outline;
+          return states.contains(WidgetState.selected)
+              ? scheme.primary
+              : scheme.outline;
         }),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
@@ -421,7 +434,8 @@ class AppTheme {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: isDark ? scheme.surfaceContainerHighest : scheme.inverseSurface,
+          color:
+              isDark ? scheme.surfaceContainerHighest : scheme.inverseSurface,
           borderRadius: BorderRadius.circular(8),
         ),
         textStyle: textTheme.bodySmall?.copyWith(
@@ -434,7 +448,7 @@ class AppTheme {
         color: scheme.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
-        shadowColor: scheme.shadow.withValues(alpha: 0.12),
+        shadowColor: scheme.shadow.withValuesCompat(alpha: 0.12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -458,7 +472,7 @@ class AppTheme {
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: scheme.primary,
-        selectionColor: scheme.primary.withValues(alpha: 0.22),
+        selectionColor: scheme.primary.withValuesCompat(alpha: 0.22),
         selectionHandleColor: scheme.primary,
       ),
       iconTheme: IconThemeData(color: textPrimary),
@@ -472,7 +486,7 @@ class AppTheme {
     return base.copyWith(
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
-          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
           TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
@@ -487,7 +501,8 @@ class AppTheme {
     final baseTextTheme = _buildTextTheme(scheme);
     final textTheme = baseTextTheme.copyWith(
       bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-      bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+      bodyMedium:
+          baseTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
       bodySmall: baseTextTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
     );
     final textPrimary = scheme.onSurface;
@@ -566,11 +581,13 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.error, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         labelStyle: textTheme.bodyMedium?.copyWith(color: textSecondary),
-        floatingLabelStyle: textTheme.bodyMedium?.copyWith(color: scheme.primary),
+        floatingLabelStyle:
+            textTheme.bodyMedium?.copyWith(color: scheme.primary),
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: textSecondary.withValues(alpha: 0.9),
+          color: textSecondary.withValuesCompat(alpha: 0.9),
         ),
       ),
       dividerTheme: DividerThemeData(

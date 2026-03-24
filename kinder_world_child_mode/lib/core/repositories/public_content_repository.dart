@@ -19,7 +19,9 @@ class PublicContentRepository {
       final response = await _networkService.get<Map<String, dynamic>>(
         '/content/child/categories',
       );
-      return _items(response.data?['items']).map(PublicContentCategory.fromJson).toList();
+      return _items(response.data?['items'])
+          .map(PublicContentCategory.fromJson)
+          .toList();
     } catch (e) {
       _logger.w('Error fetching child content categories: $e');
       return const [];
@@ -40,11 +42,14 @@ class PublicContentRepository {
             'category_slug': categorySlug,
           if (contentType != null && contentType.isNotEmpty)
             'content_type': contentType,
-          if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+          if (search != null && search.trim().isNotEmpty)
+            'search': search.trim(),
           if (age != null) 'age': age,
         },
       );
-      return _items(response.data?['items']).map(PublicContentItem.fromJson).toList();
+      return _items(response.data?['items'])
+          .map(PublicContentItem.fromJson)
+          .toList();
     } catch (e) {
       _logger.w('Error fetching child content items: $e');
       return const [];
@@ -68,7 +73,8 @@ class PublicContentRepository {
   }
 }
 
-final publicContentRepositoryProvider = Provider<PublicContentRepository>((ref) {
+final publicContentRepositoryProvider =
+    Provider<PublicContentRepository>((ref) {
   return PublicContentRepository(
     networkService: ref.watch(networkServiceProvider),
     logger: ref.watch(loggerProvider),
@@ -79,7 +85,10 @@ List<Map<String, dynamic>> _items(Object? value) {
   if (value is! List) {
     return const <Map<String, dynamic>>[];
   }
-  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 Map<String, dynamic> _item(Object? value) {

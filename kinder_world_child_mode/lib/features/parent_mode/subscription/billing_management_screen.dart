@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/themed_card.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -27,7 +28,7 @@ class BillingManagementScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.08),
+                color: colors.shadow.withValuesCompat(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),

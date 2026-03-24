@@ -160,8 +160,9 @@ class AdminChildProgressDetails {
     return AdminChildProgressDetails(
       childId: _asInt(json['child_id']),
       summary: AdminChildProgressSummary.fromJson(_asMap(json['summary'])),
-      milestones:
-          _asMapList(json['milestones']).map(AdminChildMilestone.fromJson).toList(),
+      milestones: _asMapList(json['milestones'])
+          .map(AdminChildMilestone.fromJson)
+          .toList(),
       auditEvents:
           _asMapList(json['audit_events']).map(AdminAuditLog.fromJson).toList(),
     );
@@ -213,8 +214,9 @@ class AdminChildActivityLog {
   factory AdminChildActivityLog.fromJson(Map<String, dynamic> json) {
     return AdminChildActivityLog(
       childId: _asInt(json['child_id']),
-      entries:
-          _asMapList(json['entries']).map(AdminChildActivityEntry.fromJson).toList(),
+      entries: _asMapList(json['entries'])
+          .map(AdminChildActivityEntry.fromJson)
+          .toList(),
     );
   }
 }
@@ -312,8 +314,9 @@ class AdminChildAiBuddySummary {
       usageMetrics: AdminChildAiBuddyUsageMetrics.fromJson(
         _asMap(json['usage_metrics']),
       ),
-      recentFlags:
-          _asMapList(json['recent_flags']).map(AdminChildAiBuddyFlag.fromJson).toList(),
+      recentFlags: _asMapList(json['recent_flags'])
+          .map(AdminChildAiBuddyFlag.fromJson)
+          .toList(),
     );
   }
 }
@@ -332,7 +335,10 @@ List<Map<String, dynamic>> _asMapList(Object? value) {
   if (value is! List) {
     return const <Map<String, dynamic>>[];
   }
-  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 String? _asString(Object? value) {

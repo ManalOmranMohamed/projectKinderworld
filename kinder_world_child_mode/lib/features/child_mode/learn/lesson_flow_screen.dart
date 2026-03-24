@@ -17,6 +17,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/features/child_mode/learn/lesson_content_provider.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class LessonFlowScreen extends ConsumerStatefulWidget {
   final String lessonId;
@@ -262,8 +263,10 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValuesCompat(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
             ),
             child: Icon(
@@ -355,7 +358,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   color: Theme.of(context)
                       .colorScheme
                       .shadow
-                      .withValues(alpha: 0.05),
+                      .withValuesCompat(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -380,12 +383,12 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                     color: Theme.of(context)
                         .colorScheme
                         .primary
-                        .withValues(alpha: 0.1),
+                        .withValuesCompat(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
-                      '📚\n${l10n.lessonContentPlaceholder}',
+                      'ًں“ڑ\n${l10n.lessonContentPlaceholder}',
                       style: TextStyle(
                         fontSize: 24,
                         color: Theme.of(context).colorScheme.primary,
@@ -440,7 +443,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   color: Theme.of(context)
                       .colorScheme
                       .shadow
-                      .withValues(alpha: 0.05),
+                      .withValuesCompat(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -462,15 +465,16 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   width: double.infinity,
                   height: 150,
                   decoration: BoxDecoration(
-                    color: context.childTheme.fun.withValues(alpha: 0.1),
+                    color: context.childTheme.fun.withValuesCompat(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: context.childTheme.fun.withValues(alpha: 0.3),
+                      color:
+                          context.childTheme.fun.withValuesCompat(alpha: 0.3),
                     ),
                   ),
                   child: Center(
                     child: Text(
-                      '🎯\n${l10n.tapCorrectAnswer}',
+                      'ًںژ¯\n${l10n.tapCorrectAnswer}',
                       style: TextStyle(
                         fontSize: 20,
                         color: context.childTheme.fun,
@@ -514,7 +518,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   color: Theme.of(context)
                       .colorScheme
                       .shadow
-                      .withValues(alpha: 0.05),
+                      .withValuesCompat(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -585,7 +589,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: context.successColor.withValues(alpha: 0.1),
+              color: context.successColor.withValuesCompat(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
             ),
             child: Icon(
@@ -622,7 +626,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   color: Theme.of(context)
                       .colorScheme
                       .shadow
-                      .withValues(alpha: 0.05),
+                      .withValuesCompat(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -731,7 +735,10 @@ class _AnswerOption extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isSelected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                ? Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValuesCompat(alpha: 0.1)
                 : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(

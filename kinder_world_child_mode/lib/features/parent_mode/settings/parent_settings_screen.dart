@@ -11,6 +11,7 @@ import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentSettingsScreen extends ConsumerWidget {
   const ParentSettingsScreen({super.key});
@@ -28,8 +29,8 @@ class ParentSettingsScreen extends ConsumerWidget {
     final parent = context.parentTheme;
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
-    final currentPlan =
-        ref.watch(planInfoProvider).asData?.value ?? PlanInfo.fromTier(PlanTier.free);
+    final currentPlan = ref.watch(planInfoProvider).asData?.value ??
+        PlanInfo.fromTier(PlanTier.free);
     final bool isPremium = currentPlan.tier != PlanTier.free;
 
     return Scaffold(
@@ -55,14 +56,15 @@ class ParentSettingsScreen extends ConsumerWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1,
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           children: [
-            // ── Profile Header ──────────────────────────────────────────
+            // â”€â”€ Profile Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _ProfileHeader(
               name: user?.name ?? l10n.parentFallback,
               email: user?.email ?? '',
@@ -72,7 +74,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // ── Account ─────────────────────────────────────────────────
+            // â”€â”€ Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               label: l10n.accountSection,
               tiles: [
@@ -108,7 +110,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Family ──────────────────────────────────────────────────
+            // â”€â”€ Family â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               label: l10n.familySection,
               tiles: [
@@ -153,7 +155,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Preferences ─────────────────────────────────────────────
+            // â”€â”€ Preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               label: l10n.preferencesSection,
               tiles: [
@@ -194,7 +196,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Support ─────────────────────────────────────────────────
+            // â”€â”€ Support â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               label: l10n.supportSection,
               tiles: [
@@ -227,7 +229,7 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Danger Zone ─────────────────────────────────────────────
+            // â”€â”€ Danger Zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               tiles: [
                 ParentSettingsTile(
@@ -253,13 +255,13 @@ class ParentSettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
 
-            // ── App version footnote ─────────────────────────────────────
+            // â”€â”€ App version footnote â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Center(
               child: Text(
                 l10n.appVersionLabel('1.0.0'),
                 style: textTheme.bodySmall?.copyWith(
                   fontSize: 12,
-                  color: colors.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: colors.onSurfaceVariant.withValuesCompat(alpha: 0.5),
                 ),
               ),
             ),
@@ -303,9 +305,9 @@ class ParentSettingsScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PROFILE HEADER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ProfileHeader extends StatelessWidget {
   final String name;
@@ -333,7 +335,7 @@ class _ProfileHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.07),
+            color: colors.shadow.withValuesCompat(alpha: 0.07),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),

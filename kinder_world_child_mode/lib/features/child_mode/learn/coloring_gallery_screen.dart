@@ -6,6 +6,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_page_screen.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ColoringGalleryScreen extends StatefulWidget {
   const ColoringGalleryScreen({super.key});
@@ -84,10 +85,9 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
     {
       'title': 'Coloring Page 10',
       'image': 'assets/images/coloring/coloring3.svg',
-       'svg': 'assets/images/coloring/coloring3.svg',
+      'svg': 'assets/images/coloring/coloring3.svg',
       'level': 'Beginner',
     },
-    
   ];
 
   List<Map<String, String>> get _filteredItems {
@@ -181,7 +181,7 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           decoration: BoxDecoration(
                             color: selected
-                                ? child.kindness.withValues(alpha: 0.22)
+                                ? child.kindness.withValuesCompat(alpha: 0.22)
                                 : colors.surface,
                             borderRadius: BorderRadius.circular(26),
                             border: Border.all(
@@ -192,22 +192,24 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: (selected
-                                        ? child.kindness
-                                        : child.fun)
-                                    .withValues(alpha: 0.4),
+                                color: (selected ? child.kindness : child.fun)
+                                    .withValuesCompat(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                            child: Center(
+                          child: Center(
                             child: Text(
-                              level == 'All' ? l10n.all
-                                : level == 'Beginner' ? l10n.beginner
-                                : level == 'Intermediate' ? l10n.intermediate
-                                : level == 'Advanced' ? l10n.advanced
-                                : level,
+                              level == 'All'
+                                  ? l10n.all
+                                  : level == 'Beginner'
+                                      ? l10n.beginner
+                                      : level == 'Intermediate'
+                                          ? l10n.intermediate
+                                          : level == 'Advanced'
+                                              ? l10n.advanced
+                                              : level,
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Comic Sans MS',
@@ -232,12 +234,11 @@ class _ColoringGalleryScreenState extends State<ColoringGalleryScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 18),
                           decoration: BoxDecoration(
-                            color: colors.surface.withValues(alpha: 0.92),
+                            color: colors.surface.withValuesCompat(alpha: 0.92),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: child.fun
-                                    .withValues(alpha: 0.35),
+                                color: child.fun.withValuesCompat(alpha: 0.35),
                                 blurRadius: 12,
                                 offset: const Offset(0, 5),
                               ),
@@ -345,7 +346,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF95D5FF).withValues(alpha: 0.4),
+                  color: const Color(0xFF95D5FF).withValuesCompat(alpha: 0.4),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -480,7 +481,7 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(0xFFA5E17F)
-                                    .withValues(alpha: 0.55),
+                                    .withValuesCompat(alpha: 0.55),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -516,7 +517,8 @@ class _ColoringItemCardState extends State<_ColoringItemCard> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFD66B).withValues(alpha: 0.7),
+                          color: const Color(0xFFFFD66B)
+                              .withValuesCompat(alpha: 0.7),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -560,13 +562,14 @@ class _PlayfulBackground extends StatelessWidget {
           top: 24,
           left: 20,
           child: Icon(Icons.star_rounded,
-              color: Colors.white.withValues(alpha: 0.8), size: 18),
+              color: Colors.white.withValuesCompat(alpha: 0.8), size: 18),
         ),
         Positioned(
           top: 58,
           right: 36,
           child: Icon(Icons.star_rounded,
-              color: const Color(0xFFFFD54F).withValues(alpha: 0.9), size: 20),
+              color: const Color(0xFFFFD54F).withValuesCompat(alpha: 0.9),
+              size: 20),
         ),
       ],
     );

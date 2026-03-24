@@ -10,6 +10,7 @@ import 'package:kinder_world/core/widgets/premium_badge.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentalControlsScreen extends ConsumerStatefulWidget {
   const ParentalControlsScreen({super.key});
@@ -127,7 +128,8 @@ class _ParentalControlsScreenState
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1,
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -295,7 +297,7 @@ class _ParentalControlsScreenState
                     // Emergency Controls
                     ParentCard(
                       backgroundColor:
-                          ParentColors.alertRed.withValues(alpha: 0.06),
+                          ParentColors.alertRed.withValuesCompat(alpha: 0.06),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -306,7 +308,7 @@ class _ParentalControlsScreenState
                                 height: 34,
                                 decoration: BoxDecoration(
                                   color: ParentColors.alertRed
-                                      .withValues(alpha: 0.14),
+                                      .withValuesCompat(alpha: 0.14),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(Icons.lock_rounded,
@@ -374,7 +376,7 @@ class _ParentalControlsScreenState
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: ParentColors.parentGreen.withValues(alpha: 0.12),
+                  color: ParentColors.parentGreen.withValuesCompat(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: ParentColors.parentGreen, size: 18),
@@ -408,11 +410,8 @@ class _ParentalControlsScreenState
   }
 
   Widget _buildToggleSetting(
-    String title,
-    bool value,
-    ValueChanged<bool> onChanged,
-    {bool enabled = true}
-  ) {
+      String title, bool value, ValueChanged<bool> onChanged,
+      {bool enabled = true}) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Padding(
@@ -427,21 +426,19 @@ class _ParentalControlsScreenState
           Switch(
             value: value,
             onChanged: enabled ? onChanged : null,
-            activeThumbColor: colors.primary,
+            thumbColor: WidgetStateProperty.resolveWith(
+              (states) =>
+                  states.contains(WidgetState.selected) ? colors.primary : null,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSliderSetting(
-    String title,
-    double value,
-    double min,
-    double max,
-    ValueChanged<double> onChanged,
-    {bool enabled = true}
-  ) {
+  Widget _buildSliderSetting(String title, double value, double min, double max,
+      ValueChanged<double> onChanged,
+      {bool enabled = true}) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final hoursLabel = '${value.round()} h';
@@ -462,7 +459,7 @@ class _ParentalControlsScreenState
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.12),
+                  color: colors.primary.withValuesCompat(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

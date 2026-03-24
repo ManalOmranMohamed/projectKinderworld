@@ -8,6 +8,7 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
@@ -69,7 +70,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────────────────
+          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           AdminPageHeader(
             title: l10n.adminAnalyticsTitle,
             subtitle: l10n.adminAnalyticsSubtitle,
@@ -83,7 +84,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── Range selector ──────────────────────────────────────────
+          // â”€â”€ Range selector â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SegmentedButton<String>(
@@ -118,7 +119,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               icon: Icons.analytics_outlined,
             )
           else if (_overview != null && _usage != null) ...[
-            // ── KPI Grid ──────────────────────────────────────────────
+            // â”€â”€ KPI Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             LayoutBuilder(builder: (context, constraints) {
               final cols = constraints.maxWidth >= 900
                   ? 4
@@ -166,7 +167,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
             }),
             const SizedBox(height: 20),
 
-            // ── Charts + Summary ──────────────────────────────────────
+            // â”€â”€ Charts + Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             LayoutBuilder(builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 1100;
               if (isWide) {
@@ -282,7 +283,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                           value: fraction,
                           minHeight: 6,
                           backgroundColor:
-                              cs.primaryContainer.withValues(alpha: 0.4),
+                              cs.primaryContainer.withValuesCompat(alpha: 0.4),
                           valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
                         ),
                       ),
@@ -322,8 +323,8 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               const SizedBox(height: 12),
               if (overview.recentTickets.isEmpty)
                 Text(l10n.adminAnalyticsNoData,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onSurface.withValues(alpha: 0.5)))
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurface.withValuesCompat(alpha: 0.5)))
               else
                 ...overview.recentTickets.map((ticket) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -357,10 +358,10 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                                         fontWeight: FontWeight.w600)),
                                 const SizedBox(height: 2),
                                 Text(
-                                    '${ticket['status'] ?? '-'} · ${ticket['email'] ?? '-'}',
+                                    '${ticket['status'] ?? '-'} آ· ${ticket['email'] ?? '-'}',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                         color: cs.onSurface
-                                            .withValues(alpha: 0.55))),
+                                            .withValuesCompat(alpha: 0.55))),
                               ],
                             ),
                           ),
@@ -395,7 +396,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
   }
 }
 
-// ─────────────────────────── KPI Card ────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _KpiCard extends StatelessWidget {
   const _KpiCard({
@@ -419,7 +420,8 @@ class _KpiCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: bgColor.withValues(alpha: 0.7), width: 1.5),
+        side:
+            BorderSide(color: bgColor.withValuesCompat(alpha: 0.7), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -444,7 +446,7 @@ class _KpiCard extends StatelessWidget {
                   Text(title,
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6)),
+                              .withValuesCompat(alpha: 0.6)),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                 ],
@@ -457,7 +459,7 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Legend Dot ──────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Legend Dot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LegendDot extends StatelessWidget {
   const _LegendDot({required this.color, required this.label});
@@ -481,7 +483,7 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Usage Chart ─────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Usage Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _UsageChart extends StatelessWidget {
   const _UsageChart({required this.points});

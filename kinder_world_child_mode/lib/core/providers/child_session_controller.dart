@@ -488,7 +488,8 @@ final childErrorProvider = Provider<String?>((ref) {
 });
 
 /// Get child statistics (async)
-final childStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final childStatsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final controller = ref.watch(childSessionControllerProvider.notifier);
   return await controller.getChildStats();
 });

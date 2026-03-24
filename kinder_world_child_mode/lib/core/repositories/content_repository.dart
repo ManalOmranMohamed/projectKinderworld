@@ -29,7 +29,7 @@ class ContentRepository {
             final json = data is String
                 ? jsonDecode(data)
                 : Map<String, dynamic>.from(data);
-            
+
             activities.add(Activity.fromJson(json));
           } catch (e) {
             _logger.e('Error parsing activity: $key, $e');
@@ -49,15 +49,14 @@ class ContentRepository {
   Future<Activity?> getActivity(String activityId) async {
     try {
       final data = _activityBox.get(activityId);
-      
+
       if (data == null) {
         _logger.w('Activity not found: $activityId');
         return null;
       }
 
-      final json = data is String
-          ? jsonDecode(data)
-          : Map<String, dynamic>.from(data);
+      final json =
+          data is String ? jsonDecode(data) : Map<String, dynamic>.from(data);
 
       return Activity.fromJson(json);
     } catch (e) {
@@ -71,7 +70,7 @@ class ContentRepository {
     try {
       final json = activity.toJson();
       await _activityBox.put(activity.id, json);
-      
+
       _logger.d('Activity saved: ${activity.id}');
       return activity;
     } catch (e) {
@@ -84,10 +83,9 @@ class ContentRepository {
   Future<bool> saveActivities(List<Activity> activities) async {
     try {
       final map = {
-        for (var activity in activities)
-          activity.id: activity.toJson()
+        for (var activity in activities) activity.id: activity.toJson()
       };
-      
+
       await _activityBox.putAll(map);
       _logger.d('Saved ${activities.length} activities');
       return true;
@@ -118,7 +116,7 @@ class ContentRepository {
       final filtered = allActivities
           .where((activity) => activity.category == category)
           .toList();
-      
+
       _logger.d('Found ${filtered.length} activities in category: $category');
       return filtered;
     } catch (e) {
@@ -131,10 +129,9 @@ class ContentRepository {
   Future<List<Activity>> getActivitiesByType(String type) async {
     try {
       final allActivities = await getAllActivities();
-      final filtered = allActivities
-          .where((activity) => activity.type == type)
-          .toList();
-      
+      final filtered =
+          allActivities.where((activity) => activity.type == type).toList();
+
       _logger.d('Found ${filtered.length} activities of type: $type');
       return filtered;
     } catch (e) {
@@ -147,10 +144,9 @@ class ContentRepository {
   Future<List<Activity>> getActivitiesByAspect(String aspect) async {
     try {
       final allActivities = await getAllActivities();
-      final filtered = allActivities
-          .where((activity) => activity.aspect == aspect)
-          .toList();
-      
+      final filtered =
+          allActivities.where((activity) => activity.aspect == aspect).toList();
+
       _logger.d('Found ${filtered.length} activities for aspect: $aspect');
       return filtered;
     } catch (e) {
@@ -166,8 +162,9 @@ class ContentRepository {
       final filtered = allActivities
           .where((activity) => activity.difficulty == difficulty)
           .toList();
-      
-      _logger.d('Found ${filtered.length} activities with difficulty: $difficulty');
+
+      _logger.d(
+          'Found ${filtered.length} activities with difficulty: $difficulty');
       return filtered;
     } catch (e) {
       _logger.e('Error filtering by difficulty: $difficulty, $e');
@@ -181,9 +178,9 @@ class ContentRepository {
   Future<List<Activity>> getPopularActivities({int limit = 10}) async {
     try {
       final allActivities = await getAllActivities();
-      
+
       allActivities.sort((a, b) => b.playCount.compareTo(a.playCount));
-      
+
       final popular = allActivities.take(limit).toList();
       _logger.d('Retrieved ${popular.length} popular activities');
       return popular;
@@ -197,9 +194,9 @@ class ContentRepository {
   Future<List<Activity>> getRecentlyAddedActivities({int limit = 10}) async {
     try {
       final allActivities = await getAllActivities();
-      
+
       allActivities.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      
+
       final recent = allActivities.take(limit).toList();
       _logger.d('Retrieved ${recent.length} recently added activities');
       return recent;
@@ -215,22 +212,21 @@ class ContentRepository {
   Future<List<Activity>> getRecommendedActivities(ChildProfile child) async {
     try {
       final allActivities = await getAllActivities();
-      
+
       // Filter by age appropriateness
       final ageAppropriate = allActivities
           .where((activity) => activity.isAppropriateForAge(child.age))
           .toList();
-      
+
       // Score activities based on child's interests and level
       final scored = ageAppropriate.map((activity) {
         double score = 0.0;
-        
+
         // Interest match
-        final interestMatches = activity.tags
-            .where((tag) => child.interests.contains(tag))
-            .length;
+        final interestMatches =
+            activity.tags.where((tag) => child.interests.contains(tag)).length;
         score += interestMatches * 10;
-        
+
         // Level appropriateness
         final levelDiff = (activity.difficultyLevel - child.level).abs();
         if (levelDiff <= 1) {
@@ -238,21 +234,22 @@ class ContentRepository {
         } else if (levelDiff <= 2) {
           score += 2;
         }
-        
+
         // Rating boost
         if (activity.averageRating != null) {
           score += activity.averageRating! * 2;
         }
-        
+
         return MapEntry(activity, score);
       }).toList();
-      
+
       // Sort by score
       scored.sort((a, b) => b.value.compareTo(a.value));
-      
+
       // Return top 10
       final recommended = scored.take(10).map((e) => e.key).toList();
-      _logger.d('Generated ${recommended.length} recommendations for ${child.name}');
+      _logger.d(
+          'Generated ${recommended.length} recommendations for ${child.name}');
       return recommended;
     } catch (e) {
       _logger.e('Error getting recommended activities: $e');
@@ -264,11 +261,11 @@ class ContentRepository {
   Future<List<Activity>> getActivitiesForChild(ChildProfile child) async {
     try {
       final allActivities = await getAllActivities();
-      
+
       final appropriate = allActivities
           .where((activity) => activity.isAppropriateForAge(child.age))
           .toList();
-      
+
       _logger.d('Found ${appropriate.length} activities for ${child.name}');
       return appropriate;
     } catch (e) {
@@ -283,16 +280,16 @@ class ContentRepository {
   Future<List<Activity>> searchActivities(String query) async {
     try {
       if (query.isEmpty) return [];
-      
+
       final allActivities = await getAllActivities();
       final searchTerm = query.toLowerCase();
-      
+
       final results = allActivities.where((activity) {
         return activity.title.toLowerCase().contains(searchTerm) ||
-               activity.description.toLowerCase().contains(searchTerm) ||
-               activity.tags.any((tag) => tag.toLowerCase().contains(searchTerm));
+            activity.description.toLowerCase().contains(searchTerm) ||
+            activity.tags.any((tag) => tag.toLowerCase().contains(searchTerm));
       }).toList();
-      
+
       _logger.d('Search for "$query" found ${results.length} results');
       return results;
     } catch (e) {
@@ -307,11 +304,11 @@ class ContentRepository {
   Future<List<Activity>> getOfflineActivities() async {
     try {
       final allActivities = await getAllActivities();
-      
+
       final offline = allActivities
           .where((activity) => activity.isOfflineAvailable)
           .toList();
-      
+
       _logger.d('Found ${offline.length} offline activities');
       return offline;
     } catch (e) {
@@ -349,12 +346,12 @@ class ContentRepository {
     try {
       final activity = await getActivity(activityId);
       if (activity == null) return false;
-      
+
       final updated = activity.copyWith(
         playCount: activity.playCount + 1,
         updatedAt: DateTime.now(),
       );
-      
+
       await saveActivity(updated);
       _logger.d('Play count incremented for: $activityId');
       return true;
@@ -381,7 +378,8 @@ class ContentRepository {
           .toList();
 
       await saveActivities(normalizedActivities);
-      _logger.d('Synced ${normalizedActivities.length} activities to local store');
+      _logger
+          .d('Synced ${normalizedActivities.length} activities to local store');
       return true;
     } catch (e) {
       _logger.e('Error syncing with server: $e');
@@ -395,7 +393,7 @@ class ContentRepository {
   Future<Map<String, dynamic>> getContentStats() async {
     try {
       final allActivities = await getAllActivities();
-      
+
       final stats = {
         'totalActivities': allActivities.length,
         'byCategory': <String, int>{},
@@ -404,18 +402,19 @@ class ContentRepository {
         'offlineCount': allActivities.where((a) => a.isOfflineAvailable).length,
         'premiumCount': allActivities.where((a) => a.isPremium).length,
       };
-      
+
       // Count by category
       final byCategory = stats['byCategory'] as Map<String, int>;
       final byType = stats['byType'] as Map<String, int>;
       final byAspect = stats['byAspect'] as Map<String, int>;
 
       for (var activity in allActivities) {
-        byCategory[activity.category] = (byCategory[activity.category] ?? 0) + 1;
+        byCategory[activity.category] =
+            (byCategory[activity.category] ?? 0) + 1;
         byType[activity.type] = (byType[activity.type] ?? 0) + 1;
         byAspect[activity.aspect] = (byAspect[activity.aspect] ?? 0) + 1;
       }
-      
+
       return stats;
     } catch (e) {
       _logger.e('Error getting content stats: $e');

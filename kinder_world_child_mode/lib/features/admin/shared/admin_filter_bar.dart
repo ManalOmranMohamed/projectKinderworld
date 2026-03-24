@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminFilterBar extends StatelessWidget {
   const AdminFilterBar({
@@ -25,7 +26,7 @@ class AdminFilterBar extends StatelessWidget {
             color: colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.5),
             ),
           ),
           child: compact
@@ -38,7 +39,8 @@ class AdminFilterBar extends StatelessWidget {
                         Icon(
                           Icons.filter_list_rounded,
                           size: 18,
-                          color: colorScheme.primary.withValues(alpha: 0.7),
+                          color:
+                              colorScheme.primary.withValuesCompat(alpha: 0.7),
                         ),
                       ],
                     ),
@@ -66,7 +68,7 @@ class AdminFilterBar extends StatelessWidget {
                     Icon(
                       Icons.filter_list_rounded,
                       size: 18,
-                      color: colorScheme.primary.withValues(alpha: 0.7),
+                      color: colorScheme.primary.withValuesCompat(alpha: 0.7),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

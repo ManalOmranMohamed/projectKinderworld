@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/widgets/app_state_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminPageHeader extends StatelessWidget {
   const AdminPageHeader({
@@ -42,7 +43,7 @@ class AdminPageHeader extends StatelessWidget {
               Text(
                 subtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                 ),
               ),
               if (actions.isNotEmpty) ...[
@@ -69,7 +70,7 @@ class AdminPageHeader extends StatelessWidget {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                     ),
                   ),
                 ],

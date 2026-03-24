@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildLoginPicturePasswordPicker extends StatelessWidget {
   const ChildLoginPicturePasswordPicker({
@@ -56,7 +57,7 @@ class ChildLoginPicturePasswordPicker extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? optionColor.withValues(alpha: 0.2)
+                      ? optionColor.withValuesCompat(alpha: 0.2)
                       : Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(

@@ -12,6 +12,7 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -230,7 +231,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                   gradient: LinearGradient(
                     colors: [
                       colorScheme.primary,
-                      colorScheme.primary.withValues(alpha: 0.75),
+                      colorScheme.primary.withValuesCompat(alpha: 0.75),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -254,7 +255,8 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                     Text(
                       l10n.adminDashboardSubtitle,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onPrimary.withValues(alpha: 0.85),
+                        color:
+                            colorScheme.onPrimary.withValuesCompat(alpha: 0.85),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -270,7 +272,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                             foregroundColor: colorScheme.onPrimary,
                             side: BorderSide(
                                 color: colorScheme.onPrimary
-                                    .withValues(alpha: 0.5)),
+                                    .withValuesCompat(alpha: 0.5)),
                           ),
                           icon: _refreshing
                               ? SizedBox(
@@ -535,7 +537,8 @@ class _StatCard extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color:
+                      theme.colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                   fontSize: compact ? 12 : null,
                 ),
                 maxLines: 2,
@@ -652,7 +655,7 @@ class _AuditFeed extends StatelessWidget {
       return Text(
         emptyLabel,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withValues(alpha: 0.6),
+          color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
         ),
       );
     }
@@ -687,14 +690,16 @@ class _AuditFeed extends StatelessWidget {
                     Text(
                       _adminIdentity(log.admin),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                       ),
                     ),
                     if (log.timestamp != null)
                       Text(
                         _formatDate(log.timestamp!),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.45),
+                          color: colorScheme.onSurface
+                              .withValuesCompat(alpha: 0.45),
                         ),
                       ),
                   ],
@@ -741,7 +746,7 @@ class _SupportQueue extends StatelessWidget {
       return Text(
         emptyLabel,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withValues(alpha: 0.6),
+          color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
         ),
       );
     }
@@ -790,7 +795,8 @@ class _SupportQueue extends StatelessWidget {
                           ticket.email ??
                           '-',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        color:
+                            colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -830,7 +836,7 @@ class _SubscriptionSummary extends StatelessWidget {
       return Text(
         l10n.adminAnalyticsNoData,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withValues(alpha: 0.6),
+          color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
         ),
       );
     }
@@ -868,8 +874,8 @@ class _SubscriptionSummary extends StatelessWidget {
                 LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor:
-                      colorScheme.primaryContainer.withValues(alpha: 0.35),
+                  backgroundColor: colorScheme.primaryContainer
+                      .withValuesCompat(alpha: 0.35),
                 ),
               ],
             ),
@@ -942,7 +948,7 @@ class _ContentOpsSummary extends StatelessWidget {
           Text(
             l10n.adminAnalyticsNoData,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
             ),
           ),
         ],

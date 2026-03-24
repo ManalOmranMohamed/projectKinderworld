@@ -6,6 +6,7 @@ import 'package:kinder_world/core/providers/app_launch_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class _OnboardingData {
   final String title;
@@ -190,7 +191,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 220,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.onPrimary.withValues(alpha: 0.07),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.07),
               ),
             ),
           ),
@@ -203,7 +204,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.onPrimary.withValues(alpha: 0.06),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.06),
               ),
             ),
           ),
@@ -216,7 +217,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.onPrimary.withValues(alpha: 0.10),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.10),
               ),
             ),
           ),
@@ -229,7 +230,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 page.decorIcon1,
                 key: ValueKey('d1_$_currentPage'),
                 size: 28,
-                color: colors.onPrimary.withValues(alpha: 0.25),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.25),
               ),
             ),
           ),
@@ -242,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 page.decorIcon2,
                 key: ValueKey('d2_$_currentPage'),
                 size: 22,
-                color: colors.onPrimary.withValues(alpha: 0.20),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.20),
               ),
             ),
           ),
@@ -276,7 +277,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       },
                       effect: ExpandingDotsEffect(
                         activeDotColor: colors.onPrimary,
-                        dotColor: colors.onPrimary.withValues(alpha: 0.35),
+                        dotColor:
+                            colors.onPrimary.withValuesCompat(alpha: 0.35),
                         dotHeight: 8,
                         dotWidth: 8,
                         expansionFactor: 3,
@@ -294,7 +296,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: colors.onPrimary.withValues(alpha: 0.4),
+                            color:
+                                colors.onPrimary.withValuesCompat(alpha: 0.4),
                           ),
                         ),
                       ),
@@ -323,7 +326,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                     const BorderRadius.vertical(top: Radius.circular(36)),
                 boxShadow: [
                   BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.12),
+                    color: colors.shadow.withValuesCompat(alpha: 0.12),
                     blurRadius: 30,
                     offset: const Offset(0, -6),
                   ),
@@ -346,7 +349,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.1),
+                                color:
+                                    colors.primary.withValuesCompat(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
@@ -412,7 +416,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                                     borderRadius: BorderRadius.circular(999),
                                     border: Border.all(
                                       color: colors.outlineVariant
-                                          .withValues(alpha: 0.7),
+                                          .withValuesCompat(alpha: 0.7),
                                     ),
                                   ),
                                   child: Text(
@@ -445,7 +449,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                               boxShadow: [
                                 BoxShadow(
                                   color: gradientColors.first
-                                      .withValues(alpha: 0.35),
+                                      .withValuesCompat(alpha: 0.35),
                                   blurRadius: 16,
                                   offset: const Offset(0, 6),
                                 ),
@@ -555,7 +559,7 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: colors.onPrimary.withValues(alpha: 0.08),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.08),
                       ),
                     ),
                     Container(
@@ -563,9 +567,9 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 160,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: colors.onPrimary.withValues(alpha: 0.12),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.12),
                         border: Border.all(
-                          color: colors.onPrimary.withValues(alpha: 0.2),
+                          color: colors.onPrimary.withValuesCompat(alpha: 0.2),
                           width: 1.5,
                         ),
                       ),
@@ -575,14 +579,14 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: colors.onPrimary.withValues(alpha: 0.22),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.22),
                         border: Border.all(
-                          color: colors.onPrimary.withValues(alpha: 0.35),
+                          color: colors.onPrimary.withValuesCompat(alpha: 0.35),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: colors.shadow.withValues(alpha: 0.10),
+                            color: colors.shadow.withValuesCompat(alpha: 0.10),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -611,7 +615,7 @@ class _OnboardingPageViewState extends State<_OnboardingPageView>
                   height: 1.0,
                   shadows: [
                     Shadow(
-                      color: colors.shadow.withValues(alpha: 0.3),
+                      color: colors.shadow.withValuesCompat(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

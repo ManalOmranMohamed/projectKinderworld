@@ -7,6 +7,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/theme/theme_palette.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentThemeScreen extends ConsumerWidget {
   const ParentThemeScreen({super.key});
@@ -41,7 +42,8 @@ class ParentThemeScreen extends ConsumerWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1,
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -50,7 +52,7 @@ class ParentThemeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Appearance Mode ─────────────────────────────────────────
+              // â”€â”€ Appearance Mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               ParentCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +94,7 @@ class ParentThemeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
 
-              // ── Color Palette ────────────────────────────────────────────
+              // â”€â”€ Color Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               ParentCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,9 +122,9 @@ class ParentThemeScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MODE BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ModeButton extends StatelessWidget {
   final IconData icon;
@@ -183,9 +185,9 @@ class _ModeButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PALETTE ROW
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PaletteRow extends StatelessWidget {
   final ThemePalette palette;
@@ -212,13 +214,13 @@ class _PaletteRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? parent.primaryLight.withValues(alpha: 0.72)
+              ? parent.primaryLight.withValuesCompat(alpha: 0.72)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? parent.primary
-                : colors.outlineVariant.withValues(alpha: 0.5),
+                : colors.outlineVariant.withValuesCompat(alpha: 0.5),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -239,7 +241,7 @@ class _PaletteRow extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: previewColor.withValues(alpha: 0.28),
+                        color: previewColor.withValuesCompat(alpha: 0.28),
                         blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),

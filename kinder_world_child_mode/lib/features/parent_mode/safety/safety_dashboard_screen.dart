@@ -9,6 +9,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/features/parent_mode/safety/safety_dashboard_service.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class SafetyDashboardScreen extends ConsumerStatefulWidget {
   const SafetyDashboardScreen({
@@ -114,7 +115,8 @@ class _SafetyDashboardScreenState extends ConsumerState<SafetyDashboardScreen> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   ParentCard(
-                    backgroundColor: colors.primary.withValues(alpha: 0.08),
+                    backgroundColor:
+                        colors.primary.withValuesCompat(alpha: 0.08),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -124,7 +126,8 @@ class _SafetyDashboardScreenState extends ConsumerState<SafetyDashboardScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.14),
+                                color: colors.primary
+                                    .withValuesCompat(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(14),
                               ),
                               child: Icon(
@@ -252,7 +255,7 @@ class _StatusSection extends StatelessWidget {
             icon: Icons.shield_outlined,
             title: l10n.parentalControls,
             subtitle:
-                '${data.controls.hoursPerDay}h/day • ${data.controls.sleepMode ? data.controls.bedtime : l10n.inactiveLabel}',
+                '${data.controls.hoursPerDay}h/day â€¢ ${data.controls.sleepMode ? data.controls.bedtime : l10n.inactiveLabel}',
             status: data.controls.hasActiveProtection
                 ? ParentBadgeStatus.active
                 : ParentBadgeStatus.inactive,
@@ -261,7 +264,7 @@ class _StatusSection extends StatelessWidget {
             icon: Icons.privacy_tip_outlined,
             title: l10n.privacySettings,
             subtitle:
-                '${l10n.analyticsTitle}: ${data.privacySettings.analyticsEnabled ? l10n.activeLabel : l10n.inactiveLabel} • ${l10n.dataSharing}: ${data.privacySettings.dataCollectionOptOut ? l10n.activeLabel : l10n.inactiveLabel}',
+                '${l10n.analyticsTitle}: ${data.privacySettings.analyticsEnabled ? l10n.activeLabel : l10n.inactiveLabel} â€¢ ${l10n.dataSharing}: ${data.privacySettings.dataCollectionOptOut ? l10n.activeLabel : l10n.inactiveLabel}',
             status: data.privacyGuardsEnabledCount > 0
                 ? ParentBadgeStatus.active
                 : ParentBadgeStatus.inactive,
@@ -312,7 +315,7 @@ class _ActivitySection extends StatelessWidget {
                 ? lastActivity.childName
                 : l10n.notAvailable,
             subtitle: lastActivity != null
-                ? '${lastActivity.title} • ${_timeAgo(context, lastActivity.timestamp)}'
+                ? '${lastActivity.title} â€¢ ${_timeAgo(context, lastActivity.timestamp)}'
                 : l10n.noRecordedActivityYet,
             icon: Icons.history_rounded,
             color: context.parentTheme.reward,
@@ -406,7 +409,7 @@ class _SupportSection extends StatelessWidget {
             value: '${data.openSupportTicketsCount}',
             subtitle: latestTicket == null
                 ? l10n.supportTicketNoHistory
-                : '${latestTicket.subject} • ${_supportStatusLabel(context, latestTicket.status)}',
+                : '${latestTicket.subject} â€¢ ${_supportStatusLabel(context, latestTicket.status)}',
             icon: Icons.support_agent_rounded,
             color: context.infoColor,
           ),
@@ -508,7 +511,7 @@ class _StatusRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.08),
+              color: colors.primary.withValuesCompat(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: colors.primary),
@@ -561,7 +564,8 @@ class _MetricTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -569,7 +573,7 @@ class _MetricTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color),

@@ -17,8 +17,11 @@ class AdminAnalyticsOverview {
 
   factory AdminAnalyticsOverview.fromJson(Map<String, dynamic> json) {
     Map<String, int> parseIntMap(dynamic value) {
-      final source = value is Map ? Map<String, dynamic>.from(value) : const <String, dynamic>{};
-      return source.map((key, raw) => MapEntry(key, (raw as num?)?.toInt() ?? 0));
+      final source = value is Map
+          ? Map<String, dynamic>.from(value)
+          : const <String, dynamic>{};
+      return source
+          .map((key, raw) => MapEntry(key, (raw as num?)?.toInt() ?? 0));
     }
 
     final subscriptions = json['subscriptions_summary'] is Map

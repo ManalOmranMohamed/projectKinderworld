@@ -17,13 +17,16 @@ class ScreenTimeRule with _$ScreenTimeRule {
     @JsonKey(name: 'sleep_mode_enabled') required bool sleepModeEnabled,
     @JsonKey(name: 'sleep_start_time') String? sleepStartTime,
     @JsonKey(name: 'sleep_end_time') String? sleepEndTime,
-    @JsonKey(name: 'break_reminders_enabled') required bool breakRemindersEnabled,
+    @JsonKey(name: 'break_reminders_enabled')
+    required bool breakRemindersEnabled,
     @JsonKey(name: 'break_interval_minutes') int? breakIntervalMinutes,
     @JsonKey(name: 'break_duration_minutes') int? breakDurationMinutes,
     @JsonKey(name: 'emergency_lock_enabled') required bool emergencyLockEnabled,
     @JsonKey(name: 'smart_control_enabled') required bool smartControlEnabled,
-    @JsonKey(name: 'ai_recommendations_enabled') required bool aiRecommendationsEnabled,
-    @JsonKey(name: 'content_restrictions') required ContentRestrictions contentRestrictions,
+    @JsonKey(name: 'ai_recommendations_enabled')
+    required bool aiRecommendationsEnabled,
+    @JsonKey(name: 'content_restrictions')
+    required ContentRestrictions contentRestrictions,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @JsonKey(name: 'is_active') required bool isActive,
@@ -31,15 +34,16 @@ class ScreenTimeRule with _$ScreenTimeRule {
 
   const ScreenTimeRule._();
 
-  factory ScreenTimeRule.fromJson(Map<String, dynamic> json) => 
+  factory ScreenTimeRule.fromJson(Map<String, dynamic> json) =>
       _$ScreenTimeRuleFromJson(json);
 
   // Check if current time is within allowed hours
   bool isTimeAllowed(DateTime time) {
     if (allowedHours.isEmpty) return true;
-    
-    final currentTime = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    
+
+    final currentTime =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
     for (final slot in allowedHours) {
       if (slot.containsTime(currentTime)) {
         return true;
@@ -53,14 +57,14 @@ class ScreenTimeRule with _$ScreenTimeRule {
     if (!sleepModeEnabled || sleepStartTime == null || sleepEndTime == null) {
       return false;
     }
-    
+
     final currentTime = time.hour * 60 + time.minute;
     final startParts = sleepStartTime!.split(':');
     final endParts = sleepEndTime!.split(':');
-    
+
     final startTime = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
     final endTime = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
-    
+
     // Handle overnight sleep periods
     if (startTime > endTime) {
       return currentTime >= startTime || currentTime <= endTime;
@@ -98,7 +102,7 @@ class TimeSlot with _$TimeSlot {
 
   const TimeSlot._();
 
-  factory TimeSlot.fromJson(Map<String, dynamic> json) => 
+  factory TimeSlot.fromJson(Map<String, dynamic> json) =>
       _$TimeSlotFromJson(json);
 
   // Check if time falls within this slot
@@ -106,7 +110,7 @@ class TimeSlot with _$TimeSlot {
     final timeMinutes = _timeToMinutes(time);
     final startMinutes = _timeToMinutes(start);
     final endMinutes = _timeToMinutes(end);
-    
+
     return timeMinutes >= startMinutes && timeMinutes <= endMinutes;
   }
 
@@ -125,37 +129,43 @@ class TimeSlot with _$TimeSlot {
 @freezed
 class ContentRestrictions with _$ContentRestrictions {
   const factory ContentRestrictions({
-    @JsonKey(name: 'blocked_categories') required List<String> blockedCategories,
-    @JsonKey(name: 'blocked_activities') required List<String> blockedActivities,
-    @JsonKey(name: 'allowed_categories') required List<String> allowedCategories,
+    @JsonKey(name: 'blocked_categories')
+    required List<String> blockedCategories,
+    @JsonKey(name: 'blocked_activities')
+    required List<String> blockedActivities,
+    @JsonKey(name: 'allowed_categories')
+    required List<String> allowedCategories,
     @JsonKey(name: 'max_difficulty') String? maxDifficulty,
-    @JsonKey(name: 'require_approval_for') required List<String> requireApprovalFor,
+    @JsonKey(name: 'require_approval_for')
+    required List<String> requireApprovalFor,
     @JsonKey(name: 'age_appropriate_only') required bool ageAppropriateOnly,
     @JsonKey(name: 'educational_focus') bool? educationalFocus,
   }) = _ContentRestrictions;
 
   const ContentRestrictions._();
 
-  factory ContentRestrictions.fromJson(Map<String, dynamic> json) => 
+  factory ContentRestrictions.fromJson(Map<String, dynamic> json) =>
       _$ContentRestrictionsFromJson(json);
 
   // Check if activity is allowed
-  bool isActivityAllowed(String activityCategory, String activityId, String difficulty) {
+  bool isActivityAllowed(
+      String activityCategory, String activityId, String difficulty) {
     // Check if activity is explicitly blocked
     if (blockedActivities.contains(activityId)) {
       return false;
     }
-    
+
     // Check if category is blocked
     if (blockedCategories.contains(activityCategory)) {
       return false;
     }
-    
+
     // Check if category is in allowed list (if list is not empty)
-    if (allowedCategories.isNotEmpty && !allowedCategories.contains(activityCategory)) {
+    if (allowedCategories.isNotEmpty &&
+        !allowedCategories.contains(activityCategory)) {
       return false;
     }
-    
+
     // Check difficulty limit
     if (maxDifficulty != null) {
       final activityDiff = _getDifficultyValue(difficulty);
@@ -164,14 +174,14 @@ class ContentRestrictions with _$ContentRestrictions {
         return false;
       }
     }
-    
+
     return true;
   }
 
   // Check if activity requires approval
   bool requiresApproval(String activityCategory, String activityId) {
     return requireApprovalFor.contains(activityCategory) ||
-           requireApprovalFor.contains(activityId);
+        requireApprovalFor.contains(activityId);
   }
 
   // Convert difficulty string to numeric value
@@ -202,11 +212,17 @@ class DaysOfWeek {
   static const String friday = 'friday';
   static const String saturday = 'saturday';
   static const String sunday = 'sunday';
-  
+
   static const List<String> all = [
-    monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    monday,
+    tuesday,
+    wednesday,
+    thursday,
+    friday,
+    saturday,
+    sunday
   ];
-  
+
   static String getDisplayName(String day, String language) {
     if (language == 'ar') {
       switch (day) {

@@ -115,7 +115,7 @@ class ProgressRepository {
       final json = record.toJson();
       await _progressBox.put(record.id, json);
       _cacheRecord(record);
-      
+
       _logger.d('Progress record created: ${record.id}');
       return record;
     } catch (e) {
@@ -133,7 +133,7 @@ class ProgressRepository {
       }
 
       final data = _progressBox.get(recordId);
-      
+
       if (data == null) {
         _logger.w('Progress record not found: $recordId');
         return null;
@@ -156,11 +156,11 @@ class ProgressRepository {
       final updated = record.copyWith(
         updatedAt: DateTime.now(),
       );
-      
+
       final json = updated.toJson();
       await _progressBox.put(updated.id, json);
       _cacheRecord(updated);
-      
+
       _logger.d('Progress record updated: ${updated.id}');
       return updated;
     } catch (e) {
@@ -192,7 +192,7 @@ class ProgressRepository {
         _recordsByChild[childId] ?? const <ProgressRecord>[],
         growable: false,
       );
-      
+
       _logger.d('Retrieved ${records.length} records for child: $childId');
       return records;
     } catch (e) {
@@ -223,13 +223,13 @@ class ProgressRepository {
     try {
       final allRecords = await getProgressForChild(childId);
       final today = DateTime.now();
-      
+
       final todayRecords = allRecords.where((record) {
         return record.date.year == today.year &&
-               record.date.month == today.month &&
-               record.date.day == today.day;
+            record.date.month == today.month &&
+            record.date.day == today.day;
       }).toList();
-      
+
       _logger.d('Found ${todayRecords.length} records for today');
       return todayRecords;
     } catch (e) {
@@ -246,12 +246,12 @@ class ProgressRepository {
   }) async {
     try {
       final allRecords = await getProgressForChild(childId);
-      
+
       final filtered = allRecords.where((record) {
         return record.date.isAfter(startDate) &&
-               record.date.isBefore(endDate.add(const Duration(days: 1)));
+            record.date.isBefore(endDate.add(const Duration(days: 1)));
       }).toList();
-      
+
       _logger.d('Found ${filtered.length} records for date range');
       return filtered;
     } catch (e) {
@@ -266,7 +266,7 @@ class ProgressRepository {
   Future<Map<String, dynamic>> getChildStats(String childId) async {
     try {
       final records = await getProgressForChild(childId);
-      
+
       if (records.isEmpty) {
         return {
           'totalXP': 0,
@@ -277,14 +277,17 @@ class ProgressRepository {
         };
       }
 
-      final totalXP = records.fold<int>(0, (sum, record) => sum + record.xpEarned);
-      final totalScore = records.fold<int>(0, (sum, record) => sum + record.score);
-      final totalTime = records.fold<int>(0, (sum, record) => sum + record.duration);
-      
+      final totalXP =
+          records.fold<int>(0, (sum, record) => sum + record.xpEarned);
+      final totalScore =
+          records.fold<int>(0, (sum, record) => sum + record.score);
+      final totalTime =
+          records.fold<int>(0, (sum, record) => sum + record.duration);
+
       final completedCount = records
           .where((r) => r.completionStatus == CompletionStatus.completed)
           .length;
-      
+
       final completionRate = completedCount / records.length;
 
       return {
@@ -308,7 +311,7 @@ class ProgressRepository {
       final now = DateTime.now();
       final weekStart = now.subtract(Duration(days: now.weekday - 1));
       final weekEnd = weekStart.add(const Duration(days: 6));
-      
+
       final weekRecords = await getProgressForDateRange(
         childId: childId,
         startDate: weekStart,
@@ -316,17 +319,17 @@ class ProgressRepository {
       );
 
       final dailyStats = <String, Map<String, dynamic>>{};
-      
+
       for (var i = 0; i < 7; i++) {
         final day = weekStart.add(Duration(days: i));
         final dayKey = '${day.year}-${day.month}-${day.day}';
-        
+
         final dayRecords = weekRecords.where((record) {
           return record.date.year == day.year &&
-                 record.date.month == day.month &&
-                 record.date.day == day.day;
+              record.date.month == day.month &&
+              record.date.day == day.day;
         }).toList();
-        
+
         dailyStats[dayKey] = {
           'date': day,
           'activitiesCompleted': dayRecords.length,
@@ -355,7 +358,7 @@ class ProgressRepository {
       final now = DateTime.now();
       final monthStart = DateTime(now.year, now.month, 1);
       final monthEnd = DateTime(now.year, now.month + 1, 0);
-      
+
       final monthRecords = await getProgressForDateRange(
         childId: childId,
         startDate: monthStart,
@@ -368,9 +371,10 @@ class ProgressRepository {
         'totalActivities': monthRecords.length,
         'totalXP': monthRecords.fold<int>(0, (sum, r) => sum + r.xpEarned),
         'totalTime': monthRecords.fold<int>(0, (sum, r) => sum + r.duration),
-        'averageScore': monthRecords.isEmpty 
-            ? 0 
-            : monthRecords.fold<int>(0, (sum, r) => sum + r.score) / monthRecords.length,
+        'averageScore': monthRecords.isEmpty
+            ? 0
+            : monthRecords.fold<int>(0, (sum, r) => sum + r.score) /
+                monthRecords.length,
       };
     } catch (e) {
       _logger.e('Error getting monthly summary: $childId, $e');
@@ -384,25 +388,31 @@ class ProgressRepository {
   Future<Map<String, dynamic>> getPerformanceTrends(String childId) async {
     try {
       final records = await getProgressForChild(childId);
-      
+
       if (records.isEmpty) return {};
 
       // Last 7 days trend
       final last7Days = records.take(7).toList();
-      final avgScoreLast7 = last7Days.fold<int>(0, (sum, r) => sum + r.score) / last7Days.length;
-      
+      final avgScoreLast7 =
+          last7Days.fold<int>(0, (sum, r) => sum + r.score) / last7Days.length;
+
       // Previous 7 days
       final previous7Days = records.skip(7).take(7).toList();
-      final avgScorePrevious7 = previous7Days.isEmpty 
-          ? 0 
-          : previous7Days.fold<int>(0, (sum, r) => sum + r.score) / previous7Days.length;
-      
+      final avgScorePrevious7 = previous7Days.isEmpty
+          ? 0
+          : previous7Days.fold<int>(0, (sum, r) => sum + r.score) /
+              previous7Days.length;
+
       final trend = avgScoreLast7 - avgScorePrevious7;
 
       return {
         'currentAverageScore': avgScoreLast7,
         'previousAverageScore': avgScorePrevious7,
-        'trend': trend > 0 ? 'improving' : trend < 0 ? 'declining' : 'stable',
+        'trend': trend > 0
+            ? 'improving'
+            : trend < 0
+                ? 'declining'
+                : 'stable',
         'trendValue': trend,
       };
     } catch (e) {
@@ -415,15 +425,16 @@ class ProgressRepository {
   Future<Map<String, dynamic>> getMoodAnalysis(String childId) async {
     try {
       final records = await getProgressForChild(childId);
-      
+
       final moodCounts = <String, int>{};
       var moodImprovedCount = 0;
-      
+
       for (var record in records) {
         if (record.moodAfter != null) {
-          moodCounts[record.moodAfter!] = (moodCounts[record.moodAfter!] ?? 0) + 1;
+          moodCounts[record.moodAfter!] =
+              (moodCounts[record.moodAfter!] ?? 0) + 1;
         }
-        
+
         if (record.moodImproved) {
           moodImprovedCount++;
         }
@@ -432,9 +443,8 @@ class ProgressRepository {
       return {
         'moodCounts': moodCounts,
         'moodImprovedCount': moodImprovedCount,
-        'moodImprovementRate': records.isEmpty 
-            ? 0 
-            : moodImprovedCount / records.length,
+        'moodImprovementRate':
+            records.isEmpty ? 0 : moodImprovedCount / records.length,
       };
     } catch (e) {
       _logger.e('Error getting mood analysis: $childId, $e');
@@ -455,12 +465,12 @@ class ProgressRepository {
 
       var streak = 0;
       var currentDate = DateTime.now();
-      
+
       // Check if there's activity today
       final hasToday = sorted.any((record) {
         return record.date.year == currentDate.year &&
-               record.date.month == currentDate.month &&
-               record.date.day == currentDate.day;
+            record.date.month == currentDate.month &&
+            record.date.day == currentDate.day;
       });
 
       if (!hasToday) {
@@ -468,23 +478,23 @@ class ProgressRepository {
         final yesterday = currentDate.subtract(const Duration(days: 1));
         final hasYesterday = sorted.any((record) {
           return record.date.year == yesterday.year &&
-                 record.date.month == yesterday.month &&
-                 record.date.day == yesterday.day;
+              record.date.month == yesterday.month &&
+              record.date.day == yesterday.day;
         });
-        
+
         if (!hasYesterday) return 0;
-        
+
         currentDate = yesterday;
       }
 
       // Count consecutive days
       for (var i = 0; i < 365; i++) {
         final checkDate = currentDate.subtract(Duration(days: i));
-        
+
         final hasActivity = sorted.any((record) {
           return record.date.year == checkDate.year &&
-                 record.date.month == checkDate.month &&
-                 record.date.day == checkDate.day;
+              record.date.month == checkDate.month &&
+              record.date.day == checkDate.day;
         });
 
         if (hasActivity) {
@@ -523,7 +533,7 @@ class ProgressRepository {
   Future<bool> syncWithServer() async {
     try {
       final needsSync = await getRecordsNeedingSync();
-      
+
       for (var record in needsSync) {
         // Mark as synced
         final updated = record.copyWith(
@@ -532,7 +542,7 @@ class ProgressRepository {
         );
         await updateProgressRecord(updated);
       }
-      
+
       _logger.d('Synced ${needsSync.length} records');
       return true;
     } catch (e) {

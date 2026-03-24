@@ -50,7 +50,8 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
         elevation: 0,
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(supportControllerProvider.notifier).loadTickets(),
+        onRefresh: () =>
+            ref.read(supportControllerProvider.notifier).loadTickets(),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -264,7 +265,8 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
         ),
         trailing: _SupportChip(
           label: _statusLabel(ticket.status, l10n),
-          colorScheme: _statusColor(ticket.status, Theme.of(context).colorScheme),
+          colorScheme:
+              _statusColor(ticket.status, Theme.of(context).colorScheme),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
@@ -276,14 +278,12 @@ class _ParentContactUsScreenState extends ConsumerState<ParentContactUsScreen> {
               children: [
                 _SupportChip(
                   label: _categoryLabel(ticket.category, l10n),
-                  colorScheme:
-                      _categoryColor(Theme.of(context).colorScheme),
+                  colorScheme: _categoryColor(Theme.of(context).colorScheme),
                 ),
                 if (ticket.updatedAt != null)
                   _SupportChip(
                     label: _formatDate(ticket.updatedAt!),
-                    colorScheme:
-                        _neutralColor(Theme.of(context).colorScheme),
+                    colorScheme: _neutralColor(Theme.of(context).colorScheme),
                   ),
               ],
             ),

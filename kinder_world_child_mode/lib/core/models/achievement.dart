@@ -5,6 +5,8 @@
 
 import 'dart:ui';
 
+import 'package:kinder_world/core/utils/color_serialization.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // XP CONSTANTS — how much XP each action awards
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,15 +14,15 @@ import 'dart:ui';
 class XPRewards {
   XPRewards._();
 
-  static const int completeLesson    = 50;
-  static const int completeActivity  = 30;
-  static const int completeQuiz      = 40;
-  static const int perfectScore      = 60;  // bonus on top of quiz XP
-  static const int dailyStreak       = 20;
-  static const int playActivity      = 25;
-  static const int coloringPage      = 15;
-  static const int aiBuddySession    = 10;
-  static const int firstLogin        = 100; // one-time welcome bonus
+  static const int completeLesson = 50;
+  static const int completeActivity = 30;
+  static const int completeQuiz = 40;
+  static const int perfectScore = 60; // bonus on top of quiz XP
+  static const int dailyStreak = 20;
+  static const int playActivity = 25;
+  static const int coloringPage = 15;
+  static const int aiBuddySession = 10;
+  static const int firstLogin = 100; // one-time welcome bonus
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,16 +35,16 @@ class LevelThresholds {
   LevelThresholds._();
 
   static const List<int> thresholds = [
-    0,      // Level 1
-    200,    // Level 2
-    500,    // Level 3
-    1000,   // Level 4
-    2000,   // Level 5
-    4000,   // Level 6
-    8000,   // Level 7
-    15000,  // Level 8
-    25000,  // Level 9
-    40000,  // Level 10
+    0, // Level 1
+    200, // Level 2
+    500, // Level 3
+    1000, // Level 4
+    2000, // Level 5
+    4000, // Level 6
+    8000, // Level 7
+    15000, // Level 8
+    25000, // Level 9
+    40000, // Level 10
   ];
 
   static const int maxLevel = 10;
@@ -93,16 +95,16 @@ class LevelThresholds {
   /// Human-readable title for a level.
   static String titleForLevel(int level) {
     const titles = [
-      'Explorer',       // 1
-      'Adventurer',     // 2
-      'Learner',        // 3
-      'Scholar',        // 4
-      'Champion',       // 5
-      'Hero',           // 6
-      'Master',         // 7
-      'Legend',         // 8
-      'Genius',         // 9
-      'KinderStar',     // 10
+      'Explorer', // 1
+      'Adventurer', // 2
+      'Learner', // 3
+      'Scholar', // 4
+      'Champion', // 5
+      'Hero', // 6
+      'Master', // 7
+      'Legend', // 8
+      'Genius', // 9
+      'KinderStar', // 10
     ];
     final idx = (level - 1).clamp(0, titles.length - 1);
     return titles[idx];
@@ -123,18 +125,18 @@ class LevelThresholds {
 class AchievementIds {
   AchievementIds._();
 
-  static const String firstLesson      = 'first_lesson';
-  static const String firstActivity    = 'first_activity';
-  static const String firstBadge       = 'first_badge';
-  static const String streak3          = 'streak_3';
-  static const String streak7          = 'streak_7';
-  static const String streak30         = 'streak_30';
-  static const String activities10     = 'activities_10';
-  static const String activities50     = 'activities_50';
-  static const String level5           = 'level_5';
-  static const String xp1000          = 'xp_1000';
-  static const String perfectScore     = 'perfect_score';
-  static const String explorer         = 'explorer';
+  static const String firstLesson = 'first_lesson';
+  static const String firstActivity = 'first_activity';
+  static const String firstBadge = 'first_badge';
+  static const String streak3 = 'streak_3';
+  static const String streak7 = 'streak_7';
+  static const String streak30 = 'streak_30';
+  static const String activities10 = 'activities_10';
+  static const String activities50 = 'activities_50';
+  static const String level5 = 'level_5';
+  static const String xp1000 = 'xp_1000';
+  static const String perfectScore = 'perfect_score';
+  static const String explorer = 'explorer';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,12 +146,12 @@ class AchievementIds {
 class BadgeIds {
   BadgeIds._();
 
-  static const String starLearner       = 'star_learner';
-  static const String streakHero        = 'streak_hero';
-  static const String activityChampion  = 'activity_champion';
-  static const String quizMaster        = 'quiz_master';
-  static const String explorer          = 'explorer';
-  static const String levelMaster       = 'level_master';
+  static const String starLearner = 'star_learner';
+  static const String streakHero = 'streak_hero';
+  static const String activityChampion = 'activity_champion';
+  static const String quizMaster = 'quiz_master';
+  static const String explorer = 'explorer';
+  static const String levelMaster = 'level_master';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,7 +270,7 @@ class Badge {
         'nameKey': nameKey,
         'descriptionKey': descriptionKey,
         'iconEmoji': iconEmoji,
-        'colorValue': color.toARGB32(),
+        'colorValue': colorToArgb32(color),
         'isEarned': isEarned,
         'earnedAt': earnedAt?.toIso8601String(),
       };
@@ -306,7 +308,8 @@ class GamificationState {
   final List<Badge> badges;
   final DateTime? lastActivityDate;
   final int activitiesCompleted;
-  final Set<String> exploredCategories; // tracks which content categories visited
+  final Set<String>
+      exploredCategories; // tracks which content categories visited
 
   const GamificationState({
     required this.childId,
@@ -399,12 +402,12 @@ class XPEvent {
 class AchievementCatalog {
   AchievementCatalog._();
 
-  static const Color _gold    = Color(0xFFFFD700);
-  static const Color _fire    = Color(0xFFFF6B35);
-  static const Color _purple  = Color(0xFF7C4DFF);
-  static const Color _green   = Color(0xFF4CAF50);
-  static const Color _blue    = Color(0xFF3F51B5);
-  static const Color _pink    = Color(0xFFE91E63);
+  static const Color _gold = Color(0xFFFFD700);
+  static const Color _fire = Color(0xFFFF6B35);
+  static const Color _purple = Color(0xFF7C4DFF);
+  static const Color _green = Color(0xFF4CAF50);
+  static const Color _blue = Color(0xFF3F51B5);
+  static const Color _pink = Color(0xFFE91E63);
 
   /// Returns the full catalog of achievements with default (locked) state.
   static List<Achievement> get all => [

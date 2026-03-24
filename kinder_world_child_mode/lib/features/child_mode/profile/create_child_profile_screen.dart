@@ -9,6 +9,7 @@ import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -18,28 +19,30 @@ class CreateChildProfileScreen extends ConsumerStatefulWidget {
   const CreateChildProfileScreen({super.key});
 
   @override
-  ConsumerState<CreateChildProfileScreen> createState() => _CreateChildProfileScreenState();
+  ConsumerState<CreateChildProfileScreen> createState() =>
+      _CreateChildProfileScreenState();
 }
 
-class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScreen> {
+class _CreateChildProfileScreenState
+    extends ConsumerState<CreateChildProfileScreen> {
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
-  
+
   // Step 1: Basic Info
   final _nameController = TextEditingController();
   final _parentEmailController = TextEditingController();
   int _selectedAge = 6;
-  
+
   // Step 2: Avatar
   String _selectedAvatar = 'assets/images/avatars/boy1.png';
-  
+
   // Step 3: Interests
   final List<String> _selectedInterests = [];
-  
+
   // Step 4: Picture Password
   final List<String> _picturePassword = [];
   OverlayEntry? _topMessageEntry;
-  
+
   // Available avatars
   final List<String> _avatarOptions = [
     'assets/images/avatars/boy1.png',
@@ -57,33 +60,33 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
     'assets/images/avatars/av5.png',
     'assets/images/avatars/av6.png',
   ];
-  
+
   // Available interests
   final Map<String, String> _interestOptions = {
-    'math': '🔢 Mathematics',
-    'science': '🔬 Science',
-    'reading': '📚 Reading',
-    'art': '🎨 Art & Drawing',
-    'music': '🎵 Music',
-    'sports': '⚽ Sports',
-    'animals': '🐾 Animals',
-    'nature': '🌿 Nature',
+    'math': 'ًں”¢ Mathematics',
+    'science': 'ًں”¬ Science',
+    'reading': 'ًں“ڑ Reading',
+    'art': 'ًںژ¨ Art & Drawing',
+    'music': 'ًںژµ Music',
+    'sports': 'âڑ½ Sports',
+    'animals': 'ًںگ¾ Animals',
+    'nature': 'ًںŒ؟ Nature',
   };
-  
+
   // Available pictures for password
   final List<Map<String, dynamic>> _pictureOptions = [
-    {'id': 'apple', 'icon': '🍎', 'name': 'Apple'},
-    {'id': 'ball', 'icon': '⚽', 'name': 'Ball'},
-    {'id': 'cat', 'icon': '🐱', 'name': 'Cat'},
-    {'id': 'dog', 'icon': '🐶', 'name': 'Dog'},
-    {'id': 'elephant', 'icon': '🐘', 'name': 'Elephant'},
-    {'id': 'fish', 'icon': '🐠', 'name': 'Fish'},
-    {'id': 'guitar', 'icon': '🎸', 'name': 'Guitar'},
-    {'id': 'house', 'icon': '🏠', 'name': 'House'},
-    {'id': 'icecream', 'icon': '🍦', 'name': 'Ice Cream'},
-    {'id': 'jelly', 'icon': '🍇', 'name': 'Jelly'},
-    {'id': 'kite', 'icon': '🪁', 'name': 'Kite'},
-    {'id': 'lion', 'icon': '🦁', 'name': 'Lion'},
+    {'id': 'apple', 'icon': 'ًںچژ', 'name': 'Apple'},
+    {'id': 'ball', 'icon': 'âڑ½', 'name': 'Ball'},
+    {'id': 'cat', 'icon': 'ًںگ±', 'name': 'Cat'},
+    {'id': 'dog', 'icon': 'ًںگ¶', 'name': 'Dog'},
+    {'id': 'elephant', 'icon': 'ًںگک', 'name': 'Elephant'},
+    {'id': 'fish', 'icon': 'ًںگ ', 'name': 'Fish'},
+    {'id': 'guitar', 'icon': 'ًںژ¸', 'name': 'Guitar'},
+    {'id': 'house', 'icon': 'ًںڈ ', 'name': 'House'},
+    {'id': 'icecream', 'icon': 'ًںچ¦', 'name': 'Ice Cream'},
+    {'id': 'jelly', 'icon': 'ًںچ‡', 'name': 'Jelly'},
+    {'id': 'kite', 'icon': 'ًںھپ', 'name': 'Kite'},
+    {'id': 'lion', 'icon': 'ًں¦پ', 'name': 'Lion'},
   ];
 
   @override
@@ -129,11 +132,16 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isError ? Theme.of(context).colorScheme.error : context.successColor,
+                  color: isError
+                      ? Theme.of(context).colorScheme.error
+                      : context.successColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValuesCompat(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -167,7 +175,8 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
 
   void _onPictureSelected(String pictureId) {
     setState(() {
-      if (_picturePassword.length < 3 && !_picturePassword.contains(pictureId)) {
+      if (_picturePassword.length < 3 &&
+          !_picturePassword.contains(pictureId)) {
         _picturePassword.add(pictureId);
       } else if (_picturePassword.contains(pictureId)) {
         _picturePassword.remove(pictureId);
@@ -324,9 +333,9 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
     }
 
     await ref.read(childSessionControllerProvider.notifier).startChildSession(
-      childId: response.childId,
-      childProfile: saved,
-    );
+          childId: response.childId,
+          childProfile: saved,
+        );
 
     if (mounted) {
       context.go('/child/home');
@@ -341,7 +350,8 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () {
             if (_currentStep > 0) {
               setState(() {
@@ -374,9 +384,11 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       height: 4,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
-                        color: index <= _currentStep 
-                            ? Theme.of(context).colorScheme.primary 
-                            : Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: index <= _currentStep
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -384,7 +396,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 }),
               ),
             ),
-            
+
             // Step content
             Expanded(
               child: Form(
@@ -392,7 +404,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                 child: _buildCurrentStep(),
               ),
             ),
-            
+
             // Navigation buttons
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -408,7 +420,8 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary),
                         ),
                         child: Text(
                           AppLocalizations.of(context)!.back,
@@ -422,11 +435,13 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                   if (_currentStep > 0) const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _currentStep == 3 ? _createProfile : () {
-                        setState(() {
-                          _currentStep++;
-                        });
-                      },
+                      onPressed: _currentStep == 3
+                          ? _createProfile
+                          : () {
+                              setState(() {
+                                _currentStep++;
+                              });
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -490,13 +505,14 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Name input
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
               labelText: l10n.childNameLabel,
-              labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              labelStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -515,7 +531,8 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             controller: _parentEmailController,
             decoration: InputDecoration(
               labelText: l10n.parentEmail,
-              labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              labelStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -539,7 +556,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             },
           ),
           const SizedBox(height: 24),
-          
+
           // Age selector
           Text(
             l10n.childAge,
@@ -550,7 +567,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 16),
-          
+
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -596,7 +613,6 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 32),
-          
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -609,7 +625,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             itemBuilder: (context, index) {
               final avatar = _avatarOptions[index];
               final isSelected = _selectedAvatar == avatar;
-              
+
               return InkWell(
                 onTap: () {
                   setState(() {
@@ -622,7 +638,11 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       width: isSelected ? 3 : 1,
                     ),
                   ),
@@ -631,7 +651,10 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValuesCompat(alpha: 0.1),
                         borderRadius: BorderRadius.circular(40),
                       ),
                       child: ClipOval(
@@ -680,7 +703,6 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 32),
-          
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -694,18 +716,25 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             itemBuilder: (context, index) {
               final entry = _interestOptions.entries.elementAt(index);
               final isSelected = _selectedInterests.contains(entry.key);
-              
+
               return InkWell(
                 onTap: () => _onInterestSelected(entry.key),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected 
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                    color: isSelected
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValuesCompat(alpha: 0.1)
                         : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -714,8 +743,11 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                       entry.value,
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -752,7 +784,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Selected pictures
           Container(
             height: 80,
@@ -760,7 +792,8 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -770,18 +803,19 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
                   height: 50,
                   margin: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   child: _picturePassword.length > index
                       ? Center(
-                        child: Text(
-                          _pictureOptions.firstWhere(
-                            (p) => p['id'] == _picturePassword[index]
-                          )['icon'],
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                          child: Text(
+                            _pictureOptions.firstWhere((p) =>
+                                p['id'] == _picturePassword[index])['icon'],
+                            style: const TextStyle(fontSize: 24),
+                          ),
                         )
                       : null,
                 );
@@ -789,7 +823,7 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             ),
           ),
           const SizedBox(height: 32),
-          
+
           // Picture options
           GridView.builder(
             shrinkWrap: true,
@@ -804,18 +838,25 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
             itemBuilder: (context, index) {
               final picture = _pictureOptions[index];
               final isSelected = _picturePassword.contains(picture['id']);
-              
+
               return InkWell(
                 onTap: () => _onPictureSelected(picture['id']),
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected 
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                    color: isSelected
+                        ? Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValuesCompat(alpha: 0.2)
                         : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                       width: 2,
                     ),
                   ),
@@ -845,5 +886,3 @@ class _CreateChildProfileScreenState extends ConsumerState<CreateChildProfileScr
     );
   }
 }
-
-

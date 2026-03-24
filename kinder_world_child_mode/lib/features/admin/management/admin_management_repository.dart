@@ -844,5 +844,8 @@ List<Map<String, dynamic>> _jsonList(Object? value) {
   if (value is! List) {
     return const <Map<String, dynamic>>[];
   }
-  return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }

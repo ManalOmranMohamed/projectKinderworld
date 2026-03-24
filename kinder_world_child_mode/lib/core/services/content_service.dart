@@ -64,7 +64,8 @@ class ContentService {
         'coppa' => '/legal/coppa',
         _ => '/legal/terms',
       };
-      final response = await _networkService.get<Map<String, dynamic>>(endpoint);
+      final response =
+          await _networkService.get<Map<String, dynamic>>(endpoint);
       return LegalContentPayload.fromJson(response.data ?? const {});
     } catch (e) {
       _logger.w('Error getting legal payload: $e');

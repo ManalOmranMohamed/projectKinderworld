@@ -21,6 +21,7 @@ import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/features/child_mode/paywall/child_paywall_screen.dart';
 import 'package:kinder_world/features/auth/widgets/child_login_picture_password_picker.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildLoginScreen extends ConsumerStatefulWidget {
   const ChildLoginScreen({super.key});
@@ -141,7 +142,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                       color: Theme.of(context)
                           .colorScheme
                           .shadow
-                          .withValues(alpha: 0.2),
+                          .withValuesCompat(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -520,7 +521,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                         ? Theme.of(context)
                                             .colorScheme
                                             .primary
-                                            .withValues(alpha: 0.2)
+                                            .withValuesCompat(alpha: 0.2)
                                         : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
@@ -598,7 +599,8 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? optionColor.withValues(alpha: 0.2)
+                                        ? optionColor.withValuesCompat(
+                                            alpha: 0.2)
                                         : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
@@ -1147,11 +1149,16 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            color: Theme.of(context)
+                .colorScheme
+                .primary
+                .withValuesCompat(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValuesCompat(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -1285,7 +1292,10 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+              ? Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValuesCompat(alpha: 0.1)
               : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -1302,7 +1312,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
               avatarPath: child.avatarPath,
               size: 64,
               backgroundColor:
-                  context.childTheme.kindness.withValues(alpha: 0.2),
+                  context.childTheme.kindness.withValuesCompat(alpha: 0.2),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1326,7 +1336,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             ] else ...[
               const SizedBox(height: 4),
               Text(
-                '—',
+                'â€”',
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1337,7 +1347,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: context.childTheme.xp.withValues(alpha: 0.2),
+                color: context.childTheme.xp.withValuesCompat(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -1377,7 +1387,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
                 color: Theme.of(context)
                     .colorScheme
                     .primary
-                    .withValues(alpha: 0.12),
+                    .withValuesCompat(alpha: 0.12),
                 borderRadius: BorderRadius.circular(32),
                 border:
                     Border.all(color: Theme.of(context).colorScheme.primary),

@@ -128,12 +128,14 @@ class PublicContentItem {
       category: rawCategory is Map<String, dynamic>
           ? PublicContentCategory.fromJson(rawCategory)
           : rawCategory is Map
-              ? PublicContentCategory.fromJson(Map<String, dynamic>.from(rawCategory))
+              ? PublicContentCategory.fromJson(
+                  Map<String, dynamic>.from(rawCategory))
               : null,
       quizzes: rawQuizzes is List
           ? rawQuizzes
               .whereType<Map>()
-              .map((item) => PublicQuiz.fromJson(Map<String, dynamic>.from(item)))
+              .map((item) =>
+                  PublicQuiz.fromJson(Map<String, dynamic>.from(item)))
               .toList()
           : const [],
     );

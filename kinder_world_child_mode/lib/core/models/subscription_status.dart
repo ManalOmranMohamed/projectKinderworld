@@ -33,7 +33,7 @@ class SubscriptionStatus with _$SubscriptionStatus {
 
   const SubscriptionStatus._();
 
-  factory SubscriptionStatus.fromJson(Map<String, dynamic> json) => 
+  factory SubscriptionStatus.fromJson(Map<String, dynamic> json) =>
       _$SubscriptionStatusFromJson(json);
 
   // Check if subscription is active
@@ -111,30 +111,32 @@ class SubscriptionStatus with _$SubscriptionStatus {
   // Get next billing date
   DateTime? get nextBillingDate {
     if (subscriptionStartDate == null) return null;
-    
+
     final now = DateTime.now();
     if (nextPaymentDate != null) {
       return nextPaymentDate;
     }
-    
+
     // Calculate based on plan type
     final startDate = subscriptionStartDate!;
     if (planType == SubscriptionPlanType.monthly) {
       // Find next month anniversary
-      var nextDate = DateTime(startDate.year, startDate.month + 1, startDate.day);
+      var nextDate =
+          DateTime(startDate.year, startDate.month + 1, startDate.day);
       while (nextDate.isBefore(now)) {
         nextDate = DateTime(nextDate.year, nextDate.month + 1, nextDate.day);
       }
       return nextDate;
     } else if (planType == SubscriptionPlanType.yearly) {
       // Find next year anniversary
-      var nextDate = DateTime(startDate.year + 1, startDate.month, startDate.day);
+      var nextDate =
+          DateTime(startDate.year + 1, startDate.month, startDate.day);
       while (nextDate.isBefore(now)) {
         nextDate = DateTime(nextDate.year + 1, nextDate.month, nextDate.day);
       }
       return nextDate;
     }
-    
+
     return null;
   }
 }
@@ -147,11 +149,16 @@ class SubscriptionPlanType {
   static const String yearly = 'yearly';
   static const String family = 'family';
   static const String educational = 'educational';
-  
+
   static const List<String> all = [
-    free, trial, monthly, yearly, family, educational
+    free,
+    trial,
+    monthly,
+    yearly,
+    family,
+    educational
   ];
-  
+
   static String getDisplayName(String planType) {
     switch (planType) {
       case free:
@@ -180,11 +187,16 @@ class SubscriptionStatusValues {
   static const String pending = 'pending';
   static const String suspended = 'suspended';
   static const String trial = 'trial';
-  
+
   static const List<String> all = [
-    active, canceled, expired, pending, suspended, trial
+    active,
+    canceled,
+    expired,
+    pending,
+    suspended,
+    trial
   ];
-  
+
   static String getDisplayName(String status) {
     switch (status) {
       case active:
@@ -203,7 +215,7 @@ class SubscriptionStatusValues {
         return status;
     }
   }
-  
+
   static Color getColor(String status) {
     switch (status) {
       case active:
@@ -236,13 +248,20 @@ class SubscriptionFeatures {
   static const String customLearningPaths = 'custom_learning_paths';
   static const String progressExport = 'progress_export';
   static const String noAds = 'no_ads';
-  
+
   static const List<String> all = [
-    unlimitedActivities, advancedReports, aiInsights, multipleProfiles,
-    offlineDownload, prioritySupport, advancedParentalControls,
-    customLearningPaths, progressExport, noAds
+    unlimitedActivities,
+    advancedReports,
+    aiInsights,
+    multipleProfiles,
+    offlineDownload,
+    prioritySupport,
+    advancedParentalControls,
+    customLearningPaths,
+    progressExport,
+    noAds
   ];
-  
+
   static String getDisplayName(String feature) {
     switch (feature) {
       case unlimitedActivities:

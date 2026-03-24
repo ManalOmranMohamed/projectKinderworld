@@ -11,6 +11,7 @@ import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ActivityOfTheDayScreen extends ConsumerStatefulWidget {
   const ActivityOfTheDayScreen({super.key});
@@ -102,15 +103,15 @@ class _ActivityOfTheDayScreenState
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.secondary.withValues(alpha: 0.2),
-                      AppColors.xpColor.withValues(alpha: 0.15),
+                      AppColors.secondary.withValuesCompat(alpha: 0.2),
+                      AppColors.xpColor.withValuesCompat(alpha: 0.15),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: AppColors.secondary.withValues(alpha: 0.25)),
+                      color: AppColors.secondary.withValuesCompat(alpha: 0.25)),
                 ),
                 child: Row(
                   children: [
@@ -118,7 +119,7 @@ class _ActivityOfTheDayScreenState
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.2),
+                        color: AppColors.secondary.withValuesCompat(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Icon(
@@ -155,7 +156,7 @@ class _ActivityOfTheDayScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.xpColor.withValues(alpha: 0.2),
+                        color: AppColors.xpColor.withValuesCompat(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
@@ -284,7 +285,7 @@ class _ActivityOfTheDayScreenState
           border: Border.all(color: colors.surfaceContainerHighest),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.05),
+              color: colors.shadow.withValuesCompat(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -296,7 +297,7 @@ class _ActivityOfTheDayScreenState
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
+                color: color.withValuesCompat(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),

@@ -1,8 +1,8 @@
 // lib/features/child_mode/mood/mood_picker_widget.dart
 //
 // Child-facing mood tracking UI.
-// MoodPickerSection   — animated emoji mood buttons shown on home screen.
-// MoodRecommendationsSection — content cards based on selected mood.
+// MoodPickerSection   â€” animated emoji mood buttons shown on home screen.
+// MoodRecommendationsSection â€” content cards based on selected mood.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,10 +15,11 @@ import 'package:kinder_world/core/providers/mood_provider.dart';
 import 'package:kinder_world/core/services/mood_recommendation_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MOOD PICKER SECTION
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /// Displays a row of animated emoji buttons for the child to pick their mood.
 /// Shows an encouragement message after selection.
@@ -85,11 +86,11 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────────────
+            // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               children: [
                 Text(
-                  alreadyRecorded ? '✨' : '💭',
+                  alreadyRecorded ? 'âœ¨' : 'ًں’­',
                   style: const TextStyle(fontSize: 22),
                 ),
                 const SizedBox(width: 10),
@@ -121,10 +122,10 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
                 // Saved badge
                 if (justSaved)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: childTheme.xp.withValues(alpha: 0.15),
+                      color: childTheme.xp.withValuesCompat(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -141,7 +142,7 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
 
             const SizedBox(height: 16),
 
-            // ── Mood Buttons ─────────────────────────────────────────────────
+            // â”€â”€ Mood Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (!alreadyRecorded)
               _MoodButtonsRow(
                 selectedMood: _tappedMood,
@@ -152,7 +153,7 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
             else
               _CurrentMoodDisplay(mood: currentMood!),
 
-            // ── Encouragement ────────────────────────────────────────────────
+            // â”€â”€ Encouragement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (alreadyRecorded && currentMood != null) ...[
               const SizedBox(height: 12),
               _EncouragementBanner(mood: currentMood),
@@ -164,9 +165,9 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MOOD BUTTONS ROW
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MoodButtonsRow extends StatelessWidget {
   const _MoodButtonsRow({
@@ -219,9 +220,9 @@ class _MoodButtonsRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SINGLE MOOD EMOJI BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MoodEmojiButton extends StatelessWidget {
   const _MoodEmojiButton({
@@ -248,8 +249,8 @@ class _MoodEmojiButton extends StatelessWidget {
         height: compact ? 58 : 62,
         decoration: BoxDecoration(
           color: isSelected
-              ? moodColor.withValues(alpha: 0.18)
-              : colors.surfaceContainerHighest.withValues(alpha: 0.5),
+              ? moodColor.withValuesCompat(alpha: 0.18)
+              : colors.surfaceContainerHighest.withValuesCompat(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? moodColor : Colors.transparent,
@@ -258,7 +259,7 @@ class _MoodEmojiButton extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: moodColor.withValues(alpha: 0.3),
+                    color: moodColor.withValuesCompat(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   )
@@ -271,9 +272,8 @@ class _MoodEmojiButton extends StatelessWidget {
             Text(
               MoodMeta.emoji(mood),
               style: TextStyle(
-                fontSize: compact
-                    ? (isSelected ? 24 : 20)
-                    : (isSelected ? 26 : 22),
+                fontSize:
+                    compact ? (isSelected ? 24 : 20) : (isSelected ? 26 : 22),
               ),
             ),
             const SizedBox(height: 2),
@@ -322,9 +322,9 @@ class _MoodEmojiButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // CURRENT MOOD DISPLAY (already recorded today)
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _CurrentMoodDisplay extends StatelessWidget {
   const _CurrentMoodDisplay({required this.mood});
@@ -339,9 +339,9 @@ class _CurrentMoodDisplay extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: moodColor.withValues(alpha: 0.1),
+        color: moodColor.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: moodColor.withValues(alpha: 0.3)),
+        border: Border.all(color: moodColor.withValuesCompat(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -374,9 +374,9 @@ class _CurrentMoodDisplay extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ENCOURAGEMENT BANNER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _EncouragementBanner extends StatelessWidget {
   const _EncouragementBanner({required this.mood});
@@ -392,7 +392,7 @@ class _EncouragementBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: moodColor.withValues(alpha: 0.08),
+        color: moodColor.withValuesCompat(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -410,28 +410,28 @@ class _EncouragementBanner extends StatelessWidget {
   String _encouragementText(String mood) {
     switch (mood) {
       case ChildMoods.happy:
-        return '🌟 Great! Let\'s make the most of your happy mood!';
+        return 'ًںŒں Great! Let\'s make the most of your happy mood!';
       case ChildMoods.excited:
-        return '⚡ You\'re excited! Let\'s channel that energy!';
+        return 'âڑ، You\'re excited! Let\'s channel that energy!';
       case ChildMoods.calm:
-        return '🍃 You\'re calm and focused. Perfect for learning!';
+        return 'ًںچƒ You\'re calm and focused. Perfect for learning!';
       case ChildMoods.tired:
-        return '💤 Feeling tired? Let\'s do something light and fun.';
+        return 'ًں’¤ Feeling tired? Let\'s do something light and fun.';
       case ChildMoods.sad:
-        return '💛 It\'s okay to feel sad. Let\'s do something calming.';
+        return 'ًں’› It\'s okay to feel sad. Let\'s do something calming.';
       case ChildMoods.angry:
-        return '🌬️ Let\'s take a deep breath and do something relaxing.';
+        return 'ًںŒ¬ï¸ڈ Let\'s take a deep breath and do something relaxing.';
       default:
-        return '✨ Let\'s explore something fun today!';
+        return 'âœ¨ Let\'s explore something fun today!';
     }
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MOOD RECOMMENDATIONS SECTION
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-/// Shows 2–3 content recommendation cards based on the child's current mood.
+/// Shows 2â€“3 content recommendation cards based on the child's current mood.
 /// Only visible after a mood has been recorded today.
 class MoodRecommendationsSection extends ConsumerWidget {
   const MoodRecommendationsSection({super.key});
@@ -469,7 +469,7 @@ class MoodRecommendationsSection extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          // Recommendation cards — horizontal scroll
+          // Recommendation cards â€” horizontal scroll
           SizedBox(
             height: 110,
             child: ListView.separated(
@@ -487,9 +487,9 @@ class MoodRecommendationsSection extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RECOMMENDATION CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _RecommendationCard extends StatelessWidget {
   const _RecommendationCard({required this.rec});
@@ -511,14 +511,14 @@ class _RecommendationCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              rec.color.withValues(alpha: 0.85),
-              rec.color.withValues(alpha: 0.6),
+              rec.color.withValuesCompat(alpha: 0.85),
+              rec.color.withValuesCompat(alpha: 0.6),
             ],
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: rec.color.withValues(alpha: 0.3),
+              color: rec.color.withValuesCompat(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -536,7 +536,7 @@ class _RecommendationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.25),
+                    color: colors.surface.withValuesCompat(alpha: 0.25),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(rec.icon, size: 14, color: Colors.white),
@@ -561,7 +561,7 @@ class _RecommendationCard extends StatelessWidget {
               moodRecSubtitleFallback(rec.subtitleKey),
               style: textTheme.bodySmall?.copyWith(
                 fontSize: 10,
-                color: Colors.white.withValues(alpha: 0.85),
+                color: Colors.white.withValuesCompat(alpha: 0.85),
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

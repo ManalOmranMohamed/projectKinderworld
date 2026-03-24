@@ -1,5 +1,5 @@
 """
-Enhanced AI Provider for AI Buddy using z-ai-web-dev-sdk
+Enhanced AI Provider for AI Buddy using OpenAI.
 """
 
 from __future__ import annotations

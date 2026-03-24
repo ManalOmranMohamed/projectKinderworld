@@ -7,6 +7,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class LanguageSelectionScreen extends ConsumerStatefulWidget {
   const LanguageSelectionScreen({super.key});
@@ -87,7 +88,7 @@ class _LanguageSelectionScreenState
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: auth.brand.withValues(alpha: 0.08),
+                          color: auth.brand.withValuesCompat(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -128,7 +129,7 @@ class _LanguageSelectionScreenState
 
                   // Language cards
                   _LanguageCard(
-                    flag: '🇺🇸',
+                    flag: 'ًں‡؛ًں‡¸',
                     name: l10n.english,
                     nativeName: 'English',
                     isSelected: currentLocale.languageCode == 'en',
@@ -136,9 +137,9 @@ class _LanguageSelectionScreenState
                   ),
                   const SizedBox(height: 16),
                   _LanguageCard(
-                    flag: '🇸🇦',
+                    flag: 'ًں‡¸ًں‡¦',
                     name: l10n.arabic,
-                    nativeName: 'العربية',
+                    nativeName: 'ط§ظ„ط¹ط±ط¨ظٹط©',
                     isSelected: currentLocale.languageCode == 'ar',
                     onTap: () => _selectLanguage('ar'),
                   ),
@@ -185,7 +186,7 @@ class _LanguageCard extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
         color: isSelected
-            ? auth.brand.withValues(alpha: 0.06)
+            ? auth.brand.withValuesCompat(alpha: 0.06)
             : context.colors.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
@@ -195,14 +196,14 @@ class _LanguageCard extends StatelessWidget {
         boxShadow: isSelected
             ? [
                 BoxShadow(
-                  color: auth.brand.withValues(alpha: 0.12),
+                  color: auth.brand.withValuesCompat(alpha: 0.12),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: context.colors.shadow.withValues(alpha: 0.04),
+                  color: context.colors.shadow.withValuesCompat(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

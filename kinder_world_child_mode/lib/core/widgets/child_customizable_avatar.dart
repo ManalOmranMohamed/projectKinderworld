@@ -4,6 +4,7 @@ import 'package:kinder_world/core/models/child_avatar_customization.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_avatar_customization_provider.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildCustomizableAvatar extends ConsumerWidget {
   const ChildCustomizableAvatar({
@@ -110,8 +111,8 @@ class _FrameBase extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [
-            frameColor.withValues(alpha: 0.95),
-            frameColor.withValues(alpha: 0.55),
+            frameColor.withValuesCompat(alpha: 0.95),
+            frameColor.withValuesCompat(alpha: 0.55),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -119,7 +120,7 @@ class _FrameBase extends StatelessWidget {
         boxShadow: glow
             ? [
                 BoxShadow(
-                  color: frameColor.withValues(alpha: 0.35),
+                  color: frameColor.withValuesCompat(alpha: 0.35),
                   blurRadius: 18,
                   spreadRadius: 1,
                 ),
@@ -127,7 +128,7 @@ class _FrameBase extends StatelessWidget {
             : null,
         border: shield
             ? Border.all(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white.withValuesCompat(alpha: 0.8),
                 width: 3,
               )
             : null,
@@ -139,7 +140,7 @@ class _FrameBase extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: frameColor.withValues(alpha: 0.9),
+                    color: frameColor.withValuesCompat(alpha: 0.9),
                     width: 3,
                   ),
                 ),

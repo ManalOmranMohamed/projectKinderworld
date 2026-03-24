@@ -66,41 +66,41 @@ class AppNavigationController {
     }
     _backHandlingLocked = true;
     try {
-    final router = _router ?? GoRouter.maybeOf(context);
-    if (router == null) {
+      final router = _router ?? GoRouter.maybeOf(context);
+      if (router == null) {
+        return true;
+      }
+
+      final currentLocation = _currentLocationFor(context, router);
+      _recordLocation(currentLocation);
+
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
+      final modalRoute = ModalRoute.of(context);
+      final isPopupRoute = modalRoute is PopupRoute;
+      if (isPopupRoute && rootNavigator.canPop()) {
+        rootNavigator.pop();
+        return true;
+      }
+
+      final previous = _previousLocation(currentLocation);
+      if (_shouldUsePreviousRoute(
+        previous: previous,
+        current: currentLocation,
+        fallback: fallback,
+      )) {
+        _removeTail(currentLocation);
+        router.go(previous!);
+        return true;
+      }
+
+      final resolvedFallback = _normalize(
+        fallback ?? fallbackFor(currentLocation),
+      );
+      if (resolvedFallback != currentLocation) {
+        clearHistory(seedLocation: resolvedFallback);
+        router.go(resolvedFallback);
+      }
       return true;
-    }
-
-    final currentLocation = _currentLocationFor(context, router);
-    _recordLocation(currentLocation);
-
-    final rootNavigator = Navigator.of(context, rootNavigator: true);
-    final modalRoute = ModalRoute.of(context);
-    final isPopupRoute = modalRoute is PopupRoute;
-    if (isPopupRoute && rootNavigator.canPop()) {
-      rootNavigator.pop();
-      return true;
-    }
-
-    final previous = _previousLocation(currentLocation);
-    if (_shouldUsePreviousRoute(
-      previous: previous,
-      current: currentLocation,
-      fallback: fallback,
-    )) {
-      _removeTail(currentLocation);
-      router.go(previous!);
-      return true;
-    }
-
-    final resolvedFallback = _normalize(
-      fallback ?? fallbackFor(currentLocation),
-    );
-    if (resolvedFallback != currentLocation) {
-      clearHistory(seedLocation: resolvedFallback);
-      router.go(resolvedFallback);
-    }
-    return true;
     } finally {
       unawaited(Future<void>.microtask(() {
         _backHandlingLocked = false;
@@ -299,8 +299,7 @@ class AppNavigationController {
       location == Routes.parentForgotPassword;
 
   bool _isChildAuthRoute(String location) =>
-      location == Routes.childLogin ||
-      location == Routes.childForgotPassword;
+      location == Routes.childLogin || location == Routes.childForgotPassword;
 
   bool _isAuthRoute(String location) =>
       _isAdminAuthRoute(location) ||

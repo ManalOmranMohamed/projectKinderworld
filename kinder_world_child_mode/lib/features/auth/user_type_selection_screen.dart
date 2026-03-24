@@ -6,6 +6,7 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class UserTypeSelectionScreen extends ConsumerStatefulWidget {
   const UserTypeSelectionScreen({super.key});
@@ -168,151 +169,152 @@ class _UserTypeSelectionScreenState
         backgroundColor: auth.pageBackground,
         body: SafeArea(
           child: Column(
-          children: [
-            // ── Header ──
-            FadeTransition(
-              opacity: _headerFade,
-              child: SlideTransition(
-                position: _headerSlide,
+            children: [
+              // â”€â”€ Header â”€â”€
+              FadeTransition(
+                opacity: _headerFade,
+                child: SlideTransition(
+                  position: _headerSlide,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      children: [
+                        // Back button row
+                        Row(
+                          children: [
+                            _CircleBackButton(
+                              onTap: () =>
+                                  context.appBack(fallback: Routes.welcome),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.whoIsUsingKinderWorld,
+                          textAlign: TextAlign.center,
+                          style: textTheme.displayMedium?.copyWith(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: auth.textPrimary,
+                            letterSpacing: -0.8,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.selectUserTypeSubtitle,
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontSize: 14,
+                            color: auth.textMuted,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // â”€â”€ Role panels â”€â”€
+              Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: Column(
                     children: [
-                      // Back button row
-                      Row(
-                        children: [
-                          _CircleBackButton(
-                            onTap: () => context.appBack(fallback: Routes.welcome),
+                      // Parent panel
+                      Expanded(
+                        child: FadeTransition(
+                          opacity: _parentFade,
+                          child: SlideTransition(
+                            position: _parentSlide,
+                            child: _RolePanel(
+                              title: l10n.parentMode,
+                              description: l10n.parentModeDescription,
+                              icon: Icons.shield_rounded,
+                              secondaryIcon: Icons.bar_chart_rounded,
+                              tertiaryIcon: Icons.family_restroom_rounded,
+                              gradientColors: [
+                                auth.brandDeep,
+                                auth.brand,
+                                auth.brandLight,
+                              ],
+                              accentColor: auth.brandLight,
+                              tag: l10n.secureAndStructured,
+                              tagIcon: Icons.verified_rounded,
+                              isPressed: _pressedPanel == 'parent',
+                              onTap: () => _selectUserType('parent'),
+                            ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        l10n.whoIsUsingKinderWorld,
-                        textAlign: TextAlign.center,
-                        style: textTheme.displayMedium?.copyWith(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: auth.textPrimary,
-                          letterSpacing: -0.8,
-                          height: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.selectUserTypeSubtitle,
-                        textAlign: TextAlign.center,
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
-                          color: auth.textMuted,
-                          height: 1.5,
+                      const SizedBox(height: 16),
+                      // Child panel
+                      Expanded(
+                        child: FadeTransition(
+                          opacity: _childFade,
+                          child: SlideTransition(
+                            position: _childSlide,
+                            child: _RolePanel(
+                              title: l10n.childMode,
+                              description: l10n.childModeDescription,
+                              icon: Icons.auto_awesome_rounded,
+                              secondaryIcon: Icons.sports_esports_rounded,
+                              tertiaryIcon: Icons.emoji_events_rounded,
+                              gradientColors: [
+                                childTheme.kindness,
+                                auth.child,
+                                auth.childLight,
+                              ],
+                              accentColor: auth.childBackground,
+                              tag: l10n.funAndPlayful,
+                              tagIcon: Icons.star_rounded,
+                              isPressed: _pressedPanel == 'child',
+                              onTap: () => _selectUserType('child'),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.center,
+                        child: TextButton(
+                          onPressed: () => context.go(Routes.adminLogin),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 32),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Admin',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: auth.textMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 28),
-
-            // ── Role panels ──
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  children: [
-                    // Parent panel
-                    Expanded(
-                      child: FadeTransition(
-                        opacity: _parentFade,
-                        child: SlideTransition(
-                          position: _parentSlide,
-                          child: _RolePanel(
-                            title: l10n.parentMode,
-                            description: l10n.parentModeDescription,
-                            icon: Icons.shield_rounded,
-                            secondaryIcon: Icons.bar_chart_rounded,
-                            tertiaryIcon: Icons.family_restroom_rounded,
-                            gradientColors: [
-                              auth.brandDeep,
-                              auth.brand,
-                              auth.brandLight,
-                            ],
-                            accentColor: auth.brandLight,
-                            tag: l10n.secureAndStructured,
-                            tagIcon: Icons.verified_rounded,
-                            isPressed: _pressedPanel == 'parent',
-                            onTap: () => _selectUserType('parent'),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Child panel
-                    Expanded(
-                      child: FadeTransition(
-                        opacity: _childFade,
-                        child: SlideTransition(
-                          position: _childSlide,
-                          child: _RolePanel(
-                            title: l10n.childMode,
-                            description: l10n.childModeDescription,
-                            icon: Icons.auto_awesome_rounded,
-                            secondaryIcon: Icons.sports_esports_rounded,
-                            tertiaryIcon: Icons.emoji_events_rounded,
-                            gradientColors: [
-                              childTheme.kindness,
-                              auth.child,
-                              auth.childLight,
-                            ],
-                            accentColor: auth.childBackground,
-                            tag: l10n.funAndPlayful,
-                            tagIcon: Icons.star_rounded,
-                            isPressed: _pressedPanel == 'child',
-                            onTap: () => _selectUserType('child'),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.center,
-                      child: TextButton(
-                        onPressed: () => context.go(Routes.adminLogin),
-                        style: TextButton.styleFrom(
-                          minimumSize: const Size(0, 32),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          'Admin',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: auth.textMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _RolePanel — dramatic gradient panel for each role
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// _RolePanel â€” dramatic gradient panel for each role
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RolePanel extends StatelessWidget {
   final String title;
   final String description;
@@ -359,7 +361,7 @@ class _RolePanel extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: gradientColors.first.withValues(alpha: 0.40),
+                color: gradientColors.first.withValuesCompat(alpha: 0.40),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
                 spreadRadius: -4,
@@ -368,7 +370,7 @@ class _RolePanel extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              // ── Decorative circles ──
+              // â”€â”€ Decorative circles â”€â”€
               Positioned(
                 top: -30,
                 right: -30,
@@ -377,7 +379,7 @@ class _RolePanel extends StatelessWidget {
                   height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: Colors.white.withValuesCompat(alpha: 0.08),
                   ),
                 ),
               ),
@@ -389,18 +391,18 @@ class _RolePanel extends StatelessWidget {
                   height: 100,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.06),
+                    color: Colors.white.withValuesCompat(alpha: 0.06),
                   ),
                 ),
               ),
-              // ── Floating secondary icons ──
+              // â”€â”€ Floating secondary icons â”€â”€
               Positioned(
                 top: 16,
                 right: 60,
                 child: Icon(
                   secondaryIcon,
                   size: 20,
-                  color: Colors.white.withValues(alpha: 0.20),
+                  color: Colors.white.withValuesCompat(alpha: 0.20),
                 ),
               ),
               Positioned(
@@ -409,11 +411,11 @@ class _RolePanel extends StatelessWidget {
                 child: Icon(
                   tertiaryIcon,
                   size: 24,
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: Colors.white.withValuesCompat(alpha: 0.18),
                 ),
               ),
 
-              // ── Main content ──
+              // â”€â”€ Main content â”€â”€
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Row(
@@ -423,15 +425,15 @@ class _RolePanel extends StatelessWidget {
                       width: 72,
                       height: 72,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: Colors.white.withValuesCompat(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.30),
+                          color: Colors.white.withValuesCompat(alpha: 0.30),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.10),
+                            color: Colors.black.withValuesCompat(alpha: 0.10),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -452,7 +454,7 @@ class _RolePanel extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.20),
+                              color: Colors.white.withValuesCompat(alpha: 0.20),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -460,14 +462,16 @@ class _RolePanel extends StatelessWidget {
                               children: [
                                 Icon(tagIcon,
                                     size: 11,
-                                    color: Colors.white.withValues(alpha: 0.9)),
+                                    color: Colors.white
+                                        .withValuesCompat(alpha: 0.9)),
                                 const SizedBox(width: 4),
                                 Text(
                                   tag,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white
+                                        .withValuesCompat(alpha: 0.9),
                                     letterSpacing: 0.3,
                                   ),
                                 ),
@@ -490,7 +494,7 @@ class _RolePanel extends StatelessWidget {
                             description,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.80),
+                              color: Colors.white.withValuesCompat(alpha: 0.80),
                               height: 1.4,
                             ),
                             maxLines: 2,
@@ -505,7 +509,7 @@ class _RolePanel extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
+                        color: Colors.white.withValuesCompat(alpha: 0.20),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -525,9 +529,9 @@ class _RolePanel extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // _CircleBackButton
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _CircleBackButton extends StatelessWidget {
   final VoidCallback onTap;
   const _CircleBackButton({required this.onTap});

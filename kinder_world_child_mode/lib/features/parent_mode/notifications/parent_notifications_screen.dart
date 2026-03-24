@@ -11,6 +11,7 @@ import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_entry.dart';
 import 'package:kinder_world/features/parent_mode/notifications/parent_notification_service.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentNotificationsScreen extends ConsumerStatefulWidget {
   const ParentNotificationsScreen({super.key});
@@ -121,7 +122,7 @@ class _ParentNotificationsScreenState
           preferredSize: const Size.fromHeight(1),
           child: Divider(
             height: 1,
-            color: colors.outlineVariant.withValues(alpha: 0.4),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4),
           ),
         ),
       ),
@@ -252,16 +253,16 @@ class _NotificationCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: notification.isRead
               ? colors.surface
-              : colors.primary.withValues(alpha: 0.08),
+              : colors.primary.withValuesCompat(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: notification.isRead
                 ? colors.outlineVariant
-                : colors.primary.withValues(alpha: 0.3),
+                : colors.primary.withValuesCompat(alpha: 0.3),
           ),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.08),
+              color: colors.shadow.withValuesCompat(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -275,7 +276,7 @@ class _NotificationCard extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: _getTypeColor(context, notification.type)
-                    .withValues(alpha: 0.1),
+                    .withValuesCompat(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(

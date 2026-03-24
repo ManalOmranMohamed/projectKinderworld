@@ -28,7 +28,8 @@ class AdminUser {
       name: (json['name'] as String?) ?? '',
       isActive: (json['is_active'] as bool?) ?? true,
       roles: List<String>.from((json['roles'] as List<dynamic>?) ?? []),
-      permissions: List<String>.from((json['permissions'] as List<dynamic>?) ?? []),
+      permissions:
+          List<String>.from((json['permissions'] as List<dynamic>?) ?? []),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );

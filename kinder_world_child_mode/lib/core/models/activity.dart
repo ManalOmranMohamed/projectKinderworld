@@ -28,7 +28,8 @@ class Activity with _$Activity {
     List<String>? materialsNeeded,
     @JsonKey(name: 'is_offline_available') required bool isOfflineAvailable,
     @JsonKey(name: 'is_premium') required bool isPremium,
-    @JsonKey(name: 'parent_approval_required') required bool parentApprovalRequired,
+    @JsonKey(name: 'parent_approval_required')
+    required bool parentApprovalRequired,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
     @JsonKey(name: 'completion_rate') double? completionRate,
@@ -38,13 +39,13 @@ class Activity with _$Activity {
 
   const Activity._();
 
-  factory Activity.fromJson(Map<String, dynamic> json) => 
+  factory Activity.fromJson(Map<String, dynamic> json) =>
       _$ActivityFromJson(json);
 
   // Check if activity is appropriate for age
   bool isAppropriateForAge(int age) {
     if (ageRange.isEmpty) return true;
-    
+
     for (final range in ageRange) {
       if (range.contains('-')) {
         final parts = range.split('-');
@@ -139,31 +140,59 @@ class ActivityCategories {
   static const String games = 'games';
   static const String stories = 'stories';
   static const String videos = 'videos';
-  
+
   static const List<String> all = [
-    mathematics, science, reading, history, geography, languages,
-    socialSkills, emotionalIntelligence, creativity, motorSkills,
-    problemSolving, music, games, stories, videos
+    mathematics,
+    science,
+    reading,
+    history,
+    geography,
+    languages,
+    socialSkills,
+    emotionalIntelligence,
+    creativity,
+    motorSkills,
+    problemSolving,
+    music,
+    games,
+    stories,
+    videos
   ];
 
   static String getDisplayName(String category) {
     switch (category) {
-      case mathematics: return 'Mathematics';
-      case science: return 'Science';
-      case reading: return 'Reading';
-      case history: return 'History';
-      case geography: return 'Geography';
-      case languages: return 'Languages';
-      case socialSkills: return 'Social Skills';
-      case emotionalIntelligence: return 'Emotional Intelligence';
-      case creativity: return 'Creativity';
-      case motorSkills: return 'Motor Skills';
-      case problemSolving: return 'Problem Solving';
-      case music: return 'Music';
-      case games: return 'Games';
-      case stories: return 'Stories';
-      case videos: return 'Videos';
-      default: return category;
+      case mathematics:
+        return 'Mathematics';
+      case science:
+        return 'Science';
+      case reading:
+        return 'Reading';
+      case history:
+        return 'History';
+      case geography:
+        return 'Geography';
+      case languages:
+        return 'Languages';
+      case socialSkills:
+        return 'Social Skills';
+      case emotionalIntelligence:
+        return 'Emotional Intelligence';
+      case creativity:
+        return 'Creativity';
+      case motorSkills:
+        return 'Motor Skills';
+      case problemSolving:
+        return 'Problem Solving';
+      case music:
+        return 'Music';
+      case games:
+        return 'Games';
+      case stories:
+        return 'Stories';
+      case videos:
+        return 'Videos';
+      default:
+        return category;
     }
   }
 }
@@ -180,25 +209,44 @@ class ActivityTypes {
   static const String song = 'song';
   static const String challenge = 'challenge';
   static const String simulation = 'simulation';
-  
+
   static const List<String> all = [
-    lesson, game, quiz, story, video, interactiveStory,
-    craft, song, challenge, simulation
+    lesson,
+    game,
+    quiz,
+    story,
+    video,
+    interactiveStory,
+    craft,
+    song,
+    challenge,
+    simulation
   ];
 
   static String getDisplayName(String type) {
     switch (type) {
-      case lesson: return 'Lesson';
-      case game: return 'Game';
-      case quiz: return 'Quiz';
-      case story: return 'Story';
-      case video: return 'Video';
-      case interactiveStory: return 'Interactive Story';
-      case craft: return 'Craft';
-      case song: return 'Song';
-      case challenge: return 'Challenge';
-      case simulation: return 'Simulation';
-      default: return type;
+      case lesson:
+        return 'Lesson';
+      case game:
+        return 'Game';
+      case quiz:
+        return 'Quiz';
+      case story:
+        return 'Story';
+      case video:
+        return 'Video';
+      case interactiveStory:
+        return 'Interactive Story';
+      case craft:
+        return 'Craft';
+      case song:
+        return 'Song';
+      case challenge:
+        return 'Challenge';
+      case simulation:
+        return 'Simulation';
+      default:
+        return type;
     }
   }
 }
@@ -209,11 +257,14 @@ class ActivityAspects {
   static const String skillful = 'skillful';
   static const String educational = 'educational';
   static const String entertaining = 'entertaining';
-  
+
   static const List<String> all = [
-    behavioral, skillful, educational, entertaining
+    behavioral,
+    skillful,
+    educational,
+    entertaining
   ];
-  
+
   static String getDisplayName(String aspect) {
     switch (aspect) {
       case behavioral:
@@ -237,11 +288,9 @@ class DifficultyLevels {
   static const String medium = 'medium';
   static const String hard = 'hard';
   static const String expert = 'expert';
-  
-  static const List<String> all = [
-    beginner, easy, medium, hard, expert
-  ];
-  
+
+  static const List<String> all = [beginner, easy, medium, hard, expert];
+
   static String getDisplayName(String difficulty) {
     switch (difficulty) {
       case beginner:

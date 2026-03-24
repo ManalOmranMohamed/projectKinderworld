@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class SystemPageLayout extends StatelessWidget {
   final PreferredSizeWidget? appBar;
@@ -105,10 +106,10 @@ class SystemInfoCard extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: colors.surfaceContainerHighest.withValuesCompat(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.5),
+          color: colors.outlineVariant.withValuesCompat(alpha: 0.5),
         ),
       ),
       child: child,

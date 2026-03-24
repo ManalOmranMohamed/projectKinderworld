@@ -124,7 +124,8 @@ class MoodNotifier extends StateNotifier<MoodState> {
         weekCounts: counts,
         isLoading: false,
       );
-      _logger.d('MoodNotifier: loaded for $childId — today=${todayEntry?.mood}');
+      _logger
+          .d('MoodNotifier: loaded for $childId — today=${todayEntry?.mood}');
     } catch (e) {
       _logger.e('MoodNotifier.loadForChild error: $e');
       state = MoodState(isLoading: false, error: e.toString());
@@ -216,13 +217,15 @@ class MoodNotifier extends StateNotifier<MoodState> {
   }) async {
     final numericChildId = int.tryParse(childId);
     if (numericChildId == null) {
-      _logger.w('Skipping mood analytics sync for non-numeric child id: $childId');
+      _logger
+          .w('Skipping mood analytics sync for non-numeric child id: $childId');
       return;
     }
 
     final parentAccessToken = await _resolveParentAccessToken();
     if (parentAccessToken == null || parentAccessToken.isEmpty) {
-      _logger.w('Skipping mood analytics sync because no parent token is available');
+      _logger.w(
+          'Skipping mood analytics sync because no parent token is available');
       return;
     }
 
@@ -332,14 +335,12 @@ final hasRecordedMoodTodayProvider = Provider.autoDispose<bool>((ref) {
 });
 
 /// The 7 most recent mood entries for the current child.
-final recentMoodEntriesProvider =
-    Provider.autoDispose<List<MoodEntry>>((ref) {
+final recentMoodEntriesProvider = Provider.autoDispose<List<MoodEntry>>((ref) {
   return ref.watch(moodNotifierProvider).recentEntries;
 });
 
 /// Mood → count map for the last 7 days.
-final moodWeekCountsProvider =
-    Provider.autoDispose<Map<String, int>>((ref) {
+final moodWeekCountsProvider = Provider.autoDispose<Map<String, int>>((ref) {
   return ref.watch(moodNotifierProvider).weekCounts;
 });
 
@@ -361,7 +362,8 @@ final moodJustSavedProvider = Provider.autoDispose<bool>((ref) {
 /// Async mood counts for a specific child (used by parent reports).
 /// Family provider keyed by (childId, days).
 final childMoodCountsProvider = FutureProvider.autoDispose
-    .family<Map<String, int>, ({String childId, int days})>((ref, params) async {
+    .family<Map<String, int>, ({String childId, int days})>(
+        (ref, params) async {
   final repo = ref.watch(moodRepositoryProvider);
   return repo.getMoodCounts(params.childId, days: params.days);
 });

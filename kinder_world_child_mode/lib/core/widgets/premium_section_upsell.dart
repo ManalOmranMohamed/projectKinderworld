@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/premium_badge.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -37,7 +38,7 @@ class PremiumSectionUpsell extends StatelessWidget {
         border: Border.all(color: colors.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
+            color: colors.shadow.withValuesCompat(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -51,8 +52,8 @@ class PremiumSectionUpsell extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style:
-                      textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               if (showBadge) const PremiumBadge(),

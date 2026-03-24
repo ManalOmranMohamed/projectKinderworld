@@ -4,6 +4,7 @@ import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildPaywallScreen extends ConsumerStatefulWidget {
   const ChildPaywallScreen({super.key});
@@ -60,7 +61,7 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.05),
+                      color: colors.shadow.withValuesCompat(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -72,7 +73,7 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
+                        color: AppColors.primary.withValuesCompat(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(
@@ -185,7 +186,7 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: AppColors.primary.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: AppColors.primary),

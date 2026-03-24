@@ -28,7 +28,7 @@ class EntertainingScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white.withValuesCompat(alpha: 0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -101,7 +101,7 @@ class EntertainingScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValuesCompat(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -119,7 +119,7 @@ class EntertainingScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.6),
+                Colors.black.withValuesCompat(alpha: 0.6),
               ],
             ),
           ),
@@ -270,7 +270,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValuesCompat(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -288,7 +288,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.6),
+                Colors.black.withValuesCompat(alpha: 0.6),
               ],
             ),
           ),
@@ -417,7 +417,7 @@ class BehavioralScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.behavioral.withValues(alpha: 0.15),
+              color: AppColors.behavioral.withValuesCompat(alpha: 0.15),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -435,7 +435,7 @@ class BehavioralScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.7),
+                Colors.black.withValuesCompat(alpha: 0.7),
               ],
             ),
           ),
@@ -529,7 +529,7 @@ class ValueDetailsScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValuesCompat(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -547,7 +547,7 @@ class ValueDetailsScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.7),
+                Colors.black.withValuesCompat(alpha: 0.7),
               ],
             ),
           ),
@@ -602,7 +602,8 @@ class MethodContentScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.behavioral.withValues(alpha: 0.1),
+                          color:
+                              AppColors.behavioral.withValuesCompat(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child:
@@ -622,7 +623,7 @@ class MethodContentScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withValuesCompat(alpha: 0.8),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -683,7 +684,7 @@ class MethodContentScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: Colors.black.withValuesCompat(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -698,7 +699,7 @@ class MethodContentScreen extends ConsumerWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.behavioral.withValues(alpha: 0.1),
+                  color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -803,7 +804,7 @@ class SkillfulScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.skillful.withValues(alpha: 0.1),
+              color: AppColors.skillful.withValuesCompat(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -824,7 +825,7 @@ class SkillfulScreen extends StatelessWidget {
                 errorBuilder: (c, e, s) => Container(
                   width: 120,
                   height: 120,
-                  color: AppColors.skillful.withValues(alpha: 0.2),
+                  color: AppColors.skillful.withValuesCompat(alpha: 0.2),
                   child: Icon(Icons.brush, color: AppColors.skillful),
                 ),
               ),
@@ -953,7 +954,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: Color(0xFFFFF3E0).withValues(alpha: 0.5),
+      backgroundColor: Color(0xFFFFF3E0).withValuesCompat(alpha: 0.5),
       body: SafeArea(
         child: Column(
           children: [
@@ -995,7 +996,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.1),
+                        color: Colors.grey.withValuesCompat(alpha: 0.1),
                         blurRadius: 5)
                   ],
                 ),
@@ -1099,7 +1100,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withValuesCompat(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -1146,7 +1147,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.skillful.withValues(alpha: 0.1),
+                        color: AppColors.skillful.withValuesCompat(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1166,7 +1167,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               padding: const EdgeInsets.all(12.0),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.skillful.withValues(alpha: 0.1),
+                  color: AppColors.skillful.withValuesCompat(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.play_arrow, color: AppColors.skillful),
@@ -1260,7 +1261,8 @@ class SkillVideoScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.skillful.withValues(alpha: 0.2),
+                              color: AppColors.skillful
+                                  .withValuesCompat(alpha: 0.2),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -1286,7 +1288,7 @@ class SkillVideoScreen extends StatelessWidget {
                                 boxShadow: [
                                   BoxShadow(
                                     color: AppColors.skillful
-                                        .withValues(alpha: 0.4),
+                                        .withValuesCompat(alpha: 0.4),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -1306,7 +1308,7 @@ class SkillVideoScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withValuesCompat(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -1410,7 +1412,7 @@ class EducationalScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white.withValuesCompat(alpha: 0.8),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Builder(
@@ -1473,7 +1475,7 @@ class EducationalScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: Colors.black.withValuesCompat(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1491,7 +1493,7 @@ class EducationalScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withValues(alpha: 0.7),
+                Colors.black.withValuesCompat(alpha: 0.7),
               ],
             ),
           ),
@@ -1594,7 +1596,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.1),
+                        color: Colors.grey.withValuesCompat(alpha: 0.1),
                         blurRadius: 5)
                   ],
                 ),
@@ -1701,7 +1703,7 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withValuesCompat(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -1747,7 +1749,8 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.educational.withValues(alpha: 0.1),
+                        color:
+                            AppColors.educational.withValuesCompat(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1863,7 +1866,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: Colors.black.withValuesCompat(alpha: 0.1),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -1886,7 +1889,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                               width: 70,
                               height: 70,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color:
+                                    Colors.white.withValuesCompat(alpha: 0.9),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.play_arrow,
@@ -1903,7 +1907,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                           borderRadius: BorderRadius.circular(25),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withValuesCompat(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 5),
                             ),
@@ -1919,7 +1923,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: AppColors.educational
-                                        .withValues(alpha: 0.15),
+                                        .withValuesCompat(alpha: 0.15),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.quiz,
@@ -2086,7 +2090,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withValuesCompat(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -2098,7 +2102,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.educational.withValues(alpha: 0.15),
+                        color:
+                            AppColors.educational.withValuesCompat(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child:
@@ -2182,7 +2187,8 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                         textColor = Colors.red[900]!;
                       }
                     } else if (isSelected) {
-                      bgColor = AppColors.educational.withValues(alpha: 0.1);
+                      bgColor =
+                          AppColors.educational.withValuesCompat(alpha: 0.1);
                       borderColor = AppColors.educational;
                     }
 

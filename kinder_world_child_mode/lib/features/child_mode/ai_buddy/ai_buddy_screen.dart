@@ -9,6 +9,7 @@ import 'package:kinder_world/core/services/ai_buddy_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class _QuickAction {
   const _QuickAction({
@@ -119,7 +120,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
       setState(() {
         _isLoading = false;
         _error = null;
-        _unavailable = AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
+        _unavailable =
+            AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
       });
       return;
     }
@@ -166,7 +168,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
     final childId = int.tryParse(ref.read(aiBuddyCurrentChildIdProvider) ?? '');
     if (childId == null) {
       setState(() {
-        _unavailable = AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
+        _unavailable =
+            AppLocalizations.of(context)!.aiBuddyNoActiveChildSession;
       });
       return;
     }
@@ -299,7 +302,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         color: colors.surface,
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.05),
+            color: colors.shadow.withValuesCompat(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -339,15 +342,16 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              childTheme.buddyStart.withValues(alpha: _pulseGlow.value),
+                          color: childTheme.buddyStart
+                              .withValuesCompat(alpha: _pulseGlow.value),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
                       ],
                     ),
                     child: const Center(
-                      child: Icon(Icons.smart_toy_rounded, size: 30, color: Colors.white),
+                      child: Icon(Icons.smart_toy_rounded,
+                          size: 30, color: Colors.white),
                     ),
                   ),
                 ),
@@ -375,7 +379,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.12),
+                            color: statusColor.withValuesCompat(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -456,10 +460,10 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
               width: 90,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: actions[i].color.withValues(alpha: 0.08),
+                color: actions[i].color.withValuesCompat(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: actions[i].color.withValues(alpha: 0.25),
+                  color: actions[i].color.withValuesCompat(alpha: 0.25),
                   width: 1.2,
                 ),
               ),
@@ -506,7 +510,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
             : l10n.aiBuddyBannerOnlineDescription);
     final bannerColor = isUnavailable
         ? colors.errorContainer
-        : colors.tertiaryContainer.withValues(alpha: 0.6);
+        : colors.tertiaryContainer.withValuesCompat(alpha: 0.6);
     final bannerIconColor = isUnavailable ? colors.error : colors.tertiary;
     final bannerTextColor =
         isUnavailable ? colors.onErrorContainer : colors.onTertiaryContainer;
@@ -613,7 +617,7 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
         color: colors.surface,
         border: Border(
           top: BorderSide(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -674,7 +678,8 @@ class _AiBuddyScreenState extends ConsumerState<AiBuddyScreen>
                       ? const []
                       : [
                           BoxShadow(
-                            color: childTheme.buddyStart.withValues(alpha: 0.35),
+                            color: childTheme.buddyStart
+                                .withValuesCompat(alpha: 0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -726,7 +731,8 @@ class _BuddyBubble extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
+              child:
+                  Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
             ),
           ),
           Flexible(
@@ -798,7 +804,8 @@ class _TypingBubble extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
+              child:
+                  Icon(Icons.smart_toy_rounded, size: 16, color: Colors.white),
             ),
           ),
           Flexible(
@@ -852,7 +859,7 @@ class _UserBubble extends StatelessWidget {
                   end: Alignment.bottomRight,
                   colors: [
                     colors.primary,
-                    colors.primary.withValues(alpha: 0.8),
+                    colors.primary.withValuesCompat(alpha: 0.8),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -878,7 +885,8 @@ class _UserBubble extends StatelessWidget {
                     Text(
                       timeLabel,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colors.onPrimary.withValues(alpha: 0.8),
+                            color:
+                                colors.onPrimary.withValuesCompat(alpha: 0.8),
                           ),
                     ),
                   ],

@@ -91,8 +91,10 @@ class _AdminUserDetailsScreenState
 
     final activity = _activity;
     final summary = activity?.summary;
-    final notifications = activity?.notifications ?? const <AdminUserNotificationPreview>[];
-    final tickets = activity?.supportTickets ?? const <AdminUserSupportTicketPreview>[];
+    final notifications =
+        activity?.notifications ?? const <AdminUserNotificationPreview>[];
+    final tickets =
+        activity?.supportTickets ?? const <AdminUserSupportTicketPreview>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -165,7 +167,9 @@ class _AdminUserDetailsScreenState
                           (entry) => ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(
-                              entry.title.isEmpty ? l10n.notAvailable : entry.title,
+                              entry.title.isEmpty
+                                  ? l10n.notAvailable
+                                  : entry.title,
                             ),
                             subtitle: Text(entry.createdAt ?? ''),
                           ),
@@ -187,7 +191,9 @@ class _AdminUserDetailsScreenState
                           (entry) => ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(
-                              entry.subject.isEmpty ? l10n.notAvailable : entry.subject,
+                              entry.subject.isEmpty
+                                  ? l10n.notAvailable
+                                  : entry.subject,
                             ),
                             subtitle: Text(entry.createdAt ?? ''),
                           ),

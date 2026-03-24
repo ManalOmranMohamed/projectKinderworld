@@ -7,6 +7,7 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ErrorScreen extends ConsumerStatefulWidget {
   final String error;
@@ -85,10 +86,10 @@ class _ErrorScreenState extends ConsumerState<ErrorScreen>
           width: 140,
           height: 140,
           decoration: BoxDecoration(
-            color: colors.error.withValues(alpha: 0.1),
+            color: colors.error.withValuesCompat(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.xxl),
             border: Border.all(
-              color: colors.error.withValues(alpha: 0.3),
+              color: colors.error.withValuesCompat(alpha: 0.3),
               width: 2,
             ),
           ),

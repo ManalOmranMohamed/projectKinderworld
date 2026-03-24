@@ -164,7 +164,8 @@ class ChildrenCacheService {
         key: parentId,
         staleAfter: _childrenStaleAfter,
       );
-      final isServerBacked = staleSnapshot.syncState != CacheSyncState.neverSynced;
+      final isServerBacked =
+          staleSnapshot.syncState != CacheSyncState.neverSynced;
       return ChildrenCacheResult(
         children: isServerBacked
             ? localById.values.toList(growable: false)

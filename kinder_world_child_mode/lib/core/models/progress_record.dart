@@ -19,7 +19,8 @@ class ProgressRecord with _$ProgressRecord {
     required int xpEarned,
     String? notes,
     @JsonKey(name: 'completion_status') required String completionStatus,
-    @JsonKey(name: 'performance_metrics') Map<String, dynamic>? performanceMetrics,
+    @JsonKey(name: 'performance_metrics')
+    Map<String, dynamic>? performanceMetrics,
     @JsonKey(name: 'ai_feedback') String? aiFeedback,
     @JsonKey(name: 'mood_before') String? moodBefore,
     @JsonKey(name: 'mood_after') String? moodAfter,
@@ -33,7 +34,7 @@ class ProgressRecord with _$ProgressRecord {
 
   const ProgressRecord._();
 
-  factory ProgressRecord.fromJson(Map<String, dynamic> json) => 
+  factory ProgressRecord.fromJson(Map<String, dynamic> json) =>
       _$ProgressRecordFromJson(json);
 
   // Check if activity was completed successfully
@@ -62,7 +63,7 @@ class ProgressRecord with _$ProgressRecord {
   // Check if mood improved
   bool get moodImproved {
     if (moodBefore == null || moodAfter == null) return false;
-    
+
     final moodValues = {
       'happy': 5,
       'excited': 4,
@@ -71,10 +72,10 @@ class ProgressRecord with _$ProgressRecord {
       'sad': 1,
       'angry': 0,
     };
-    
+
     final beforeValue = moodValues[moodBefore] ?? 3;
     final afterValue = moodValues[moodAfter] ?? 3;
-    
+
     return afterValue > beforeValue;
   }
 
@@ -95,33 +96,32 @@ class ProgressRecord with _$ProgressRecord {
 
   // Check if record needs to be synced
   bool get needsSync {
-    return syncStatus == SyncStatus.pending || 
-           syncStatus == SyncStatus.failed;
+    return syncStatus == SyncStatus.pending || syncStatus == SyncStatus.failed;
   }
 
   // Get engagement score based on various factors
   double get engagementScore {
     double score = 0.0;
-    
+
     // Base score from completion
     if (completionStatus == CompletionStatus.completed) {
       score += 0.4;
     } else if (completionStatus == CompletionStatus.partial) {
       score += 0.2;
     }
-    
+
     // Score from performance
     score += (this.score / 100.0) * 0.3;
-    
+
     // Score from duration (normalized)
     final normalizedDuration = (duration / 60.0).clamp(0.0, 2.0);
     score += normalizedDuration * 0.2;
-    
+
     // Score from help requests (less help = higher engagement)
     if (helpRequested == false) {
       score += 0.1;
     }
-    
+
     return score.clamp(0.0, 1.0);
   }
 }
@@ -133,9 +133,13 @@ class CompletionStatus {
   static const String completed = 'completed';
   static const String partial = 'partial';
   static const String abandoned = 'abandoned';
-  
+
   static const List<String> all = [
-    notStarted, inProgress, completed, partial, abandoned
+    notStarted,
+    inProgress,
+    completed,
+    partial,
+    abandoned
   ];
 }
 
@@ -145,10 +149,8 @@ class SyncStatus {
   static const String pending = 'pending';
   static const String failed = 'failed';
   static const String inProgress = 'in_progress';
-  
-  static const List<String> all = [
-    synced, pending, failed, inProgress
-  ];
+
+  static const List<String> all = [synced, pending, failed, inProgress];
 }
 
 // Performance metrics keys
@@ -160,9 +162,14 @@ class PerformanceMetrics {
   static const String problemSolving = 'problem_solving';
   static const String collaboration = 'collaboration';
   static const String persistence = 'persistence';
-  
+
   static const List<String> all = [
-    accuracy, speed, attention, creativity, 
-    problemSolving, collaboration, persistence
+    accuracy,
+    speed,
+    attention,
+    creativity,
+    problemSolving,
+    collaboration,
+    persistence
   ];
 }

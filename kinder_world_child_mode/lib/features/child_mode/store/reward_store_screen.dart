@@ -9,6 +9,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 enum RewardType { avatar, frame, badge, sticker, theme }
 
@@ -652,9 +653,10 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: onStoreColor.withValues(alpha: 0.16),
+              color: onStoreColor.withValuesCompat(alpha: 0.16),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: onStoreColor.withValues(alpha: 0.24)),
+              border:
+                  Border.all(color: onStoreColor.withValuesCompat(alpha: 0.24)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -979,7 +981,8 @@ class _PendingApprovalsCard extends StatelessWidget {
                               l10n.rewardStoreRequestedAt(
                                 DateFormat(
                                   'MMM d, h:mm a',
-                                  Localizations.localeOf(context).toLanguageTag(),
+                                  Localizations.localeOf(context)
+                                      .toLanguageTag(),
                                 ).format(request.requestedAt),
                               ),
                               style: TextStyle(
@@ -1023,7 +1026,7 @@ class _EquippedStrip extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Container(
-      color: xpColor.withValues(alpha: 0.1),
+      color: xpColor.withValuesCompat(alpha: 0.1),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
@@ -1042,10 +1045,11 @@ class _EquippedStrip extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.15),
+                        color: item.color.withValuesCompat(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('${item.emoji} ${l10n.rewardItemName(item.id)}',
+                      child: Text(
+                          '${item.emoji} ${l10n.rewardItemName(item.id)}',
                           style: TextStyle(
                               color: item.color, fontWeight: FontWeight.w700)),
                     ),
@@ -1132,7 +1136,7 @@ class _StoreItemCard extends StatelessWidget {
         border: Border.all(
           color: equipped
               ? item.color
-              : colors.outlineVariant.withValues(alpha: 0.5),
+              : colors.outlineVariant.withValuesCompat(alpha: 0.5),
           width: equipped ? 2 : 1,
         ),
       ),

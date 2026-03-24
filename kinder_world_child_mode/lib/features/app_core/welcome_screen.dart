@@ -5,6 +5,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -225,7 +226,7 @@ class _HeroHeader extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.onPrimary.withValues(alpha: 0.07),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.07),
               ),
             ),
           ),
@@ -237,7 +238,7 @@ class _HeroHeader extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colors.onPrimary.withValues(alpha: 0.06),
+                color: colors.onPrimary.withValuesCompat(alpha: 0.06),
               ),
             ),
           ),
@@ -254,7 +255,7 @@ class _HeroHeader extends StatelessWidget {
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
-                          color: colors.shadow.withValues(alpha: 0.15),
+                          color: colors.shadow.withValuesCompat(alpha: 0.15),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -283,7 +284,7 @@ class _HeroHeader extends StatelessWidget {
                       letterSpacing: -0.5,
                       shadows: [
                         Shadow(
-                          color: colors.shadow.withValues(alpha: 0.3),
+                          color: colors.shadow.withValuesCompat(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -296,7 +297,7 @@ class _HeroHeader extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: colors.onPrimary.withValues(alpha: 0.85),
+                      color: colors.onPrimary.withValuesCompat(alpha: 0.85),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -422,10 +423,10 @@ class _FeatureCard extends StatelessWidget {
         compact ? 8 : 10,
       ),
       decoration: BoxDecoration(
-        color: item.color.withValues(alpha: 0.06),
+        color: item.color.withValuesCompat(alpha: 0.06),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: item.color.withValues(alpha: 0.15),
+          color: item.color.withValuesCompat(alpha: 0.15),
           width: 1.2,
         ),
       ),
@@ -445,7 +446,7 @@ class _FeatureCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: item.color.withValues(alpha: 0.3),
+                  color: item.color.withValuesCompat(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),

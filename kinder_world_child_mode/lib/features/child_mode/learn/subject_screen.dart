@@ -12,6 +12,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_safe_ui.dart';
 import 'package:kinder_world/features/child_mode/learn/data/lesson_catalog.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class SubjectScreen extends ConsumerWidget {
   const SubjectScreen({
@@ -82,7 +83,8 @@ class SubjectScreen extends ConsumerWidget {
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: onSubjectColor.withValues(alpha: 0.16),
+                                color: onSubjectColor.withValuesCompat(
+                                    alpha: 0.16),
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: Icon(
@@ -107,7 +109,7 @@ class SubjectScreen extends ConsumerWidget {
                                   Text(
                                     '${lessons.length} ${l10n.availableLessons.toLowerCase()}',
                                     style: textTheme.bodyMedium?.copyWith(
-                                      color: onSubjectColor.withValues(
+                                      color: onSubjectColor.withValuesCompat(
                                           alpha: 0.85),
                                     ),
                                   ),
@@ -122,7 +124,8 @@ class SubjectScreen extends ConsumerWidget {
                           child: Text(
                             l10n.levelsSubtitle,
                             style: textTheme.bodySmall?.copyWith(
-                              color: onSubjectColor.withValues(alpha: 0.9),
+                              color:
+                                  onSubjectColor.withValuesCompat(alpha: 0.9),
                             ),
                           ),
                         ),
@@ -134,7 +137,7 @@ class SubjectScreen extends ConsumerWidget {
                           minHeight: 8,
                           borderRadius: BorderRadius.circular(999),
                           backgroundColor:
-                              onSubjectColor.withValues(alpha: 0.22),
+                              onSubjectColor.withValuesCompat(alpha: 0.22),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             onSubjectColor,
                           ),
@@ -348,7 +351,7 @@ class _NextLessonCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.primaryContainer.withValues(alpha: 0.45),
+        color: colors.primaryContainer.withValuesCompat(alpha: 0.45),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -357,7 +360,7 @@ class _NextLessonCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.15),
+              color: colors.primary.withValuesCompat(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.flag, color: colors.primary),
@@ -446,19 +449,19 @@ class _LessonCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: locked
-                ? colors.surfaceContainerHighest.withValues(alpha: 0.55)
+                ? colors.surfaceContainerHighest.withValuesCompat(alpha: 0.55)
                 : colors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: completed
-                  ? context.successColor.withValues(alpha: 0.35)
+                  ? context.successColor.withValuesCompat(alpha: 0.35)
                   : locked
-                      ? colors.outlineVariant.withValues(alpha: 0.45)
-                      : colors.primary.withValues(alpha: 0.12),
+                      ? colors.outlineVariant.withValuesCompat(alpha: 0.45)
+                      : colors.primary.withValuesCompat(alpha: 0.12),
             ),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.05),
+                color: colors.shadow.withValuesCompat(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -585,9 +588,9 @@ class _PathStepIndicator extends StatelessWidget {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
+        color: color.withValuesCompat(alpha: 0.14),
         shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.45)),
+        border: Border.all(color: color.withValuesCompat(alpha: 0.45)),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -615,7 +618,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
+        color: color.withValuesCompat(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -647,7 +650,7 @@ class _MiniPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: tint.withValues(alpha: 0.1),
+        color: tint.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

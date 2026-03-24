@@ -6,6 +6,7 @@ import 'package:kinder_world/core/localization/auth_error_localizer.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
@@ -181,7 +182,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       l10n.adminLoginFooter,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        color:
+                            colorScheme.onSurface.withValuesCompat(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -230,7 +232,7 @@ class _AdminHeader extends StatelessWidget {
         Text(
           l10n.adminLoginSubtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
               ),
           textAlign: TextAlign.center,
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 Color _onColor(Color color) {
   return ThemeData.estimateBrightnessForColor(color) == Brightness.dark
@@ -7,7 +8,7 @@ Color _onColor(Color color) {
 }
 
 Color _surfaceBlend(Color surface, Color tint, double alpha) {
-  return Color.alphaBlend(tint.withValues(alpha: alpha), surface);
+  return Color.alphaBlend(tint.withValuesCompat(alpha: alpha), surface);
 }
 
 class ThemePalette {
@@ -111,7 +112,7 @@ class ThemePalette {
       onSurfaceVariant:
           isDark ? const Color(0xFFC7D1DD) : const Color(0xFF5B6675),
       outline: outline,
-      outlineVariant: outline.withValues(alpha: isDark ? 0.78 : 0.58),
+      outlineVariant: outline.withValuesCompat(alpha: isDark ? 0.78 : 0.58),
       shadow: Colors.black,
       scrim: Colors.black,
       inverseSurface:

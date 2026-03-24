@@ -181,7 +181,7 @@ class _AdminContentManagementScreenState
     final titleAr = TextEditingController(text: category?.titleAr ?? '');
     final descEn = TextEditingController(text: category?.descriptionEn ?? '');
     final descAr = TextEditingController(text: category?.descriptionAr ?? '');
-      final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             insetPadding: EdgeInsets.symmetric(
@@ -336,7 +336,7 @@ class _AdminContentManagementScreenState
     String selectedType = content?.contentType ?? 'lesson';
     String selectedStatus = content?.status ?? 'draft';
     bool featured = metadataMap['featured'] == true;
-      final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(
@@ -847,7 +847,7 @@ class _AdminContentManagementScreenState
     int? selectedCategoryId = quiz?.categoryId;
     int? selectedContentId = quiz?.contentId;
     String selectedStatus = quiz?.status ?? 'draft';
-      final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setStateDialog) => AlertDialog(

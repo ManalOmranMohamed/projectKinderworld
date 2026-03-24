@@ -49,8 +49,10 @@ class SubscriptionReturnPayload {
   }
 
   static SubscriptionReturnPayload? fromQuery(Map<String, String> params) {
-    final flow = (params['flow'] ?? params['source'] ?? '').trim().toLowerCase();
-    final result = (params['result'] ?? params['status'] ?? '').trim().toLowerCase();
+    final flow =
+        (params['flow'] ?? params['source'] ?? '').trim().toLowerCase();
+    final result =
+        (params['result'] ?? params['status'] ?? '').trim().toLowerCase();
     final sessionId = params['session_id']?.trim();
     final checkoutStatus = params['checkout_status']?.trim();
     final paymentStatus = params['payment_status']?.trim();
@@ -71,8 +73,9 @@ class SubscriptionReturnPayload {
       flow: resolvedFlow,
       result: resolvedResult,
       sessionId: sessionId?.isEmpty ?? true ? null : sessionId,
-      checkoutStatus:
-          checkoutStatus?.isEmpty ?? true ? null : checkoutStatus?.toLowerCase(),
+      checkoutStatus: checkoutStatus?.isEmpty ?? true
+          ? null
+          : checkoutStatus?.toLowerCase(),
       paymentStatus:
           paymentStatus?.isEmpty ?? true ? null : paymentStatus?.toLowerCase(),
       provider: provider?.isEmpty ?? true ? null : provider?.toLowerCase(),

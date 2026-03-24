@@ -269,8 +269,8 @@ class AdminSubscriptionRecord {
           .toList(),
       paymentAttempts: (json['payment_attempts'] as List<dynamic>? ?? const [])
           .whereType<Map>()
-          .map((item) =>
-              AdminPaymentAttemptRecord.fromJson(Map<String, dynamic>.from(item)))
+          .map((item) => AdminPaymentAttemptRecord.fromJson(
+              Map<String, dynamic>.from(item)))
           .toList(),
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,

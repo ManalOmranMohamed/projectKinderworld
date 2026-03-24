@@ -16,9 +16,9 @@ class _Keys {
   _Keys._();
 
   static String achievements(String childId) => 'achievements_$childId';
-  static String badges(String childId)        => 'badges_$childId';
-  static String metadata(String childId)      => 'meta_$childId';
-  static String categories(String childId)    => 'categories_$childId';
+  static String badges(String childId) => 'badges_$childId';
+  static String metadata(String childId) => 'meta_$childId';
+  static String categories(String childId) => 'categories_$childId';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

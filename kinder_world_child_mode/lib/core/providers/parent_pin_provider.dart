@@ -71,7 +71,8 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
   final Logger _logger;
 
   Future<void> refreshStatus() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     try {
       final status = await _authRepository.getParentPinStatus();
       final isVerified = await _authRepository.isParentPinVerified();
@@ -97,7 +98,8 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
     required String pin,
     required String confirmPin,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     final result = await _authRepository.setParentPin(pin, confirmPin);
     if (result.success) {
       await refreshStatus();
@@ -116,7 +118,8 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
   }
 
   Future<bool> verifyPin(String pin) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     final result = await _authRepository.verifyParentPin(pin);
     if (result.success) {
       await refreshStatus();
@@ -144,7 +147,8 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
     required String newPin,
     required String confirmPin,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     final result = await _authRepository.changeParentPin(
       currentPin: currentPin,
       newPin: newPin,
@@ -167,7 +171,8 @@ class ParentPinNotifier extends StateNotifier<ParentPinState> {
   }
 
   Future<bool> requestReset({String? note}) async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     final result = await _authRepository.requestParentPinReset(note: note);
     state = state.copyWith(
       isLoading: false,

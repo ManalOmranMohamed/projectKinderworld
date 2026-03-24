@@ -13,6 +13,7 @@ import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_guard.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentDashboardContent extends StatelessWidget {
   const ParentDashboardContent({
@@ -86,14 +87,14 @@ class ParentDashboardSafetyCard extends StatelessWidget {
 
     return ParentCard(
       onTap: () => context.go('/parent/safety-dashboard'),
-      backgroundColor: colors.primary.withValues(alpha: 0.06),
+      backgroundColor: colors.primary.withValuesCompat(alpha: 0.06),
       child: Row(
         children: [
           Container(
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.12),
+              color: colors.primary.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
@@ -266,7 +267,7 @@ class ParentDashboardAlertsSection extends StatelessWidget {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: item.color.withValues(alpha: 0.12),
+                              color: item.color.withValuesCompat(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(item.icon, size: 18, color: item.color),
@@ -289,7 +290,8 @@ class ParentDashboardAlertsSection extends StatelessWidget {
                           Divider(
                             height: 1,
                             indent: 52,
-                            color: colors.outlineVariant.withValues(alpha: 0.4),
+                            color: colors.outlineVariant
+                                .withValuesCompat(alpha: 0.4),
                           ),
                       ],
                     );
@@ -385,7 +387,7 @@ class ParentDashboardQuickActionTile extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
+                color: colors.primary.withValuesCompat(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 18, color: colors.primary),
@@ -497,7 +499,8 @@ class ParentDashboardChildCard extends StatelessWidget {
                       avatarId: child.avatar,
                       avatarPath: child.avatarPath,
                       radius: 26,
-                      backgroundColor: colors.primary.withValues(alpha: 0.15),
+                      backgroundColor:
+                          colors.primary.withValuesCompat(alpha: 0.15),
                     ),
                     Positioned(
                       bottom: -2,
@@ -546,8 +549,8 @@ class ParentDashboardChildCard extends StatelessWidget {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    childTheme.streak.withValues(alpha: 0.10),
+                                color: childTheme.streak
+                                    .withValuesCompat(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -800,7 +803,7 @@ class ParentDashboardAiInsightsSection extends StatelessWidget {
     final colors = theme.colorScheme;
 
     return ParentCard(
-      backgroundColor: colors.primary.withValues(alpha: 0.05),
+      backgroundColor: colors.primary.withValuesCompat(alpha: 0.05),
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -814,7 +817,7 @@ class ParentDashboardAiInsightsSection extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       colors.primary,
-                      colors.primary.withValues(alpha: 0.7),
+                      colors.primary.withValuesCompat(alpha: 0.7),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -1006,7 +1009,7 @@ class ParentDashboardActivityRow extends StatelessWidget {
           Divider(
             height: 1,
             indent: 36,
-            color: colors.outlineVariant.withValues(alpha: 0.4),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4),
           ),
       ],
     );
@@ -1086,7 +1089,8 @@ class ParentDashboardWeeklyProgressChartSection extends StatelessWidget {
                         show: true,
                         drawVerticalLine: false,
                         getDrawingHorizontalLine: (_) => FlLine(
-                          color: colors.outlineVariant.withValues(alpha: 0.4),
+                          color: colors.outlineVariant
+                              .withValuesCompat(alpha: 0.4),
                           strokeWidth: 1,
                         ),
                       ),
@@ -1134,7 +1138,8 @@ class ParentDashboardWeeklyProgressChartSection extends StatelessWidget {
                               toY: entry.value.toDouble(),
                               color: isToday
                                   ? colors.primary
-                                  : colors.primary.withValues(alpha: 0.35),
+                                  : colors.primary
+                                      .withValuesCompat(alpha: 0.35),
                               width: 18,
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(6),

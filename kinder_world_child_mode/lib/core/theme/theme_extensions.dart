@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 Color _onColor(Color color) {
   return ThemeData.estimateBrightnessForColor(color) == Brightness.dark
@@ -30,35 +31,36 @@ class AuthThemeTokens extends ThemeExtension<AuthThemeTokens> {
     required this.divider,
     required this.pageBackground,
   });
-
   factory AuthThemeTokens.fromScheme(ColorScheme scheme) {
     final isDark = scheme.brightness == Brightness.dark;
     final parent = scheme.primary;
     final child = _mix(scheme.secondary, scheme.tertiary, 0.35);
     return AuthThemeTokens(
       brand: scheme.primary,
-      brandDeep: _mix(scheme.primary, scheme.inverseSurface, isDark ? 0.24 : 0.38),
+      brandDeep:
+          _mix(scheme.primary, scheme.inverseSurface, isDark ? 0.24 : 0.38),
       brandLight: _mix(scheme.primary, scheme.secondary, isDark ? 0.22 : 0.40),
       parent: parent,
       parentLight: _mix(parent, scheme.primaryContainer, 0.55),
-      parentBackground: scheme.primaryContainer.withValues(alpha: isDark ? 0.38 : 0.82),
+      parentBackground:
+          scheme.primaryContainer.withValuesCompat(alpha: isDark ? 0.38 : 0.82),
       child: child,
       childLight: _mix(child, scheme.tertiaryContainer, 0.45),
-      childBackground: scheme.secondaryContainer.withValues(alpha: isDark ? 0.34 : 0.76),
-      inputBackground: isDark
-          ? scheme.surfaceContainerHigh
-          : scheme.surfaceContainerLowest,
+      childBackground: scheme.secondaryContainer
+          .withValuesCompat(alpha: isDark ? 0.34 : 0.76),
+      inputBackground:
+          isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerLowest,
       inputBorder: isDark
-          ? scheme.outlineVariant.withValues(alpha: 0.92)
+          ? scheme.outlineVariant.withValuesCompat(alpha: 0.92)
           : scheme.outlineVariant,
       textPrimary: scheme.onSurface,
       textMuted: scheme.onSurfaceVariant,
-      textHint: scheme.onSurfaceVariant.withValues(alpha: 0.72),
-      divider: scheme.outlineVariant.withValues(alpha: isDark ? 0.92 : 0.72),
+      textHint: scheme.onSurfaceVariant.withValuesCompat(alpha: 0.72),
+      divider:
+          scheme.outlineVariant.withValuesCompat(alpha: isDark ? 0.92 : 0.72),
       pageBackground: isDark ? scheme.surface : scheme.surfaceContainerLowest,
     );
   }
-
   final Color brand;
   final Color brandDeep;
   final Color brandLight;
@@ -75,7 +77,6 @@ class AuthThemeTokens extends ThemeExtension<AuthThemeTokens> {
   final Color textHint;
   final Color divider;
   final Color pageBackground;
-
   @override
   AuthThemeTokens copyWith({
     Color? brand,
@@ -124,7 +125,8 @@ class AuthThemeTokens extends ThemeExtension<AuthThemeTokens> {
       brandLight: Color.lerp(brandLight, other.brandLight, t)!,
       parent: Color.lerp(parent, other.parent, t)!,
       parentLight: Color.lerp(parentLight, other.parentLight, t)!,
-      parentBackground: Color.lerp(parentBackground, other.parentBackground, t)!,
+      parentBackground:
+          Color.lerp(parentBackground, other.parentBackground, t)!,
       child: Color.lerp(child, other.child, t)!,
       childLight: Color.lerp(childLight, other.childLight, t)!,
       childBackground: Color.lerp(childBackground, other.childBackground, t)!,
@@ -158,7 +160,6 @@ class ParentThemeTokens extends ThemeExtension<ParentThemeTokens> {
     required this.sectionHeader,
     required this.divider,
   });
-
   factory ParentThemeTokens.fromScheme(ColorScheme scheme) {
     final isDark = scheme.brightness == Brightness.dark;
     final warning = _mix(const Color(0xFFF59E0B), scheme.secondary, 0.28);
@@ -168,23 +169,24 @@ class ParentThemeTokens extends ThemeExtension<ParentThemeTokens> {
     final danger = _mix(const Color(0xFFEF4444), scheme.error, 0.38);
     return ParentThemeTokens(
       primary: scheme.primary,
-      primaryLight: scheme.primaryContainer.withValues(alpha: isDark ? 0.42 : 0.92),
+      primaryLight:
+          scheme.primaryContainer.withValuesCompat(alpha: isDark ? 0.42 : 0.92),
       warning: warning,
-      warningLight: warning.withValues(alpha: isDark ? 0.22 : 0.14),
+      warningLight: warning.withValuesCompat(alpha: isDark ? 0.22 : 0.14),
       info: info,
-      infoLight: info.withValues(alpha: isDark ? 0.22 : 0.14),
+      infoLight: info.withValuesCompat(alpha: isDark ? 0.22 : 0.14),
       reward: reward,
-      rewardLight: reward.withValues(alpha: isDark ? 0.24 : 0.14),
+      rewardLight: reward.withValuesCompat(alpha: isDark ? 0.24 : 0.14),
       success: success,
-      successLight: success.withValues(alpha: isDark ? 0.24 : 0.14),
+      successLight: success.withValuesCompat(alpha: isDark ? 0.24 : 0.14),
       danger: danger,
-      dangerLight: danger.withValues(alpha: isDark ? 0.24 : 0.14),
+      dangerLight: danger.withValuesCompat(alpha: isDark ? 0.24 : 0.14),
       cardSurface: scheme.surfaceContainerLow,
       sectionHeader: scheme.onSurfaceVariant,
-      divider: scheme.outlineVariant.withValues(alpha: isDark ? 0.88 : 0.72),
+      divider:
+          scheme.outlineVariant.withValuesCompat(alpha: isDark ? 0.88 : 0.72),
     );
   }
-
   final Color primary;
   final Color primaryLight;
   final Color warning;
@@ -200,9 +202,7 @@ class ParentThemeTokens extends ThemeExtension<ParentThemeTokens> {
   final Color cardSurface;
   final Color sectionHeader;
   final Color divider;
-
   Color get alert => danger;
-
   @override
   ParentThemeTokens copyWith({
     Color? primary,
@@ -277,7 +277,6 @@ class ChildThemeTokens extends ThemeExtension<ChildThemeTokens> {
     required this.buddyStart,
     required this.buddyEnd,
   });
-
   factory ChildThemeTokens.fromScheme(ColorScheme scheme) {
     final isDark = scheme.brightness == Brightness.dark;
     final xp = _mix(const Color(0xFFF4C542), scheme.secondary, 0.15);
@@ -290,7 +289,7 @@ class ChildThemeTokens extends ThemeExtension<ChildThemeTokens> {
     return ChildThemeTokens(
       xp: xp,
       streak: streak,
-      streakLight: streak.withValues(alpha: isDark ? 0.28 : 0.16),
+      streakLight: streak.withValuesCompat(alpha: isDark ? 0.28 : 0.16),
       success: success,
       kindness: kindness,
       learning: learning,
@@ -300,7 +299,6 @@ class ChildThemeTokens extends ThemeExtension<ChildThemeTokens> {
       buddyEnd: _mix(scheme.secondary, scheme.tertiary, 0.40),
     );
   }
-
   final Color xp;
   final Color streak;
   final Color streakLight;
@@ -311,7 +309,6 @@ class ChildThemeTokens extends ThemeExtension<ChildThemeTokens> {
   final Color fun;
   final Color buddyStart;
   final Color buddyEnd;
-
   @override
   ChildThemeTokens copyWith({
     Color? xp,
@@ -360,40 +357,28 @@ class ChildThemeTokens extends ThemeExtension<ChildThemeTokens> {
 extension ThemeDataThemeX on ThemeData {
   AuthThemeTokens get auth =>
       extension<AuthThemeTokens>() ?? AuthThemeTokens.fromScheme(colorScheme);
-
   ParentThemeTokens get parentTokens =>
-      extension<ParentThemeTokens>() ?? ParentThemeTokens.fromScheme(colorScheme);
-
+      extension<ParentThemeTokens>() ??
+      ParentThemeTokens.fromScheme(colorScheme);
   ChildThemeTokens get childTokens =>
       extension<ChildThemeTokens>() ?? ChildThemeTokens.fromScheme(colorScheme);
 }
 
 extension BuildContextThemeX on BuildContext {
   ThemeData get theme => Theme.of(this);
-
   ColorScheme get colors => theme.colorScheme;
-
   TextTheme get text => theme.textTheme;
-
   AuthThemeTokens get authTheme => theme.auth;
-
   ParentThemeTokens get parentTheme => theme.parentTokens;
-
   ChildThemeTokens get childTheme => theme.childTokens;
-
   Color get successColor => childTheme.success;
-
   Color get warningColor => parentTheme.warning;
-
   Color get infoColor => parentTheme.info;
-
   Color get rewardColor => parentTheme.reward;
-
   Color get subtleSurface => colors.surfaceContainerHighest;
 }
 
 extension ThemeColorX on Color {
-  Color subtle([double alpha = 0.12]) => withValues(alpha: alpha);
-
+  Color subtle([double alpha = 0.12]) => withValuesCompat(alpha: alpha);
   Color get onColor => _onColor(this);
 }

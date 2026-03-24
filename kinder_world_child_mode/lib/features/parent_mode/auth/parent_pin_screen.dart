@@ -6,6 +6,7 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentPinScreen extends ConsumerStatefulWidget {
   const ParentPinScreen({
@@ -420,7 +421,7 @@ class _NumberButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.08),
+              color: colors.shadow.withValuesCompat(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

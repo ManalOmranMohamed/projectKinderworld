@@ -7,6 +7,7 @@ import 'package:kinder_world/core/providers/subscription_provider.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/widgets/app_state_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class PaymentMethodsScreen extends ConsumerStatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -180,10 +181,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                     final methods = snapshot.data ?? [];
                     if (methods.isEmpty) {
                       return AppEmptyState.child(
-                        emoji: '💳',
+                        emoji: 'ًں’³',
                         title: l10n.paymentMethodsEmpty,
                         subtitle:
-                            '${l10n.addPaymentMethod} • ${l10n.openPaymentPortal}',
+                            '${l10n.addPaymentMethod} â€¢ ${l10n.openPaymentPortal}',
                       );
                     }
 
@@ -199,7 +200,8 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.shadow.withValues(alpha: 0.05),
+                                color:
+                                    colors.shadow.withValuesCompat(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
                               ),
@@ -233,7 +235,9 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                                         method.provider.toUpperCase(),
                                         if (method.methodType != null)
                                           method.methodType!,
-                                      ].where((e) => e.isNotEmpty).join(' • '),
+                                      ]
+                                          .where((e) => e.isNotEmpty)
+                                          .join(' â€¢ '),
                                       style: textTheme.bodySmall?.copyWith(
                                         color: colors.onSurfaceVariant,
                                       ),
@@ -248,7 +252,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppColors.primary
-                                                .withValues(alpha: 0.1),
+                                                .withValuesCompat(alpha: 0.1),
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                           ),

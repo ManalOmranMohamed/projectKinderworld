@@ -150,7 +150,8 @@ class AdminCmsContent {
 
   factory AdminCmsContent.fromJson(Map<String, dynamic> json) {
     final rawQuizzes = (json['quizzes'] as List<dynamic>? ?? const [])
-        .map((item) => AdminCmsQuiz.fromJson(Map<String, dynamic>.from(item as Map)))
+        .map((item) =>
+            AdminCmsQuiz.fromJson(Map<String, dynamic>.from(item as Map)))
         .toList();
     return AdminCmsContent(
       id: json['id'] as int,

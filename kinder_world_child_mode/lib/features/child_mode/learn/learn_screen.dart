@@ -6,6 +6,7 @@ import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';

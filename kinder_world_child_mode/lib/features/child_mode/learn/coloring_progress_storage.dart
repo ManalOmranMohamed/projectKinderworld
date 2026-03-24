@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_serialization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ColoringProgressData {
@@ -83,7 +84,7 @@ class ColoringProgressStorage {
   }
 
   static String _toHex(Color color) {
-    final argb = color.toARGB32();
+    final argb = colorToArgb32(color);
     return '#${argb.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
   }
 }

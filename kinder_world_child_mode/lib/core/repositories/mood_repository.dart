@@ -49,7 +49,8 @@ class MoodRepository {
         _MoodKeys.entries(entry.childId),
         jsonEncode(updated.map((e) => e.toJson()).toList()),
       );
-      _logger.d('MoodRepository: saved mood "${entry.mood}" for ${entry.childId}');
+      _logger
+          .d('MoodRepository: saved mood "${entry.mood}" for ${entry.childId}');
       return entry;
     } catch (e) {
       _logger.e('MoodRepository.addEntry error: $e');
@@ -122,8 +123,7 @@ class MoodRepository {
   }) async {
     final counts = await getMoodCounts(childId, days: days);
     if (counts.isEmpty) return null;
-    return (counts.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value)))
+    return (counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value)))
         .first
         .key;
   }

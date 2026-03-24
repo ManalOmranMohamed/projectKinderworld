@@ -16,10 +16,10 @@ import 'package:kinder_world/router.dart';
 class MoodRecommendation {
   final String id;
   final String emoji;
-  final String titleKey;   // localization key
+  final String titleKey; // localization key
   final String subtitleKey; // localization key
   final Color color;
-  final String route;      // GoRouter route to navigate to
+  final String route; // GoRouter route to navigate to
   final IconData icon;
 
   const MoodRecommendation({

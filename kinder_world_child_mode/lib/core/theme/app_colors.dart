@@ -16,8 +16,8 @@ class AppColors {
   // Accent Colors
   static const Color success = Color(0xFF388E3C); // Strong green
   static const Color warning = Color(0xFFFBC02D); // Strong yellow
-  static const Color error = Color(0xFFD32F2F);   // Strong red
-  static const Color info = Color(0xFF0288D1);    // Strong cyan
+  static const Color error = Color(0xFFD32F2F); // Strong red
+  static const Color info = Color(0xFF0288D1); // Strong cyan
 
   // Neutral Colors
   static const Color white = Color(0xFFFFFFFF);
@@ -28,7 +28,7 @@ class AppColors {
 
   // Background Colors
   static const Color background = Color(0xFFFFFFFF); // Always white
-  static const Color surface = Color(0xFFFFFFFF);    // Always white
+  static const Color surface = Color(0xFFFFFFFF); // Always white
   static const Color surfaceVariant = Color(0xFFF5F5F5);
 
   // Text Colors
@@ -62,7 +62,7 @@ class AppColors {
   static const Color progressEnd = Color(0xFF1976D2);
   static const Color xpColor = Color(0xFFFFD700);
   static const Color streakColor = Color(0xFFFF5722);
-  
+
   // Mode colors
   static const Color parentModeColor = Color(0xFF2E7D32);
 }

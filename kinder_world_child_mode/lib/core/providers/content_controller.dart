@@ -31,7 +31,8 @@ class ContentState {
   }) {
     return ContentState(
       activities: activities ?? this.activities,
-      recommendedActivities: recommendedActivities ?? this.recommendedActivities,
+      recommendedActivities:
+          recommendedActivities ?? this.recommendedActivities,
       popularActivities: popularActivities ?? this.popularActivities,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
@@ -65,15 +66,15 @@ class ContentController extends StateNotifier<ContentState> {
   /// Load all activities
   Future<void> loadAllActivities() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final activities = await _contentRepository.getAllActivities();
-      
+
       state = state.copyWith(
         activities: activities,
         isLoading: false,
       );
-      
+
       _logger.d('Loaded ${activities.length} activities');
     } catch (e, _) {
       _logger.e('Error loading activities: $e');
@@ -87,8 +88,10 @@ class ContentController extends StateNotifier<ContentState> {
   /// Load activities by category
   Future<List<Activity>> loadActivitiesByCategory(String category) async {
     try {
-      final activities = await _contentRepository.getActivitiesByCategory(category);
-      _logger.d('Loaded ${activities.length} activities for category: $category');
+      final activities =
+          await _contentRepository.getActivitiesByCategory(category);
+      _logger
+          .d('Loaded ${activities.length} activities for category: $category');
       return activities;
     } catch (e, _) {
       _logger.e('Error loading activities by category: $category, $e');
@@ -123,8 +126,9 @@ class ContentController extends StateNotifier<ContentState> {
   /// Load popular activities
   Future<void> loadPopularActivities() async {
     try {
-      final activities = await _contentRepository.getPopularActivities(limit: 10);
-      
+      final activities =
+          await _contentRepository.getPopularActivities(limit: 10);
+
       state = state.copyWith(popularActivities: activities);
       _logger.d('Loaded ${activities.length} popular activities');
     } catch (e, _) {
@@ -135,7 +139,8 @@ class ContentController extends StateNotifier<ContentState> {
   /// Load recently added activities
   Future<List<Activity>> loadRecentlyAddedActivities() async {
     try {
-      final activities = await _contentRepository.getRecentlyAddedActivities(limit: 10);
+      final activities =
+          await _contentRepository.getRecentlyAddedActivities(limit: 10);
       _logger.d('Loaded ${activities.length} recently added activities');
       return activities;
     } catch (e, _) {
@@ -149,10 +154,12 @@ class ContentController extends StateNotifier<ContentState> {
   /// Load recommended activities for a child
   Future<void> loadRecommendedActivities(ChildProfile child) async {
     try {
-      final activities = await _contentRepository.getRecommendedActivities(child);
-      
+      final activities =
+          await _contentRepository.getRecommendedActivities(child);
+
       state = state.copyWith(recommendedActivities: activities);
-      _logger.d('Loaded ${activities.length} recommended activities for ${child.name}');
+      _logger.d(
+          'Loaded ${activities.length} recommended activities for ${child.name}');
     } catch (e, _) {
       _logger.e('Error loading recommended activities: $e');
     }
@@ -162,7 +169,8 @@ class ContentController extends StateNotifier<ContentState> {
   Future<List<Activity>> loadActivitiesForChild(ChildProfile child) async {
     try {
       final activities = await _contentRepository.getActivitiesForChild(child);
-      _logger.d('Loaded ${activities.length} activities for child: ${child.name}');
+      _logger
+          .d('Loaded ${activities.length} activities for child: ${child.name}');
       return activities;
     } catch (e, _) {
       _logger.e('Error loading activities for child: ${child.name}, $e');
@@ -187,8 +195,10 @@ class ContentController extends StateNotifier<ContentState> {
   /// Filter activities by difficulty
   Future<List<Activity>> filterByDifficulty(String difficulty) async {
     try {
-      final activities = await _contentRepository.getActivitiesByDifficulty(difficulty);
-      _logger.d('Filtered ${activities.length} activities by difficulty: $difficulty');
+      final activities =
+          await _contentRepository.getActivitiesByDifficulty(difficulty);
+      _logger.d(
+          'Filtered ${activities.length} activities by difficulty: $difficulty');
       return activities;
     } catch (e, _) {
       _logger.e('Error filtering by difficulty: $difficulty, $e');
@@ -208,8 +218,9 @@ class ContentController extends StateNotifier<ContentState> {
         }
         return false;
       }).toList();
-      
-      _logger.d('Filtered ${activities.length} activities for age range: $minAge-$maxAge');
+
+      _logger.d(
+          'Filtered ${activities.length} activities for age range: $minAge-$maxAge');
       return activities;
     } catch (e, _) {
       _logger.e('Error filtering by age range: $minAge-$maxAge, $e');
@@ -261,7 +272,7 @@ class ContentController extends StateNotifier<ContentState> {
   Future<bool> incrementPlayCount(String activityId) async {
     try {
       final success = await _contentRepository.incrementPlayCount(activityId);
-      
+
       if (success) {
         // Update local state
         state = state.copyWith(
@@ -273,7 +284,7 @@ class ContentController extends StateNotifier<ContentState> {
           }).toList(),
         );
       }
-      
+
       return success;
     } catch (e, _) {
       _logger.e('Error incrementing play count: $activityId, $e');
@@ -284,13 +295,15 @@ class ContentController extends StateNotifier<ContentState> {
   // ==================== CONTENT DISCOVERY ====================
 
   /// Get activities by interests
-  Future<List<Activity>> getActivitiesByInterests(List<String> interests) async {
+  Future<List<Activity>> getActivitiesByInterests(
+      List<String> interests) async {
     try {
       final activities = state.activities.where((activity) {
         return activity.tags.any((tag) => interests.contains(tag));
       }).toList();
-      
-      _logger.d('Found ${activities.length} activities matching interests: $interests');
+
+      _logger.d(
+          'Found ${activities.length} activities matching interests: $interests');
       return activities;
     } catch (e, _) {
       _logger.e('Error getting activities by interests: $interests, $e');
@@ -303,32 +316,35 @@ class ContentController extends StateNotifier<ContentState> {
     try {
       // Get recommended activities
       final recommended = await loadActivitiesForChild(child);
-      
+
       // Filter by child's interests and level
       final filtered = recommended.where((activity) {
         // Check if activity matches child's interests
-        final interestMatch = activity.tags.any((tag) => child.interests.contains(tag));
-        
+        final interestMatch =
+            activity.tags.any((tag) => child.interests.contains(tag));
+
         // Check if difficulty is appropriate
         final levelDiff = (activity.difficultyLevel - child.level).abs();
-        
+
         return interestMatch && levelDiff <= 2;
       }).toList();
-      
+
       // Sort by relevance and return top 5
       filtered.sort((a, b) {
-        final aInterestMatches = a.tags.where((tag) => child.interests.contains(tag)).length;
-        final bInterestMatches = b.tags.where((tag) => child.interests.contains(tag)).length;
-        
+        final aInterestMatches =
+            a.tags.where((tag) => child.interests.contains(tag)).length;
+        final bInterestMatches =
+            b.tags.where((tag) => child.interests.contains(tag)).length;
+
         if (aInterestMatches != bInterestMatches) {
           return bInterestMatches.compareTo(aInterestMatches);
         }
-        
+
         final aRating = a.averageRating ?? 0.0;
         final bRating = b.averageRating ?? 0.0;
         return bRating.compareTo(aRating);
       });
-      
+
       return filtered.take(5).toList();
     } catch (e, _) {
       _logger.e('Error getting daily recommendations: $e');
@@ -337,7 +353,8 @@ class ContentController extends StateNotifier<ContentState> {
   }
 
   /// Get continue learning activities (recently played)
-  Future<List<Activity>> getContinueLearningActivities(ChildProfile child) async {
+  Future<List<Activity>> getContinueLearningActivities(
+      ChildProfile child) async {
     try {
       // Get child's recent activities (would need progress data)
       // For now, return popular activities
@@ -401,10 +418,11 @@ class ContentController extends StateNotifier<ContentState> {
 }
 
 // Provider
-final contentControllerProvider = StateNotifierProvider.autoDispose<ContentController, ContentState>((ref) {
+final contentControllerProvider =
+    StateNotifierProvider.autoDispose<ContentController, ContentState>((ref) {
   final contentRepository = ref.watch(contentRepositoryProvider);
   final logger = ref.watch(loggerProvider);
-  
+
   return ContentController(
     contentRepository: contentRepository,
     logger: logger,
@@ -415,7 +433,7 @@ final contentControllerProvider = StateNotifierProvider.autoDispose<ContentContr
 final contentRepositoryProvider = Provider<ContentRepository>((ref) {
   final activityBox = Hive.box('activities');
   final logger = ref.watch(loggerProvider);
-  
+
   return ContentRepository(
     activityBox: activityBox,
     logger: logger,
@@ -436,17 +454,20 @@ final popularActivitiesProvider = Provider<List<Activity>>((ref) {
 });
 
 // Async providers for dynamic content
-final activitiesByCategoryProvider = FutureProvider.autoDispose.family<List<Activity>, String>((ref, category) async {
+final activitiesByCategoryProvider = FutureProvider.autoDispose
+    .family<List<Activity>, String>((ref, category) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.loadActivitiesByCategory(category);
 });
 
-final dailyRecommendationsProvider = FutureProvider.autoDispose.family<List<Activity>, ChildProfile>((ref, child) async {
+final dailyRecommendationsProvider = FutureProvider.autoDispose
+    .family<List<Activity>, ChildProfile>((ref, child) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.getDailyRecommendations(child);
 });
 
-final offlineActivitiesProvider = FutureProvider.autoDispose<List<Activity>>((ref) async {
+final offlineActivitiesProvider =
+    FutureProvider.autoDispose<List<Activity>>((ref) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.getOfflineActivities();
 });

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class PremiumUpsellWidget extends StatelessWidget {
   final PlanInfo plan;
@@ -38,10 +39,11 @@ class PremiumUpsellWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.6)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
+            color: colors.shadow.withValuesCompat(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -94,7 +96,7 @@ class _CompactUpsell extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
+                color: colors.primary.withValuesCompat(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(Icons.lock, color: colors.primary),
@@ -174,7 +176,7 @@ class _FullUpsell extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.12),
+                color: colors.primary.withValuesCompat(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(Icons.lock, color: colors.primary),
@@ -223,7 +225,7 @@ class _FullUpsell extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
+                      color: colors.primary.withValuesCompat(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -336,7 +338,9 @@ class _FullUpsell extends StatelessWidget {
       plan.isUnlimitedChildren
           ? l10n.planUnlimitedChildren
           : l10n.planChildLimit(plan.maxChildren),
-      plan.hasAdvancedReports ? l10n.planAdvancedReports : l10n.planBasicReports,
+      plan.hasAdvancedReports
+          ? l10n.planAdvancedReports
+          : l10n.planBasicReports,
     ];
     if (plan.hasAiInsights) {
       details.add(l10n.planAiInsightsPro);
@@ -361,7 +365,8 @@ class _DetailChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.6)),
       ),
       child: Text(
         label,

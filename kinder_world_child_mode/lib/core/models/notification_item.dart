@@ -31,7 +31,7 @@ class NotificationItem with _$NotificationItem {
 
   const NotificationItem._();
 
-  factory NotificationItem.fromJson(Map<String, dynamic> json) => 
+  factory NotificationItem.fromJson(Map<String, dynamic> json) =>
       _$NotificationItemFromJson(json);
 
   // Check if notification is expired
@@ -59,7 +59,7 @@ class NotificationItem with _$NotificationItem {
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-    
+
     if (difference.inSeconds < 60) {
       return '${difference.inSeconds} seconds ago';
     } else if (difference.inMinutes < 60) {
@@ -105,13 +105,22 @@ class NotificationTypes {
   static const String subscription = 'subscription';
   static const String system = 'system';
   static const String aiInsight = 'ai_insight';
-  
+
   static const List<String> all = [
-    achievement, milestone, reminder, warning, reportReady,
-    contentRecommended, breakReminder, timeLimitWarning,
-    approvalRequired, subscription, system, aiInsight
+    achievement,
+    milestone,
+    reminder,
+    warning,
+    reportReady,
+    contentRecommended,
+    breakReminder,
+    timeLimitWarning,
+    approvalRequired,
+    subscription,
+    system,
+    aiInsight
   ];
-  
+
   static String getDisplayName(String type) {
     switch (type) {
       case achievement:
@@ -142,7 +151,7 @@ class NotificationTypes {
         return type;
     }
   }
-  
+
   static IconData getIcon(String type) {
     switch (type) {
       case achievement:
@@ -180,10 +189,8 @@ class NotificationPriority {
   static const String low = 'low';
   static const String medium = 'medium';
   static const String high = 'high';
-  
-  static const List<String> all = [
-    low, medium, high
-  ];
+
+  static const List<String> all = [low, medium, high];
 }
 
 // Notification data keys

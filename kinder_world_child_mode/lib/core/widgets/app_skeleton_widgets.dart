@@ -93,7 +93,6 @@ class AppSkeletonCard extends StatelessWidget {
   final EdgeInsets padding;
   final AppSkeletonVariant variant;
 
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;

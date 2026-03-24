@@ -8,6 +8,7 @@ import 'package:kinder_world/core/providers/profile_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentProfileScreen extends ConsumerStatefulWidget {
   const ParentProfileScreen({super.key});
@@ -95,7 +96,8 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Divider(
-              height: 1, color: colors.outlineVariant.withValues(alpha: 0.4)),
+              height: 1,
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
@@ -105,14 +107,16 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline_rounded, size: 48, color: parent.danger),
+                Icon(Icons.error_outline_rounded,
+                    size: 48, color: parent.danger),
                 const SizedBox(height: 16),
                 Text(l10n.error,
                     style: TextStyle(color: colors.onSurfaceVariant)),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () => ref.invalidate(meProvider),
-                  style: FilledButton.styleFrom(backgroundColor: parent.primary),
+                  style:
+                      FilledButton.styleFrom(backgroundColor: parent.primary),
                   child: Text(l10n.retry),
                 ),
               ],
@@ -130,7 +134,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: Column(
                 children: [
-                  // ── Avatar header ─────────────────────────────────────
+                  // â”€â”€ Avatar header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   ParentCard(
                     child: Column(
                       children: [
@@ -184,7 +188,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── Name field ────────────────────────────────────────
+                  // â”€â”€ Name field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   ParentCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +233,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Email field (read-only) ────────────────────────────
+                  // â”€â”€ Email field (read-only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   ParentCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +265,7 @@ class _ParentProfileScreenState extends ConsumerState<ParentProfileScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Save button ───────────────────────────────────────
+                  // â”€â”€ Save button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   SizedBox(
                     width: double.infinity,
                     height: 52,

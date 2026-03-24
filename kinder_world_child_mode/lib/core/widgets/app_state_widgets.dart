@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 enum AppStateVariant { child, parent, admin }
 
@@ -120,7 +121,8 @@ class AppLoadingState extends StatelessWidget {
                 Text(
                   resolvedMessage,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.55),
+                        color:
+                            colorScheme.onSurface.withValuesCompat(alpha: 0.55),
                       ),
                   textAlign: TextAlign.center,
                 ),
@@ -139,7 +141,7 @@ class AppEmptyState extends StatelessWidget {
     required this.subtitle,
     this.action,
     this.actionLabel,
-    this.emoji = '✨',
+    this.emoji = 'âœ¨',
     this.icon,
   }) : variant = AppStateVariant.child;
 
@@ -176,7 +178,7 @@ class AppEmptyState extends StatelessWidget {
     switch (variant) {
       case AppStateVariant.child:
         return ChildEmptyState(
-          emoji: emoji ?? '✨',
+          emoji: emoji ?? 'âœ¨',
           title: title,
           subtitle: subtitle,
           action: _buildAction(),
@@ -198,7 +200,7 @@ class AppEmptyState extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.5),
             ),
           ),
           child: Padding(
@@ -216,7 +218,7 @@ class AppEmptyState extends StatelessWidget {
                     child: Icon(
                       icon ?? Icons.inbox_outlined,
                       size: 32,
-                      color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      color: colorScheme.onSurface.withValuesCompat(alpha: 0.4),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -231,7 +233,8 @@ class AppEmptyState extends StatelessWidget {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.55),
+                      color:
+                          colorScheme.onSurface.withValuesCompat(alpha: 0.55),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -306,7 +309,8 @@ class AppErrorState extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 420),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withValues(alpha: 0.45),
+                  color:
+                      colorScheme.errorContainer.withValuesCompat(alpha: 0.45),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Padding(
@@ -358,12 +362,12 @@ class AppErrorState extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
               child: Card(
-                color: colorScheme.errorContainer.withValues(alpha: 0.3),
+                color: colorScheme.errorContainer.withValuesCompat(alpha: 0.3),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
-                    color: colorScheme.error.withValues(alpha: 0.2),
+                    color: colorScheme.error.withValuesCompat(alpha: 0.2),
                   ),
                 ),
                 child: Padding(
@@ -411,12 +415,12 @@ class AppErrorState extends StatelessWidget {
         return Padding(
           padding: padding,
           child: Card(
-            color: colorScheme.errorContainer.withValues(alpha: 0.35),
+            color: colorScheme.errorContainer.withValuesCompat(alpha: 0.35),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
-                color: colorScheme.error.withValues(alpha: 0.25),
+                color: colorScheme.error.withValuesCompat(alpha: 0.25),
               ),
             ),
             child: Padding(
@@ -453,7 +457,8 @@ class AppErrorState extends StatelessWidget {
                         Text(
                           message,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: colorScheme.onSurface
+                                .withValuesCompat(alpha: 0.7),
                           ),
                         ),
                         if (onRetry != null) ...[

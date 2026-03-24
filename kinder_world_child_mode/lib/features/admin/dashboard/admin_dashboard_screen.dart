@@ -18,6 +18,7 @@ import 'package:kinder_world/features/admin/support/admin_support_tickets_screen
 import 'package:kinder_world/features/admin/users/admin_user_details_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_users_screen.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key, this.activePath});
@@ -103,7 +104,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        color:
+                            colorScheme.primary.withValuesCompat(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
@@ -344,7 +346,7 @@ class _AdminAvatarButton extends ConsumerWidget {
                     color: Theme.of(ctx)
                         .colorScheme
                         .onSurface
-                        .withValues(alpha: 0.6),
+                        .withValuesCompat(alpha: 0.6),
                   ),
                 ),
             ],

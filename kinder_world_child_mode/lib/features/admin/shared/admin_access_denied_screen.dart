@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -57,7 +58,7 @@ class AdminAccessDeniedScreen extends ConsumerWidget {
               Text(
                 l10n.adminPermissionDeniedMessage,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
               ),

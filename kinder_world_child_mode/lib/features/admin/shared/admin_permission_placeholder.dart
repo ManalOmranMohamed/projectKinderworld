@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -19,7 +20,7 @@ class AdminPermissionPlaceholder extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         margin: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: colorScheme.errorContainer.withValues(alpha: 0.35),
+          color: colorScheme.errorContainer.withValuesCompat(alpha: 0.35),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: colorScheme.errorContainer),
         ),

@@ -6,6 +6,7 @@ import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
   const PlayScreen({super.key});
@@ -36,7 +37,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             setState(() {
-              _itemsFuture = ref.read(publicContentRepositoryProvider).fetchItems();
+              _itemsFuture =
+                  ref.read(publicContentRepositoryProvider).fetchItems();
             });
             await _itemsFuture;
           },
@@ -65,7 +67,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                       );
                     }
                     return ListView(
-                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, bottom: 16),
                       children: [
                         if (_selectedType == 'all' && _searchQuery.isEmpty) ...[
                           ChildSectionHeader(title: l10n.featured),
@@ -75,7 +78,8 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: filtered.take(3).length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 12),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
                               itemBuilder: (context, index) =>
                                   _FeaturedContentCard(item: filtered[index]),
                             ),
@@ -158,10 +162,10 @@ class _PlayScreenState extends ConsumerState<PlayScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: successColor.withValues(alpha: 0.12),
+              color: successColor.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: successColor.withValues(alpha: 0.3),
+                color: successColor.withValuesCompat(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -279,7 +283,8 @@ class _FeaturedContentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final accent = _categoryColor(item.category?.slug ?? item.contentType, context);
+    final accent =
+        _categoryColor(item.category?.slug ?? item.contentType, context);
     return SizedBox(
       width: 220,
       child: KinderCard(
@@ -302,13 +307,15 @@ class _FeaturedContentCard extends StatelessWidget {
                     top: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: colors.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        _displayType(item.contentType, AppLocalizations.of(context)!),
+                        _displayType(
+                            item.contentType, AppLocalizations.of(context)!),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -356,7 +363,8 @@ class _PlayableContentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final tagColor = _categoryColor(item.category?.slug ?? item.contentType, context);
+    final tagColor =
+        _categoryColor(item.category?.slug ?? item.contentType, context);
     return KinderCard(
       padding: EdgeInsets.zero,
       borderRadius: 18,
@@ -393,13 +401,15 @@ class _PlayableContentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: tagColor.withValues(alpha: 0.12),
+                      color: tagColor.withValuesCompat(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      _displayType(item.contentType, AppLocalizations.of(context)!),
+                      _displayType(
+                          item.contentType, AppLocalizations.of(context)!),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -499,7 +509,8 @@ class _PlayContentDetailScreenState
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Text(
-                  _localized(item.bodyEn ?? '', item.bodyAr ?? '', context).isEmpty
+                  _localized(item.bodyEn ?? '', item.bodyAr ?? '', context)
+                          .isEmpty
                       ? l10n.playNoBodyContentYet
                       : _localized(
                           item.bodyEn ?? '',
@@ -539,7 +550,8 @@ class _PlayContentDetailScreenState
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text('${quiz.questionCount} ${l10n.adminCmsQuestionsLabel}'),
+                              Text(
+                                  '${quiz.questionCount} ${l10n.adminCmsQuestionsLabel}'),
                             ],
                           ),
                         ),
@@ -563,7 +575,8 @@ class _PlayDetailHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _categoryColor(item.category?.slug ?? item.contentType, context);
+    final accent =
+        _categoryColor(item.category?.slug ?? item.contentType, context);
     final hasRemoteImage = item.thumbnailUrl != null &&
         item.thumbnailUrl!.trim().isNotEmpty &&
         (item.thumbnailUrl!.startsWith('http://') ||
@@ -574,8 +587,8 @@ class _PlayDetailHero extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            accent.withValues(alpha: 0.24),
-            accent.withValues(alpha: 0.10),
+            accent.withValuesCompat(alpha: 0.24),
+            accent.withValuesCompat(alpha: 0.10),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -615,8 +628,8 @@ class _PlayDetailHeroFallback extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withValues(alpha: 0.22),
-            color.withValues(alpha: 0.10),
+            color.withValuesCompat(alpha: 0.22),
+            color.withValuesCompat(alpha: 0.10),
           ],
         ),
       ),
@@ -662,8 +675,8 @@ class _Thumbnail extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withValues(alpha: 0.22),
-            color.withValues(alpha: 0.10),
+            color.withValuesCompat(alpha: 0.22),
+            color.withValuesCompat(alpha: 0.10),
           ],
         ),
       ),

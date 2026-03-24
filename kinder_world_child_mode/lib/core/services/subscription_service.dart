@@ -62,7 +62,8 @@ class SubscriptionService {
 
   Future<Map<String, dynamic>> refreshSubscription() async {
     await _invalidateSubscriptionCache();
-    final data = await getSubscription(forceRefresh: true, allowCachedOnError: false);
+    final data =
+        await getSubscription(forceRefresh: true, allowCachedOnError: false);
     if (data == null) {
       throw StateError('Subscription snapshot is unavailable');
     }
@@ -227,9 +228,7 @@ class SubscriptionService {
         key: _paymentMethodsKey,
         payload: data,
       );
-      return data
-          .map((item) => PaymentMethodRecord.fromJson(item))
-          .toList();
+      return data.map((item) => PaymentMethodRecord.fromJson(item)).toList();
     } catch (e) {
       _logger.e('Error fetching payment methods: $e');
       if (snapshot.hasData) {

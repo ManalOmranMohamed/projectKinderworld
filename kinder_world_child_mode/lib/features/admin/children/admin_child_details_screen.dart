@@ -100,7 +100,8 @@ class _AdminChildDetailsScreenState
     final entries = _activityLog?.entries ?? const <AdminChildActivityEntry>[];
     final aiSummary = _aiBuddySummary;
     final usageMetrics = aiSummary?.usageMetrics;
-    final recentFlags = aiSummary?.recentFlags ?? const <AdminChildAiBuddyFlag>[];
+    final recentFlags =
+        aiSummary?.recentFlags ?? const <AdminChildAiBuddyFlag>[];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -168,7 +169,9 @@ class _AdminChildDetailsScreenState
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.flag_outlined),
                             title: Text(
-                              entry.title.isEmpty ? l10n.notAvailable : entry.title,
+                              entry.title.isEmpty
+                                  ? l10n.notAvailable
+                                  : entry.title,
                             ),
                             subtitle: Text(entry.timestamp ?? ''),
                           ),

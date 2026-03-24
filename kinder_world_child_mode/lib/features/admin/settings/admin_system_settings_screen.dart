@@ -6,6 +6,7 @@ import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminSystemSettingsScreen extends ConsumerStatefulWidget {
   const AdminSystemSettingsScreen({super.key});
@@ -147,7 +148,7 @@ class _AdminSystemSettingsScreenState
                 subtitle: Text(
                   l10n.adminSettingsMaintenanceModeHint,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withValuesCompat(alpha: 0.6),
                   ),
                 ),
                 value: effective['maintenance_mode'] as bool? ?? false,
@@ -176,7 +177,7 @@ class _AdminSystemSettingsScreenState
                 subtitle: Text(
                   l10n.adminSettingsRegistrationEnabledHint,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withValuesCompat(alpha: 0.6),
                   ),
                 ),
                 value: effective['registration_enabled'] as bool? ?? true,
@@ -205,7 +206,7 @@ class _AdminSystemSettingsScreenState
                 subtitle: Text(
                   l10n.adminSettingsAiBuddyEnabledHint,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withValuesCompat(alpha: 0.6),
                   ),
                 ),
                 value: effective['ai_buddy_enabled'] as bool? ?? true,

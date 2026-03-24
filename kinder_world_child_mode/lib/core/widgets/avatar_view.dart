@@ -6,7 +6,8 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 /// Unified avatar display widget that handles both avatar paths and avatar IDs
 /// Maps avatar_1, avatar_2, avatar_3, avatar_4 to their corresponding icons
 class AvatarView extends StatelessWidget {
-  final String? avatarPath; // Direct asset path (e.g., 'assets/images/avatars/boy_01.png')
+  final String?
+      avatarPath; // Direct asset path (e.g., 'assets/images/avatars/boy_01.png')
   final String? avatarId; // Avatar ID (e.g., 'avatar_1', 'avatar_2')
   final double radius;
   final BoxFit fit;
@@ -139,7 +140,8 @@ class AvatarView extends StatelessWidget {
 
   bool _isNetworkImage(String path) {
     final uri = Uri.tryParse(path);
-    return uri != null && uri.hasAbsolutePath &&
+    return uri != null &&
+        uri.hasAbsolutePath &&
         (path.startsWith('http://') || path.startsWith('https://'));
   }
 
@@ -166,7 +168,7 @@ class AvatarView extends StatelessWidget {
     // Fallback to image path (legacy support)
     final resolvedPath = _resolvePath();
     final fallbackImage = fallbackAsset;
-    
+
     if (resolvedPath != null && _isNetworkImage(resolvedPath)) {
       return CachedNetworkImage(
         imageUrl: resolvedPath,

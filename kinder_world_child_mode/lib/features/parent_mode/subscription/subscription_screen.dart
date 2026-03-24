@@ -14,6 +14,7 @@ import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/features/parent_mode/subscription/subscription_plan_catalog.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({
@@ -309,8 +310,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   String _formatDateTime(DateTime? value) {
-    if (value == null) return '—';
-    return DateFormat('MMM d, y • h:mm a').format(value);
+    if (value == null) return 'â€”';
+    return DateFormat('MMM d, y â€¢ h:mm a').format(value);
   }
 
   String _formatAmount(int amountCents, String currency) {
@@ -530,7 +531,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: fg.withValues(alpha: 0.9),
+                        color: fg.withValuesCompat(alpha: 0.9),
                       ),
                 ),
               ],
@@ -608,7 +609,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: fg.withValues(alpha: 0.9),
+                        color: fg.withValuesCompat(alpha: 0.9),
                       ),
                 ),
               ],
@@ -651,7 +652,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
           preferredSize: const Size.fromHeight(1),
           child: Divider(
             height: 1,
-            color: colors.outlineVariant.withValues(alpha: 0.4),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4),
           ),
         ),
       ),
@@ -732,7 +733,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                             color: (isPremium
                                     ? parent.reward
                                     : colors.onSurfaceVariant)
-                                .withValues(alpha: 0.15),
+                                .withValuesCompat(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Icon(
@@ -954,9 +955,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((event) => _HistoryTile(
                               title:
-                                  '${_displayStatus(context, event.eventType)} • ${event.planId}',
+                                  '${_displayStatus(context, event.eventType)} â€¢ ${event.planId}',
                               subtitle:
-                                  '${_displayStatus(context, event.status)} • ${event.source}',
+                                  '${_displayStatus(context, event.status)} â€¢ ${event.source}',
                               trailing: _formatDateTime(event.occurredAt),
                               icon: Icons.timeline_rounded,
                             ))
@@ -975,9 +976,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((transaction) => _HistoryTile(
                               title:
-                                  '${_displayStatus(context, transaction.transactionType)} • ${transaction.planId}',
+                                  '${_displayStatus(context, transaction.transactionType)} â€¢ ${transaction.planId}',
                               subtitle:
-                                  '${_formatAmount(transaction.amountCents, transaction.currency)} • ${_displayStatus(context, transaction.status)}',
+                                  '${_formatAmount(transaction.amountCents, transaction.currency)} â€¢ ${_displayStatus(context, transaction.status)}',
                               trailing:
                                   _formatDateTime(transaction.effectiveAt),
                               icon: Icons.receipt_rounded,
@@ -997,7 +998,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                             .take(8)
                             .map((attempt) => _HistoryTile(
                                   title:
-                                      '${_displayStatus(context, attempt.attemptType)} • ${attempt.planId}',
+                                      '${_displayStatus(context, attempt.attemptType)} â€¢ ${attempt.planId}',
                                   subtitle: [
                                     _formatAmount(
                                         attempt.amountCents, attempt.currency),
@@ -1005,7 +1006,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                                     if (attempt.failureCode != null &&
                                         attempt.failureCode!.isNotEmpty)
                                       attempt.failureCode!,
-                                  ].join(' • '),
+                                  ].join(' â€¢ '),
                                   trailing: _formatDateTime(
                                     attempt.completedAt ?? attempt.requestedAt,
                                   ),
@@ -1061,7 +1062,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
             width: 30,
             height: 30,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 16, color: color),
@@ -1107,12 +1108,13 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
         border: Border.all(
           color: isRecommended
               ? accentColor
-              : colors.outlineVariant.withValues(alpha: 0.6),
+              : colors.outlineVariant.withValuesCompat(alpha: 0.6),
           width: isRecommended ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: isRecommended ? 0.10 : 0.05),
+            color: colors.shadow
+                .withValuesCompat(alpha: isRecommended ? 0.10 : 0.05),
             blurRadius: isRecommended ? 18 : 10,
             offset: const Offset(0, 5),
           ),
@@ -1328,7 +1330,7 @@ class _LifecycleRow extends StatelessWidget {
             ? null
             : Border(
                 bottom: BorderSide(
-                  color: colors.outlineVariant.withValues(alpha: 0.35),
+                  color: colors.outlineVariant.withValuesCompat(alpha: 0.35),
                 ),
               ),
       ),
@@ -1495,7 +1497,7 @@ class _HistoryTile extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.12),
+              color: colors.primary.withValuesCompat(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 16, color: colors.primary),
@@ -1551,7 +1553,7 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValuesCompat(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

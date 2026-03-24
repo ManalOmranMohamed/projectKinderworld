@@ -93,14 +93,12 @@ class _ParentHelpScreenState extends ConsumerState<ParentHelpScreen> {
                       : _localizedFaqItems(l10n);
                   final filtered = query.isEmpty
                       ? items
-                      : items
-                          .where((item) {
-                            final q = query.toLowerCase();
-                            final question = item.question.toLowerCase();
-                            final answer = item.answer.toLowerCase();
-                            return question.contains(q) || answer.contains(q);
-                          })
-                          .toList();
+                      : items.where((item) {
+                          final q = query.toLowerCase();
+                          final question = item.question.toLowerCase();
+                          final answer = item.answer.toLowerCase();
+                          return question.contains(q) || answer.contains(q);
+                        }).toList();
 
                   if (filtered.isEmpty) {
                     return Column(

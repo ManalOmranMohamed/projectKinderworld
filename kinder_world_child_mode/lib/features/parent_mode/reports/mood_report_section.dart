@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/mood_provider.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOOD REPORT SECTION — shown in parent reports for a specific child
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// MOOD REPORT SECTION â€” shown in parent reports for a specific child
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class MoodReportSection extends ConsumerWidget {
   const MoodReportSection({super.key, required this.childId});
@@ -49,7 +50,7 @@ class MoodReportSection extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Most frequent mood highlight ──────────────────────
+                  // â”€â”€ Most frequent mood highlight â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   if (mostFrequent != null) ...[
                     _MostFrequentBanner(
                       mood: mostFrequent,
@@ -58,7 +59,7 @@ class MoodReportSection extends ConsumerWidget {
                     const SizedBox(height: 16),
                   ],
 
-                  // ── Total entries label ───────────────────────────────
+                  // â”€â”€ Total entries label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -81,7 +82,7 @@ class MoodReportSection extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // ── Mood bar chart ────────────────────────────────────
+                  // â”€â”€ Mood bar chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _MoodBarChart(counts: counts, total: total, l10n: l10n),
                 ],
               );
@@ -93,9 +94,9 @@ class MoodReportSection extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MOST FREQUENT MOOD BANNER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MostFrequentBanner extends StatelessWidget {
   const _MostFrequentBanner({required this.mood, required this.l10n});
@@ -109,9 +110,9 @@ class _MostFrequentBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: info.color.withValues(alpha: 0.10),
+        color: info.color.withValuesCompat(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: info.color.withValues(alpha: 0.30)),
+        border: Border.all(color: info.color.withValuesCompat(alpha: 0.30)),
       ),
       child: Row(
         children: [
@@ -147,9 +148,9 @@ class _MostFrequentBanner extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MOOD BAR CHART — horizontal bars per mood type
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// MOOD BAR CHART â€” horizontal bars per mood type
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MoodBarChart extends StatelessWidget {
   const _MoodBarChart({
@@ -246,9 +247,9 @@ class _MoodBarChart extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // EMPTY STATE
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MoodEmptyState extends StatelessWidget {
   const _MoodEmptyState({required this.l10n});
@@ -268,9 +269,9 @@ class _MoodEmptyState extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // MOOD INFO HELPER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MoodInfo {
   final String emoji;
@@ -282,18 +283,18 @@ class _MoodInfo {
 _MoodInfo _moodInfo(String mood, AppLocalizations l10n) {
   switch (mood) {
     case 'happy':
-      return _MoodInfo('😊', l10n.happy, const Color(0xFFFFB300));
+      return _MoodInfo('ًںکٹ', l10n.happy, const Color(0xFFFFB300));
     case 'excited':
-      return _MoodInfo('🤩', l10n.excited, const Color(0xFFFF6D00));
+      return _MoodInfo('ًں¤©', l10n.excited, const Color(0xFFFF6D00));
     case 'calm':
-      return _MoodInfo('😌', l10n.calm, const Color(0xFF00BCD4));
+      return _MoodInfo('ًںکŒ', l10n.calm, const Color(0xFF00BCD4));
     case 'tired':
-      return _MoodInfo('😴', l10n.tired, const Color(0xFF9E9E9E));
+      return _MoodInfo('ًںک´', l10n.tired, const Color(0xFF9E9E9E));
     case 'sad':
-      return _MoodInfo('😢', l10n.sad, const Color(0xFF5C6BC0));
+      return _MoodInfo('ًںک¢', l10n.sad, const Color(0xFF5C6BC0));
     case 'angry':
-      return _MoodInfo('😠', l10n.angry, const Color(0xFFE53935));
+      return _MoodInfo('ًںک ', l10n.angry, const Color(0xFFE53935));
     default:
-      return _MoodInfo('😐', mood, const Color(0xFF78909C));
+      return _MoodInfo('ًںکگ', mood, const Color(0xFF78909C));
   }
 }

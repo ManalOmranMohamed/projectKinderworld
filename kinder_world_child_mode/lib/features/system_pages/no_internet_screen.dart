@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class NoInternetScreen extends ConsumerStatefulWidget {
   const NoInternetScreen({super.key});
@@ -162,7 +163,7 @@ class _NoInternetIllustration extends StatelessWidget {
             height: 180,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colors.errorContainer.withValues(alpha: 0.15),
+              color: colors.errorContainer.withValuesCompat(alpha: 0.15),
             ),
           ),
           Container(
@@ -170,7 +171,7 @@ class _NoInternetIllustration extends StatelessWidget {
             height: 130,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colors.errorContainer.withValues(alpha: 0.25),
+              color: colors.errorContainer.withValuesCompat(alpha: 0.25),
             ),
           ),
           Container(
@@ -178,7 +179,7 @@ class _NoInternetIllustration extends StatelessWidget {
             height: 88,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: colors.errorContainer.withValues(alpha: 0.9),
+              color: colors.errorContainer.withValuesCompat(alpha: 0.9),
             ),
             child: Icon(
               Icons.wifi_off_rounded,
@@ -192,7 +193,7 @@ class _NoInternetIllustration extends StatelessWidget {
             child: Icon(
               Icons.signal_wifi_statusbar_null_rounded,
               size: 22,
-              color: colors.error.withValues(alpha: 0.4),
+              color: colors.error.withValuesCompat(alpha: 0.4),
             ),
           ),
         ],

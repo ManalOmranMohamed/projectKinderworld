@@ -92,7 +92,8 @@ class SubscriptionApi {
   }
 
   Future<List<Map<String, dynamic>>> getPaymentMethods() async {
-    final response = await _network.get<Map<String, dynamic>>('/billing/methods');
+    final response =
+        await _network.get<Map<String, dynamic>>('/billing/methods');
     final data = response.data;
     final methods = data?['methods'];
     if (methods is! List) return const [];

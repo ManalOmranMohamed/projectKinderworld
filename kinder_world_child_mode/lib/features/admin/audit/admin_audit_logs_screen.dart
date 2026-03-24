@@ -9,6 +9,7 @@ import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminAuditLogsScreen extends ConsumerStatefulWidget {
   const AdminAuditLogsScreen({super.key});
@@ -129,7 +130,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──────────────────────────────────────────────────
+          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           AdminPageHeader(
             title: l10n.adminAuditTitle,
             subtitle: l10n.adminAuditSubtitle,
@@ -143,7 +144,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── Filters ──────────────────────────────────────────────────
+          // â”€â”€ Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           AdminFilterBar(
             trailing: FilledButton.icon(
               onPressed: _applyFilters,
@@ -222,7 +223,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
           ),
           const SizedBox(height: 20),
 
-          // ── States ──────────────────────────────────────────────────
+          // â”€â”€ States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_loading)
             const AdminLoadingState()
           else if (_error != null)
@@ -241,7 +242,8 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: cs.outlineVariant.withValues(alpha: 0.5),
+                            color:
+                                cs.outlineVariant.withValuesCompat(alpha: 0.5),
                           ),
                         ),
                         child: Padding(
@@ -257,7 +259,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
-                                      log.timestamp ?? '—',
+                                      log.timestamp ?? 'â€”',
                                       textAlign: TextAlign.end,
                                       style:
                                           theme.textTheme.bodySmall?.copyWith(
@@ -276,7 +278,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                log.admin?['email'] as String? ?? '—',
+                                log.admin?['email'] as String? ?? 'â€”',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: cs.onSurfaceVariant,
                                 ),
@@ -290,9 +292,10 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  '${log.ipAddress ?? '—'}\n${log.userAgent ?? ''}',
+                                  '${log.ipAddress ?? 'â€”'}\n${log.userAgent ?? ''}',
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.7),
+                                    color: cs.onSurface
+                                        .withValuesCompat(alpha: 0.7),
                                   ),
                                 ),
                               ),
@@ -333,19 +336,19 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(Text(
-                    log.admin?['email'] as String? ?? '—',
+                    log.admin?['email'] as String? ?? 'â€”',
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(Text(
-                    log.timestamp ?? '—',
+                    log.timestamp ?? 'â€”',
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(SizedBox(
                     width: 280,
                     child: Text(
-                      '${log.ipAddress ?? '—'}\n${log.userAgent ?? ''}',
+                      '${log.ipAddress ?? 'â€”'}\n${log.userAgent ?? ''}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurface.withValues(alpha: 0.7)),
+                          color: cs.onSurface.withValuesCompat(alpha: 0.7)),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -380,7 +383,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
   }
 }
 
-// ─────────────────────────── Action Chip ─────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Action Chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ActionChip extends StatelessWidget {
   const _ActionChip({required this.action});

@@ -7,6 +7,7 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/features/system_pages/widgets/system_page_layout.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class MaintenanceScreen extends ConsumerStatefulWidget {
   const MaintenanceScreen({super.key});
@@ -73,7 +74,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           width: 120,
           height: 120,
           decoration: BoxDecoration(
-            color: warningColor.withValues(alpha: 0.12),
+            color: warningColor.withValuesCompat(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
           child: Icon(
@@ -211,7 +212,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: successColor.withValues(alpha: 0.12),
+            color: successColor.withValuesCompat(alpha: 0.12),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Icon(
@@ -238,7 +239,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: IconButton(

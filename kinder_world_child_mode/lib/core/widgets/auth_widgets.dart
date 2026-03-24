@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GradientButton — full-width CTA with gradient fill + loading state
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// GradientButton â€” full-width CTA with gradient fill + loading state
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class GradientButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -64,7 +65,8 @@ class _GradientButtonState extends State<GradientButton>
     final colors = Theme.of(context).colorScheme;
     final auth = context.authTheme;
     final disabled = widget.onPressed == null || widget.isLoading;
-    final gradientColors = widget.gradientColors ?? [auth.brand, auth.brandLight];
+    final gradientColors =
+        widget.gradientColors ?? [auth.brand, auth.brandLight];
     return GestureDetector(
       onTapDown: disabled ? null : _onTapDown,
       onTapUp: disabled ? null : _onTapUp,
@@ -92,7 +94,7 @@ class _GradientButtonState extends State<GradientButton>
                 ? []
                 : [
                     BoxShadow(
-                      color: gradientColors.first.withValues(alpha: 0.35),
+                      color: gradientColors.first.withValuesCompat(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -134,9 +136,9 @@ class _GradientButtonState extends State<GradientButton>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OutlineAuthButton — secondary outlined button
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// OutlineAuthButton â€” secondary outlined button
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class OutlineAuthButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -184,9 +186,9 @@ class OutlineAuthButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AuthInputField — styled text field with focus animation
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// AuthInputField â€” styled text field with focus animation
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class AuthInputField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
@@ -251,7 +253,7 @@ class _AuthInputFieldState extends State<AuthInputField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValuesCompat(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -288,21 +290,21 @@ class _AuthInputFieldState extends State<AuthInputField> {
           suffixIcon: widget.suffixIcon,
           filled: true,
           fillColor: _isFocused
-              ? colors.primary.withValues(alpha: 0.04)
-              : colors.surfaceContainerHighest.withValues(alpha: 0.5),
+              ? colors.primary.withValuesCompat(alpha: 0.04)
+              : colors.surfaceContainerHighest.withValuesCompat(alpha: 0.5),
           labelStyle: TextStyle(
             color: _isFocused ? colors.primary : colors.onSurfaceVariant,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           hintStyle: TextStyle(
-            color: colors.onSurfaceVariant.withValues(alpha: 0.6),
+            color: colors.onSurfaceVariant.withValuesCompat(alpha: 0.6),
             fontSize: 14,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: colors.outlineVariant.withValues(alpha: 0.6),
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.6),
               width: 1.2,
             ),
           ),
@@ -337,9 +339,9 @@ class _AuthInputFieldState extends State<AuthInputField> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PasswordStrengthIndicator — animated strength bar
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// PasswordStrengthIndicator â€” animated strength bar
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class PasswordStrengthIndicator extends StatelessWidget {
   final String password;
 
@@ -369,8 +371,11 @@ class PasswordStrengthIndicator extends StatelessWidget {
       _PasswordStrength.weak => (colors.error, l10n.passwordWeak, 1),
       _PasswordStrength.fair => (colors.tertiary, l10n.passwordFair, 2),
       _PasswordStrength.strong => (colors.primary, l10n.passwordStrong, 3),
-      _PasswordStrength.veryStrong =>
-        (Color.lerp(colors.primary, colors.secondary, 0.35)!, l10n.passwordVeryStrong, 4),
+      _PasswordStrength.veryStrong => (
+          Color.lerp(colors.primary, colors.secondary, 0.35)!,
+          l10n.passwordVeryStrong,
+          4
+        ),
       _ => (Colors.transparent, '', 0),
     };
 
@@ -413,9 +418,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
 
 enum _PasswordStrength { none, weak, fair, strong, veryStrong }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AuthDivider — "OR" divider
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// AuthDivider â€” "OR" divider
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class AuthDivider extends StatelessWidget {
   final String label;
   const AuthDivider({super.key, this.label = 'OR'});
@@ -427,7 +432,7 @@ class AuthDivider extends StatelessWidget {
       children: [
         Expanded(
           child: Divider(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.5),
             thickness: 1,
           ),
         ),
@@ -445,7 +450,7 @@ class AuthDivider extends StatelessWidget {
         ),
         Expanded(
           child: Divider(
-            color: colors.outlineVariant.withValues(alpha: 0.5),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.5),
             thickness: 1,
           ),
         ),
@@ -454,9 +459,9 @@ class AuthDivider extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// FloatingDecorativeCircle — decorative background element
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// FloatingDecorativeCircle â€” decorative background element
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class FloatingDecorativeCircle extends StatelessWidget {
   final double size;
   final Color color;
@@ -476,15 +481,15 @@ class FloatingDecorativeCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withValues(alpha: opacity),
+        color: color.withValuesCompat(alpha: opacity),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AuthSuccessView — success state for forgot password screens
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// AuthSuccessView â€” success state for forgot password screens
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class AuthSuccessView extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -520,7 +525,7 @@ class AuthSuccessView extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: resolvedAccent.withValues(alpha: 0.12),
+                color: resolvedAccent.withValuesCompat(alpha: 0.12),
               ),
               child: Icon(icon, size: 60, color: resolvedAccent),
             ),
@@ -550,7 +555,7 @@ class AuthSuccessView extends StatelessWidget {
               onPressed: onPressed,
               gradientColors: [
                 resolvedAccent,
-                resolvedAccent.withValues(alpha: 0.7),
+                resolvedAccent.withValuesCompat(alpha: 0.7),
               ],
             ),
           ],

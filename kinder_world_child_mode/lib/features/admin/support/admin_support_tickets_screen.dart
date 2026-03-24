@@ -10,6 +10,7 @@ import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminSupportTicketsScreen extends ConsumerStatefulWidget {
   const AdminSupportTicketsScreen({super.key});
@@ -393,11 +394,14 @@ class _AdminSupportTicketsScreenState
         final cs = Theme.of(context).colorScheme;
         return Card(
           elevation: selected ? 0 : null,
-          color: selected ? cs.primaryContainer.withValues(alpha: 0.35) : null,
+          color: selected
+              ? cs.primaryContainer.withValuesCompat(alpha: 0.35)
+              : null,
           shape: selected
               ? RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
+                  side: BorderSide(
+                      color: cs.primary.withValuesCompat(alpha: 0.4)),
                 )
               : null,
           child: InkWell(
@@ -423,11 +427,14 @@ class _AdminSupportTicketsScreenState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${_categoryLabel(ticket.category, l10n)} • ${ticket.requester?['email'] ?? ticket.email ?? '—'}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: cs.onSurface.withValues(alpha: 0.6),
-                                  ),
+                          '${_categoryLabel(ticket.category, l10n)} â€¢ ${ticket.requester?['email'] ?? ticket.email ?? 'â€”'}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color:
+                                    cs.onSurface.withValuesCompat(alpha: 0.6),
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -435,12 +442,11 @@ class _AdminSupportTicketsScreenState
                           const SizedBox(height: 2),
                           Text(
                             ticket.preview ?? ticket.message,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: cs.onSurface.withValues(alpha: 0.45),
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: cs.onSurface
+                                          .withValuesCompat(alpha: 0.45),
+                                    ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -527,10 +533,10 @@ class _AdminSupportTicketsScreenState
               runSpacing: 8,
               children: [
                 Text(
-                  '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? '—'}',
+                  '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? 'â€”'}',
                 ),
                 Text(
-                  '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? '—'}',
+                  '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? 'â€”'}',
                 ),
                 Text(
                   '${l10n.adminSupportCategoryLabel}: ${_categoryLabel(ticket.category, l10n)}',
@@ -664,7 +670,7 @@ class _AdminSupportTicketsScreenState
   String _formatDate(String value) {
     final parsed = DateTime.tryParse(value)?.toLocal();
     if (parsed == null) return value;
-    return DateFormat('MMM d, y • h:mm a').format(parsed);
+    return DateFormat('MMM d, y â€¢ h:mm a').format(parsed);
   }
 }
 

@@ -82,7 +82,7 @@ class _ChildProfileHeroSection extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       colors.primary,
-                      colors.primary.withValues(alpha: 0.5),
+                      colors.primary.withValuesCompat(alpha: 0.5),
                     ],
                   ),
                 ),
@@ -99,7 +99,8 @@ class _ChildProfileHeroSection extends StatelessWidget {
                       child: ChildCustomizableAvatar(
                         child: child,
                         radius: 56,
-                        backgroundColor: colors.primary.withValues(alpha: 0.15),
+                        backgroundColor:
+                            colors.primary.withValuesCompat(alpha: 0.15),
                       ),
                     ),
                   ),
@@ -123,7 +124,8 @@ class _ChildProfileHeroSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: childTheme.buddyStart.withValues(alpha: 0.4),
+                        color:
+                            childTheme.buddyStart.withValuesCompat(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -346,7 +348,7 @@ class _ChildProfileInterestChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.1),
+        color: colors.primary.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -403,7 +405,7 @@ class _ChildProfileAchievementBadge extends StatelessWidget {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: childTheme.xp.withValues(alpha: 0.12),
+            color: childTheme.xp.withValuesCompat(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
@@ -512,10 +514,10 @@ class _ChildProfileEquippedItemsSection extends ConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: xpColor.withValues(alpha: 0.10),
+          color: xpColor.withValuesCompat(alpha: 0.10),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: xpColor.withValues(alpha: 0.40),
+            color: xpColor.withValuesCompat(alpha: 0.40),
             width: 1.5,
           ),
         ),
@@ -542,7 +544,7 @@ class _ChildProfileEquippedItemsSection extends ConsumerWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.15),
+                        color: item.color.withValuesCompat(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: item.color, width: 1.5),
                       ),
@@ -622,7 +624,7 @@ class _ChildProfileSectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
+            color: colors.shadow.withValuesCompat(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

@@ -10,6 +10,7 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentChildProfileScreen extends ConsumerStatefulWidget {
   const ParentChildProfileScreen({
@@ -178,7 +179,7 @@ class _ParentChildProfileScreenState
           preferredSize: const Size.fromHeight(1),
           child: Divider(
             height: 1,
-            color: colors.outlineVariant.withValues(alpha: 0.4),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4),
           ),
         ),
       ),
@@ -220,8 +221,8 @@ class _ParentChildProfileScreenState
                                 avatarPath: _avatarAssets[child.avatar] ??
                                     child.avatarPath,
                                 radius: 46,
-                                backgroundColor:
-                                    parent.primary.withValues(alpha: 0.12),
+                                backgroundColor: parent.primary
+                                    .withValuesCompat(alpha: 0.12),
                               ),
                             ),
                           ),
@@ -265,8 +266,8 @@ class _ParentChildProfileScreenState
                     const SizedBox(height: 4),
                     Text(
                       child.age > 0
-                          ? '${l10n.yearsOld(child.age)} • ${l10n.level} ${child.level}'
-                          : '${l10n.notAvailable} • ${l10n.level} ${child.level}',
+                          ? '${l10n.yearsOld(child.age)} â€¢ ${l10n.level} ${child.level}'
+                          : '${l10n.notAvailable} â€¢ ${l10n.level} ${child.level}',
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.onSurfaceVariant,
@@ -374,7 +375,7 @@ class _ParentChildProfileScreenState
                                 ),
                                 decoration: BoxDecoration(
                                   color: parent.primary
-                                      .withValues(alpha: 0.10),
+                                      .withValuesCompat(alpha: 0.10),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(

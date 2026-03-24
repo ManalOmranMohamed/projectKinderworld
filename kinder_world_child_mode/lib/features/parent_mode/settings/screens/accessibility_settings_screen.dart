@@ -6,6 +6,7 @@ import 'package:kinder_world/core/providers/accessibility_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// Parent-controlled screen for enabling/disabling accessibility features
 /// that apply to the child-facing interface.
@@ -44,14 +45,14 @@ class AccessibilitySettingsScreen extends ConsumerWidget {
           preferredSize: const Size.fromHeight(1),
           child: Divider(
               height: 1,
-              color: colors.outlineVariant.withValues(alpha: 0.4)),
+              color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         ),
       ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           children: [
-            // ── Header banner ──────────────────────────────────────────
+            // â”€â”€ Header banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _AccessibilityBanner(
               isAnyEnabled: accessibility.isAnyEnabled,
               l10n: l10n,
@@ -59,7 +60,7 @@ class AccessibilitySettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Feature toggles ────────────────────────────────────────
+            // â”€â”€ Feature toggles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ParentSettingsGroup(
               label: l10n.accessibilityMode,
               tiles: [
@@ -90,7 +91,7 @@ class AccessibilitySettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Live preview ───────────────────────────────────────────
+            // â”€â”€ Live preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _LivePreview(
               largeFontEnabled: accessibility.largeFontEnabled,
               highContrastEnabled: accessibility.highContrastEnabled,
@@ -99,11 +100,11 @@ class AccessibilitySettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Parent note ────────────────────────────────────────────
+            // â”€â”€ Parent note â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _ParentNote(l10n: l10n, colors: colors),
             const SizedBox(height: 20),
 
-            // ── Reset button ───────────────────────────────────────────
+            // â”€â”€ Reset button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (accessibility.isAnyEnabled)
               _ResetButton(
                 l10n: l10n,
@@ -152,9 +153,9 @@ class AccessibilitySettingsScreen extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // BANNER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AccessibilityBanner extends StatelessWidget {
   final bool isAnyEnabled;
@@ -176,8 +177,8 @@ class _AccessibilityBanner extends StatelessWidget {
         gradient: LinearGradient(
           colors: isAnyEnabled
               ? [
-                  parent.info.withValues(alpha: 0.15),
-                  parent.reward.withValues(alpha: 0.10),
+                  parent.info.withValuesCompat(alpha: 0.15),
+                  parent.reward.withValuesCompat(alpha: 0.10),
                 ]
               : [
                   colors.surfaceContainerHighest,
@@ -189,8 +190,8 @@ class _AccessibilityBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isAnyEnabled
-              ? parent.info.withValues(alpha: 0.4)
-              : colors.outlineVariant.withValues(alpha: 0.3),
+              ? parent.info.withValuesCompat(alpha: 0.4)
+              : colors.outlineVariant.withValuesCompat(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -200,7 +201,7 @@ class _AccessibilityBanner extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: isAnyEnabled
-                  ? parent.info.withValues(alpha: 0.15)
+                  ? parent.info.withValuesCompat(alpha: 0.15)
                   : colors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -239,9 +240,8 @@ class _AccessibilityBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: isAnyEnabled
-                  ? parent.info
-                  : colors.surfaceContainerHighest,
+              color:
+                  isAnyEnabled ? parent.info : colors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -252,7 +252,8 @@ class _AccessibilityBanner extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: isAnyEnabled ? colors.onPrimary : colors.onSurfaceVariant,
+                color:
+                    isAnyEnabled ? colors.onPrimary : colors.onSurfaceVariant,
               ),
             ),
           ),
@@ -262,9 +263,9 @@ class _AccessibilityBanner extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // TOGGLE TILE
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AccessibilityToggleTile extends StatelessWidget {
   final IconData icon;
@@ -305,7 +306,7 @@ class _AccessibilityToggleTile extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: value
-                      ? iconColor.withValues(alpha: 0.15)
+                      ? iconColor.withValuesCompat(alpha: 0.15)
                       : colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -356,7 +357,11 @@ class _AccessibilityToggleTile extends StatelessWidget {
                   Switch(
                     value: value,
                     onChanged: onChanged,
-                    activeThumbColor: iconColor,
+                    thumbColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.selected)
+                          ? iconColor
+                          : null,
+                    ),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ],
@@ -368,16 +373,16 @@ class _AccessibilityToggleTile extends StatelessWidget {
           Divider(
             height: 1,
             indent: 70,
-            color: colors.outlineVariant.withValues(alpha: 0.4),
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4),
           ),
       ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // LIVE PREVIEW
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LivePreview extends StatelessWidget {
   final bool largeFontEnabled;
@@ -397,8 +402,7 @@ class _LivePreview extends StatelessWidget {
     // Preview colours
     final previewBg = highContrastEnabled ? Colors.black : colors.surface;
     final previewFg = highContrastEnabled ? Colors.white : colors.onSurface;
-    final previewAccent =
-        highContrastEnabled ? Colors.yellow : colors.primary;
+    final previewAccent = highContrastEnabled ? Colors.yellow : colors.primary;
     final previewBorder =
         highContrastEnabled ? Colors.white : colors.outlineVariant;
 
@@ -427,12 +431,12 @@ class _LivePreview extends StatelessWidget {
             color: previewBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: previewBorder.withValues(alpha: 0.5),
+              color: previewBorder.withValuesCompat(alpha: 0.5),
               width: highContrastEnabled ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.06),
+                color: colors.shadow.withValuesCompat(alpha: 0.06),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -452,7 +456,7 @@ class _LivePreview extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: previewAccent.withValues(alpha: 0.2),
+                        color: previewAccent.withValuesCompat(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: highContrastEnabled
                             ? Border.all(color: previewAccent, width: 2)
@@ -467,7 +471,7 @@ class _LivePreview extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hello, Sara! 👋',
+                            'Hello, Sara! ًں‘‹',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
@@ -494,7 +498,7 @@ class _LivePreview extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: previewAccent.withValues(alpha: 0.15),
+                    color: previewAccent.withValuesCompat(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: highContrastEnabled
                         ? Border.all(color: previewAccent, width: 2)
@@ -526,9 +530,9 @@ class _LivePreview extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PARENT NOTE
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ParentNote extends StatelessWidget {
   final AppLocalizations l10n;
@@ -541,17 +545,16 @@ class _ParentNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colors.primaryContainer.withValues(alpha: 0.5),
+        color: colors.primaryContainer.withValuesCompat(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: colors.primary.withValues(alpha: 0.25),
+          color: colors.primary.withValuesCompat(alpha: 0.25),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded,
-              size: 18, color: colors.primary),
+          Icon(Icons.info_outline_rounded, size: 18, color: colors.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -569,9 +572,9 @@ class _ParentNote extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // RESET BUTTON
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ResetButton extends StatelessWidget {
   final AppLocalizations l10n;
@@ -595,7 +598,7 @@ class _ResetButton extends StatelessWidget {
         label: Text(l10n.accessibilityResetAll),
         style: OutlinedButton.styleFrom(
           foregroundColor: parent.danger,
-          side: BorderSide(color: parent.danger.withValues(alpha: 0.5)),
+          side: BorderSide(color: parent.danger.withValuesCompat(alpha: 0.5)),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

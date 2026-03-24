@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/providers/locale_provider.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentLanguageScreen extends ConsumerStatefulWidget {
   const ParentLanguageScreen({super.key});
@@ -53,7 +54,8 @@ class _ParentLanguageScreenState extends ConsumerState<ParentLanguageScreen> {
               ),
               const SizedBox(height: 24),
               ...languages.map((language) {
-                final isSelected = currentLocale.languageCode == language['code'];
+                final isSelected =
+                    currentLocale.languageCode == language['code'];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: InkWell(
@@ -77,15 +79,14 @@ class _ParentLanguageScreenState extends ConsumerState<ParentLanguageScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: colors.shadow.withValues(alpha: 0.05),
+                            color: colors.shadow.withValuesCompat(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
                         ],
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [

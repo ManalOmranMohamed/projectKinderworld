@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class PicturePasswordOption {
   final String id;
@@ -209,10 +210,10 @@ class PicturePasswordRow extends StatelessWidget {
     final resolvedColor = useOptionColor
         ? _resolveSemanticColor(context, option?.semanticColor) ?? fallbackColor
         : fallbackColor;
-    final borderColor = resolvedColor.withValues(alpha: 0.6);
+    final borderColor = resolvedColor.withValuesCompat(alpha: 0.6);
     final fillColor = id == null
-        ? colors.surfaceContainerHighest.withValues(alpha: 0.5)
-        : resolvedColor.withValues(alpha: 0.15);
+        ? colors.surfaceContainerHighest.withValuesCompat(alpha: 0.5)
+        : resolvedColor.withValuesCompat(alpha: 0.15);
     final iconColor = resolvedColor;
 
     final icon = option?.icon;

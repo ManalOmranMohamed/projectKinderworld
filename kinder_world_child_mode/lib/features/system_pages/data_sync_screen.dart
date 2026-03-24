@@ -10,6 +10,7 @@ import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/app.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class DataSyncScreen extends ConsumerStatefulWidget {
   const DataSyncScreen({super.key});
@@ -175,8 +176,8 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                   height: 120,
                   decoration: BoxDecoration(
                     color: _isSyncing
-                        ? colors.primary.withValues(alpha: 0.12)
-                        : successColor.withValues(alpha: 0.12),
+                        ? colors.primary.withValuesCompat(alpha: 0.12)
+                        : successColor.withValuesCompat(alpha: 0.12),
                     borderRadius: BorderRadius.circular(60),
                   ),
                   child: Icon(
@@ -229,7 +230,7 @@ class _DataSyncScreenState extends ConsumerState<DataSyncScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.05),
+                      color: colors.shadow.withValuesCompat(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -324,7 +325,7 @@ class _SyncDetailItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.12),
+            color: colors.primary.withValuesCompat(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Icon(

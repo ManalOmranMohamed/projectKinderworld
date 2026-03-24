@@ -23,6 +23,7 @@ import 'package:kinder_world/core/utils/children_api_parsing.dart';
 import 'package:kinder_world/core/widgets/picture_password_row.dart';
 import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildManagementScreen extends ConsumerStatefulWidget {
   const ChildManagementScreen({super.key});
@@ -103,7 +104,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                       color: Theme.of(context)
                           .colorScheme
                           .shadow
-                          .withValues(alpha: 0.2),
+                          .withValuesCompat(alpha: 0.2),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -298,7 +299,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
   }) {
     final option = childAvatarOptionForValue(avatarId ?? avatarPath);
     final resolvedBackground = option?.backgroundColor ??
-        context.parentTheme.primary.withValues(alpha: 0.1);
+        context.parentTheme.primary.withValuesCompat(alpha: 0.1);
     final resolvedPath =
         option?.assetPath.isNotEmpty == true ? option!.assetPath : avatarPath;
 
@@ -357,7 +358,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                 color: Theme.of(context)
                     .colorScheme
                     .outlineVariant
-                    .withValues(alpha: 0.4)),
+                    .withValuesCompat(alpha: 0.4)),
           ),
         ),
         body: SafeArea(
@@ -595,7 +596,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       decoration: BoxDecoration(
                                         color: isSelected
                                             ? context.parentTheme.primary
-                                                .withValues(alpha: 0.2)
+                                                .withValuesCompat(alpha: 0.2)
                                             : Theme.of(context)
                                                 .colorScheme
                                                 .surface,
@@ -658,7 +659,8 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
                                       height: 64,
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? optionColor.withValues(alpha: 0.2)
+                                            ? optionColor.withValuesCompat(
+                                                alpha: 0.2)
                                             : Theme.of(context)
                                                 .colorScheme
                                                 .surface,
@@ -1036,7 +1038,7 @@ class _ChildManagementScreenState extends ConsumerState<ChildManagementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

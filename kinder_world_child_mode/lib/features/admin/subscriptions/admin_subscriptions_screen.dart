@@ -9,6 +9,7 @@ import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminSubscriptionsScreen extends ConsumerStatefulWidget {
   const AdminSubscriptionsScreen({super.key});
@@ -54,10 +55,10 @@ class _AdminSubscriptionsScreenState
   }
 
   String _formatDate(String? value) {
-    if (value == null || value.isEmpty) return '—';
+    if (value == null || value.isEmpty) return 'â€”';
     final parsed = DateTime.tryParse(value)?.toLocal();
     if (parsed == null) return value;
-    return DateFormat('MMM d, y • h:mm a').format(parsed);
+    return DateFormat('MMM d, y â€¢ h:mm a').format(parsed);
   }
 
   String _formatAmount(int amountCents, String currency) {
@@ -254,7 +255,7 @@ class _AdminSubscriptionsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Page header ─────────────────────────────────────────
+              // â”€â”€ Page header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AdminPageHeader(
                 title: l10n.adminSubscriptionsTitle,
                 subtitle: l10n.adminSubscriptionsSubtitle,
@@ -268,7 +269,7 @@ class _AdminSubscriptionsScreenState
               ),
               const SizedBox(height: 20),
 
-              // ── Filters ─────────────────────────────────────────────
+              // â”€â”€ Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AdminFilterBar(
                 children: [
                   SizedBox(
@@ -361,7 +362,7 @@ class _AdminSubscriptionsScreenState
               ),
               const SizedBox(height: 20),
 
-              // ── Content ─────────────────────────────────────────────
+              // â”€â”€ Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (_loading)
                 const AdminLoadingState()
               else if (_error != null)
@@ -388,7 +389,7 @@ class _AdminSubscriptionsScreenState
               ],
               const SizedBox(height: 16),
 
-              // ── Pagination ──────────────────────────────────────────
+              // â”€â”€ Pagination â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AdminPaginationBar(
                 summary: l10n.adminPaginationSummary(
                   (_pagination['page'] as int?) ?? _page,
@@ -424,13 +425,13 @@ class _AdminSubscriptionsScreenState
         return Card(
           elevation: isSelected ? 2 : 0,
           color: isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.35)
+              ? colorScheme.primaryContainer.withValuesCompat(alpha: 0.35)
               : colorScheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: isSelected
                 ? BorderSide(
-                    color: colorScheme.primary.withValues(alpha: 0.4),
+                    color: colorScheme.primary.withValuesCompat(alpha: 0.4),
                     width: 1.5)
                 : BorderSide.none,
           ),
@@ -453,9 +454,11 @@ class _AdminSubscriptionsScreenState
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
-              item.name.isEmpty ? item.status : '${item.name} • ${item.status}',
+              item.name.isEmpty
+                  ? item.status
+                  : '${item.name} â€¢ ${item.status}',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
               ),
             ),
             trailing: _PlanChip(plan: item.plan),
@@ -509,7 +512,7 @@ class _AdminSubscriptionsScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────
+            // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               children: [
                 Expanded(
@@ -526,12 +529,12 @@ class _AdminSubscriptionsScreenState
             Text(
               item.name.isEmpty ? '-' : item.name,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
               ),
             ),
             const Divider(height: 24),
 
-            // ── Info rows ────────────────────────────────────────────
+            // â”€â”€ Info rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             _InfoRow(
               icon: Icons.info_outline_rounded,
               label: l10n.adminSubscriptionsStatusLabel,
@@ -628,7 +631,7 @@ class _AdminSubscriptionsScreenState
             ),
             const SizedBox(height: 16),
 
-            // ── Features ─────────────────────────────────────────────
+            // â”€â”€ Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Row(
               children: [
                 Icon(Icons.featured_play_list_outlined,
@@ -667,7 +670,8 @@ class _AdminSubscriptionsScreenState
                         size: 13,
                         color: isEnabled
                             ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.4),
+                            : colorScheme.onSurface
+                                .withValuesCompat(alpha: 0.4),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -675,7 +679,8 @@ class _AdminSubscriptionsScreenState
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: isEnabled
                               ? colorScheme.primary
-                              : colorScheme.onSurface.withValues(alpha: 0.5),
+                              : colorScheme.onSurface
+                                  .withValuesCompat(alpha: 0.5),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -692,9 +697,9 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((event) => _TimelineEntry(
                         title:
-                            '${_displayStatus(event.eventType)} • ${event.planId}',
+                            '${_displayStatus(event.eventType)} â€¢ ${event.planId}',
                         subtitle:
-                            '${_displayStatus(event.status)} • ${event.source}',
+                            '${_displayStatus(event.status)} â€¢ ${event.source}',
                         trailing: _formatDate(event.occurredAt),
                       ))
                   .toList(),
@@ -707,9 +712,9 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((entry) => _TimelineEntry(
                         title:
-                            '${_displayStatus(entry.transactionType)} • ${entry.planId}',
+                            '${_displayStatus(entry.transactionType)} â€¢ ${entry.planId}',
                         subtitle:
-                            '${_formatAmount(entry.amountCents, entry.currency)} • ${_displayStatus(entry.status)}',
+                            '${_formatAmount(entry.amountCents, entry.currency)} â€¢ ${_displayStatus(entry.status)}',
                         trailing: _formatDate(entry.effectiveAt),
                       ))
                   .toList(),
@@ -722,13 +727,13 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((entry) => _TimelineEntry(
                         title:
-                            '${_displayStatus(entry.attemptType)} • ${entry.planId}',
+                            '${_displayStatus(entry.attemptType)} â€¢ ${entry.planId}',
                         subtitle: [
                           _formatAmount(entry.amountCents, entry.currency),
                           _displayStatus(entry.status),
                           if ((entry.failureCode ?? '').isNotEmpty)
                             entry.failureCode!,
-                        ].join(' • '),
+                        ].join(' â€¢ '),
                         trailing:
                             _formatDate(entry.completedAt ?? entry.requestedAt),
                       ))
@@ -736,7 +741,7 @@ class _AdminSubscriptionsScreenState
             ),
             const SizedBox(height: 16),
 
-            // ── Actions ──────────────────────────────────────────────
+            // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -769,7 +774,7 @@ class _AdminSubscriptionsScreenState
   }
 }
 
-// ─────────────────────────── Info Row ────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Info Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _InfoRow extends StatelessWidget {
   const _InfoRow({
@@ -789,12 +794,13 @@ class _InfoRow extends StatelessWidget {
     return Row(
       children: [
         Icon(icon,
-            size: 16, color: colorScheme.onSurface.withValues(alpha: 0.5)),
+            size: 16,
+            color: colorScheme.onSurface.withValuesCompat(alpha: 0.5)),
         const SizedBox(width: 8),
         Text(
           '$label: ',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurface.withValues(alpha: 0.6),
+            color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
           ),
         ),
         Text(
@@ -807,7 +813,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Plan Chip ───────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Plan Chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _PlanChip extends StatelessWidget {
   const _PlanChip({required this.plan});

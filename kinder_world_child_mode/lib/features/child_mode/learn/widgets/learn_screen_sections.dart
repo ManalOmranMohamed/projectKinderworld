@@ -87,7 +87,7 @@ class _LearnIntroBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: AppColors.primary.withValuesCompat(alpha: 0.1),
           borderRadius: const BorderRadius.only(
             topRight: Radius.circular(20),
             bottomLeft: Radius.circular(20),
@@ -202,7 +202,7 @@ class _LearnSearchResultCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.08),
+              color: colors.shadow.withValuesCompat(alpha: 0.08),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -249,7 +249,7 @@ class _LearnCategoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.2),
+              color: color.withValuesCompat(alpha: 0.2),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -270,7 +270,7 @@ class _LearnCategoryCard extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.6),
+                    Colors.black.withValuesCompat(alpha: 0.6),
                   ],
                 ),
               ),
@@ -287,7 +287,7 @@ class _LearnCategoryCard extends StatelessWidget {
                       shadows: [
                         Shadow(
                           blurRadius: 4,
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: Colors.black.withValuesCompat(alpha: 0.3),
                           offset: const Offset(0, 2),
                         ),
                       ],
@@ -304,7 +304,7 @@ class _LearnCategoryCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
+                    color: Colors.white.withValuesCompat(alpha: 0.92),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(

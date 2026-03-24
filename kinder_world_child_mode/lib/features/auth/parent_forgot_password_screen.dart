@@ -6,6 +6,7 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentForgotPasswordScreen extends StatefulWidget {
   const ParentForgotPasswordScreen({super.key});
@@ -113,7 +114,7 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                       height: 130,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.07),
+                        color: Colors.white.withValuesCompat(alpha: 0.07),
                       ),
                     ),
                   ),
@@ -125,7 +126,7 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: Colors.white.withValuesCompat(alpha: 0.06),
                       ),
                     ),
                   ),
@@ -143,10 +144,12 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
+                                color:
+                                    Colors.white.withValuesCompat(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.25),
+                                  color: Colors.white
+                                      .withValuesCompat(alpha: 0.25),
                                 ),
                               ),
                               child: const Icon(
@@ -163,10 +166,12 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.18),
+                                  color: Colors.white
+                                      .withValuesCompat(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.30),
+                                    color: Colors.white
+                                        .withValuesCompat(alpha: 0.30),
                                   ),
                                 ),
                                 child: const Icon(
@@ -192,8 +197,8 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                                     l10n.parentAccount,
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.75),
+                                      color: Colors.white
+                                          .withValuesCompat(alpha: 0.75),
                                     ),
                                   ),
                                 ],
@@ -280,10 +285,10 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: context.infoColor.withValues(alpha: 0.06),
+                color: context.infoColor.withValuesCompat(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: context.infoColor.withValues(alpha: 0.2),
+                  color: context.infoColor.withValuesCompat(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -376,7 +381,7 @@ class _ParentForgotPasswordScreenState extends State<ParentForgotPasswordScreen>
                   height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: context.successColor.withValues(alpha: 0.10),
+                    color: context.successColor.withValuesCompat(alpha: 0.10),
                   ),
                   child: Icon(
                     Icons.mark_email_read_rounded,
@@ -484,7 +489,7 @@ class _StepRow extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
+            color: color.withValuesCompat(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Center(

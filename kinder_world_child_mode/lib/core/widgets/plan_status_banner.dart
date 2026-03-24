@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/plan_provider.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class PlanStatusBanner extends ConsumerWidget {
   final EdgeInsetsGeometry margin;
@@ -35,7 +36,7 @@ class PlanStatusBanner extends ConsumerWidget {
             border: Border.all(color: colors.outlineVariant),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.05),
+                color: colors.shadow.withValuesCompat(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -50,7 +51,7 @@ class PlanStatusBanner extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.12),
+                      color: colors.primary.withValuesCompat(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(

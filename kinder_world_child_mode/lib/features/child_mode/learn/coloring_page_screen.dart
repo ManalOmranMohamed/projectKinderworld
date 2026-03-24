@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/utils/color_serialization.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_progress_storage.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:xml/xml.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ColoringPageScreen extends StatefulWidget {
   const ColoringPageScreen({
@@ -192,11 +194,11 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.92),
+                    color: colors.surface.withValuesCompat(alpha: 0.92),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.shadow.withValues(alpha: 0.18),
+                        color: colors.shadow.withValuesCompat(alpha: 0.18),
                         blurRadius: 14,
                         offset: const Offset(0, 5),
                       ),
@@ -282,7 +284,7 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
+                    color: Colors.black.withValuesCompat(alpha: 0.55),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -432,11 +434,11 @@ class _ColoringPageScreenState extends State<ColoringPageScreen> {
       height: 144,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: Colors.white.withValuesCompat(alpha: 0.95),
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6BC8FF).withValues(alpha: 0.25),
+            color: const Color(0xFF6BC8FF).withValuesCompat(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -877,8 +879,8 @@ class SvgColoringTemplate {
       ..write('">');
 
     if (outlineGroup != null) {
-      // فحص: هل الـ outline معمول بـ fill+evenodd (يسبب holes شفافة)؟
-      // لو آه → نحوّله لـ stroke عشان كل خط يبان أسود صح
+      // ظپط­طµ: ظ‡ظ„ ط§ظ„ظ€ outline ظ…ط¹ظ…ظˆظ„ ط¨ظ€ fill+evenodd (ظٹط³ط¨ط¨ holes ط´ظپط§ظپط©)طں
+      // ظ„ظˆ ط¢ظ‡ â†’ ظ†ط­ظˆظ‘ظ„ظ‡ ظ„ظ€ stroke ط¹ط´ط§ظ† ظƒظ„ ط®ط· ظٹط¨ط§ظ† ط£ط³ظˆط¯ طµط­
       final outlinePaths = outlineGroup.findAllElements('path').toList();
       final usesEvenoddFill = outlinePaths.any((p) =>
           p.getAttribute('fill-rule') == 'evenodd' &&
@@ -886,7 +888,7 @@ class SvgColoringTemplate {
           p.getAttribute('fill') != 'none');
 
       if (usesEvenoddFill) {
-        // حوّل كل path لـ stroke بدل fill → مفيش holes
+        // ط­ظˆظ‘ظ„ ظƒظ„ path ظ„ظ€ stroke ط¨ط¯ظ„ fill â†’ ظ…ظپظٹط´ holes
         buffer.write(
           '<g fill="none" stroke="#000000" stroke-width="3" '
           'stroke-linejoin="round" stroke-linecap="round">',
@@ -898,11 +900,11 @@ class SvgColoringTemplate {
         }
         buffer.write('</g>');
       } else {
-        // outline سليم → اكتبه كاملاً مع كل attributes
+        // outline ط³ظ„ظٹظ… â†’ ط§ظƒطھط¨ظ‡ ظƒط§ظ…ظ„ط§ظ‹ ظ…ط¹ ظƒظ„ attributes
         buffer.write(outlineGroup.toXmlString());
       }
     } else {
-      // مفيش outline group → نلف كل الـ paths في <g> بـ stroke أسود سميك
+      // ظ…ظپظٹط´ outline group â†’ ظ†ظ„ظپ ظƒظ„ ط§ظ„ظ€ paths ظپظٹ <g> ط¨ظ€ stroke ط£ط³ظˆط¯ ط³ظ…ظٹظƒ
       buffer.write(
         '<g fill="none" stroke="#000000" stroke-width="3" '
         'stroke-linejoin="round" stroke-linecap="round">',
@@ -937,7 +939,7 @@ class SvgColoringTemplate {
   }
 
   static String _toHex(Color color) {
-    final argb = color.toARGB32();
+    final argb = colorToArgb32(color);
     return '#${argb.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
   }
 }
@@ -1049,7 +1051,7 @@ class _PaletteBubbleButtonState extends State<_PaletteBubbleButton> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withValues(alpha: 0.55),
+                  color: widget.color.withValuesCompat(alpha: 0.55),
                   blurRadius: widget.selected ? 16 : 10,
                   offset: const Offset(0, 4),
                 ),
@@ -1102,7 +1104,7 @@ class _SparkleBurstState extends State<_SparkleBurst>
             scale: 0.6 + (t * 1.1),
             child: Icon(
               Icons.auto_awesome_rounded,
-              color: widget.color.withValues(alpha: 0.9),
+              color: widget.color.withValuesCompat(alpha: 0.9),
               size: 28,
             ),
           ),
@@ -1186,7 +1188,7 @@ class _PlayfulCanvasBackground extends StatelessWidget {
           left: 18,
           child: Icon(
             Icons.star_rounded,
-            color: const Color(0xFFFFD54F).withValues(alpha: 0.9),
+            color: const Color(0xFFFFD54F).withValuesCompat(alpha: 0.9),
             size: 20,
           ),
         ),
@@ -1195,7 +1197,7 @@ class _PlayfulCanvasBackground extends StatelessWidget {
           right: 30,
           child: Icon(
             Icons.star_rounded,
-            color: Colors.white.withValues(alpha: 0.85),
+            color: Colors.white.withValuesCompat(alpha: 0.85),
             size: 16,
           ),
         ),

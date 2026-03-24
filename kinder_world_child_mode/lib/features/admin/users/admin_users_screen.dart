@@ -12,6 +12,7 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -197,7 +198,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Page header ─────────────────────────────────────────
+              // â”€â”€ Page header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AdminPageHeader(
                 title: l10n.adminUsersTitle,
                 subtitle: l10n.adminUsersSubtitle,
@@ -211,7 +212,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ── Filters ─────────────────────────────────────────────
+              // â”€â”€ Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               AdminFilterBar(
                 children: [
                   SizedBox(
@@ -275,7 +276,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ── Content ─────────────────────────────────────────────
+              // â”€â”€ Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               if (_loading)
                 const AdminLoadingState()
               else if (_error != null)
@@ -291,8 +292,8 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(
-                          color:
-                              colorScheme.outlineVariant.withValues(alpha: 0.5),
+                          color: colorScheme.outlineVariant
+                              .withValuesCompat(alpha: 0.5),
                         ),
                       ),
                       child: Padding(
@@ -334,7 +335,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
                                           color: colorScheme.onSurface
-                                              .withValues(alpha: 0.6),
+                                              .withValuesCompat(alpha: 0.6),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -467,7 +468,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                               Icon(Icons.child_care,
                                   size: 14,
                                   color: colorScheme.onSurface
-                                      .withValues(alpha: 0.5)),
+                                      .withValuesCompat(alpha: 0.5)),
                               const SizedBox(width: 4),
                               Text('${user.childCount}'),
                             ],

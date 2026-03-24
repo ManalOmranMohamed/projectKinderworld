@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
-// ─────────────────────────── Sidebar item model ──────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Sidebar item model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -25,7 +26,7 @@ class _SidebarItem {
   });
 }
 
-// ─────────────────────────── Sidebar widget ──────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Sidebar widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class AdminSidebar extends ConsumerWidget {
   const AdminSidebar({
@@ -109,174 +110,176 @@ class AdminSidebar extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
 
     final content = SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
+      child: Column(
+        children: [
+          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.admin_panel_settings_outlined,
+                        color: colorScheme.onPrimary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.adminDashboard,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          if (admin?.email != null)
+                            Text(
+                              admin!.email,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onPrimaryContainer
+                                    .withValuesCompat(alpha: 0.7),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (onClose != null)
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: onClose,
+                        color: colorScheme.onPrimaryContainer,
+                        iconSize: 20,
+                      ),
+                  ],
+                ),
+                if (admin?.roles.isNotEmpty == true) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    children: admin!.roles.map((role) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary,
+                          color:
+                              colorScheme.primary.withValuesCompat(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.admin_panel_settings_outlined,
-                          color: colorScheme.onPrimary,
-                          size: 24,
+                        child: Text(
+                          role,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.adminDashboard,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            if (admin?.email != null)
-                              Text(
-                                admin!.email,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onPrimaryContainer
-                                      .withValues(alpha: 0.7),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (onClose != null)
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: onClose,
-                          color: colorScheme.onPrimaryContainer,
-                          iconSize: 20,
-                        ),
-                    ],
+                      );
+                    }).toList(),
                   ),
-                  if (admin?.roles.isNotEmpty == true) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      children: admin!.roles.map((role) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            role,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
+          ),
 
-            // ── Nav items ───────────────────────────────────────────────
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                children: _items.map((item) {
-                  // Permission check — hide items the admin can't access
-                  if (item.requiredPermission != null) {
-                    final hasPermission =
-                        admin?.hasPermission(item.requiredPermission!) ?? false;
-                    if (!hasPermission) return const SizedBox.shrink();
-                  }
+          // â”€â”€ Nav items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: _items.map((item) {
+                // Permission check â€” hide items the admin can't access
+                if (item.requiredPermission != null) {
+                  final hasPermission =
+                      admin?.hasPermission(item.requiredPermission!) ?? false;
+                  if (!hasPermission) return const SizedBox.shrink();
+                }
 
-                  final isSelected = selectedRoute == item.route ||
-                      selectedRoute.startsWith('${item.route}/');
+                final isSelected = selectedRoute == item.route ||
+                    selectedRoute.startsWith('${item.route}/');
 
-                  return ListTile(
-                    leading: isSelected
-                        ? Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              item.icon,
-                              size: 20,
-                              color: colorScheme.primary,
-                            ),
-                          )
-                        : Icon(
+                return ListTile(
+                  leading: isSelected
+                      ? Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary
+                                .withValuesCompat(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
                             item.icon,
                             size: 20,
-                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: colorScheme.primary,
                           ),
-                    title: Text(
-                      item.label(l10n),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.onSurface,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
+                        )
+                      : Icon(
+                          item.icon,
+                          size: 20,
+                          color: colorScheme.onSurface
+                              .withValuesCompat(alpha: 0.6),
+                        ),
+                  title: Text(
+                    item.label(l10n),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
-                    selected: isSelected,
-                    selectedTileColor:
-                        colorScheme.primaryContainer.withValues(alpha: 0.6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 2),
-                    onTap: () {
-                      onClose?.call();
-                      if (!isSelected) context.go(item.route);
-                    },
-                  );
-                }).toList(),
-              ),
+                  ),
+                  selected: isSelected,
+                  selectedTileColor:
+                      colorScheme.primaryContainer.withValuesCompat(alpha: 0.6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  onTap: () {
+                    onClose?.call();
+                    if (!isSelected) context.go(item.route);
+                  },
+                );
+              }).toList(),
             ),
+          ),
 
-            // ── Logout ──────────────────────────────────────────────────
-            const Divider(height: 1),
-            ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: colorScheme.error,
-              ),
-              title: Text(
-                l10n.adminLogout,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              onTap: () => _confirmLogout(context, ref, l10n),
+          // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          const Divider(height: 1),
+          ListTile(
+            leading: Icon(
+              Icons.logout,
+              color: colorScheme.error,
             ),
-            const SizedBox(height: 8),
-          ],
-        ),
+            title: Text(
+              l10n.adminLogout,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            onTap: () => _confirmLogout(context, ref, l10n),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
 
     if (embedded) {
@@ -286,7 +289,7 @@ class AdminSidebar extends ConsumerWidget {
           color: colorScheme.surface,
           border: Border(
             right: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.5),
             ),
           ),
         ),

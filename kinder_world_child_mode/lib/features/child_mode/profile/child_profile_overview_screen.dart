@@ -10,6 +10,7 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/router.dart' show Routes;
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildProfileOverviewScreen extends ConsumerWidget {
   const ChildProfileOverviewScreen({super.key});
@@ -105,8 +106,9 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () =>
-              ref.read(childSessionControllerProvider.notifier).refreshProfile(),
+          onRefresh: () => ref
+              .read(childSessionControllerProvider.notifier)
+              .refreshProfile(),
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
@@ -118,13 +120,13 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      colors.primary.withValues(alpha: 0.16),
-                      childTheme.buddyEnd.withValues(alpha: 0.12),
+                      colors.primary.withValuesCompat(alpha: 0.16),
+                      childTheme.buddyEnd.withValuesCompat(alpha: 0.12),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.10),
+                    color: colors.primary.withValuesCompat(alpha: 0.10),
                   ),
                 ),
                 child: Column(
@@ -147,7 +149,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                               gradient: LinearGradient(
                                 colors: [
                                   colors.primary,
-                                  colors.primary.withValues(alpha: 0.5),
+                                  colors.primary.withValuesCompat(alpha: 0.5),
                                 ],
                               ),
                             ),
@@ -162,8 +164,8 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                                   avatarId: child.avatar,
                                   avatarPath: child.avatarPath,
                                   radius: 56,
-                                  backgroundColor:
-                                      colors.primary.withValues(alpha: 0.15),
+                                  backgroundColor: colors.primary
+                                      .withValuesCompat(alpha: 0.15),
                                 ),
                               ),
                             ),
@@ -306,7 +308,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.08),
+                      color: colors.shadow.withValuesCompat(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -341,7 +343,8 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colors.primary.withValues(alpha: 0.1),
+                                  color: colors.primary
+                                      .withValuesCompat(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -366,7 +369,7 @@ class ChildProfileOverviewScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.08),
+                      color: colors.shadow.withValuesCompat(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -498,7 +501,7 @@ class _ProfileStatCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.06),
+              color: colors.shadow.withValuesCompat(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -511,7 +514,7 @@ class _ProfileStatCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.14),
+                color: color.withValuesCompat(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: color),

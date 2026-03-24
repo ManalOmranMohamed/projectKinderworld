@@ -140,7 +140,8 @@ class AiBuddySession {
       providerMode: json['provider_mode'] as String? ?? 'internal_fallback',
       providerStatus: json['provider_status'] as String? ?? 'fallback',
       unavailableReason: json['unavailable_reason'] as String?,
-      visibilityMode: json['visibility_mode'] as String? ?? 'summary_and_metrics',
+      visibilityMode:
+          json['visibility_mode'] as String? ?? 'summary_and_metrics',
       parentSummary: json['parent_summary'] as String?,
       startedAt: _readDateTime(json['started_at']),
       lastMessageAt: _readDateTime(json['last_message_at']),
@@ -296,7 +297,8 @@ class AiBuddyVisibilitySummary {
     return AiBuddyVisibilitySummary(
       childId: json['child_id'] as int? ?? 0,
       childName: json['child_name'] as String? ?? '',
-      visibilityMode: json['visibility_mode'] as String? ?? 'summary_and_metrics',
+      visibilityMode:
+          json['visibility_mode'] as String? ?? 'summary_and_metrics',
       transcriptAccess: json['transcript_access'] as bool? ?? false,
       parentSummary: json['parent_summary'] as String? ?? '',
       provider: AiBuddyProviderStatus.fromJson(
@@ -315,7 +317,8 @@ class AiBuddyVisibilitySummary {
           : null,
       recentFlags: (json['recent_flags'] as List<dynamic>? ?? const [])
           .whereType<Map>()
-          .map((item) => AiBuddyVisibilityFlag.fromJson(Map<String, dynamic>.from(item)))
+          .map((item) =>
+              AiBuddyVisibilityFlag.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
     );
   }
@@ -337,11 +340,13 @@ class AiBuddyConversation {
   factory AiBuddyConversation.fromJson(Map<String, dynamic> json) {
     return AiBuddyConversation(
       session: json['session'] is Map
-          ? AiBuddySession.fromJson(Map<String, dynamic>.from(json['session'] as Map))
+          ? AiBuddySession.fromJson(
+              Map<String, dynamic>.from(json['session'] as Map))
           : null,
       messages: (json['messages'] as List<dynamic>? ?? const [])
           .whereType<Map>()
-          .map((item) => AiBuddyMessage.fromJson(Map<String, dynamic>.from(item)))
+          .map((item) =>
+              AiBuddyMessage.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
       provider: AiBuddyProviderStatus.fromJson(
         Map<String, dynamic>.from(json['provider'] as Map? ?? const {}),
@@ -372,7 +377,8 @@ class AiBuddySendResult {
         Map<String, dynamic>.from(json['user_message'] as Map? ?? const {}),
       ),
       assistantMessage: AiBuddyMessage.fromJson(
-        Map<String, dynamic>.from(json['assistant_message'] as Map? ?? const {}),
+        Map<String, dynamic>.from(
+            json['assistant_message'] as Map? ?? const {}),
       ),
       provider: AiBuddyProviderStatus.fromJson(
         Map<String, dynamic>.from(json['provider'] as Map? ?? const {}),

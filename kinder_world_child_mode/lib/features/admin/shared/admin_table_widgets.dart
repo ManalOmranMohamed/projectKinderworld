@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AdminDataTableCard extends StatelessWidget {
   const AdminDataTableCard({
@@ -9,13 +10,11 @@ class AdminDataTableCard extends StatelessWidget {
     this.mobileBreakpoint = 820,
     this.minTableWidth = 880,
   });
-
   final List<DataColumn> columns;
   final List<DataRow> rows;
   final WidgetBuilder? mobileBuilder;
   final double mobileBreakpoint;
   final double minTableWidth;
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -26,13 +25,12 @@ class AdminDataTableCard extends StatelessWidget {
         if (useMobile) {
           return mobileBuilder!(context);
         }
-
         return Card(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+                color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.6)),
           ),
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
@@ -43,8 +41,11 @@ class AdminDataTableCard extends StatelessWidget {
                 headingRowColor: WidgetStateProperty.all(
                   colorScheme.surfaceContainerLow,
                 ),
-                headingTextStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                headingTextStyle: Theme.of(context)
+                    .textTheme
+                    .labelMedium
+                    ?.copyWith(
+                      color: colorScheme.onSurface.withValuesCompat(alpha: 0.7),
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.3,
                     ),
@@ -75,7 +76,6 @@ class AdminPaginationBar extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
   });
-
   final String summary;
   final bool hasPrevious;
   final bool hasNext;
@@ -83,7 +83,6 @@ class AdminPaginationBar extends StatelessWidget {
   final String nextLabel;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -121,14 +120,13 @@ class AdminPaginationBar extends StatelessWidget {
             ),
           ],
         );
-
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                color: colorScheme.outlineVariant.withValuesCompat(alpha: 0.5)),
           ),
           child: compact
               ? Column(
@@ -139,15 +137,16 @@ class AdminPaginationBar extends StatelessWidget {
                         Icon(
                           Icons.table_rows_outlined,
                           size: 16,
-                          color: colorScheme.onSurface.withValues(alpha: 0.45),
+                          color: colorScheme.onSurface
+                              .withValuesCompat(alpha: 0.45),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             summary,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color:
-                                  colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: colorScheme.onSurface
+                                  .withValuesCompat(alpha: 0.6),
                             ),
                           ),
                         ),
@@ -162,7 +161,8 @@ class AdminPaginationBar extends StatelessWidget {
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: hasPrevious ? onPrevious : null,
-                              icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                              icon: const Icon(Icons.chevron_left_rounded,
+                                  size: 18),
                               label: Text(previousLabel),
                             ),
                           ),
@@ -171,7 +171,8 @@ class AdminPaginationBar extends StatelessWidget {
                             width: double.infinity,
                             child: FilledButton.icon(
                               onPressed: hasNext ? onNext : null,
-                              icon: const Icon(Icons.chevron_right_rounded, size: 18),
+                              icon: const Icon(Icons.chevron_right_rounded,
+                                  size: 18),
                               label: Text(nextLabel),
                               iconAlignment: IconAlignment.end,
                             ),
@@ -187,14 +188,16 @@ class AdminPaginationBar extends StatelessWidget {
                     Icon(
                       Icons.table_rows_outlined,
                       size: 16,
-                      color: colorScheme.onSurface.withValues(alpha: 0.45),
+                      color:
+                          colorScheme.onSurface.withValuesCompat(alpha: 0.45),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         summary,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: colorScheme.onSurface
+                              .withValuesCompat(alpha: 0.6),
                         ),
                       ),
                     ),

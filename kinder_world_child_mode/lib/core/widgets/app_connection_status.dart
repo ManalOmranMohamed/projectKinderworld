@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/sync_status_provider.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 enum AppConnectionStatusVariant { child, parent, admin }
 
@@ -30,11 +31,11 @@ class AppConnectionStatusBanner extends ConsumerWidget {
     final isOffline = status.isOffline;
     final accent = _accentColor(context);
     final background = isOffline
-        ? colors.errorContainer.withValues(alpha: 0.88)
-        : accent.withValues(alpha: 0.14);
+        ? colors.errorContainer.withValuesCompat(alpha: 0.88)
+        : accent.withValuesCompat(alpha: 0.14);
     final foreground = isOffline ? colors.onErrorContainer : colors.onSurface;
     final subtitleColor = isOffline
-        ? colors.onErrorContainer.withValues(alpha: 0.86)
+        ? colors.onErrorContainer.withValuesCompat(alpha: 0.86)
         : colors.onSurfaceVariant;
 
     return Padding(
@@ -46,8 +47,8 @@ class AppConnectionStatusBanner extends ConsumerWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isOffline
-                ? colors.error.withValues(alpha: 0.18)
-                : accent.withValues(alpha: 0.18),
+                ? colors.error.withValuesCompat(alpha: 0.18)
+                : accent.withValuesCompat(alpha: 0.18),
           ),
         ),
         child: Row(
@@ -57,8 +58,8 @@ class AppConnectionStatusBanner extends ConsumerWidget {
               height: 36,
               decoration: BoxDecoration(
                 color: isOffline
-                    ? colors.onErrorContainer.withValues(alpha: 0.12)
-                    : accent.withValues(alpha: 0.16),
+                    ? colors.onErrorContainer.withValuesCompat(alpha: 0.12)
+                    : accent.withValuesCompat(alpha: 0.16),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(

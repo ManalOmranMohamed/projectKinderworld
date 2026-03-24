@@ -8,6 +8,7 @@ import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/utils/password_policy.dart';
 import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentRegisterScreen extends ConsumerStatefulWidget {
   const ParentRegisterScreen({super.key});
@@ -181,7 +182,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
           children: [
-            // ── Branded header ──
+            // â”€â”€ Branded header â”€â”€
             FadeTransition(
               opacity: _headerFade,
               child: SlideTransition(
@@ -190,7 +191,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
               ),
             ),
 
-            // ── Form area ──
+            // â”€â”€ Form area â”€â”€
             Expanded(
               child: FadeTransition(
                 opacity: _formFade,
@@ -223,7 +224,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                           ),
                           const SizedBox(height: 24),
 
-                          // ── Section: Personal Info ──
+                          // â”€â”€ Section: Personal Info â”€â”€
                           _SectionLabel(
                             icon: Icons.person_outline_rounded,
                             label: l10n.personalInformation,
@@ -270,7 +271,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                           ),
                           const SizedBox(height: 24),
 
-                          // ── Section: Security ──
+                          // â”€â”€ Section: Security â”€â”€
                           _SectionLabel(
                             icon: Icons.lock_outline_rounded,
                             label: l10n.securitySection,
@@ -341,7 +342,7 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
                           ),
                           const SizedBox(height: 24),
 
-                          // ── Terms checkbox ──
+                          // â”€â”€ Terms checkbox â”€â”€
                           _TermsCheckbox(
                             value: _agreeToTerms,
                             onChanged: (val) =>
@@ -416,9 +417,9 @@ class _ParentRegisterScreenState extends ConsumerState<ParentRegisterScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // _RegisterHeader
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RegisterHeader extends StatelessWidget {
   final double screenHeight;
   const _RegisterHeader({required this.screenHeight});
@@ -452,7 +453,7 @@ class _RegisterHeader extends StatelessWidget {
               height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
+                color: Colors.white.withValuesCompat(alpha: 0.07),
               ),
             ),
           ),
@@ -469,10 +470,10 @@ class _RegisterHeader extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: Colors.white.withValuesCompat(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: Colors.white.withValuesCompat(alpha: 0.25),
                         ),
                       ),
                       child: const Icon(
@@ -489,10 +490,10 @@ class _RegisterHeader extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
+                          color: Colors.white.withValuesCompat(alpha: 0.18),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.30),
+                            color: Colors.white.withValuesCompat(alpha: 0.30),
                           ),
                         ),
                         child: const Icon(
@@ -518,7 +519,7 @@ class _RegisterHeader extends StatelessWidget {
                             AppLocalizations.of(context)!.parentAccount,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.75),
+                              color: Colors.white.withValuesCompat(alpha: 0.75),
                             ),
                           ),
                         ],
@@ -536,9 +537,9 @@ class _RegisterHeader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _SectionLabel — form section header
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// _SectionLabel â€” form section header
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SectionLabel extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -554,7 +555,7 @@ class _SectionLabel extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.10),
+            color: colors.primary.withValuesCompat(alpha: 0.10),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 15, color: colors.primary),
@@ -581,9 +582,9 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // _TermsCheckbox
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _TermsCheckbox extends StatelessWidget {
   final bool value;
   final ValueChanged<bool?> onChanged;
@@ -599,12 +600,12 @@ class _TermsCheckbox extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: value
-              ? colors.primary.withValues(alpha: 0.05)
+              ? colors.primary.withValuesCompat(alpha: 0.05)
               : colors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: value
-                ? colors.primary.withValues(alpha: 0.3)
+                ? colors.primary.withValuesCompat(alpha: 0.3)
                 : colors.outlineVariant,
             width: 1.2,
           ),

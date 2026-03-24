@@ -68,7 +68,8 @@ class ParentNotificationService {
         .map((entry) => entry.remoteId!)
         .toList();
     if (remoteIds.isNotEmpty) {
-      await _networkService.post<Map<String, dynamic>>('/notifications/mark-all-read');
+      await _networkService
+          .post<Map<String, dynamic>>('/notifications/mark-all-read');
     }
     final derivedIds = entries
         .where((entry) => !entry.isRemote)
@@ -268,7 +269,8 @@ class ParentNotificationService {
   }
 }
 
-final parentNotificationServiceProvider = Provider<ParentNotificationService>((ref) {
+final parentNotificationServiceProvider =
+    Provider<ParentNotificationService>((ref) {
   final networkService = ref.watch(networkServiceProvider);
   final childRepository = ref.watch(childRepositoryProvider);
   final progressRepository = ref.watch(progressRepositoryProvider);

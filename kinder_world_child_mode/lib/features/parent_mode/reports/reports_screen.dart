@@ -23,6 +23,7 @@ import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({
@@ -366,7 +367,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              '${l10n.childAge} ${selectedChild.age} • ${l10n.level} ${selectedChild.level}',
+                                              '${l10n.childAge} ${selectedChild.age} â€¢ ${l10n.level} ${selectedChild.level}',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: colors.onSurfaceVariant,
@@ -461,28 +462,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               Row(
                 children: [
                   _GamStat(
-                    emoji: '⭐',
+                    emoji: 'â­گ',
                     value: '${state.totalXP}',
                     label: l10n.gamificationTotalXp,
                     color: const Color(0xFFFFB300),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: '🏆',
+                    emoji: 'ًںڈ†',
                     value: '${state.level}',
                     label: l10n.gamificationLevelLabel,
                     color: const Color(0xFF7C4DFF),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: '🔥',
+                    emoji: 'ًں”¥',
                     value: '${state.streak}',
                     label: l10n.gamificationStreakLabel,
                     color: const Color(0xFFFF6D00),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: '✅',
+                    emoji: 'âœ…',
                     value: '${state.activitiesCompleted}',
                     label: l10n.gamificationActivitiesCompleted,
                     color: const Color(0xFF00C853),
@@ -507,10 +508,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: b.color.withValues(alpha: 0.12),
+                        color: b.color.withValuesCompat(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: b.color.withValues(alpha: 0.4),
+                          color: b.color.withValuesCompat(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -563,7 +564,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFB300)
-                                  .withValues(alpha: 0.15),
+                                  .withValuesCompat(alpha: 0.15),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -730,7 +731,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }) {
     final colors = Theme.of(context).colorScheme;
     return ParentCard(
-      backgroundColor: accent.withValues(alpha: 0.08),
+      backgroundColor: accent.withValuesCompat(alpha: 0.08),
       child: Row(
         children: [
           Icon(icon, color: accent),
@@ -794,7 +795,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       ),
       ParentStatCard(
         value:
-            report.averageScore > 0 ? '${report.averageScore.round()}%' : '—',
+            report.averageScore > 0 ? '${report.averageScore.round()}%' : 'â€”',
         label: l10n.avgScoreLabel,
         icon: Icons.star_rounded,
         color: parent.reward,
@@ -950,7 +951,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: parent.reward.withValues(alpha: 0.12),
+                      color: parent.reward.withValuesCompat(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -969,7 +970,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${_contentTypeLabel(l10n, session.contentType)} • ${session.durationMinutes} min • ${session.score}%',
+                          '${_contentTypeLabel(l10n, session.contentType)} â€¢ ${session.durationMinutes} min â€¢ ${session.score}%',
                           style: TextStyle(
                             fontSize: 12,
                             color:
@@ -1009,10 +1010,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colors.tertiaryContainer.withValues(alpha: 0.5),
+                color: colors.tertiaryContainer.withValuesCompat(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: colors.tertiary.withValues(alpha: 0.3),
+                  color: colors.tertiary.withValuesCompat(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -1118,7 +1119,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 ? l10n.notAvailable
                 : moodEntries.take(2).map((entry) {
                     return '${_moodLabel(l10n, entry.key)} (${entry.value})';
-                  }).join(' • '),
+                  }).join(' â€¢ '),
           ),
           const SizedBox(height: 16),
           ParentSectionHeader(title: l10n.recentAchievements),
@@ -1139,7 +1140,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '${_achievementTitle(l10n, achievement.titleKey)} • ${achievement.detail}',
+                      '${_achievementTitle(l10n, achievement.titleKey)} â€¢ ${achievement.detail}',
                     ),
                   ),
                 ],
@@ -1152,7 +1153,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   String _formatTimestamp(DateTime? value) {
-    if (value == null) return '—';
+    if (value == null) return 'â€”';
     final local = value.toLocal();
     final month = local.month.toString().padLeft(2, '0');
     final day = local.day.toString().padLeft(2, '0');
@@ -1235,9 +1236,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Gamification stat tile used in parent reports snapshot
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _GamStat extends StatelessWidget {
   const _GamStat({
@@ -1258,9 +1259,9 @@ class _GamStat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
+          color: color.withValuesCompat(alpha: 0.10),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
+          border: Border.all(color: color.withValuesCompat(alpha: 0.25)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

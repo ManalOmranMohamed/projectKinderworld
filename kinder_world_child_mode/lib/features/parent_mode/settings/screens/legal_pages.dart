@@ -6,6 +6,7 @@ import 'package:kinder_world/core/legal/legal_default_documents.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/legal_content_payload.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentTermsScreen extends StatelessWidget {
   const ParentTermsScreen({super.key});
@@ -174,8 +175,8 @@ class _ParentLegalPageState extends ConsumerState<_ParentLegalPage> {
                                   margin: const EdgeInsets.only(bottom: 14),
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color:
-                                        config.accent.withValues(alpha: 0.12),
+                                    color: config.accent
+                                        .withValuesCompat(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Text(
@@ -350,7 +351,7 @@ class _HeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.2),
+            color: accent.withValuesCompat(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -362,7 +363,7 @@ class _HeroCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: colors.surface.withValues(alpha: 0.82),
+              color: colors.surface.withValuesCompat(alpha: 0.82),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: accent, size: 28),
@@ -420,7 +421,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: colors.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.05),
+            color: colors.shadow.withValuesCompat(alpha: 0.05),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -435,7 +436,7 @@ class _SectionCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.15),
+                  color: accent.withValuesCompat(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: accent, size: 18),
@@ -476,7 +477,7 @@ class _EmptyState extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.12),
+            color: accent.withValuesCompat(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.description_outlined, color: accent, size: 32),

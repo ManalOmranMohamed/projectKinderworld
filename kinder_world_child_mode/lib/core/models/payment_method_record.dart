@@ -29,7 +29,8 @@ class PaymentMethodRecord {
   final DateTime? createdAt;
   final Map<String, dynamic> metadata;
 
-  bool get isProviderBacked => provider != 'internal' && providerMethodId != null;
+  bool get isProviderBacked =>
+      provider != 'internal' && providerMethodId != null;
 
   String get displayTitle {
     if ((brand ?? '').isNotEmpty && (last4 ?? '').isNotEmpty) {
@@ -66,7 +67,8 @@ class PaymentMethodRecord {
       expYear: _readInt(json['exp_year']),
       isDefault: _readBool(json['is_default']) ?? false,
       createdAt: _readDateTime(json['created_at']),
-      metadata: Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
+      metadata:
+          Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
     );
   }
 }

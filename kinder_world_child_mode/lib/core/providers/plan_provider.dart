@@ -31,18 +31,22 @@ class SubscriptionLifecycle {
 
   factory SubscriptionLifecycle.fromJson(Map<String, dynamic> json) {
     return SubscriptionLifecycle(
-      currentPlanId: (json['current_plan_id'] ?? json['plan'] ?? 'FREE').toString(),
+      currentPlanId:
+          (json['current_plan_id'] ?? json['plan'] ?? 'FREE').toString(),
       selectedPlanId: json['selected_plan_id']?.toString(),
       status: (json['status'] ?? 'free').toString(),
       startedAt: _readDateTime(json['started_at']),
       expiresAt: _readDateTime(json['expires_at']),
       cancelAt: _readDateTime(json['cancel_at']),
       willRenew: _readBool(json['will_renew']) ?? false,
-      lastPaymentStatus: (json['last_payment_status'] ?? 'not_applicable').toString(),
+      lastPaymentStatus:
+          (json['last_payment_status'] ?? 'not_applicable').toString(),
       provider: (json['provider'] ?? 'internal').toString(),
       isActive: _readBool(json['is_active']) ?? false,
       hasPaidAccess: _readBool(json['has_paid_access']) ??
-          subscriptionPlanTierFromBackend(json['current_plan_id']?.toString()) != PlanTier.free,
+          subscriptionPlanTierFromBackend(
+                  json['current_plan_id']?.toString()) !=
+              PlanTier.free,
     );
   }
 }
@@ -102,7 +106,8 @@ class SubscriptionEventRecord {
       status: (json['status'] ?? '').toString(),
       paymentStatus: json['payment_status']?.toString(),
       source: (json['source'] ?? 'internal').toString(),
-      details: Map<String, dynamic>.from(json['details_json'] as Map? ?? const {}),
+      details:
+          Map<String, dynamic>.from(json['details_json'] as Map? ?? const {}),
       occurredAt: _readDateTime(json['occurred_at']),
     );
   }
@@ -138,7 +143,8 @@ class BillingTransactionRecord {
       currency: (json['currency'] ?? 'USD').toString(),
       status: (json['status'] ?? '').toString(),
       effectiveAt: _readDateTime(json['effective_at']),
-      metadata: Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
+      metadata:
+          Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
     );
   }
 }
@@ -185,7 +191,8 @@ class PaymentAttemptRecord {
       failureMessage: json['failure_message']?.toString(),
       requestedAt: _readDateTime(json['requested_at']),
       completedAt: _readDateTime(json['completed_at']),
-      metadata: Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
+      metadata:
+          Map<String, dynamic>.from(json['metadata_json'] as Map? ?? const {}),
     );
   }
 }
@@ -264,7 +271,8 @@ class SubscriptionSnapshot {
   factory SubscriptionSnapshot.fromJson(Map<String, dynamic> json) {
     return SubscriptionSnapshot(
       planId: (json['plan'] ?? json['current_plan_id'] ?? 'FREE').toString(),
-      currentPlanId: (json['current_plan_id'] ?? json['plan'] ?? 'FREE').toString(),
+      currentPlanId:
+          (json['current_plan_id'] ?? json['plan'] ?? 'FREE').toString(),
       limits: Map<String, dynamic>.from(json['limits'] as Map? ?? const {}),
       features: Map<String, dynamic>.from(json['features'] as Map? ?? const {}),
       lifecycle: SubscriptionLifecycle.fromJson(
@@ -317,8 +325,7 @@ PlanInfo planInfoFromSubscriptionSnapshot({
         _readBool(features['basic_reports']) ?? defaults.hasBasicReports,
     hasAdvancedReports:
         _readBool(features['advanced_reports']) ?? defaults.hasAdvancedReports,
-    hasAiInsights:
-        _readBool(features['ai_insights']) ?? defaults.hasAiInsights,
+    hasAiInsights: _readBool(features['ai_insights']) ?? defaults.hasAiInsights,
     hasOfflineDownloads: _readBool(features['offline_downloads']) ??
         defaults.hasOfflineDownloads,
     hasSmartControls: tier != PlanTier.free,

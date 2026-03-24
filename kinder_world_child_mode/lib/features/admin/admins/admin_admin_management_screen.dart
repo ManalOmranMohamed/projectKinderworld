@@ -9,6 +9,7 @@ import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -210,7 +211,7 @@ class _AdminAdminManagementScreenState
     final nameController = TextEditingController();
     final passwordController = TextEditingController();
     final selectedRoleIds = <int>{};
-      final confirmed = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
             builder: (context, setDialogState) => AlertDialog(
@@ -847,13 +848,13 @@ class _AdminAdminManagementScreenState
                     ? Theme.of(context)
                         .colorScheme
                         .primaryContainer
-                        .withValues(alpha: 0.35)
+                        .withValuesCompat(alpha: 0.35)
                     : null,
                 child: ListTile(
                   onTap: () => _selectAdmin(adminUser.id),
                   title: Text(adminUser.email),
                   subtitle: Text(
-                    '${adminUser.name.isEmpty ? '—' : adminUser.name}\n${adminUser.roles.join(', ')}',
+                    '${adminUser.name.isEmpty ? 'â€”' : adminUser.name}\n${adminUser.roles.join(', ')}',
                   ),
                   isThreeLine: true,
                   trailing: _StatusChip(
@@ -969,7 +970,7 @@ class _AdminAdminManagementScreenState
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withValues(alpha: 0.6),
+                        .withValuesCompat(alpha: 0.6),
                   ),
             ),
             const SizedBox(height: 16),
@@ -1097,13 +1098,13 @@ class _AdminAdminManagementScreenState
                     ? Theme.of(context)
                         .colorScheme
                         .primaryContainer
-                        .withValues(alpha: 0.35)
+                        .withValuesCompat(alpha: 0.35)
                     : null,
                 child: ListTile(
                   onTap: () => _selectRole(role.id),
                   title: Text(role.name),
                   subtitle: Text(
-                    '${role.description.isEmpty ? '—' : role.description}\n${l10n.adminRoleStats(role.permissionCount, role.adminCount)}',
+                    '${role.description.isEmpty ? 'â€”' : role.description}\n${l10n.adminRoleStats(role.permissionCount, role.adminCount)}',
                   ),
                   isThreeLine: true,
                 ),
@@ -1185,12 +1186,12 @@ class _AdminAdminManagementScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                role.description.isEmpty ? '—' : role.description,
+                role.description.isEmpty ? 'â€”' : role.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withValues(alpha: 0.7),
+                          .withValuesCompat(alpha: 0.7),
                     ),
               ),
               const SizedBox(height: 16),

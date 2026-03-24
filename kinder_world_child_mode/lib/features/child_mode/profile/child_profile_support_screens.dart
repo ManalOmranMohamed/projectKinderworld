@@ -209,9 +209,9 @@ class ChildLevelsScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValuesCompat(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: Colors.white.withValuesCompat(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -219,7 +219,7 @@ class ChildLevelsScreen extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
+                color: color.withValuesCompat(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 18),
@@ -232,7 +232,7 @@ class ChildLevelsScreen extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: Colors.white.withValuesCompat(alpha: 0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -280,7 +280,7 @@ class _LevelBadge extends StatelessWidget {
     final baseColor = node.isUnlocked
         ? (node.isCurrent ? const Color(0xFFD53DF2) : const Color(0xFFFFC34A))
         : const Color(0xFF8A8AA8);
-    final glowColor = baseColor.withValues(alpha: 0.45);
+    final glowColor = baseColor.withValuesCompat(alpha: 0.45);
 
     return GestureDetector(
       onTap: onTap,
@@ -294,7 +294,7 @@ class _LevelBadge extends StatelessWidget {
                 active ? Icons.star : Icons.star_border,
                 color: active
                     ? const Color(0xFFFFD36A)
-                    : Colors.white.withValues(alpha: 0.45),
+                    : Colors.white.withValuesCompat(alpha: 0.45),
                 size: 16,
               );
             }),
@@ -308,7 +308,7 @@ class _LevelBadge extends StatelessWidget {
               gradient: LinearGradient(
                 colors: [
                   baseColor,
-                  baseColor.withValues(alpha: 0.75),
+                  baseColor.withValuesCompat(alpha: 0.75),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -321,7 +321,7 @@ class _LevelBadge extends StatelessWidget {
                 ),
               ],
               border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.65), width: 3),
+                  color: Colors.white.withValuesCompat(alpha: 0.65), width: 3),
             ),
             child: Center(
               child: Text(
@@ -352,7 +352,7 @@ class _PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4)
+      ..color = Colors.white.withValuesCompat(alpha: 0.4)
       ..strokeWidth = 20
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -658,8 +658,10 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color:
-                  Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+              color: Theme.of(context)
+                  .colorScheme
+                  .shadow
+                  .withValuesCompat(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4)),
         ],
@@ -682,7 +684,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-            color: (iconColor ?? colors.primary).withValues(alpha: 0.1),
+            color: (iconColor ?? colors.primary).withValuesCompat(alpha: 0.1),
             borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: iconColor ?? colors.primary, size: 24),
       ),
@@ -722,7 +724,7 @@ class _ChildSettingsScreenState extends ConsumerState<ChildSettingsScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.1),
+            color: colors.primary.withValuesCompat(alpha: 0.1),
             borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: colors.primary, size: 24),
       ),
@@ -796,7 +798,7 @@ class SettingsLanguageScreen extends ConsumerWidget {
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? colors.primary.withValues(alpha: 0.1)
+                      ? colors.primary.withValuesCompat(alpha: 0.1)
                       : Colors.transparent,
                 ),
                 child: Row(
@@ -992,7 +994,7 @@ class _SettingsAvatarSelectionScreenState
                   color: Theme.of(context)
                       .colorScheme
                       .shadow
-                      .withValues(alpha: 0.08),
+                      .withValuesCompat(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -1097,7 +1099,7 @@ class _SettingsAvatarSelectionScreenState
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: option.color.withValues(alpha: 0.3),
+                        color: option.color.withValuesCompat(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1153,7 +1155,7 @@ class _SettingsAvatarSelectionScreenState
                               color: Theme.of(context)
                                   .colorScheme
                                   .primary
-                                  .withValues(alpha: 0.10),
+                                  .withValuesCompat(alpha: 0.10),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Icon(
@@ -1408,7 +1410,7 @@ class _SettingsEditProfileScreenState
                     child: Container(
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? optionColor.withValues(alpha: 0.2)
+                            ? optionColor.withValuesCompat(alpha: 0.2)
                             : colors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
@@ -1495,7 +1497,7 @@ class ChildThemeScreen extends ConsumerWidget {
               border: Border.all(color: colors.outlineVariant),
               boxShadow: [
                 BoxShadow(
-                  color: colors.shadow.withValues(alpha: 0.08),
+                  color: colors.shadow.withValuesCompat(alpha: 0.08),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -1575,7 +1577,7 @@ class ChildThemeScreen extends ConsumerWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.shadow.withValues(alpha: 0.12),
+                        color: colors.shadow.withValuesCompat(alpha: 0.12),
                         blurRadius: 22,
                         offset: const Offset(0, 10),
                       ),
@@ -1640,7 +1642,7 @@ class _ChildThemeModeButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
-              ? colors.primary.withValues(alpha: 0.12)
+              ? colors.primary.withValuesCompat(alpha: 0.12)
               : colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(

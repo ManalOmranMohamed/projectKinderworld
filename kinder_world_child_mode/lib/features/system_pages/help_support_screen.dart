@@ -7,6 +7,7 @@ import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/services/content_service.dart';
 import 'package:kinder_world/router.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class HelpSupportScreen extends ConsumerStatefulWidget {
   const HelpSupportScreen({super.key});
@@ -68,10 +69,10 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: colors.primaryContainer.withValues(alpha: 0.65),
+                  color: colors.primaryContainer.withValuesCompat(alpha: 0.65),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: colors.primary.withValues(alpha: 0.22),
+                    color: colors.primary.withValuesCompat(alpha: 0.22),
                   ),
                 ),
                 child: Row(
@@ -165,7 +166,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.05),
+                      color: colors.shadow.withValuesCompat(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -222,7 +223,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.05),
+                      color: colors.shadow.withValuesCompat(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -311,7 +312,7 @@ class _FAQItemState extends State<_FAQItem> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.05),
+            color: colors.shadow.withValuesCompat(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -391,7 +392,7 @@ class _ContactOption extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: colors.primaryContainer.withValues(alpha: 0.6),
+              color: colors.primaryContainer.withValuesCompat(alpha: 0.6),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
@@ -457,7 +458,7 @@ class _ResourceItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colors.secondaryContainer.withValues(alpha: 0.65),
+              color: colors.secondaryContainer.withValuesCompat(alpha: 0.65),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(

@@ -7,6 +7,7 @@ import 'package:kinder_world/core/providers/auth_controller.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/email_validation.dart';
 import 'package:kinder_world/core/widgets/auth_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ParentLoginScreen extends ConsumerStatefulWidget {
   const ParentLoginScreen({super.key});
@@ -136,7 +137,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
         onTap: () => FocusScope.of(context).unfocus(),
         child: Column(
           children: [
-            // ── Branded header ──
+            // â”€â”€ Branded header â”€â”€
             FadeTransition(
               opacity: _headerFade,
               child: SlideTransition(
@@ -145,7 +146,7 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
               ),
             ),
 
-            // ── Form area ──
+            // â”€â”€ Form area â”€â”€
             Expanded(
               child: FadeTransition(
                 opacity: _formFade,
@@ -305,9 +306,9 @@ class _ParentLoginScreenState extends ConsumerState<ParentLoginScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _ParentLoginHeader — branded gradient header
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// _ParentLoginHeader â€” branded gradient header
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ParentLoginHeader extends StatelessWidget {
   final double screenHeight;
   const _ParentLoginHeader({required this.screenHeight});
@@ -343,7 +344,7 @@ class _ParentLoginHeader extends StatelessWidget {
               height: 110,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.07),
+                color: Colors.white.withValuesCompat(alpha: 0.07),
               ),
             ),
           ),
@@ -355,7 +356,7 @@ class _ParentLoginHeader extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+                color: Colors.white.withValuesCompat(alpha: 0.06),
               ),
             ),
           ),
@@ -374,10 +375,10 @@ class _ParentLoginHeader extends StatelessWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: Colors.white.withValuesCompat(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: Colors.white.withValuesCompat(alpha: 0.25),
                         ),
                       ),
                       child: const Icon(
@@ -395,10 +396,10 @@ class _ParentLoginHeader extends StatelessWidget {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
+                          color: Colors.white.withValuesCompat(alpha: 0.18),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.30),
+                            color: Colors.white.withValuesCompat(alpha: 0.30),
                           ),
                         ),
                         child: const Icon(
@@ -424,7 +425,7 @@ class _ParentLoginHeader extends StatelessWidget {
                             AppLocalizations.of(context)!.appTitle,
                             style: text.bodySmall?.copyWith(
                               fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.75),
+                              color: Colors.white.withValuesCompat(alpha: 0.75),
                               fontWeight: FontWeight.w500,
                             ),
                           ),

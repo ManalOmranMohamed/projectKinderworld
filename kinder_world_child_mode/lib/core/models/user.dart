@@ -28,25 +28,29 @@ class User with _$User {
 
   // Check if user is a parent
   bool get isParent => role == 'parent';
-  
+
   // Check if user is a child
   bool get isChild => role == 'child';
-  
+
   // Check if user is an admin
   bool get isAdmin => role == 'admin';
-  
+
   // Check if subscription is active
   bool get hasActiveSubscription {
-    if (subscriptionStatus == 'active') return true;
-    if (trialEndDate != null && trialEndDate!.isAfter(DateTime.now())) return true;
+    if (subscriptionStatus == 'active') {
+      return true;
+    }
+    if (trialEndDate != null && trialEndDate!.isAfter(DateTime.now())) {
+      return true;
+    }
     return false;
   }
-  
+
   // Check if trial is active
   bool get hasActiveTrial {
     return trialEndDate != null && trialEndDate!.isAfter(DateTime.now());
   }
-  
+
   // Get remaining trial days
   int get remainingTrialDays {
     if (trialEndDate == null) return 0;

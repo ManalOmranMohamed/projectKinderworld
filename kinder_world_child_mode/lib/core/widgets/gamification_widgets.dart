@@ -14,16 +14,17 @@ import 'package:kinder_world/core/models/achievement.dart' as gam
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/services/gamification_service.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // XP PROGRESS BAR
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /// Animated XP progress bar showing current level, XP, and progress to next level.
 class XPProgressBar extends StatefulWidget {
   final int xp;
   final int level;
-  final double progress; // 0.0–1.0
+  final double progress; // 0.0â€“1.0
   final int xpToNext;
   final bool compact;
 
@@ -110,7 +111,7 @@ class _XPProgressBarState extends State<XPProgressBar>
               child: LinearProgressIndicator(
                 value: isMaxLevel ? 1.0 : _progressAnim.value,
                 minHeight: 8,
-                backgroundColor: childTheme.xp.withValues(alpha: 0.15),
+                backgroundColor: childTheme.xp.withValuesCompat(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation<Color>(childTheme.xp),
               ),
             ),
@@ -142,15 +143,15 @@ class _XPProgressBarState extends State<XPProgressBar>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            childTheme.skill.withValues(alpha: 0.12),
-            childTheme.xp.withValues(alpha: 0.08),
+            childTheme.skill.withValuesCompat(alpha: 0.12),
+            childTheme.xp.withValuesCompat(alpha: 0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: childTheme.xp.withValues(alpha: 0.25),
+          color: childTheme.xp.withValuesCompat(alpha: 0.25),
           width: 1.5,
         ),
       ),
@@ -182,7 +183,8 @@ class _XPProgressBarState extends State<XPProgressBar>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: childTheme.skill.withValues(alpha: 0.12),
+                            color:
+                                childTheme.skill.withValuesCompat(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
@@ -244,7 +246,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                 Container(
                   height: 12,
                   decoration: BoxDecoration(
-                    color: childTheme.xp.withValues(alpha: 0.12),
+                    color: childTheme.xp.withValuesCompat(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -259,7 +261,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                       borderRadius: BorderRadius.circular(999),
                       boxShadow: [
                         BoxShadow(
-                          color: childTheme.xp.withValues(alpha: 0.4),
+                          color: childTheme.xp.withValuesCompat(alpha: 0.4),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -276,9 +278,9 @@ class _XPProgressBarState extends State<XPProgressBar>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LEVEL CIRCLE — public so it can be reused
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// LEVEL CIRCLE â€” public so it can be reused
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GamLevelCircle extends StatelessWidget {
   final int level;
@@ -301,7 +303,7 @@ class GamLevelCircle extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: childTheme.skill.withValues(alpha: 0.35),
+            color: childTheme.skill.withValuesCompat(alpha: 0.35),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -321,9 +323,9 @@ class GamLevelCircle extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // STREAK COUNTER
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class StreakCounter extends StatefulWidget {
   final int streak;
@@ -377,7 +379,7 @@ class _StreakCounterState extends State<StreakCounter>
               child: child,
             ),
             child: Text(
-              hasStreak ? '🔥' : '💤',
+              hasStreak ? 'ًں”¥' : 'ًں’¤',
               style: const TextStyle(fontSize: 16),
             ),
           ),
@@ -397,9 +399,9 @@ class _StreakCounterState extends State<StreakCounter>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValuesCompat(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValuesCompat(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -411,7 +413,7 @@ class _StreakCounterState extends State<StreakCounter>
               child: child,
             ),
             child: Text(
-              hasStreak ? '🔥' : '💤',
+              hasStreak ? 'ًں”¥' : 'ًں’¤',
               style: const TextStyle(fontSize: 22),
             ),
           ),
@@ -429,11 +431,13 @@ class _StreakCounterState extends State<StreakCounter>
                 ),
               ),
               Text(
-                hasStreak ? l10n.gamificationDayStreak : l10n.gamificationNoStreak,
+                hasStreak
+                    ? l10n.gamificationDayStreak
+                    : l10n.gamificationNoStreak,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: color.withValues(alpha: 0.8),
+                  color: color.withValuesCompat(alpha: 0.8),
                 ),
               ),
             ],
@@ -444,9 +448,9 @@ class _StreakCounterState extends State<StreakCounter>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BADGE CHIP — small earned badge display
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// BADGE CHIP â€” small earned badge display
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class BadgeChip extends StatelessWidget {
   final gam.Badge badge;
@@ -464,7 +468,8 @@ class BadgeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isEarned = badge.isEarned;
-    final color = isEarned ? badge.color : Theme.of(context).colorScheme.outline;
+    final color =
+        isEarned ? badge.color : Theme.of(context).colorScheme.outline;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -474,15 +479,15 @@ class BadgeChip extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: color.withValues(alpha: isEarned ? 0.15 : 0.06),
+            color: color.withValuesCompat(alpha: isEarned ? 0.15 : 0.06),
             border: Border.all(
-              color: color.withValues(alpha: isEarned ? 0.5 : 0.2),
+              color: color.withValuesCompat(alpha: isEarned ? 0.5 : 0.2),
               width: 2,
             ),
             boxShadow: isEarned
                 ? [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.25),
+                      color: color.withValuesCompat(alpha: 0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -491,7 +496,7 @@ class BadgeChip extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              isEarned ? badge.iconEmoji : '🔒',
+              isEarned ? badge.iconEmoji : 'ًں”’',
               style: TextStyle(fontSize: size * 0.42),
             ),
           ),
@@ -518,9 +523,9 @@ class BadgeChip extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BADGES ROW — horizontal scrollable row of badges
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// BADGES ROW â€” horizontal scrollable row of badges
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class BadgesRow extends ConsumerWidget {
   final bool showAll;
@@ -580,9 +585,9 @@ class BadgesRow extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // ACHIEVEMENT CARD
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class AchievementCard extends StatelessWidget {
   final gam.Achievement achievement;
@@ -603,12 +608,12 @@ class AchievementCard extends StatelessWidget {
     final isUnlocked = achievement.isUnlocked;
 
     final bgColor = isUnlocked
-        ? childTheme.xp.withValues(alpha: 0.08)
-        : colors.surfaceContainerHighest.withValues(alpha: 0.5);
+        ? childTheme.xp.withValuesCompat(alpha: 0.08)
+        : colors.surfaceContainerHighest.withValuesCompat(alpha: 0.5);
 
     final borderColor = isUnlocked
-        ? childTheme.xp.withValues(alpha: 0.35)
-        : colors.outlineVariant.withValues(alpha: 0.4);
+        ? childTheme.xp.withValuesCompat(alpha: 0.35)
+        : colors.outlineVariant.withValuesCompat(alpha: 0.4);
 
     if (compact) {
       return Container(
@@ -621,7 +626,7 @@ class AchievementCard extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              isUnlocked ? achievement.iconEmoji : '🔒',
+              isUnlocked ? achievement.iconEmoji : 'ًں”’',
               style: TextStyle(
                 fontSize: 24,
                 color: isUnlocked ? null : colors.outline,
@@ -656,10 +661,9 @@ class AchievementCard extends StatelessWidget {
             ),
             if (isUnlocked)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: childTheme.xp.withValues(alpha: 0.15),
+                  color: childTheme.xp.withValuesCompat(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -686,7 +690,7 @@ class AchievementCard extends StatelessWidget {
         boxShadow: isUnlocked
             ? [
                 BoxShadow(
-                  color: childTheme.xp.withValues(alpha: 0.12),
+                  color: childTheme.xp.withValuesCompat(alpha: 0.12),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -699,7 +703,7 @@ class AchievementCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                isUnlocked ? achievement.iconEmoji : '🔒',
+                isUnlocked ? achievement.iconEmoji : 'ًں”’',
                 style: TextStyle(
                   fontSize: 32,
                   color: isUnlocked ? null : colors.outline,
@@ -711,7 +715,7 @@ class AchievementCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: childTheme.xp.withValues(alpha: 0.15),
+                    color: childTheme.xp.withValuesCompat(alpha: 0.15),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -755,7 +759,8 @@ class AchievementCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  l10n.gamificationUnlockedOn(_formatDate(achievement.unlockedAt!)),
+                  l10n.gamificationUnlockedOn(
+                      _formatDate(achievement.unlockedAt!)),
                   style: TextStyle(
                     fontSize: 11,
                     color: context.successColor,
@@ -775,9 +780,9 @@ class AchievementCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GAMIFICATION SUMMARY BAR — compact bar for child home/profile header
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// GAMIFICATION SUMMARY BAR â€” compact bar for child home/profile header
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GamificationSummaryBar extends ConsumerWidget {
   const GamificationSummaryBar({super.key});
@@ -797,10 +802,11 @@ class GamificationSummaryBar extends ConsumerWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+        border: Border.all(
+            color: colors.outlineVariant.withValuesCompat(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.06),
+            color: colors.shadow.withValuesCompat(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -815,14 +821,15 @@ class GamificationSummaryBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: '⭐',
-            value:
-                l10n.gamificationXpReward(gamState.totalXP).replaceFirst('+', ''),
+            emoji: 'â­گ',
+            value: l10n
+                .gamificationXpReward(gamState.totalXP)
+                .replaceFirst('+', ''),
             color: childTheme.xp,
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: gamState.streak > 0 ? '🔥' : '💤',
+            emoji: gamState.streak > 0 ? 'ًں”¥' : 'ًں’¤',
             value: l10n.gamificationCompactStreak(gamState.streak),
             color: gamState.streak > 0
                 ? childTheme.streak
@@ -830,7 +837,7 @@ class GamificationSummaryBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: '🎖️',
+            emoji: 'ًںژ–ï¸ڈ',
             value: '${gamState.earnedBadges.length}',
             color: childTheme.success,
           ),
@@ -842,9 +849,8 @@ class GamificationSummaryBar extends ConsumerWidget {
               child: LinearProgressIndicator(
                 value: gamState.levelProgress,
                 minHeight: 6,
-                backgroundColor: childTheme.xp.withValues(alpha: 0.12),
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(childTheme.xp),
+                backgroundColor: childTheme.xp.withValuesCompat(alpha: 0.12),
+                valueColor: AlwaysStoppedAnimation<Color>(childTheme.xp),
               ),
             ),
           ),
@@ -854,9 +860,9 @@ class GamificationSummaryBar extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GAM STAT PILL — top-level helper widget
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// GAM STAT PILL â€” top-level helper widget
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class GamStatPill extends StatelessWidget {
   final String emoji;
@@ -890,9 +896,9 @@ class GamStatPill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LEVEL UP DIALOG — shown when child levels up
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// LEVEL UP DIALOG â€” shown when child levels up
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class LevelUpDialog extends StatefulWidget {
   final int newLevel;
@@ -915,7 +921,8 @@ class LevelUpDialog extends StatefulWidget {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
+      barrierColor:
+          Theme.of(context).colorScheme.scrim.withValuesCompat(alpha: 0.54),
       builder: (_) => LevelUpDialog(
         newLevel: newLevel,
         xpAwarded: xpAwarded,
@@ -985,7 +992,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: childTheme.skill.withValues(alpha: 0.5),
+                color: childTheme.skill.withValuesCompat(alpha: 0.5),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),
@@ -999,7 +1006,8 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 animation: _starAnim,
                 builder: (_, __) => Transform.scale(
                   scale: _starAnim.value,
-                  child: const Text('✨⭐✨', style: TextStyle(fontSize: 32)),
+                  child:
+                      const Text('âœ¨â­گâœ¨', style: TextStyle(fontSize: 32)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -1027,7 +1035,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 style: textTheme.bodyLarge?.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: childTheme.skill.onColor.withValues(alpha: 0.85),
+                  color: childTheme.skill.onColor.withValuesCompat(alpha: 0.85),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1035,7 +1043,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: childTheme.skill.onColor.withValues(alpha: 0.15),
+                  color: childTheme.skill.onColor.withValuesCompat(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -1080,9 +1088,9 @@ class _LevelUpDialogState extends State<LevelUpDialog>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ACHIEVEMENT UNLOCKED BANNER — shown at top of screen
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ACHIEVEMENT UNLOCKED BANNER â€” shown at top of screen
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class AchievementUnlockedBanner extends StatefulWidget {
   final gam.Achievement achievement;
@@ -1180,7 +1188,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: childTheme.xp.withValues(alpha: 0.4),
+                    color: childTheme.xp.withValuesCompat(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -1203,7 +1211,8 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                           style: textTheme.labelSmall?.copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: bannerTextColor.withValues(alpha: 0.82),
+                            color:
+                                bannerTextColor.withValuesCompat(alpha: 0.82),
                           ),
                         ),
                         Text(
@@ -1221,7 +1230,7 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: bannerTextColor.withValues(alpha: 0.16),
+                      color: bannerTextColor.withValuesCompat(alpha: 0.16),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -1241,12 +1250,11 @@ class _AchievementUnlockedBannerState extends State<AchievementUnlockedBanner>
       ),
     );
   }
-
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REWARD LISTENER — wraps a widget tree and shows reward dialogs automatically
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// REWARD LISTENER â€” wraps a widget tree and shows reward dialogs automatically
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /// Wrap around child screens to automatically show level-up dialogs
 /// and achievement banners when [pendingRewardProvider] has data.

@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// A custom switch button styled for the dashboard AppBar.
 class DashboardThemeSwitch extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
   const DashboardThemeSwitch({
     super.key,
     required this.value,
     required this.onChanged,
   });
 
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final knobAlignment = value ? Alignment.centerRight : Alignment.centerLeft;
+    final knobAlignment =
+        value ? Alignment.centerRight : Alignment.centerLeft;
+
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: AnimatedContainer(
@@ -59,7 +63,7 @@ class DashboardThemeSwitch extends StatelessWidget {
                   color: colors.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.2),
+                      color: colors.shadow.withValuesCompat(alpha: 0.2),
                       blurRadius: 3,
                       offset: const Offset(0, 1),
                     ),

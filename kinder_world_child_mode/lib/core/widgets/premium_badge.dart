@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -19,7 +20,7 @@ class PremiumBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.12),
+        color: colors.primary.withValuesCompat(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

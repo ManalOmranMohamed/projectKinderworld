@@ -6,6 +6,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/gamification_widgets.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 
 class AchievementsScreen extends ConsumerWidget {
   const AchievementsScreen({super.key});
@@ -27,7 +28,8 @@ class AchievementsScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.achievements)),
         body: Center(
-          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary),
         ),
       );
     }
@@ -45,7 +47,8 @@ class AchievementsScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () => ref.read(gamificationStateProvider.notifier).refresh(child.id),
+          onRefresh: () =>
+              ref.read(gamificationStateProvider.notifier).refresh(child.id),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
@@ -205,7 +208,7 @@ class _LockedAchievementCard extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: childTheme.skill.withValues(alpha: 0.15),
+                color: childTheme.skill.withValuesCompat(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -223,7 +226,7 @@ class _LockedAchievementCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: childTheme.xp.withValues(alpha: 0.18),
+                color: childTheme.xp.withValuesCompat(alpha: 0.18),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -239,7 +242,6 @@ class _LockedAchievementCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _StreakMilestoneCard extends StatelessWidget {
@@ -265,9 +267,10 @@ class _StreakMilestoneCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: childTheme.streak.withValues(alpha: 0.11),
+        color: childTheme.streak.withValuesCompat(alpha: 0.11),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: childTheme.streak.withValues(alpha: 0.25)),
+        border:
+            Border.all(color: childTheme.streak.withValuesCompat(alpha: 0.25)),
       ),
       child: Row(
         children: [

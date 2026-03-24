@@ -60,7 +60,7 @@ class ChildRepository {
         return cached;
       }
       final data = _childBox.get(childId);
-      
+
       if (data == null) {
         _logger.w('Child profile not found: $childId');
         return null;
@@ -125,7 +125,7 @@ class ChildRepository {
       final json = profile.toJson();
       await _childBox.put(profile.id, json);
       _cacheProfile(profile);
-      
+
       _logger.d('Child profile created: ${profile.id}');
       return profile;
     } catch (e) {
@@ -140,11 +140,11 @@ class ChildRepository {
       final updated = profile.copyWith(
         updatedAt: DateTime.now(),
       );
-      
+
       final json = updated.toJson();
       await _childBox.put(updated.id, json);
       _cacheProfile(updated);
-      
+
       _logger.d('Child profile updated: ${updated.id}');
       return updated;
     } catch (e) {
@@ -206,7 +206,7 @@ class ChildRepository {
         newStreak = 1;
       } else {
         final daysDifference = now.difference(lastSession).inDays;
-        
+
         if (daysDifference == 0) {
           // Same day, streak unchanged
           newStreak = child.streak;
@@ -265,7 +265,8 @@ class ChildRepository {
   // ==================== FAVORITES & INTERESTS ====================
 
   /// Add activity to favorites
-  Future<ChildProfile?> addToFavorites(String childId, String activityId) async {
+  Future<ChildProfile?> addToFavorites(
+      String childId, String activityId) async {
     try {
       final child = await getChildProfile(childId);
       if (child == null) return null;
@@ -288,7 +289,8 @@ class ChildRepository {
   }
 
   /// Remove activity from favorites
-  Future<ChildProfile?> removeFromFavorites(String childId, String activityId) async {
+  Future<ChildProfile?> removeFromFavorites(
+      String childId, String activityId) async {
     try {
       final child = await getChildProfile(childId);
       if (child == null) return null;
@@ -306,7 +308,8 @@ class ChildRepository {
   }
 
   /// Update child interests
-  Future<ChildProfile?> updateInterests(String childId, List<String> newInterests) async {
+  Future<ChildProfile?> updateInterests(
+      String childId, List<String> newInterests) async {
     try {
       final child = await getChildProfile(childId);
       if (child == null) return null;
@@ -344,7 +347,8 @@ class ChildRepository {
   }
 
   /// Update learning style
-  Future<ChildProfile?> updateLearningStyle(String childId, String learningStyle) async {
+  Future<ChildProfile?> updateLearningStyle(
+      String childId, String learningStyle) async {
     try {
       final child = await getChildProfile(childId);
       if (child == null) return null;

@@ -8,6 +8,7 @@ import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
+import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/widgets/app_connection_status.dart';
 import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -114,7 +115,7 @@ class _ChildBottomNav extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.08),
+            color: colors.shadow.withValuesCompat(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -6),
           ),
@@ -185,7 +186,7 @@ class _NavItemWidget extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? colors.primary.withValues(alpha: 0.12)
+                      ? colors.primary.withValuesCompat(alpha: 0.12)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -434,7 +435,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                       greeting,
                       style: textTheme.bodyLarge?.copyWith(
                         fontSize: 15,
-                        color: colors.onPrimary.withValues(alpha: 0.85),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.85),
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,
                       ),
@@ -455,7 +456,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                       _motivationalLine(child, l10n),
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
-                        color: colors.onPrimary.withValues(alpha: 0.85),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.85),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -476,7 +477,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 style: textTheme.labelLarge?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: colors.onPrimary.withValues(alpha: 0.9),
+                  color: colors.onPrimary.withValuesCompat(alpha: 0.9),
                 ),
               ),
               const SizedBox(width: 12),
@@ -485,7 +486,8 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
                     value: child.xpProgress.clamp(0.0, 1.0),
-                    backgroundColor: colors.onPrimary.withValues(alpha: 0.25),
+                    backgroundColor:
+                        colors.onPrimary.withValuesCompat(alpha: 0.25),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       childTheme.xp,
                     ),
@@ -585,7 +587,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: colors.onPrimary.withValues(alpha: 0.18),
+                  color: colors.onPrimary.withValuesCompat(alpha: 0.18),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -612,7 +614,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                       l10n.newTopicsAwait,
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
-                        color: colors.onPrimary.withValues(alpha: 0.8),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -622,7 +624,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: colors.onPrimary.withValues(alpha: 0.22),
+                  color: colors.onPrimary.withValuesCompat(alpha: 0.22),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -696,8 +698,9 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                         ),
                         decoration: BoxDecoration(
                           color: isComplete
-                              ? colors.onPrimary.withValues(alpha: 0.25)
-                              : childTheme.success.withValues(alpha: 0.12),
+                              ? colors.onPrimary.withValuesCompat(alpha: 0.25)
+                              : childTheme.success
+                                  .withValuesCompat(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -719,7 +722,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     child: LinearProgressIndicator(
                       value: progress,
                       backgroundColor: isComplete
-                          ? colors.onPrimary.withValues(alpha: 0.25)
+                          ? colors.onPrimary.withValuesCompat(alpha: 0.25)
                           : colors.surfaceContainerHighest,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         isComplete ? colors.onPrimary : childTheme.success,
@@ -918,7 +921,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: axis.color.withValues(alpha: 0.14),
+              color: axis.color.withValuesCompat(alpha: 0.14),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(axis.icon, color: axis.color, size: 24),
@@ -950,7 +953,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: axis.color.withValues(alpha: 0.14),
+              color: axis.color.withValuesCompat(alpha: 0.14),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -996,7 +999,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: colors.onPrimary.withValues(alpha: 0.22),
+                  color: colors.onPrimary.withValuesCompat(alpha: 0.22),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
@@ -1028,7 +1031,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                       l10n.discoverSomethingAmazing,
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
-                        color: colors.onPrimary.withValues(alpha: 0.85),
+                        color: colors.onPrimary.withValuesCompat(alpha: 0.85),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1056,7 +1059,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.1),
+                      color: colors.shadow.withValuesCompat(alpha: 0.1),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
