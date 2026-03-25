@@ -20,6 +20,9 @@ class LanguageSelectionScreen extends ConsumerStatefulWidget {
 class _LanguageSelectionScreenState
     extends ConsumerState<LanguageSelectionScreen>
     with SingleTickerProviderStateMixin {
+  static const _englishFlag = '\u{1F1FA}\u{1F1F8}';
+  static const _arabicFlag = '\u{1F1F8}\u{1F1E6}';
+
   late final AnimationController _controller;
   late final Animation<double> _fadeAnim;
   late final Animation<Offset> _slideAnim;
@@ -129,17 +132,17 @@ class _LanguageSelectionScreenState
 
                   // Language cards
                   _LanguageCard(
-                    flag: 'ًں‡؛ًں‡¸',
+                    flag: _englishFlag,
                     name: l10n.english,
-                    nativeName: 'English',
+                    nativeName: l10n.languageEnglishNativeName,
                     isSelected: currentLocale.languageCode == 'en',
                     onTap: () => _selectLanguage('en'),
                   ),
                   const SizedBox(height: 16),
                   _LanguageCard(
-                    flag: 'ًں‡¸ًں‡¦',
+                    flag: _arabicFlag,
                     name: l10n.arabic,
-                    nativeName: 'ط§ظ„ط¹ط±ط¨ظٹط©',
+                    nativeName: l10n.languageArabicNativeName,
                     isSelected: currentLocale.languageCode == 'ar',
                     onTap: () => _selectLanguage('ar'),
                   ),
@@ -216,11 +219,8 @@ class _LanguageCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Row(
             children: [
-              // Flag emoji
               Text(flag, style: const TextStyle(fontSize: 36)),
               const SizedBox(width: 16),
-
-              // Names
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,8 +243,6 @@ class _LanguageCard extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Check indicator
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 26,

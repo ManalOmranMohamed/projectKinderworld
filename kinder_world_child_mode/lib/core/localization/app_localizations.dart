@@ -618,6 +618,8 @@ abstract class AppLocalizations {
   String get language;
   String get english;
   String get arabic;
+  String get languageEnglishNativeName;
+  String get languageArabicNativeName;
   String get theme;
   String get mode;
   String get systemMode;
