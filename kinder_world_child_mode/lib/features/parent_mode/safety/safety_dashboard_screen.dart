@@ -255,7 +255,7 @@ class _StatusSection extends StatelessWidget {
             icon: Icons.shield_outlined,
             title: l10n.parentalControls,
             subtitle:
-                '${data.controls.hoursPerDay}h/day â€¢ ${data.controls.sleepMode ? data.controls.bedtime : l10n.inactiveLabel}',
+                '${data.controls.hoursPerDay}h/day \u2022 ${data.controls.sleepMode ? data.controls.bedtime : l10n.inactiveLabel}',
             status: data.controls.hasActiveProtection
                 ? ParentBadgeStatus.active
                 : ParentBadgeStatus.inactive,
@@ -264,7 +264,7 @@ class _StatusSection extends StatelessWidget {
             icon: Icons.privacy_tip_outlined,
             title: l10n.privacySettings,
             subtitle:
-                '${l10n.analyticsTitle}: ${data.privacySettings.analyticsEnabled ? l10n.activeLabel : l10n.inactiveLabel} â€¢ ${l10n.dataSharing}: ${data.privacySettings.dataCollectionOptOut ? l10n.activeLabel : l10n.inactiveLabel}',
+                '${l10n.analyticsTitle}: ${data.privacySettings.analyticsEnabled ? l10n.activeLabel : l10n.inactiveLabel} \u2022 ${l10n.dataSharing}: ${data.privacySettings.dataCollectionOptOut ? l10n.activeLabel : l10n.inactiveLabel}',
             status: data.privacyGuardsEnabledCount > 0
                 ? ParentBadgeStatus.active
                 : ParentBadgeStatus.inactive,
@@ -315,7 +315,7 @@ class _ActivitySection extends StatelessWidget {
                 ? lastActivity.childName
                 : l10n.notAvailable,
             subtitle: lastActivity != null
-                ? '${lastActivity.title} â€¢ ${_timeAgo(context, lastActivity.timestamp)}'
+                ? '${lastActivity.title} \u2022 ${_timeAgo(context, lastActivity.timestamp)}'
                 : l10n.noRecordedActivityYet,
             icon: Icons.history_rounded,
             color: context.parentTheme.reward,
@@ -409,7 +409,7 @@ class _SupportSection extends StatelessWidget {
             value: '${data.openSupportTicketsCount}',
             subtitle: latestTicket == null
                 ? l10n.supportTicketNoHistory
-                : '${latestTicket.subject} â€¢ ${_supportStatusLabel(context, latestTicket.status)}',
+                : '${latestTicket.subject} \u2022 ${_supportStatusLabel(context, latestTicket.status)}',
             icon: Icons.support_agent_rounded,
             color: context.infoColor,
           ),

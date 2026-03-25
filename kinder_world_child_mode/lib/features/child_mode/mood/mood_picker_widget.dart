@@ -90,7 +90,7 @@ class _MoodPickerSectionState extends ConsumerState<MoodPickerSection>
             Row(
               children: [
                 Text(
-                  alreadyRecorded ? 'âœ¨' : 'ًں’­',
+                  alreadyRecorded ? '\u2728' : '\u{1F4AD}',
                   style: const TextStyle(fontSize: 22),
                 ),
                 const SizedBox(width: 10),
@@ -410,19 +410,19 @@ class _EncouragementBanner extends StatelessWidget {
   String _encouragementText(String mood) {
     switch (mood) {
       case ChildMoods.happy:
-        return 'ًںŒں Great! Let\'s make the most of your happy mood!';
+        return '\u{1F31F} Great! Let\'s make the most of your happy mood!';
       case ChildMoods.excited:
-        return 'âڑ، You\'re excited! Let\'s channel that energy!';
+        return '\u26A1 You\'re excited! Let\'s channel that energy!';
       case ChildMoods.calm:
-        return 'ًںچƒ You\'re calm and focused. Perfect for learning!';
+        return '\u{1F33F} You\'re calm and focused. Perfect for learning!';
       case ChildMoods.tired:
-        return 'ًں’¤ Feeling tired? Let\'s do something light and fun.';
+        return '\u{1F4A4} Feeling tired? Let\'s do something light and fun.';
       case ChildMoods.sad:
-        return 'ًں’› It\'s okay to feel sad. Let\'s do something calming.';
+        return '\u{1F499} It\'s okay to feel sad. Let\'s do something calming.';
       case ChildMoods.angry:
-        return 'ًںŒ¬ï¸ڈ Let\'s take a deep breath and do something relaxing.';
+        return '\u{1F60C} Let\'s take a deep breath and do something relaxing.';
       default:
-        return 'âœ¨ Let\'s explore something fun today!';
+        return '\u2728 Let\'s explore something fun today!';
     }
   }
 }

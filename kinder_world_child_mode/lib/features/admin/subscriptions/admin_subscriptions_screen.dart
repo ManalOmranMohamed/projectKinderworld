@@ -56,10 +56,10 @@ class _AdminSubscriptionsScreenState
   }
 
   String _formatDate(String? value) {
-    if (value == null || value.isEmpty) return 'â€”';
+    if (value == null || value.isEmpty) return '-';
     final parsed = DateTime.tryParse(value)?.toLocal();
     if (parsed == null) return value;
-    return DateFormat('MMM d, y â€¢ h:mm a').format(parsed);
+    return DateFormat('MMM d, y \u2022 h:mm a').format(parsed);
   }
 
   String _formatAmount(int amountCents, String currency) {
@@ -457,7 +457,7 @@ class _AdminSubscriptionsScreenState
             subtitle: Text(
               item.name.isEmpty
                   ? item.status
-                  : '${item.name} â€¢ ${item.status}',
+                  : '${item.name} \u2022 ${item.status}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
               ),
@@ -698,9 +698,9 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((event) => _TimelineEntry(
                         title:
-                            '${_displayStatus(event.eventType)} â€¢ ${event.planId}',
+                            '${_displayStatus(event.eventType)} \u2022 ${event.planId}',
                         subtitle:
-                            '${_displayStatus(event.status)} â€¢ ${event.source}',
+                            '${_displayStatus(event.status)} \u2022 ${event.source}',
                         trailing: _formatDate(event.occurredAt),
                       ))
                   .toList(),
@@ -713,9 +713,9 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((entry) => _TimelineEntry(
                         title:
-                            '${_displayStatus(entry.transactionType)} â€¢ ${entry.planId}',
+                            '${_displayStatus(entry.transactionType)} \u2022 ${entry.planId}',
                         subtitle:
-                            '${_formatAmount(entry.amountCents, entry.currency)} â€¢ ${_displayStatus(entry.status)}',
+                            '${_formatAmount(entry.amountCents, entry.currency)} \u2022 ${_displayStatus(entry.status)}',
                         trailing: _formatDate(entry.effectiveAt),
                       ))
                   .toList(),
@@ -728,13 +728,13 @@ class _AdminSubscriptionsScreenState
                   .take(8)
                   .map((entry) => _TimelineEntry(
                         title:
-                            '${_displayStatus(entry.attemptType)} â€¢ ${entry.planId}',
+                            '${_displayStatus(entry.attemptType)} \u2022 ${entry.planId}',
                         subtitle: [
                           _formatAmount(entry.amountCents, entry.currency),
                           _displayStatus(entry.status),
                           if ((entry.failureCode ?? '').isNotEmpty)
                             entry.failureCode!,
-                        ].join(' â€¢ '),
+                        ].join(' \u2022 '),
                         trailing:
                             _formatDate(entry.completedAt ?? entry.requestedAt),
                       ))

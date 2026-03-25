@@ -63,30 +63,30 @@ class _CreateChildProfileScreenState
 
   // Available interests
   final Map<String, String> _interestOptions = {
-    'math': 'ًں”¢ Mathematics',
-    'science': 'ًں”¬ Science',
-    'reading': 'ًں“ڑ Reading',
-    'art': 'ًںژ¨ Art & Drawing',
-    'music': 'ًںژµ Music',
-    'sports': 'âڑ½ Sports',
-    'animals': 'ًںگ¾ Animals',
-    'nature': 'ًںŒ؟ Nature',
+    'math': '\u{1F9EE} Mathematics',
+    'science': '\u{1F52C} Science',
+    'reading': '\u{1F4DA} Reading',
+    'art': '\u{1F3A8} Art and Drawing',
+    'music': '\u{1F3B5} Music',
+    'sports': '\u26BD Sports',
+    'animals': '\u{1F43E} Animals',
+    'nature': '\u{1F33F} Nature',
   };
 
   // Available pictures for password
   final List<Map<String, dynamic>> _pictureOptions = [
-    {'id': 'apple', 'icon': 'ًںچژ', 'name': 'Apple'},
-    {'id': 'ball', 'icon': 'âڑ½', 'name': 'Ball'},
-    {'id': 'cat', 'icon': 'ًںگ±', 'name': 'Cat'},
-    {'id': 'dog', 'icon': 'ًںگ¶', 'name': 'Dog'},
-    {'id': 'elephant', 'icon': 'ًںگک', 'name': 'Elephant'},
-    {'id': 'fish', 'icon': 'ًںگ ', 'name': 'Fish'},
-    {'id': 'guitar', 'icon': 'ًںژ¸', 'name': 'Guitar'},
-    {'id': 'house', 'icon': 'ًںڈ ', 'name': 'House'},
-    {'id': 'icecream', 'icon': 'ًںچ¦', 'name': 'Ice Cream'},
-    {'id': 'jelly', 'icon': 'ًںچ‡', 'name': 'Jelly'},
-    {'id': 'kite', 'icon': 'ًںھپ', 'name': 'Kite'},
-    {'id': 'lion', 'icon': 'ًں¦پ', 'name': 'Lion'},
+    {'id': 'apple', 'icon': '\u{1F34E}', 'name': 'Apple'},
+    {'id': 'ball', 'icon': '\u26BD', 'name': 'Ball'},
+    {'id': 'cat', 'icon': '\u{1F431}', 'name': 'Cat'},
+    {'id': 'dog', 'icon': '\u{1F436}', 'name': 'Dog'},
+    {'id': 'elephant', 'icon': '\u{1F418}', 'name': 'Elephant'},
+    {'id': 'fish', 'icon': '\u{1F420}', 'name': 'Fish'},
+    {'id': 'guitar', 'icon': '\u{1F3B8}', 'name': 'Guitar'},
+    {'id': 'house', 'icon': '\u{1F3E0}', 'name': 'House'},
+    {'id': 'icecream', 'icon': '\u{1F366}', 'name': 'Ice Cream'},
+    {'id': 'jelly', 'icon': '\u{1F36E}', 'name': 'Jelly'},
+    {'id': 'kite', 'icon': '\u{1FA81}', 'name': 'Kite'},
+    {'id': 'lion', 'icon': '\u{1F981}', 'name': 'Lion'},
   ];
 
   @override

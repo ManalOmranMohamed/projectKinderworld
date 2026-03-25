@@ -428,7 +428,7 @@ class _AdminSupportTicketsScreenState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${_categoryLabel(ticket.category, l10n)} â€¢ ${ticket.requester?['email'] ?? ticket.email ?? 'â€”'}',
+                          '${_categoryLabel(ticket.category, l10n)} \u2022 ${ticket.requester?['email'] ?? ticket.email ?? '-'}',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -534,10 +534,10 @@ class _AdminSupportTicketsScreenState
               runSpacing: 8,
               children: [
                 Text(
-                  '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? 'â€”'}',
+                  '${l10n.adminSupportRequester}: ${ticket.requester?['email'] ?? ticket.email ?? '-'}',
                 ),
                 Text(
-                  '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? 'â€”'}',
+                  '${l10n.adminSupportAssignee}: ${ticket.assignedAdmin?['email'] ?? '-'}',
                 ),
                 Text(
                   '${l10n.adminSupportCategoryLabel}: ${_categoryLabel(ticket.category, l10n)}',
@@ -671,7 +671,7 @@ class _AdminSupportTicketsScreenState
   String _formatDate(String value) {
     final parsed = DateTime.tryParse(value)?.toLocal();
     if (parsed == null) return value;
-    return DateFormat('MMM d, y â€¢ h:mm a').format(parsed);
+    return DateFormat('MMM d, y \u2022 h:mm a').format(parsed);
   }
 }
 

@@ -388,7 +388,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   ),
                   child: Center(
                     child: Text(
-                      'ًں“ڑ\n${l10n.lessonContentPlaceholder}',
+                      '\u{1F4DA}\n${l10n.lessonContentPlaceholder}',
                       style: TextStyle(
                         fontSize: 24,
                         color: Theme.of(context).colorScheme.primary,
@@ -474,7 +474,7 @@ class _LessonFlowScreenState extends ConsumerState<LessonFlowScreen>
                   ),
                   child: Center(
                     child: Text(
-                      'ًںژ¯\n${l10n.tapCorrectAnswer}',
+                      '\u{1F3AF}\n${l10n.tapCorrectAnswer}',
                       style: TextStyle(
                         fontSize: 20,
                         color: context.childTheme.fun,

@@ -211,7 +211,7 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
                                 ),
                                 child: const Center(
                                   child: Text(
-                                    'ًں†ک',
+                                    '\u{1F511}',
                                     style: TextStyle(fontSize: 26),
                                   ),
                                 ),
@@ -501,17 +501,17 @@ class _ChildForgotPasswordScreenState extends State<ChildForgotPasswordScreen>
                 ),
                 const SizedBox(height: 14),
                 _ChildStepRow(
-                  emoji: 'ًں“§',
+                  emoji: '\u{1F4E7}',
                   text: l10n.childStep1,
                 ),
                 const SizedBox(height: 10),
                 _ChildStepRow(
-                  emoji: 'ًں”‘',
+                  emoji: '\u{1F5BC}\u{FE0F}',
                   text: l10n.childStep2,
                 ),
                 const SizedBox(height: 10),
                 _ChildStepRow(
-                  emoji: 'ًںژ®',
+                  emoji: '\u{1F3AE}',
                   text: l10n.childStep3,
                 ),
               ],

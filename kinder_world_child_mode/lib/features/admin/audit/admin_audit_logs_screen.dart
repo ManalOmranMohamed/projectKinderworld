@@ -259,7 +259,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
-                                      log.timestamp ?? 'â€”',
+                                      log.timestamp ?? '-',
                                       textAlign: TextAlign.end,
                                       style:
                                           theme.textTheme.bodySmall?.copyWith(
@@ -278,7 +278,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                log.admin?['email'] as String? ?? 'â€”',
+                                log.admin?['email'] as String? ?? '-',
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: cs.onSurfaceVariant,
                                 ),
@@ -292,7 +292,7 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  '${log.ipAddress ?? 'â€”'}\n${log.userAgent ?? ''}',
+                                  '${log.ipAddress ?? '-'}\n${log.userAgent ?? ''}',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: cs.onSurface
                                         .withValuesCompat(alpha: 0.7),
@@ -336,17 +336,17 @@ class _AdminAuditLogsScreenState extends ConsumerState<AdminAuditLogsScreen> {
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(Text(
-                    log.admin?['email'] as String? ?? 'â€”',
+                    log.admin?['email'] as String? ?? '-',
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(Text(
-                    log.timestamp ?? 'â€”',
+                    log.timestamp ?? '-',
                     style: theme.textTheme.bodySmall,
                   )),
                   DataCell(SizedBox(
                     width: 280,
                     child: Text(
-                      '${log.ipAddress ?? 'â€”'}\n${log.userAgent ?? ''}',
+                      '${log.ipAddress ?? '-'}\n${log.userAgent ?? ''}',
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: cs.onSurface.withValuesCompat(alpha: 0.7)),
                       maxLines: 2,

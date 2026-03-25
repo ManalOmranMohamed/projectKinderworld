@@ -283,18 +283,18 @@ class _MoodInfo {
 _MoodInfo _moodInfo(String mood, AppLocalizations l10n) {
   switch (mood) {
     case 'happy':
-      return _MoodInfo('ًںکٹ', l10n.happy, const Color(0xFFFFB300));
+      return _MoodInfo('\u{1F642}', l10n.happy, const Color(0xFFFFB300));
     case 'excited':
-      return _MoodInfo('ًں¤©', l10n.excited, const Color(0xFFFF6D00));
+      return _MoodInfo('\u{1F929}', l10n.excited, const Color(0xFFFF6D00));
     case 'calm':
-      return _MoodInfo('ًںکŒ', l10n.calm, const Color(0xFF00BCD4));
+      return _MoodInfo('\u{1F60C}', l10n.calm, const Color(0xFF00BCD4));
     case 'tired':
-      return _MoodInfo('ًںک´', l10n.tired, const Color(0xFF9E9E9E));
+      return _MoodInfo('\u{1F62A}', l10n.tired, const Color(0xFF9E9E9E));
     case 'sad':
-      return _MoodInfo('ًںک¢', l10n.sad, const Color(0xFF5C6BC0));
+      return _MoodInfo('\u{1F622}', l10n.sad, const Color(0xFF5C6BC0));
     case 'angry':
-      return _MoodInfo('ًںک ', l10n.angry, const Color(0xFFE53935));
+      return _MoodInfo('\u{1F620}', l10n.angry, const Color(0xFFE53935));
     default:
-      return _MoodInfo('ًںکگ', mood, const Color(0xFF78909C));
+      return _MoodInfo('\u{1F610}', mood, const Color(0xFF78909C));
   }
 }

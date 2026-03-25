@@ -181,10 +181,10 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                     final methods = snapshot.data ?? [];
                     if (methods.isEmpty) {
                       return AppEmptyState.child(
-                        emoji: 'ًں’³',
+                        emoji: '\u{1F4B3}',
                         title: l10n.paymentMethodsEmpty,
                         subtitle:
-                            '${l10n.addPaymentMethod} â€¢ ${l10n.openPaymentPortal}',
+                            '${l10n.addPaymentMethod} \u2022 ${l10n.openPaymentPortal}',
                       );
                     }
 
@@ -237,7 +237,7 @@ class _PaymentMethodsScreenState extends ConsumerState<PaymentMethodsScreen>
                                           method.methodType!,
                                       ]
                                           .where((e) => e.isNotEmpty)
-                                          .join(' â€¢ '),
+                                          .join(' \u2022 '),
                                       style: textTheme.bodySmall?.copyWith(
                                         color: colors.onSurfaceVariant,
                                       ),

@@ -266,8 +266,8 @@ class _ParentChildProfileScreenState
                     const SizedBox(height: 4),
                     Text(
                       child.age > 0
-                          ? '${l10n.yearsOld(child.age)} â€¢ ${l10n.level} ${child.level}'
-                          : '${l10n.notAvailable} â€¢ ${l10n.level} ${child.level}',
+                          ? '${l10n.yearsOld(child.age)} \u2022 ${l10n.level} ${child.level}'
+                          : '${l10n.notAvailable} \u2022 ${l10n.level} ${child.level}',
                       style: TextStyle(
                         fontSize: 14,
                         color: colors.onSurfaceVariant,

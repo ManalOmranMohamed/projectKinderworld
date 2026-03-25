@@ -141,7 +141,7 @@ class AppEmptyState extends StatelessWidget {
     required this.subtitle,
     this.action,
     this.actionLabel,
-    this.emoji = 'âœ¨',
+    this.emoji = '\u2728',
     this.icon,
   }) : variant = AppStateVariant.child;
 
@@ -178,7 +178,7 @@ class AppEmptyState extends StatelessWidget {
     switch (variant) {
       case AppStateVariant.child:
         return ChildEmptyState(
-          emoji: emoji ?? 'âœ¨',
+          emoji: emoji ?? '\u2728',
           title: title,
           subtitle: subtitle,
           action: _buildAction(),

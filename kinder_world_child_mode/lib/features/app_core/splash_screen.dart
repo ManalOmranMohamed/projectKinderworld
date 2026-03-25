@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/app.dart';
+import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/providers/app_launch_provider.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -344,7 +345,7 @@ class _SplashBranding extends StatelessWidget {
         ),
         SizedBox(height: layout.taglineSpacing),
         Text(
-          'Learn â€¢ Play â€¢ Grow',
+          AppLocalizations.of(context)!.splashTagline,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: const Color(0xFF1A3A6B),

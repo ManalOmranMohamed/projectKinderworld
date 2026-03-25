@@ -310,8 +310,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
   }
 
   String _formatDateTime(DateTime? value) {
-    if (value == null) return 'â€”';
-    return DateFormat('MMM d, y â€¢ h:mm a').format(value);
+    if (value == null) return '-';
+    return DateFormat('MMM d, y \u2022 h:mm a').format(value);
   }
 
   String _formatAmount(int amountCents, String currency) {
@@ -955,9 +955,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((event) => _HistoryTile(
                               title:
-                                  '${_displayStatus(context, event.eventType)} â€¢ ${event.planId}',
+                                  '${_displayStatus(context, event.eventType)} \u2022 ${event.planId}',
                               subtitle:
-                                  '${_displayStatus(context, event.status)} â€¢ ${event.source}',
+                                  '${_displayStatus(context, event.status)} \u2022 ${event.source}',
                               trailing: _formatDateTime(event.occurredAt),
                               icon: Icons.timeline_rounded,
                             ))
@@ -976,9 +976,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                         .take(8)
                         .map((transaction) => _HistoryTile(
                               title:
-                                  '${_displayStatus(context, transaction.transactionType)} â€¢ ${transaction.planId}',
+                                  '${_displayStatus(context, transaction.transactionType)} \u2022 ${transaction.planId}',
                               subtitle:
-                                  '${_formatAmount(transaction.amountCents, transaction.currency)} â€¢ ${_displayStatus(context, transaction.status)}',
+                                  '${_formatAmount(transaction.amountCents, transaction.currency)} \u2022 ${_displayStatus(context, transaction.status)}',
                               trailing:
                                   _formatDateTime(transaction.effectiveAt),
                               icon: Icons.receipt_rounded,
@@ -998,7 +998,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                             .take(8)
                             .map((attempt) => _HistoryTile(
                                   title:
-                                      '${_displayStatus(context, attempt.attemptType)} â€¢ ${attempt.planId}',
+                                      '${_displayStatus(context, attempt.attemptType)} \u2022 ${attempt.planId}',
                                   subtitle: [
                                     _formatAmount(
                                         attempt.amountCents, attempt.currency),
@@ -1006,7 +1006,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen>
                                     if (attempt.failureCode != null &&
                                         attempt.failureCode!.isNotEmpty)
                                       attempt.failureCode!,
-                                  ].join(' â€¢ '),
+                                  ].join(' \u2022 '),
                                   trailing: _formatDateTime(
                                     attempt.completedAt ?? attempt.requestedAt,
                                   ),

@@ -525,7 +525,7 @@ class _ChildProfileEquippedItemsSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'âœ¨ My Equipped Items',
+              '\u2728 My Equipped Items',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: 14,

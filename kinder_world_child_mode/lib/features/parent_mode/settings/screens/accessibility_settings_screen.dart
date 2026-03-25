@@ -471,7 +471,7 @@ class _LivePreview extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hello, Sara! ًں‘‹',
+                            'Hello, Sara! \u{1F44B}',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,

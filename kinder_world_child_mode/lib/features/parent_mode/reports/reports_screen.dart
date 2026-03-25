@@ -367,7 +367,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              '${l10n.childAge} ${selectedChild.age} â€¢ ${l10n.level} ${selectedChild.level}',
+                                              '${l10n.childAge} ${selectedChild.age} \u2022 ${l10n.level} ${selectedChild.level}',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: colors.onSurfaceVariant,
@@ -462,28 +462,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               Row(
                 children: [
                   _GamStat(
-                    emoji: 'â­گ',
+                    emoji: '\u2B50',
                     value: '${state.totalXP}',
                     label: l10n.gamificationTotalXp,
                     color: const Color(0xFFFFB300),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: 'ًںڈ†',
+                    emoji: '\u{1F3C6}',
                     value: '${state.level}',
                     label: l10n.gamificationLevelLabel,
                     color: const Color(0xFF7C4DFF),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: 'ًں”¥',
+                    emoji: '\u{1F525}',
                     value: '${state.streak}',
                     label: l10n.gamificationStreakLabel,
                     color: const Color(0xFFFF6D00),
                   ),
                   const SizedBox(width: 8),
                   _GamStat(
-                    emoji: 'âœ…',
+                    emoji: '\u2705',
                     value: '${state.activitiesCompleted}',
                     label: l10n.gamificationActivitiesCompleted,
                     color: const Color(0xFF00C853),
@@ -795,7 +795,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       ),
       ParentStatCard(
         value:
-            report.averageScore > 0 ? '${report.averageScore.round()}%' : 'â€”',
+            report.averageScore > 0 ? '${report.averageScore.round()}%' : '-',
         label: l10n.avgScoreLabel,
         icon: Icons.star_rounded,
         color: parent.reward,
@@ -970,7 +970,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${_contentTypeLabel(l10n, session.contentType)} â€¢ ${session.durationMinutes} min â€¢ ${session.score}%',
+                          '${_contentTypeLabel(l10n, session.contentType)} \u2022 ${session.durationMinutes} min \u2022 ${session.score}%',
                           style: TextStyle(
                             fontSize: 12,
                             color:
@@ -1119,7 +1119,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 ? l10n.notAvailable
                 : moodEntries.take(2).map((entry) {
                     return '${_moodLabel(l10n, entry.key)} (${entry.value})';
-                  }).join(' â€¢ '),
+                  }).join(' \u2022 '),
           ),
           const SizedBox(height: 16),
           ParentSectionHeader(title: l10n.recentAchievements),
@@ -1140,7 +1140,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '${_achievementTitle(l10n, achievement.titleKey)} â€¢ ${achievement.detail}',
+                      '${_achievementTitle(l10n, achievement.titleKey)} \u2022 ${achievement.detail}',
                     ),
                   ),
                 ],
@@ -1153,7 +1153,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   String _formatTimestamp(DateTime? value) {
-    if (value == null) return 'â€”';
+    if (value == null) return '-';
     final local = value.toLocal();
     final month = local.month.toString().padLeft(2, '0');
     final day = local.day.toString().padLeft(2, '0');

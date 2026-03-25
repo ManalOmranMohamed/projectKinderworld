@@ -85,17 +85,7 @@ class ChildProfileScreen extends ConsumerWidget {
               _ChildProfileAchievementsSection(
                 achievements: [
                   _ProfileAchievement(
-                    emoji: 'ًںڈ†',
-                    title: l10n.achievementFirstQuizTitle,
-                    description: l10n.achievementFirstQuizSubtitle,
-                  ),
-                  _ProfileAchievement(
-                    emoji: 'ًں”¥',
-                    title: l10n.achievementStreakTitle,
-                    description: l10n.achievementStreakSubtitle,
-                  ),
-                  _ProfileAchievement(
-                    emoji: 'â­گ',
+                    emoji: '\u{1F9EE}',
                     title: l10n.achievementMathMasterTitle,
                     description: l10n.achievementMathMasterSubtitle,
                   ),

@@ -855,7 +855,7 @@ class _AdminAdminManagementScreenState
                   onTap: () => _selectAdmin(adminUser.id),
                   title: Text(adminUser.email),
                   subtitle: Text(
-                    '${adminUser.name.isEmpty ? 'â€”' : adminUser.name}\n${adminUser.roles.join(', ')}',
+                    '${adminUser.name.isEmpty ? '-' : adminUser.name}\n${adminUser.roles.join(', ')}',
                   ),
                   isThreeLine: true,
                   trailing: _StatusChip(
@@ -1105,7 +1105,7 @@ class _AdminAdminManagementScreenState
                   onTap: () => _selectRole(role.id),
                   title: Text(role.name),
                   subtitle: Text(
-                    '${role.description.isEmpty ? 'â€”' : role.description}\n${l10n.adminRoleStats(role.permissionCount, role.adminCount)}',
+                    '${role.description.isEmpty ? '-' : role.description}\n${l10n.adminRoleStats(role.permissionCount, role.adminCount)}',
                   ),
                   isThreeLine: true,
                 ),
@@ -1187,7 +1187,7 @@ class _AdminAdminManagementScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                role.description.isEmpty ? 'â€”' : role.description,
+                role.description.isEmpty ? '-' : role.description,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme

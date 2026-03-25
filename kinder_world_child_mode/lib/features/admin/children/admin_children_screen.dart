@@ -412,7 +412,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                                     children: [
                                       Chip(
                                         label: Text(
-                                          '${l10n.adminChildrenAgeColumn}: ${child.age?.toString() ?? 'â€”'}',
+                                          '${l10n.adminChildrenAgeColumn}: ${child.age?.toString() ?? '-'}',
                                         ),
                                         visualDensity: VisualDensity.compact,
                                       ),
@@ -537,7 +537,7 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
                             // Age cell
                             DataCell(
                               Text(
-                                child.age?.toString() ?? 'â€”',
+                                child.age?.toString() ?? '-',
                                 style: theme.textTheme.bodySmall,
                               ),
                             ),

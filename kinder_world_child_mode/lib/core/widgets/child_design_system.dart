@@ -157,7 +157,7 @@ class _ChildXpProgressBarState extends State<ChildXpProgressBar>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'â­گ ${widget.currentXp} XP',
+              '\u2B50 ${widget.currentXp} XP',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,

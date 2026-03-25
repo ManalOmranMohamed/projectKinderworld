@@ -1336,7 +1336,7 @@ class _ChildLoginScreenState extends ConsumerState<ChildLoginScreen> {
             ] else ...[
               const SizedBox(height: 4),
               Text(
-                'â€”',
+                '-',
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,

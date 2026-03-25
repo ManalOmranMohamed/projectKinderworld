@@ -379,7 +379,7 @@ class _StreakCounterState extends State<StreakCounter>
               child: child,
             ),
             child: Text(
-              hasStreak ? 'ًں”¥' : 'ًں’¤',
+              hasStreak ? '\u{1F525}' : '\u{1F4A4}',
               style: const TextStyle(fontSize: 16),
             ),
           ),
@@ -413,7 +413,7 @@ class _StreakCounterState extends State<StreakCounter>
               child: child,
             ),
             child: Text(
-              hasStreak ? 'ًں”¥' : 'ًں’¤',
+              hasStreak ? '\u{1F525}' : '\u{1F4A4}',
               style: const TextStyle(fontSize: 22),
             ),
           ),
@@ -496,7 +496,7 @@ class BadgeChip extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              isEarned ? badge.iconEmoji : 'ًں”’',
+              isEarned ? badge.iconEmoji : '\u{1F512}',
               style: TextStyle(fontSize: size * 0.42),
             ),
           ),
@@ -626,7 +626,7 @@ class AchievementCard extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              isUnlocked ? achievement.iconEmoji : 'ًں”’',
+              isUnlocked ? achievement.iconEmoji : '\u{1F512}',
               style: TextStyle(
                 fontSize: 24,
                 color: isUnlocked ? null : colors.outline,
@@ -703,7 +703,7 @@ class AchievementCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                isUnlocked ? achievement.iconEmoji : 'ًں”’',
+                isUnlocked ? achievement.iconEmoji : '\u{1F512}',
                 style: TextStyle(
                   fontSize: 32,
                   color: isUnlocked ? null : colors.outline,
@@ -821,7 +821,7 @@ class GamificationSummaryBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: 'â­گ',
+            emoji: '\u2B50',
             value: l10n
                 .gamificationXpReward(gamState.totalXP)
                 .replaceFirst('+', ''),
@@ -829,7 +829,7 @@ class GamificationSummaryBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: gamState.streak > 0 ? 'ًں”¥' : 'ًں’¤',
+            emoji: gamState.streak > 0 ? '\u{1F525}' : '\u{1F4A4}',
             value: l10n.gamificationCompactStreak(gamState.streak),
             color: gamState.streak > 0
                 ? childTheme.streak
@@ -837,7 +837,7 @@ class GamificationSummaryBar extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           GamStatPill(
-            emoji: 'ًںژ–ï¸ڈ',
+            emoji: '\u{1F3C5}',
             value: '${gamState.earnedBadges.length}',
             color: childTheme.success,
           ),
@@ -1007,7 +1007,7 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                 builder: (_, __) => Transform.scale(
                   scale: _starAnim.value,
                   child:
-                      const Text('âœ¨â­گâœ¨', style: TextStyle(fontSize: 32)),
+                      const Text('\u2728\u2B50\u2728', style: TextStyle(fontSize: 32)),
                 ),
               ),
               const SizedBox(height: 12),
