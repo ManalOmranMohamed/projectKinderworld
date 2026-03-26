@@ -39,6 +39,13 @@ class NetworkService {
       },
     );
 
+    _logInfo(
+      'http.client.config',
+      fields: {
+        'base_url': _dio.options.baseUrl,
+      },
+    );
+
     // Request Interceptor
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -70,6 +77,8 @@ class NetworkService {
             'http.request.start',
             fields: {
               'request_id': requestId,
+              'base_url': options.baseUrl,
+              'url': options.uri.toString(),
               'method': options.method,
               'path': options.path,
               'retry': options.extra['retryCount'] ?? 0,

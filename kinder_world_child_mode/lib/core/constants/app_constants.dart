@@ -60,7 +60,7 @@ class AppConstants {
   );
   static const String _developmentBaseUrl = String.fromEnvironment(
     'DEV_API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000',
+    defaultValue: 'http://192.168.42.128:8000',
   );
   static const String _stagingBaseUrl = String.fromEnvironment(
     'STAGING_API_BASE_URL',
