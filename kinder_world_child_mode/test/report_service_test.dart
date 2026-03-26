@@ -37,6 +37,7 @@ class _FakeReportsApi extends ReportsApi {
   Map<String, dynamic> advancedResponse = const <String, dynamic>{};
   Object? basicError;
   Object? advancedError;
+  int advancedCalls = 0;
 
   @override
   Future<Map<String, dynamic>> getBasicReports({
@@ -56,6 +57,7 @@ class _FakeReportsApi extends ReportsApi {
     int days = 30,
     String? parentAccessToken,
   }) async {
+    advancedCalls++;
     if (advancedError != null) {
       throw advancedError!;
     }
@@ -352,5 +354,43 @@ void main() {
     expect(result.report.totalActivitiesCompleted, 4);
     expect(result.report.averageScore, 93);
     expect(result.isCachedSnapshot, isTrue);
+  });
+
+  test(
+      'loadChildReport skips advanced reports when the plan does not allow them',
+      () async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final api = _FakeReportsApi()
+      ..basicResponse = <String, dynamic>{
+        'summary': <String, dynamic>{
+          'activities_completed_7d': 2,
+          'lessons_completed_7d': 1,
+          'screen_time_minutes_7d': 18,
+          'average_score': 87,
+          'completion_rate': 0.7,
+        },
+        'data_availability': <String, dynamic>{
+          'screen_time': true,
+          'activities': true,
+        },
+      };
+    final service = ParentReportService(
+      secureStorage: _FakeSecureStorage(parentAccessToken: 'parent-token'),
+      reportsApi: api,
+      cacheStore: AppCacheStore(preferences),
+      logger: Logger(),
+      loadProgressRecords: (_) async => const <ProgressRecord>[],
+    );
+
+    final result = await service.loadChildReport(
+      child: _child(),
+      period: ReportPeriod.week,
+      includeAdvancedReports: false,
+    );
+
+    expect(result.source, ChildReportSource.liveServer);
+    expect(result.report.totalActivitiesCompleted, 2);
+    expect(api.advancedCalls, 0);
   });
 }

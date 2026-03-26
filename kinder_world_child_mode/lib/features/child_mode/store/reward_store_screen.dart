@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/achievement.dart';
+import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/gamification_provider.dart';
-import 'package:kinder_world/core/providers/parent_pin_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
@@ -68,119 +68,119 @@ const List<RewardItem> rewardCatalog = [
       id: 'av_robot',
       name: 'Robot',
       type: RewardType.avatar,
-      price: 50,
+      price: 4,
       emoji: '\u{1F916}',
       color: Color(0xFF42A5F5)),
   RewardItem(
       id: 'av_unicorn',
       name: 'Unicorn',
       type: RewardType.avatar,
-      price: 80,
+      price: 5,
       emoji: '\u{1F984}',
       color: Color(0xFFEC407A)),
   RewardItem(
       id: 'av_astronaut',
       name: 'Astronaut',
       type: RewardType.avatar,
-      price: 100,
+      price: 6,
       emoji: '\u{1F9D1}\u{200D}\u{1F680}',
       color: Color(0xFF7E57C2)),
   RewardItem(
       id: 'av_dragon',
       name: 'Dragon',
       type: RewardType.avatar,
-      price: 120,
+      price: 7,
       emoji: '\u{1F409}',
       color: Color(0xFFEF5350)),
   RewardItem(
       id: 'fr_rainbow',
       name: 'Rainbow',
       type: RewardType.frame,
-      price: 60,
+      price: 3,
       emoji: '\u{1F308}',
       color: Color(0xFFFF7043)),
   RewardItem(
       id: 'fr_stars',
       name: 'Stars',
       type: RewardType.frame,
-      price: 70,
+      price: 4,
       emoji: '\u{2B50}',
       color: Color(0xFFFFD700)),
   RewardItem(
       id: 'fr_flowers',
       name: 'Flowers',
       type: RewardType.frame,
-      price: 55,
+      price: 3,
       emoji: '\u{1F338}',
       color: Color(0xFFE91E63)),
   RewardItem(
       id: 'bd_champion',
       name: 'Champion',
       type: RewardType.badge,
-      price: 90,
+      price: 5,
       emoji: '\u{1F3C6}',
       color: Color(0xFFFFB300)),
   RewardItem(
       id: 'bd_star',
       name: 'Star',
       type: RewardType.badge,
-      price: 40,
+      price: 2,
       emoji: '\u{1F31F}',
       color: Color(0xFFFDD835)),
   RewardItem(
       id: 'bd_rocket',
       name: 'Rocket',
       type: RewardType.badge,
-      price: 75,
+      price: 4,
       emoji: '\u{1F680}',
       color: Color(0xFF26C6DA)),
   RewardItem(
       id: 'st_heart',
       name: 'Heart',
       type: RewardType.sticker,
-      price: 30,
+      price: 2,
       emoji: '\u{2764}\u{FE0F}',
       color: Color(0xFFE53935)),
   RewardItem(
       id: 'st_fire',
       name: 'Fire',
       type: RewardType.sticker,
-      price: 35,
+      price: 2,
       emoji: '\u{1F525}',
       color: Color(0xFFFF6D00)),
   RewardItem(
       id: 'st_lightning',
       name: 'Lightning',
       type: RewardType.sticker,
-      price: 35,
+      price: 2,
       emoji: '\u{26A1}',
       color: Color(0xFFFFEA00)),
   RewardItem(
       id: 'st_diamond',
       name: 'Diamond',
       type: RewardType.sticker,
-      price: 45,
+      price: 3,
       emoji: '\u{1F48E}',
       color: Color(0xFF00BCD4)),
   RewardItem(
       id: 'th_ocean',
       name: 'Ocean',
       type: RewardType.theme,
-      price: 150,
+      price: 8,
       emoji: '\u{1F30A}',
       color: Color(0xFF1565C0)),
   RewardItem(
       id: 'th_forest',
       name: 'Forest',
       type: RewardType.theme,
-      price: 150,
+      price: 8,
       emoji: '\u{1F332}',
       color: Color(0xFF2E7D32)),
   RewardItem(
       id: 'th_galaxy',
       name: 'Galaxy',
       type: RewardType.theme,
-      price: 200,
+      price: 10,
       emoji: '\u{1F30C}',
       color: Color(0xFF4A148C)),
 ];
@@ -311,6 +311,21 @@ class RewardRedeemResult {
   final int? currentCoins;
 }
 
+int rewardStoreCoinFloor({
+  GamificationState? gamification,
+  ChildProfile? child,
+}) {
+  final completedActivities =
+      gamification?.activitiesCompleted ?? child?.activitiesCompleted ?? 0;
+  if (completedActivities <= 0) {
+    return 0;
+  }
+
+  // Keep the store simple for the presentation: each completed activity
+  // guarantees a small, visible coin reward.
+  return completedActivities * 2;
+}
+
 class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
   RewardStoreNotifier(this._box, this._childId, this._coinFloor)
       : super(const RewardStoreState(
@@ -384,9 +399,13 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       coins: coins,
       ownedIds: owned,
       equippedByType: equipped,
-      pendingRequests: pending,
+      pendingRequests: const [],
       redemptionHistory: history,
     );
+
+    if (pending.isNotEmpty) {
+      _box.put(_pendingRequestsKey, '[]');
+    }
   }
 
   void _persist() {
@@ -419,9 +438,7 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
   }
 
   bool requiresParentApproval(RewardItem item) {
-    return item.type == RewardType.theme ||
-        item.type == RewardType.avatar ||
-        item.price >= 100;
+    return false;
   }
 
   bool hasPendingRequestForItem(String itemId) {
@@ -439,24 +456,6 @@ class RewardStoreNotifier extends StateNotifier<RewardStoreState> {
       return const RewardRedeemResult(
         outcome: RewardRedeemOutcome.failed,
         message: RewardRedeemMessage.alreadyPending,
-      );
-    }
-
-    if (requiresParentApproval(item)) {
-      final request = RewardRedemptionRequest(
-        id: '${DateTime.now().microsecondsSinceEpoch}_${item.id}',
-        childId: _childId,
-        itemId: item.id,
-        status: RewardRequestStatus.pending,
-        requiresParentApproval: true,
-        requestedAt: DateTime.now(),
-      );
-      state =
-          state.copyWith(pendingRequests: [...state.pendingRequests, request]);
-      _persist();
-      return const RewardRedeemResult(
-        outcome: RewardRedeemOutcome.pendingApproval,
-        message: RewardRedeemMessage.requestSent,
       );
     }
 
@@ -589,14 +588,8 @@ final rewardStoreProvider =
   final child = ref.watch(currentChildProvider);
   final gamification = ref.watch(currentGamificationStateProvider);
 
-  final baselineCoins = (() {
-    if (gamification != null) {
-      return (gamification.totalXP / 2).floor() +
-          (gamification.earnedBadges.length * 25) +
-          (gamification.streak * 2);
-    }
-    return ((child?.xp ?? 100) / 2).floor();
-  })();
+  final baselineCoins =
+      rewardStoreCoinFloor(gamification: gamification, child: child);
 
   return RewardStoreNotifier(
     box,
@@ -614,7 +607,6 @@ class RewardStoreScreen extends ConsumerStatefulWidget {
 
 class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
   RewardType? _filter;
-  bool _approvalUnlocked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -688,25 +680,6 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
           if (equippedItems.isNotEmpty)
             _EquippedStrip(
                 equippedItems: equippedItems, xpColor: childTheme.xp),
-          if (storeState.pendingRequests.isNotEmpty)
-            _PendingApprovalsCard(
-              requests: storeState.pendingRequests,
-              unlocked: _approvalUnlocked,
-              onUnlock: _unlockParentApproval,
-              onApprove: (request) {
-                final result = ref
-                    .read(rewardStoreProvider.notifier)
-                    .approveRequest(request.id);
-                _snack(_resolveResultMessage(result),
-                    success: result.outcome != RewardRedeemOutcome.failed);
-              },
-              onReject: (request) {
-                final result = ref
-                    .read(rewardStoreProvider.notifier)
-                    .rejectRequest(request.id);
-                _snack(_resolveResultMessage(result), success: true);
-              },
-            ),
           SizedBox(
             height: 52,
             child: ListView(
@@ -748,15 +721,11 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
                     storeState.equippedByType[item.type] == item.id;
                 final pending = storeState.pendingRequests
                     .any((row) => row.itemId == item.id);
-                final needsApproval = ref
-                    .read(rewardStoreProvider.notifier)
-                    .requiresParentApproval(item);
                 return _StoreItemCard(
                   item: item,
                   owned: owned,
                   equipped: equipped,
                   pendingApproval: pending,
-                  needsApproval: needsApproval,
                   coins: storeState.coins,
                   onAction: () => _handleAction(item, owned, equipped, pending),
                 );
@@ -766,60 +735,6 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _unlockParentApproval() async {
-    final l10n = AppLocalizations.of(context)!;
-    await ref.read(parentPinProvider.notifier).refreshStatus();
-    if (!mounted) {
-      return;
-    }
-    final pinState = ref.read(parentPinProvider);
-    if (!pinState.hasPin) {
-      _snack(l10n.rewardStoreParentPinMissing, success: false);
-      return;
-    }
-
-    final controller = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.rewardStoreParentApprovalTitle),
-          content: TextField(
-            controller: controller,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            decoration: InputDecoration(
-              labelText: l10n.rewardStoreParentPinLabel,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(l10n.rewardStoreVerifyAction),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (ok != true) return;
-    final verified = await ref
-        .read(parentPinProvider.notifier)
-        .verifyPin(controller.text.trim());
-    if (!mounted) return;
-    if (verified) {
-      setState(() => _approvalUnlocked = true);
-      _snack(l10n.rewardStoreParentVerificationSuccess);
-    } else {
-      _snack(l10n.rewardStoreInvalidPin, success: false);
-    }
   }
 
   void _handleAction(RewardItem item, bool owned, bool equipped, bool pending) {
@@ -903,113 +818,6 @@ class _RewardStoreScreenState extends ConsumerState<RewardStoreScreen> {
         ),
         backgroundColor: background,
         behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-}
-
-class _PendingApprovalsCard extends StatelessWidget {
-  const _PendingApprovalsCard({
-    required this.requests,
-    required this.unlocked,
-    required this.onUnlock,
-    required this.onApprove,
-    required this.onReject,
-  });
-
-  final List<RewardRedemptionRequest> requests;
-  final bool unlocked;
-  final VoidCallback onUnlock;
-  final ValueChanged<RewardRedemptionRequest> onApprove;
-  final ValueChanged<RewardRedemptionRequest> onReject;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
-    return Card(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.pending_actions, color: colors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.rewardStorePendingApprovals(requests.length),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const Spacer(),
-                if (!unlocked)
-                  OutlinedButton(
-                    onPressed: onUnlock,
-                    child: Text(l10n.rewardStoreParentUnlock),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ...requests.take(3).map((request) {
-              final item = rewardCatalog
-                  .where((reward) => reward.id == request.itemId)
-                  .firstOrNull;
-              if (item == null) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(item.emoji, style: const TextStyle(fontSize: 24)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.rewardItemName(item.id),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700)),
-                            Text(
-                              l10n.rewardStoreRequestedAt(
-                                DateFormat(
-                                  'MMM d, h:mm a',
-                                  Localizations.localeOf(context)
-                                      .toLanguageTag(),
-                                ).format(request.requestedAt),
-                              ),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (unlocked) ...[
-                        TextButton(
-                          onPressed: () => onReject(request),
-                          child: Text(l10n.rewardStoreRejectAction),
-                        ),
-                        FilledButton(
-                          onPressed: () => onApprove(request),
-                          child: Text(l10n.rewardStoreApproveAction),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
       ),
     );
   }
@@ -1111,7 +919,6 @@ class _StoreItemCard extends StatelessWidget {
     required this.owned,
     required this.equipped,
     required this.pendingApproval,
-    required this.needsApproval,
     required this.coins,
     required this.onAction,
   });
@@ -1120,7 +927,6 @@ class _StoreItemCard extends StatelessWidget {
   final bool owned;
   final bool equipped;
   final bool pendingApproval;
-  final bool needsApproval;
   final int coins;
   final VoidCallback onAction;
 
@@ -1178,7 +984,6 @@ class _StoreItemCard extends StatelessWidget {
     if (pendingApproval) return l10n.rewardStorePendingAction;
     if (owned && equipped) return l10n.rewardStoreUnequipAction;
     if (owned) return l10n.rewardStoreEquipAction;
-    if (needsApproval) return l10n.rewardStoreRequestParentAction;
     if (!canAfford) return l10n.rewardStoreNeedMoreCoinsAction;
     return l10n.rewardStoreRedeemAction;
   }

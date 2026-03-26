@@ -23,7 +23,6 @@ import 'package:kinder_world/features/parent_mode/settings/screens/legal_pages.d
 import 'package:kinder_world/features/parent_mode/settings/screens/privacy_settings_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/profile_screen.dart';
 import 'package:kinder_world/features/parent_mode/settings/screens/theme_screen.dart';
-import 'package:kinder_world/features/parent_mode/subscription/billing_management_screen.dart';
 import 'package:kinder_world/features/parent_mode/subscription/subscription_screen.dart';
 import 'package:kinder_world/features/system_pages/data_sync_screen.dart';
 import 'package:kinder_world/features/system_pages/error_screen.dart';
@@ -157,10 +156,6 @@ List<RouteBase> buildParentRoutes() {
             SubscriptionReturnPayload.fromQuery(state.uri.queryParameters);
         return SubscriptionScreen(returnPayload: payload);
       },
-    ),
-    GoRoute(
-      path: Routes.parentBilling,
-      builder: (context, state) => const BillingManagementScreen(),
     ),
     GoRoute(
       path: Routes.parentNotifications,

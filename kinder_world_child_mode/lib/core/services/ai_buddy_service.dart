@@ -30,7 +30,7 @@ class AiBuddyService {
   Future<AiBuddyConversation> getOrStartCurrentSession({
     required int childId,
   }) async {
-    final token = await _requireParentAccessToken();
+    final token = await _requireConversationAccessToken();
     try {
       final current = await _api.getCurrentSession(
         childId: childId,
@@ -54,7 +54,7 @@ class AiBuddyService {
     required int childId,
     bool forceNew = false,
   }) async {
-    final token = await _requireParentAccessToken();
+    final token = await _requireConversationAccessToken();
     try {
       final response = await _api.startSession(
         childId: childId,
@@ -70,7 +70,7 @@ class AiBuddyService {
   Future<AiBuddyConversation> getSession({
     required int sessionId,
   }) async {
-    final token = await _requireParentAccessToken();
+    final token = await _requireConversationAccessToken();
     try {
       final response = await _api.getSession(
         sessionId: sessionId,
@@ -89,7 +89,7 @@ class AiBuddyService {
     String? clientMessageId,
     String? quickAction,
   }) async {
-    final token = await _requireParentAccessToken();
+    final token = await _requireConversationAccessToken();
     try {
       final response = await _api.sendMessage(
         sessionId: sessionId,
@@ -140,14 +140,18 @@ class AiBuddyService {
       return parentToken;
     }
 
+    throw const AiBuddyUnavailableException(
+      AiBuddyUiMessages.authenticationRequired,
+    );
+  }
+
+  Future<String> _requireConversationAccessToken() async {
     final authToken = await _secureStorage.getAuthToken();
     if (authToken != null && authToken.isNotEmpty) {
       return authToken;
     }
 
-    throw const AiBuddyUnavailableException(
-      AiBuddyUiMessages.authenticationRequired,
-    );
+    return _requireParentAccessToken();
   }
 
   Exception _mapDioError(DioException error) {
@@ -170,6 +174,11 @@ class AiBuddyService {
         }
       }
       if (detail is String && detail.isNotEmpty) {
+        if (detail == 'Invalid token type') {
+          return const AiBuddyUnavailableException(
+            AiBuddyUiMessages.authenticationRequired,
+          );
+        }
         return Exception(detail);
       }
     }

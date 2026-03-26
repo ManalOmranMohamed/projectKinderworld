@@ -266,7 +266,7 @@ class SubscriptionSnapshot {
         features: features,
       );
 
-  bool get isPremium => tier != PlanTier.free;
+  bool get isPremium => lifecycle.hasPaidAccess;
 
   factory SubscriptionSnapshot.fromJson(Map<String, dynamic> json) {
     return SubscriptionSnapshot(
@@ -331,6 +331,8 @@ PlanInfo planInfoFromSubscriptionSnapshot({
     hasSmartControls: tier != PlanTier.free,
     hasExclusiveContent: tier != PlanTier.free,
     hasFamilyDashboard: tier == PlanTier.familyPlus,
+    hasPrioritySupport:
+        _readBool(features['priority_support']) ?? defaults.hasPrioritySupport,
   );
 }
 

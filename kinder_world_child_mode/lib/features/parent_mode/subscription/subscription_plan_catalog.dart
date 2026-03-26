@@ -24,12 +24,14 @@ class SubscriptionPlanCardConfig {
 List<SubscriptionPlanCardConfig> buildSubscriptionPlanCardConfigs(
   AppLocalizations l10n,
 ) {
+  final paidAccessLabel =
+      '${l10n.oneTimePurchaseLabel} • ${l10n.lifetimeAccessLabel}';
   return [
     SubscriptionPlanCardConfig(
       title: l10n.planPremium,
-      price: '\$10',
-      priceLabel: l10n.perMonthLabel,
-      subtitle: l10n.premiumFeatures,
+      price: '\$39',
+      priceLabel: paidAccessLabel,
+      subtitle: l10n.planPremiumSubtitle,
       features: [
         l10n.unlimitedActivities,
         l10n.upToThreeChildren,
@@ -39,10 +41,10 @@ List<SubscriptionPlanCardConfig> buildSubscriptionPlanCardConfigs(
       tier: PlanTier.premium,
     ),
     SubscriptionPlanCardConfig(
-      title: l10n.familyPlanLabel,
-      price: '\$20',
-      priceLabel: l10n.perMonthLabel,
-      subtitle: l10n.bestForFamilies,
+      title: l10n.planFamilyPlus,
+      price: '\$69',
+      priceLabel: paidAccessLabel,
+      subtitle: l10n.planFamilyPlusSubtitle,
       features: [
         l10n.unlimitedActivities,
         l10n.planUnlimitedChildren,

@@ -222,7 +222,7 @@ class SubscriptionProviderMixin:
             .filter(
                 BillingTransaction.subscription_profile_id == profile.id,
                 BillingTransaction.status == "succeeded",
-                BillingTransaction.transaction_type.in_(["activation", "renewal"]),
+                BillingTransaction.transaction_type.in_(["purchase", "upgrade", "activation"]),
             )
             .order_by(BillingTransaction.effective_at.desc(), BillingTransaction.id.desc())
             .first()

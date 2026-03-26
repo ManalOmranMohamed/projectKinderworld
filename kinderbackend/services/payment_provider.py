@@ -30,6 +30,7 @@ class CheckoutSessionResult:
     status: str
     payment_status: str
     customer_id: str | None = None
+    # Legacy compatibility field. One-time purchases do not populate it.
     subscription_id: str | None = None
     payment_intent_id: str | None = None
     payment_method_id: str | None = None
@@ -38,6 +39,7 @@ class CheckoutSessionResult:
 
 @dataclass(slots=True)
 class PortalSessionResult:
+    # Legacy recurring-billing compatibility payload.
     provider: str
     session_id: str
     url: str
@@ -59,6 +61,7 @@ class RefundResult:
 
 @dataclass(slots=True)
 class ProviderSubscriptionSnapshot:
+    # Legacy recurring-billing compatibility payload.
     provider: str
     subscription_id: str
     status: str

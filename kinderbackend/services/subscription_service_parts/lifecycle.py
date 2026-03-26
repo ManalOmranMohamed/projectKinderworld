@@ -11,20 +11,17 @@ from plan_service import PLAN_FREE, get_plan_catalog, get_user_plan, validate_pl
 from services.notification_service import notification_service
 from services.payment_provider import (
     CheckoutSessionResult,
-    PaymentProviderActionRequiredError,
     PaymentProviderError,
+    PaymentProviderActionRequiredError,
     PaymentProviderUnavailableError,
 )
 from services.subscription_service_parts.common import (
-    PAYMENT_STATUS_CANCELED,
     PAYMENT_STATUS_FAILED,
     PAYMENT_STATUS_NOT_APPLICABLE,
     PAYMENT_STATUS_PENDING,
     PAYMENT_STATUS_SUCCEEDED,
     SUBSCRIPTION_STATUS_ACTIVE,
-    SUBSCRIPTION_STATUS_CANCELED,
     SUBSCRIPTION_STATUS_FREE,
-    SUBSCRIPTION_STATUS_PAST_DUE,
     SUBSCRIPTION_STATUS_PENDING,
     logger,
 )
@@ -44,7 +41,10 @@ class SubscriptionLifecycleMixin:
             raise HTTPException(status_code=400, detail=SubscriptionMessages.INVALID_PLAN)
 
         if plan == PLAN_FREE:
-            return self.cancel_subscription(db=db, user=user)
+            self._set_free_access(db=db, user=user, source="parent_upgrade_free")
+            db.commit()
+            db.refresh(user)
+            return self.get_subscription(db=db, user=user)
         self._activate_plan(
             db=db,
             user=user,
@@ -63,73 +63,65 @@ class SubscriptionLifecycleMixin:
         user: User,
         source: str = "parent_cancel",
     ) -> dict[str, object]:
+        self._set_free_access(db=db, user=user, source=source)
+        db.commit()
+        db.refresh(user)
+        return self.get_subscription(db=db, user=user)
+
+    def _set_free_access(
+        self,
+        *,
+        db: Session,
+        user: User,
+        source: str,
+    ) -> SubscriptionProfile:
         profile = self._ensure_subscription_profile(db=db, user=user)
         now = db_utc_now()
         previous_plan = profile.current_plan_id
-        notification_old_plan = profile.selected_plan_id or previous_plan
         previous_status = profile.status
-        provider_reference = profile.provider_subscription_id
+        provider_reference = profile.provider_customer_id or profile.provider_subscription_id
 
-        if previous_plan != PLAN_FREE or profile.status != SUBSCRIPTION_STATUS_FREE:
-            provider = self._payment_provider()
-            if (
-                provider.is_external
-                and profile.provider_subscription_id
-                and previous_status in {SUBSCRIPTION_STATUS_ACTIVE, SUBSCRIPTION_STATUS_PAST_DUE}
-            ):
-                try:
-                    provider.cancel_subscription(subscription_id=profile.provider_subscription_id)
-                except PaymentProviderError as exc:
-                    raise HTTPException(status_code=502, detail=str(exc))
-            profile.cancel_at = now
-            profile.status = SUBSCRIPTION_STATUS_CANCELED
-            profile.will_renew = False
-            profile.last_payment_status = PAYMENT_STATUS_CANCELED
-            profile.current_plan_id = PLAN_FREE
-            profile.selected_plan_id = None
-            self._sync_user_plan_projection(user=user, plan=PLAN_FREE, when=now)
-            db.add(profile)
-            db.add(user)
+        if previous_plan == PLAN_FREE and profile.status == SUBSCRIPTION_STATUS_FREE:
+            return profile
 
-            self._record_subscription_event(
-                db=db,
-                user=user,
-                profile=profile,
-                event_type="cancel",
-                previous_plan_id=previous_plan,
-                plan_id=PLAN_FREE,
-                previous_status=previous_status,
-                status=profile.status,
-                payment_status=profile.last_payment_status,
-                source=source,
-                details_json={"cancel_at": profile.cancel_at.isoformat()},
-                provider_reference=provider_reference,
-                occurred_at=now,
-            )
-            self._record_billing_transaction(
-                db=db,
-                user=user,
-                profile=profile,
-                plan_id=PLAN_FREE,
-                transaction_type="cancel",
-                amount_cents=0,
-                status="succeeded",
-                provider_reference=provider_reference,
-                effective_at=now,
-                metadata_json={"source": source},
-            )
-            notification_service.notify_subscription_changed(
-                db,
-                user=user,
-                old_plan=notification_old_plan,
-                new_plan=PLAN_FREE,
-                source=source,
-            )
-            db.commit()
-            db.refresh(user)
-            db.refresh(profile)
+        profile.current_plan_id = PLAN_FREE
+        profile.selected_plan_id = None
+        profile.status = SUBSCRIPTION_STATUS_FREE
+        profile.started_at = None
+        profile.expires_at = None
+        profile.cancel_at = None
+        profile.will_renew = False
+        profile.last_payment_status = PAYMENT_STATUS_NOT_APPLICABLE
+        profile.provider_subscription_id = None
+        db.add(profile)
 
-        return self.get_subscription(db=db, user=user)
+        self._sync_user_plan_projection(user=user, plan=PLAN_FREE, when=now)
+        db.add(user)
+
+        self._record_subscription_event(
+            db=db,
+            user=user,
+            profile=profile,
+            event_type="access_revoked",
+            previous_plan_id=previous_plan,
+            plan_id=PLAN_FREE,
+            previous_status=previous_status,
+            status=profile.status,
+            payment_status=profile.last_payment_status,
+            source=source,
+            details_json={"reason": "manual_revoke_or_free_reset"},
+            provider_reference=provider_reference,
+            occurred_at=now,
+        )
+        notification_service.notify_subscription_changed(
+            db,
+            user=user,
+            old_plan=previous_plan,
+            new_plan=PLAN_FREE,
+            source=source,
+        )
+        db.flush()
+        return profile
 
     def create_checkout_session(
         self,
@@ -164,23 +156,26 @@ class SubscriptionLifecycleMixin:
                 ),
             )
 
-        if requested == PLAN_FREE:
-            status_payload = self.cancel_subscription(
-                db=db,
-                user=user,
-                source="parent_select_free",
-            )
-            return self._selection_payload_from_snapshot(status_payload)
-
         profile = self._ensure_subscription_profile(db=db, user=user)
+        if requested == PLAN_FREE:
+            return self._selection_payload_from_snapshot(
+                self.get_subscription(db=db, user=user)
+            )
         now = db_utc_now()
         previous_plan = profile.current_plan_id
         previous_status = profile.status
+        if previous_plan == requested and profile.status == SUBSCRIPTION_STATUS_ACTIVE:
+            return self._selection_payload_from_snapshot(
+                self.get_subscription(db=db, user=user)
+            )
         provider = self._payment_provider()
         profile.selected_plan_id = requested
         profile.status = SUBSCRIPTION_STATUS_PENDING
         profile.last_payment_status = PAYMENT_STATUS_PENDING
         profile.provider = provider.provider_key
+        profile.cancel_at = None
+        profile.will_renew = False
+        profile.provider_subscription_id = None
         db.add(profile)
 
         try:
@@ -318,9 +313,7 @@ class SubscriptionLifecycleMixin:
             )
         else:
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-            profile.provider_subscription_id = (
-                checkout.subscription_id or profile.provider_subscription_id
-            )
+            profile.provider_subscription_id = None
             db.add(profile)
 
         db.commit()
@@ -358,12 +351,9 @@ class SubscriptionLifecycleMixin:
                 detail=SubscriptionMessages.PLAN_ID_OR_TYPE_REQUIRED,
             )
         if requested == PLAN_FREE:
-            status_payload = self.cancel_subscription(
-                db=db,
-                user=user,
-                source="parent_activate_free",
+            return self._selection_payload_from_snapshot(
+                self.get_subscription(db=db, user=user)
             )
-            return self._selection_payload_from_snapshot(status_payload)
 
         profile = self._ensure_subscription_profile(db=db, user=user)
         if profile.selected_plan_id and profile.selected_plan_id != requested:
@@ -517,9 +507,7 @@ class SubscriptionLifecycleMixin:
             db.add(checkout_attempt)
             profile.last_payment_status = checkout_attempt.status
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-            profile.provider_subscription_id = (
-                checkout.subscription_id or profile.provider_subscription_id
-            )
+            profile.provider_subscription_id = None
             db.add(profile)
             self._record_subscription_event(
                 db=db,
@@ -587,17 +575,15 @@ class SubscriptionLifecycleMixin:
         return payload_out
 
     def manage_subscription(self, *, db: Session, user: User) -> dict[str, object]:
-        return self._build_billing_portal_response(
-            db=db,
-            user=user,
-            source="parent_manage",
+        raise HTTPException(
+            status_code=410,
+            detail="Billing portal is disabled for one-time purchases",
         )
 
     def billing_portal(self, *, db: Session, user: User) -> dict[str, object]:
-        return self._build_billing_portal_response(
-            db=db,
-            user=user,
-            source="billing_portal",
+        raise HTTPException(
+            status_code=410,
+            detail="Billing portal is disabled for one-time purchases",
         )
 
     def _build_billing_portal_response(
@@ -876,7 +862,10 @@ class SubscriptionLifecycleMixin:
         except ValueError:
             raise HTTPException(status_code=400, detail=SubscriptionMessages.INVALID_PLAN)
         if normalized == PLAN_FREE:
-            return self.cancel_subscription(db=db, user=user, source=source)
+            self._set_free_access(db=db, user=user, source=source)
+            db.commit()
+            db.refresh(user)
+            return self.get_subscription(db=db, user=user)
         self._activate_plan(
             db=db,
             user=user,
@@ -904,6 +893,15 @@ class SubscriptionLifecycleMixin:
                 if profile.last_payment_status == PAYMENT_STATUS_SUCCEEDED and not user.is_premium:
                     profile.last_payment_status = PAYMENT_STATUS_NOT_APPLICABLE
                     updated = True
+                if profile.started_at is not None:
+                    profile.started_at = None
+                    updated = True
+                if profile.expires_at is not None:
+                    profile.expires_at = None
+                    updated = True
+                if profile.cancel_at is not None:
+                    profile.cancel_at = None
+                    updated = True
                 if profile.will_renew:
                     profile.will_renew = False
                     updated = True
@@ -914,11 +912,14 @@ class SubscriptionLifecycleMixin:
                 if profile.started_at is None:
                     profile.started_at = ensure_utc(user.updated_at or user.created_at or now)
                     updated = True
-                if profile.expires_at is None:
-                    profile.expires_at = profile.started_at + self._plan_duration(plan)
+                if profile.expires_at is not None:
+                    profile.expires_at = None
                     updated = True
-                if not profile.will_renew:
-                    profile.will_renew = True
+                if profile.cancel_at is not None:
+                    profile.cancel_at = None
+                    updated = True
+                if profile.will_renew:
+                    profile.will_renew = False
                     updated = True
                 if profile.last_payment_status == PAYMENT_STATUS_NOT_APPLICABLE:
                     profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
@@ -938,8 +939,6 @@ class SubscriptionLifecycleMixin:
         if plan != PLAN_FREE and bool(user.is_active):
             status = SUBSCRIPTION_STATUS_ACTIVE
             started_at = ensure_utc(user.updated_at or user.created_at or now)
-            expires_at = started_at + self._plan_duration(plan)
-            will_renew = True
             last_payment_status = PAYMENT_STATUS_SUCCEEDED
 
         profile = SubscriptionProfile(
@@ -974,11 +973,6 @@ class SubscriptionLifecycleMixin:
         now = db_utc_now()
         previous_plan = profile.current_plan_id
         previous_status = profile.status
-        was_same_active_plan = (
-            previous_plan == plan
-            and profile.status == SUBSCRIPTION_STATUS_ACTIVE
-            and plan != PLAN_FREE
-        )
 
         if payment_attempt is None:
             payment_attempt = self._record_payment_attempt(
@@ -986,7 +980,7 @@ class SubscriptionLifecycleMixin:
                 user=user,
                 profile=profile,
                 plan_id=plan,
-                attempt_type="renewal" if was_same_active_plan else "activation",
+                attempt_type="purchase",
                 status=PAYMENT_STATUS_SUCCEEDED,
                 amount_cents=self._price_cents_for_plan(plan),
                 requested_at=now,
@@ -998,36 +992,24 @@ class SubscriptionLifecycleMixin:
         if checkout is not None:
             profile.provider = checkout.provider
             profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-            profile.provider_subscription_id = (
-                checkout.subscription_id or profile.provider_subscription_id
-            )
+            profile.provider_subscription_id = None
 
         profile.selected_plan_id = None
         profile.current_plan_id = plan
         profile.status = SUBSCRIPTION_STATUS_ACTIVE
-        profile.started_at = ensure_utc(profile.started_at or now)
-        if was_same_active_plan and profile.expires_at is not None and profile.expires_at > now:
-            profile.expires_at = profile.expires_at + self._plan_duration(plan)
-            event_type = "renew"
-            transaction_type = "renewal"
-        else:
-            profile.started_at = now
-            profile.expires_at = now + self._plan_duration(plan)
-            profile.cancel_at = None
-            event_type = "activate"
-            transaction_type = "activation"
-        profile.will_renew = True
+        profile.started_at = now
+        profile.expires_at = None
+        profile.cancel_at = None
+        profile.will_renew = False
         profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
         db.add(profile)
 
         self._sync_user_plan_projection(user=user, plan=plan, when=now)
         db.add(user)
 
-        provider_reference = (
-            checkout.subscription_id
-            if checkout is not None and checkout.subscription_id
-            else payment_attempt.provider_reference
-        )
+        provider_reference = payment_attempt.provider_reference
+        event_type = "purchase" if previous_plan == PLAN_FREE else "upgrade"
+        transaction_type = "purchase" if previous_plan == PLAN_FREE else "upgrade"
         details_json = {
             "request_origin": request_origin,
             "payment_attempt_id": payment_attempt.id,

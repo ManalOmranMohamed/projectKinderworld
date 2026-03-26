@@ -18,6 +18,8 @@ class _FakeProviderState:
     subscription_id: str = "sub_test_123"
     session_id: str = "cs_test_123"
     payment_intent_id: str = "pi_test_123"
+    checkout_status: str = "complete"
+    checkout_payment_status: str = "paid"
     refunded: bool = False
     detached_method_ids: list[str] | None = None
     attached_method_ids: list[str] | None = None
@@ -57,8 +59,8 @@ class FakeStripeProvider:
             provider=self.provider_key,
             session_id=session_id,
             checkout_url=f"https://checkout.stripe.test/{session_id}",
-            status="complete",
-            payment_status="paid",
+            status=self.state.checkout_status,
+            payment_status=self.state.checkout_payment_status,
             customer_id=self.state.customer_id,
             subscription_id=self.state.subscription_id,
             payment_intent_id=self.state.payment_intent_id,
@@ -182,7 +184,7 @@ class FakeStripeProvider:
         return {"id": payment_method_id, "detached": True}
 
 
-def test_external_provider_checkout_activation_portal_refund_and_payment_methods(
+def test_external_provider_one_time_purchase_unlocks_access_and_supports_refund(
     client,
     create_parent,
     auth_headers,
@@ -196,6 +198,9 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
     try:
         parent = create_parent(email="provider.parent@example.com", plan=PLAN_FREE)
         headers = auth_headers(parent)
+
+        gated_before_purchase = client.get("/downloads/offline", headers=headers)
+        assert gated_before_purchase.status_code == 403
 
         select = client.post(
             "/subscription/checkout",
@@ -227,18 +232,19 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         assert (
             snapshot_payload["lifecycle"]["provider_customer_id"] == fake_provider.state.customer_id
         )
-        assert (
-            snapshot_payload["lifecycle"]["provider_subscription_id"]
-            == fake_provider.state.subscription_id
-        )
+        assert snapshot_payload["lifecycle"]["has_paid_access"] is True
+        assert "provider_subscription_id" not in snapshot_payload["lifecycle"]
+        assert "will_renew" not in snapshot_payload["lifecycle"]
         assert any(
             item["provider_reference"] == fake_provider.state.session_id
             for item in snapshot_payload["payment_attempts"]
         )
         assert any(
-            item["provider_reference"] == fake_provider.state.subscription_id
+            item["provider_reference"] == fake_provider.state.session_id
             for item in snapshot_payload["billing_history"]
         )
+        gated_after_purchase = client.get("/downloads/offline", headers=headers)
+        assert gated_after_purchase.status_code == 200
 
         methods = client.get("/billing/methods", headers=headers)
         assert methods.status_code == 200
@@ -254,33 +260,29 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         assert attach_method.status_code == 200
         assert attach_method.json()["method"]["provider_method_id"] == "pm_card_amex"
 
+        cancel = client.post("/subscription/cancel", headers=headers)
+        assert cancel.status_code == 410
+        assert cancel.json()["detail"] == "Cancel is disabled for one-time purchases"
+
         manage = client.post("/subscription/manage", headers=headers)
-        assert manage.status_code == 200
-        manage_payload = manage.json()
-        assert manage_payload["operation"] == "billing_portal"
-        assert manage_payload["current_plan_id"] == PLAN_PREMIUM
-        assert manage_payload["status"] == "active"
-        assert manage_payload["provider"] == "stripe"
-        assert manage_payload["provider_subscription_id"] == fake_provider.state.subscription_id
-        assert manage_payload["customer_id"] == fake_provider.state.customer_id
-        assert manage_payload["url"] == "https://billing.stripe.test/portal"
+        assert manage.status_code == 410
+        assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
 
         portal = client.post("/billing/portal", headers=headers)
-        assert portal.status_code == 200
-        portal_payload = portal.json()
-        assert portal_payload["operation"] == "billing_portal"
-        assert portal_payload["current_plan_id"] == PLAN_PREMIUM
-        assert portal_payload["status"] == "active"
-        assert portal_payload["provider"] == "stripe"
-        assert portal_payload["provider_subscription_id"] == fake_provider.state.subscription_id
-        assert portal_payload["customer_id"] == fake_provider.state.customer_id
-        assert portal_payload["url"] == "https://billing.stripe.test/portal"
+        assert portal.status_code == 410
+        assert portal.json()["detail"] == "Billing portal is disabled for one-time purchases"
 
-        history_after_portal = client.get("/subscription/history", headers=headers)
-        assert history_after_portal.status_code == 200
-        event_types = [item["event_type"] for item in history_after_portal.json()["events"]]
-        assert "manage_request" in event_types
-        assert "manage_link_created" in event_types
+        history_after_purchase = client.get("/subscription/history", headers=headers)
+        assert history_after_purchase.status_code == 200
+        purchase_history = history_after_purchase.json()
+        event_types = [item["event_type"] for item in purchase_history["events"]]
+        assert "purchase" in event_types
+        assert "renew" not in event_types
+        assert "cancel" not in event_types
+        assert {item["attempt_type"] for item in purchase_history["payment_attempts"]} <= {
+            "checkout",
+            "activation",
+        }
 
         seed_builtin_rbac()
         admin = create_admin(email="refund.admin@example.com", role_names=["super_admin"])
@@ -301,6 +303,15 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         assert any(
             item["transaction_type"] == "refund" for item in history_payload["billing_transactions"]
         )
+        assert any(
+            item["amount_cents"] < 0 and item["transaction_type"] == "refund"
+            for item in history_payload["billing_transactions"]
+        )
+
+        snapshot_after_refund = client.get("/subscription/me", headers=headers)
+        assert snapshot_after_refund.status_code == 200
+        assert snapshot_after_refund.json()["plan"] == PLAN_PREMIUM
+        assert snapshot_after_refund.json()["lifecycle"]["has_paid_access"] is True
 
         synced_methods = client.get("/billing/methods", headers=headers)
         visa_method = next(
@@ -310,5 +321,59 @@ def test_external_provider_checkout_activation_portal_refund_and_payment_methods
         )
         delete_method = client.delete(f"/billing/methods/{visa_method['id']}", headers=headers)
         assert delete_method.status_code == 200
+    finally:
+        subscription_service._payment_provider_factory = original_factory
+
+
+def test_external_provider_incomplete_checkout_keeps_access_gated(
+    client,
+    create_parent,
+    auth_headers,
+):
+    fake_provider = FakeStripeProvider()
+    fake_provider.state.checkout_status = "open"
+    fake_provider.state.checkout_payment_status = "unpaid"
+    original_factory = subscription_service._payment_provider_factory
+    subscription_service._payment_provider_factory = lambda: fake_provider
+    try:
+        parent = create_parent(email="provider.pending@example.com", plan=PLAN_FREE)
+        headers = auth_headers(parent)
+
+        before_purchase = client.get("/downloads/offline", headers=headers)
+        assert before_purchase.status_code == 403
+
+        checkout = client.post(
+            "/subscription/checkout",
+            json={"plan_type": "premium"},
+            headers=headers,
+        )
+        assert checkout.status_code == 200
+
+        activate = client.post(
+            "/subscription/activate",
+            json={"plan_type": "premium", "session_id": fake_provider.state.session_id},
+            headers=headers,
+        )
+        assert activate.status_code == 409
+        assert activate.json()["detail"] == "Payment is not completed yet"
+
+        after_attempt = client.get("/subscription/me", headers=headers)
+        assert after_attempt.status_code == 200
+        payload = after_attempt.json()
+        assert payload["plan"] == PLAN_FREE
+        assert payload["current_plan_id"] == PLAN_FREE
+        assert payload["lifecycle"]["selected_plan_id"] == PLAN_PREMIUM
+        assert payload["lifecycle"]["status"] == "pending_activation"
+        assert payload["lifecycle"]["has_paid_access"] is False
+
+        gated_after_attempt = client.get("/downloads/offline", headers=headers)
+        assert gated_after_attempt.status_code == 403
+
+        history = client.get("/subscription/history", headers=headers)
+        assert history.status_code == 200
+        history_payload = history.json()
+        assert any(item["event_type"] == "failure" for item in history_payload["events"])
+        assert not any(item["event_type"] == "renew" for item in history_payload["events"])
+        assert not any(item["attempt_type"] == "renewal" for item in history_payload["payment_attempts"])
     finally:
         subscription_service._payment_provider_factory = original_factory

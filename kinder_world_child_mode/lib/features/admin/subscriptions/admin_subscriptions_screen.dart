@@ -580,24 +580,6 @@ class _AdminSubscriptionsScreenState
             ),
             const SizedBox(height: 8),
             _InfoRow(
-              icon: Icons.event_available_outlined,
-              label: 'Expires at',
-              value: _formatDate(item.lifecycle.expiresAt),
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.event_busy_outlined,
-              label: 'Cancel at',
-              value: _formatDate(item.lifecycle.cancelAt),
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.autorenew_rounded,
-              label: 'Will renew',
-              value: item.lifecycle.willRenew ? 'Yes' : 'No',
-            ),
-            const SizedBox(height: 8),
-            _InfoRow(
               icon: Icons.credit_score_rounded,
               label: 'Last payment',
               value: _displayStatus(item.lifecycle.lastPaymentStatus),

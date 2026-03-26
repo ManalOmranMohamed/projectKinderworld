@@ -1,6 +1,5 @@
 import 'package:kinder_world/core/api/subscription_api.dart';
 import 'package:kinder_world/core/cache/app_cache_store.dart';
-import 'package:kinder_world/core/models/payment_method_record.dart';
 import 'package:kinder_world/core/subscription/plan_info.dart';
 import 'package:logger/logger.dart';
 
@@ -21,7 +20,6 @@ class SubscriptionService {
   static const _subscriptionKey = 'current';
   static const _historyKey = 'history';
   static const _plansKey = 'plans';
-  static const _paymentMethodsKey = 'payment_methods';
   static const _staleAfter = Duration(minutes: 10);
 
   Future<Map<String, dynamic>?> getSubscription({
@@ -141,32 +139,6 @@ class SubscriptionService {
     return [];
   }
 
-  Future<String> openBillingPortal() async {
-    try {
-      final response = await _subscriptionApi.manageSubscription();
-      final url = response['url'] ??
-          response['portal_url'] ??
-          response['billing_portal_url'];
-      if (url is! String || url.isEmpty) {
-        throw StateError('Billing portal URL missing');
-      }
-      return url;
-    } catch (e) {
-      _logger.e('Error opening billing portal: $e');
-      rethrow;
-    } finally {
-      await _invalidateSubscriptionCache();
-    }
-  }
-
-  Future<Map<String, dynamic>> selectPlan(PlanTier tier) async {
-    final response = await _subscriptionApi.selectPlan(
-      planType: _planTypeForTier(tier),
-    );
-    await _invalidateSubscriptionCache();
-    return response;
-  }
-
   Future<Map<String, dynamic>> activatePlan(
     PlanTier tier, {
     String? sessionId,
@@ -178,14 +150,6 @@ class SubscriptionService {
     await _invalidateSubscriptionCache();
     return response;
   }
-
-  Future<Map<String, dynamic>> cancelCurrentSubscription() async {
-    final response = await _subscriptionApi.cancelSubscription();
-    await _invalidateSubscriptionCache();
-    return response;
-  }
-
-  Future<String> manageCurrentSubscription() => openBillingPortal();
 
   Future<CheckoutSession> startCheckout(PlanTier tier) async {
     final response = await _subscriptionApi.createCheckoutSession(
@@ -203,69 +167,9 @@ class SubscriptionService {
     );
   }
 
-  Future<List<PaymentMethodRecord>> listPaymentMethods({
-    bool forceRefresh = false,
-  }) async {
-    final snapshot = _cacheStore.snapshot(
-      scope: _scope,
-      key: _paymentMethodsKey,
-      staleAfter: _staleAfter,
-    );
-
-    if (!forceRefresh && snapshot.hasData && !snapshot.isStale) {
-      return _cacheStore
-          .readList(scope: _scope, key: _paymentMethodsKey)
-          .map((item) => PaymentMethodRecord.fromJson(
-                Map<String, dynamic>.from(item as Map),
-              ))
-          .toList();
-    }
-
-    try {
-      final data = await _subscriptionApi.getPaymentMethods();
-      await _cacheStore.storeList(
-        scope: _scope,
-        key: _paymentMethodsKey,
-        payload: data,
-      );
-      return data.map((item) => PaymentMethodRecord.fromJson(item)).toList();
-    } catch (e) {
-      _logger.e('Error fetching payment methods: $e');
-      if (snapshot.hasData) {
-        return _cacheStore
-            .readList(scope: _scope, key: _paymentMethodsKey)
-            .map((item) => PaymentMethodRecord.fromJson(
-                  Map<String, dynamic>.from(item as Map),
-                ))
-            .toList();
-      }
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>> addPaymentMethod({
-    String? label,
-    String? providerMethodId,
-    bool setDefault = false,
-  }) async {
-    final response = await _subscriptionApi.addPaymentMethod(
-      label: label,
-      providerMethodId: providerMethodId,
-      setDefault: setDefault,
-    );
-    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
-    return response;
-  }
-
-  Future<void> deletePaymentMethod(int methodId) async {
-    await _subscriptionApi.deletePaymentMethod(methodId);
-    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
-  }
-
   Future<void> _invalidateSubscriptionCache() async {
     await _cacheStore.invalidate(scope: _scope, key: _subscriptionKey);
     await _cacheStore.invalidate(scope: _scope, key: _historyKey);
-    await _cacheStore.invalidate(scope: _scope, key: _paymentMethodsKey);
   }
 
   String _planTypeForTier(PlanTier tier) {

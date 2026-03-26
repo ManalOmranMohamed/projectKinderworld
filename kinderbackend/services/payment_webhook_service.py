@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -264,9 +264,7 @@ class PaymentWebhookService:
         checkout = self._checkout_result_from_object(obj)
         profile.provider = "stripe"
         profile.provider_customer_id = checkout.customer_id or profile.provider_customer_id
-        profile.provider_subscription_id = (
-            checkout.subscription_id or profile.provider_subscription_id
-        )
+        profile.provider_subscription_id = None
         profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
         db.add(profile)
 
@@ -336,351 +334,16 @@ class PaymentWebhookService:
         }
 
     def _handle_invoice_paid(self, *, db: Session, obj: dict[str, Any]) -> dict[str, Any]:
-        user, profile = self._resolve_profile_context(db=db, obj=obj)
-        if user is None or profile is None:
-            return self._ignored_result(obj=obj, event_type="invoice.paid")
-
-        now = db_utc_now()
-        invoice_id = self._invoice_id_from_object(obj, event_type="invoice.paid")
-        plan_id = self._infer_plan_id(obj=obj, profile=profile)
-        billing_reason = self._as_str(obj.get("billing_reason")) or "invoice"
-        period_end = self._invoice_period_end(obj)
-        amount_cents = int(obj.get("amount_paid") or obj.get("amount_due") or 0)
-
-        profile.provider = "stripe"
-        profile.provider_customer_id = (
-            self._as_str(obj.get("customer")) or profile.provider_customer_id
-        )
-        profile.provider_subscription_id = (
-            self._subscription_id_from_object(obj) or profile.provider_subscription_id
-        )
-        profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
-        db.add(profile)
-
-        attempt_type = "renewal" if billing_reason == "subscription_cycle" else "invoice_payment"
-        attempt = self._upsert_payment_attempt(
-            db=db,
-            user=user,
-            profile=profile,
-            provider_reference=invoice_id,
-            plan_id=plan_id or profile.current_plan_id,
-            attempt_type=attempt_type,
-            status=PAYMENT_STATUS_SUCCEEDED,
-            amount_cents=amount_cents,
-            completed=True,
-            metadata_json={
-                "billing_reason": billing_reason,
-                "payment_intent_id": self._as_str(obj.get("payment_intent")),
-                "subscription_id": profile.provider_subscription_id,
-            },
-        )
-
-        should_activate = plan_id is not None and (
-            profile.current_plan_id != plan_id or profile.status != SUBSCRIPTION_STATUS_ACTIVE
-        )
-        should_renew = (
-            plan_id is not None
-            and profile.current_plan_id == plan_id
-            and profile.status == SUBSCRIPTION_STATUS_ACTIVE
-            and billing_reason == "subscription_cycle"
-        )
-
-        if should_activate or should_renew:
-            self._subscription_service._activate_plan(  # noqa: SLF001
-                db=db,
-                user=user,
-                plan=plan_id or profile.current_plan_id,
-                source="webhook_invoice_paid",
-                request_origin="webhook_invoice_paid",
-                payment_attempt=attempt,
-            )
-        else:
-            if plan_id and profile.current_plan_id == PLAN_FREE:
-                profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(
-                    user=user, plan=plan_id, when=now
-                )  # noqa: SLF001
-                db.add(user)
-            if profile.status in {SUBSCRIPTION_STATUS_PENDING, SUBSCRIPTION_STATUS_PAST_DUE}:
-                profile.status = SUBSCRIPTION_STATUS_ACTIVE
-            if period_end is not None and (
-                profile.expires_at is None or period_end > profile.expires_at
-            ):
-                profile.expires_at = period_end
-            profile.will_renew = not bool(obj.get("cancel_at_period_end"))
-            db.add(profile)
-            self._subscription_service._record_billing_transaction(  # noqa: SLF001
-                db=db,
-                user=user,
-                profile=profile,
-                plan_id=plan_id or profile.current_plan_id,
-                transaction_type="invoice_paid",
-                amount_cents=amount_cents,
-                status="succeeded",
-                provider_reference=invoice_id,
-                effective_at=now,
-                metadata_json={"billing_reason": billing_reason},
-            )
-
-        self._subscription_service._record_subscription_event(  # noqa: SLF001
-            db=db,
-            user=user,
-            profile=profile,
-            event_type="invoice_paid",
-            previous_plan_id=profile.current_plan_id,
-            plan_id=plan_id or profile.current_plan_id,
-            previous_status=profile.status,
-            status=profile.status,
-            payment_status=PAYMENT_STATUS_SUCCEEDED,
-            source="webhook_invoice_paid",
-            details_json={"billing_reason": billing_reason},
-            provider_reference=invoice_id,
-            occurred_at=now,
-        )
-        if period_end is not None and (
-            profile.expires_at is None or period_end > profile.expires_at
-        ):
-            profile.expires_at = period_end
-            db.add(profile)
-        return {
-            "status": "processed",
-            "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "provider_invoice_id": invoice_id,
-            "provider_session_id": None,
-            "subscription_profile_id": profile.id,
-        }
+        return self._ignored_result(obj=obj, event_type="invoice.paid")
 
     def _handle_invoice_payment_failed(self, *, db: Session, obj: dict[str, Any]) -> dict[str, Any]:
-        user, profile = self._resolve_profile_context(db=db, obj=obj)
-        if user is None or profile is None:
-            return self._ignored_result(obj=obj, event_type="invoice.payment_failed")
-
-        now = db_utc_now()
-        invoice_id = self._invoice_id_from_object(obj, event_type="invoice.payment_failed")
-        plan_id = self._infer_plan_id(obj=obj, profile=profile) or profile.current_plan_id
-        amount_cents = int(obj.get("amount_due") or obj.get("amount_paid") or 0)
-        failure_message = self._failure_message_from_invoice(obj)
-
-        profile.provider = "stripe"
-        profile.provider_customer_id = (
-            self._as_str(obj.get("customer")) or profile.provider_customer_id
-        )
-        profile.provider_subscription_id = (
-            self._subscription_id_from_object(obj) or profile.provider_subscription_id
-        )
-        profile.last_payment_status = PAYMENT_STATUS_FAILED
-        profile.status = (
-            SUBSCRIPTION_STATUS_PAST_DUE
-            if profile.current_plan_id != PLAN_FREE
-            else SUBSCRIPTION_STATUS_PENDING
-        )
-        profile.will_renew = True
-        db.add(profile)
-
-        self._upsert_payment_attempt(
-            db=db,
-            user=user,
-            profile=profile,
-            provider_reference=invoice_id,
-            plan_id=plan_id,
-            attempt_type="renewal",
-            status=PAYMENT_STATUS_FAILED,
-            amount_cents=amount_cents,
-            completed=True,
-            metadata_json={
-                "billing_reason": self._as_str(obj.get("billing_reason")),
-                "subscription_id": profile.provider_subscription_id,
-            },
-            failure_code="INVOICE_PAYMENT_FAILED",
-            failure_message=failure_message,
-        )
-        self._subscription_service._record_subscription_event(  # noqa: SLF001
-            db=db,
-            user=user,
-            profile=profile,
-            event_type="invoice_payment_failed",
-            previous_plan_id=profile.current_plan_id,
-            plan_id=plan_id,
-            previous_status=profile.status,
-            status=profile.status,
-            payment_status=PAYMENT_STATUS_FAILED,
-            source="webhook_invoice_payment_failed",
-            details_json={"message": failure_message},
-            provider_reference=invoice_id,
-            occurred_at=now,
-        )
-        self._subscription_service._record_billing_transaction(  # noqa: SLF001
-            db=db,
-            user=user,
-            profile=profile,
-            plan_id=plan_id,
-            transaction_type="invoice_failed",
-            amount_cents=amount_cents,
-            status="failed",
-            provider_reference=invoice_id,
-            effective_at=now,
-            metadata_json={"message": failure_message},
-        )
-        return {
-            "status": "processed",
-            "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "provider_invoice_id": invoice_id,
-            "provider_session_id": None,
-            "subscription_profile_id": profile.id,
-        }
+        return self._ignored_result(obj=obj, event_type="invoice.payment_failed")
 
     def _handle_subscription_updated(self, *, db: Session, obj: dict[str, Any]) -> dict[str, Any]:
-        user, profile = self._resolve_profile_context(db=db, obj=obj)
-        if user is None or profile is None:
-            return self._ignored_result(obj=obj, event_type="customer.subscription.updated")
-
-        now = db_utc_now()
-        provider_subscription_id = self._subscription_id_from_object(obj)
-        provider_customer_id = self._as_str(obj.get("customer"))
-        plan_id = self._infer_plan_id(obj=obj, profile=profile)
-        previous_plan = profile.current_plan_id
-        previous_status = profile.status
-
-        profile.provider = "stripe"
-        profile.provider_customer_id = provider_customer_id or profile.provider_customer_id
-        profile.provider_subscription_id = (
-            provider_subscription_id or profile.provider_subscription_id
-        )
-        profile.expires_at = (
-            self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
-        )
-        profile.cancel_at = self._timestamp_to_utc(obj.get("cancel_at")) or profile.cancel_at
-
-        provider_status = self._as_str(obj.get("status"))
-        if provider_status in {"active", "trialing"}:
-            profile.status = SUBSCRIPTION_STATUS_ACTIVE
-            profile.last_payment_status = PAYMENT_STATUS_SUCCEEDED
-            profile.will_renew = not bool(obj.get("cancel_at_period_end"))
-            if plan_id:
-                profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(
-                    user=user, plan=plan_id, when=now
-                )  # noqa: SLF001
-                db.add(user)
-        elif provider_status in {"past_due", "unpaid"}:
-            profile.status = SUBSCRIPTION_STATUS_PAST_DUE
-            profile.last_payment_status = PAYMENT_STATUS_FAILED
-            profile.will_renew = True
-            if plan_id:
-                profile.current_plan_id = plan_id
-                self._subscription_service._sync_user_plan_projection(
-                    user=user, plan=plan_id, when=now
-                )  # noqa: SLF001
-                db.add(user)
-        elif provider_status in {"incomplete", "incomplete_expired"}:
-            profile.status = SUBSCRIPTION_STATUS_PENDING
-            profile.last_payment_status = PAYMENT_STATUS_ACTION_REQUIRED
-        elif provider_status == "canceled":
-            profile.status = SUBSCRIPTION_STATUS_CANCELED
-            profile.last_payment_status = PAYMENT_STATUS_CANCELED
-            profile.will_renew = False
-            profile.current_plan_id = PLAN_FREE
-            profile.selected_plan_id = None
-            self._subscription_service._sync_user_plan_projection(
-                user=user, plan=PLAN_FREE, when=now
-            )  # noqa: SLF001
-            db.add(user)
-        db.add(profile)
-
-        self._subscription_service._record_subscription_event(  # noqa: SLF001
-            db=db,
-            user=user,
-            profile=profile,
-            event_type="provider_subscription_updated",
-            previous_plan_id=previous_plan,
-            plan_id=profile.current_plan_id,
-            previous_status=previous_status,
-            status=profile.status,
-            payment_status=profile.last_payment_status,
-            source="webhook_subscription_updated",
-            details_json={"provider_status": provider_status},
-            provider_reference=provider_subscription_id,
-            occurred_at=now,
-        )
-        return {
-            "status": "processed",
-            "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "provider_invoice_id": None,
-            "provider_session_id": None,
-            "subscription_profile_id": profile.id,
-        }
+        return self._ignored_result(obj=obj, event_type="customer.subscription.updated")
 
     def _handle_subscription_deleted(self, *, db: Session, obj: dict[str, Any]) -> dict[str, Any]:
-        user, profile = self._resolve_profile_context(db=db, obj=obj)
-        if user is None or profile is None:
-            return self._ignored_result(obj=obj, event_type="customer.subscription.deleted")
-
-        now = db_utc_now()
-        provider_subscription_id = self._subscription_id_from_object(obj)
-        previous_plan = profile.current_plan_id
-        previous_status = profile.status
-
-        profile.provider = "stripe"
-        profile.provider_customer_id = (
-            self._as_str(obj.get("customer")) or profile.provider_customer_id
-        )
-        profile.provider_subscription_id = (
-            provider_subscription_id or profile.provider_subscription_id
-        )
-        profile.cancel_at = self._timestamp_to_utc(obj.get("canceled_at")) or now
-        profile.expires_at = (
-            self._timestamp_to_utc(obj.get("current_period_end")) or profile.expires_at
-        )
-        profile.status = SUBSCRIPTION_STATUS_CANCELED
-        profile.last_payment_status = PAYMENT_STATUS_CANCELED
-        profile.will_renew = False
-        profile.current_plan_id = PLAN_FREE
-        profile.selected_plan_id = None
-        db.add(profile)
-        self._subscription_service._sync_user_plan_projection(
-            user=user, plan=PLAN_FREE, when=now
-        )  # noqa: SLF001
-        db.add(user)
-
-        self._subscription_service._record_subscription_event(  # noqa: SLF001
-            db=db,
-            user=user,
-            profile=profile,
-            event_type="cancel",
-            previous_plan_id=previous_plan,
-            plan_id=PLAN_FREE,
-            previous_status=previous_status,
-            status=profile.status,
-            payment_status=profile.last_payment_status,
-            source="webhook_subscription_deleted",
-            details_json={"provider_status": "canceled"},
-            provider_reference=provider_subscription_id,
-            occurred_at=now,
-        )
-        if previous_plan != PLAN_FREE or previous_status != SUBSCRIPTION_STATUS_CANCELED:
-            self._subscription_service._record_billing_transaction(  # noqa: SLF001
-                db=db,
-                user=user,
-                profile=profile,
-                plan_id=PLAN_FREE,
-                transaction_type="cancel",
-                amount_cents=0,
-                status="succeeded",
-                provider_reference=provider_subscription_id,
-                effective_at=now,
-                metadata_json={"source": "webhook_subscription_deleted"},
-            )
-        return {
-            "status": "processed",
-            "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "provider_invoice_id": None,
-            "provider_session_id": None,
-            "subscription_profile_id": profile.id,
-        }
+        return self._ignored_result(obj=obj, event_type="customer.subscription.deleted")
 
     def _resolve_profile_context(
         self,
@@ -928,7 +591,7 @@ class PaymentWebhookService:
             status=self._as_str(obj.get("status")) or "complete",
             payment_status=self._as_str(obj.get("payment_status")) or "paid",
             customer_id=self._as_str(obj.get("customer")),
-            subscription_id=self._as_str(obj.get("subscription")),
+            subscription_id=None,
             payment_intent_id=self._as_str(obj.get("payment_intent")),
             payment_method_id=self._as_str(obj.get("payment_method")),
             raw=obj,
@@ -961,7 +624,6 @@ class PaymentWebhookService:
             "status": checkout.status,
             "payment_status": checkout.payment_status,
             "customer_id": checkout.customer_id,
-            "subscription_id": checkout.subscription_id,
             "payment_intent_id": checkout.payment_intent_id,
             "payment_method_id": checkout.payment_method_id,
         }
@@ -994,3 +656,4 @@ class PaymentWebhookService:
 
 
 payment_webhook_service = PaymentWebhookService()
+

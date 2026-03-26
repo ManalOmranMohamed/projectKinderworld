@@ -28,7 +28,7 @@ from services.subscription_service_parts.plans import SubscriptionPlansMixin
 from services.subscription_service_parts.provider import SubscriptionProviderMixin
 
 
-# Re-export common subscription constants and payload protocols for existing imports.
+# Re-export common plan-access constants and payload protocols for existing imports.
 class SubscriptionService(
     SubscriptionLifecycleMixin,
     SubscriptionHistoryMixin,

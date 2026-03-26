@@ -2,31 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
-import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
-
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Sidebar item model â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-/// IMPORTANT:
-/// All UI text must use AppLocalizations.
-/// Hardcoded strings are NOT allowed.
+import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
+import 'package:kinder_world/features/admin/dashboard/admin_presentation_scope.dart';
+import 'package:kinder_world/router.dart';
 
 class _SidebarItem {
-  final IconData icon;
-  final String Function(AppLocalizations l10n) label;
-  final String route;
-  final String? requiredPermission;
-
   const _SidebarItem({
     required this.icon,
     required this.label,
     required this.route,
     this.requiredPermission,
   });
-}
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Sidebar widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  final IconData icon;
+  final String Function(AppLocalizations l10n) label;
+  final String route;
+  final String? requiredPermission;
+}
 
 class AdminSidebar extends ConsumerWidget {
   const AdminSidebar({
@@ -43,62 +36,32 @@ class AdminSidebar extends ConsumerWidget {
   static final List<_SidebarItem> _items = [
     _SidebarItem(
       icon: Icons.dashboard_outlined,
-      label: (l) => l.adminSidebarOverview,
+      label: (l10n) => l10n.adminSidebarOverview,
       route: Routes.adminDashboard,
     ),
     _SidebarItem(
       icon: Icons.people_outline,
-      label: (l) => l.adminSidebarUsers,
+      label: (l10n) => l10n.adminSidebarUsers,
       route: Routes.adminUsers,
       requiredPermission: 'admin.users.view',
     ),
     _SidebarItem(
       icon: Icons.child_care_outlined,
-      label: (l) => l.adminSidebarChildren,
+      label: (l10n) => l10n.adminSidebarChildren,
       route: Routes.adminChildren,
       requiredPermission: 'admin.children.view',
     ),
     _SidebarItem(
-      icon: Icons.library_books_outlined,
-      label: (l) => l.adminSidebarContent,
-      route: Routes.adminContent,
-      requiredPermission: 'admin.content.view',
-    ),
-    _SidebarItem(
-      icon: Icons.bar_chart_outlined,
-      label: (l) => l.adminSidebarReports,
-      route: Routes.adminReports,
-      requiredPermission: 'admin.analytics.view',
-    ),
-    _SidebarItem(
       icon: Icons.support_agent_outlined,
-      label: (l) => l.adminSidebarSupport,
+      label: (l10n) => l10n.adminSidebarSupport,
       route: Routes.adminSupport,
       requiredPermission: 'admin.support.view',
     ),
     _SidebarItem(
-      icon: Icons.subscriptions_outlined,
-      label: (l) => l.adminSidebarSubscriptions,
-      route: Routes.adminSubscriptions,
-      requiredPermission: 'admin.subscription.view',
-    ),
-    _SidebarItem(
-      icon: Icons.admin_panel_settings_outlined,
-      label: (l) => l.adminSidebarAdmins,
-      route: Routes.adminAdmins,
-      requiredPermission: 'admin.admins.manage',
-    ),
-    _SidebarItem(
       icon: Icons.history_outlined,
-      label: (l) => l.adminSidebarAudit,
+      label: (l10n) => l10n.adminSidebarAudit,
       route: Routes.adminAudit,
       requiredPermission: 'admin.audit.view',
-    ),
-    _SidebarItem(
-      icon: Icons.settings_outlined,
-      label: (l) => l.adminSidebarSettings,
-      route: Routes.adminSettings,
-      requiredPermission: 'admin.settings.edit',
     ),
   ];
 
@@ -109,16 +72,24 @@ class AdminSidebar extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final items = _items.where((item) {
+      if (!adminPresentationMenuRoutes.contains(item.route)) {
+        return false;
+      }
+      final permission = item.requiredPermission;
+      if (permission == null) {
+        return true;
+      }
+      return admin?.hasPermission(permission) ?? false;
+    }).toList();
+
     final content = SafeArea(
       child: Column(
         children: [
-          // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-            ),
+            decoration: BoxDecoration(color: colorScheme.primaryContainer),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,13 +145,17 @@ class AdminSidebar extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 6,
+                    runSpacing: 6,
                     children: admin!.roles.map((role) {
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color:
-                              colorScheme.primary.withValuesCompat(alpha: 0.15),
+                          color: colorScheme.primary.withValuesCompat(
+                            alpha: 0.15,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -197,19 +172,10 @@ class AdminSidebar extends ConsumerWidget {
               ],
             ),
           ),
-
-          // â”€â”€ Nav items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children: _items.map((item) {
-                // Permission check â€” hide items the admin can't access
-                if (item.requiredPermission != null) {
-                  final hasPermission =
-                      admin?.hasPermission(item.requiredPermission!) ?? false;
-                  if (!hasPermission) return const SizedBox.shrink();
-                }
-
+              children: items.map((item) {
                 final isSelected = selectedRoute == item.route ||
                     selectedRoute.startsWith('${item.route}/');
 
@@ -218,8 +184,9 @@ class AdminSidebar extends ConsumerWidget {
                       ? Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: colorScheme.primary
-                                .withValuesCompat(alpha: 0.12),
+                            color: colorScheme.primary.withValuesCompat(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -231,8 +198,9 @@ class AdminSidebar extends ConsumerWidget {
                       : Icon(
                           item.icon,
                           size: 20,
-                          color: colorScheme.onSurface
-                              .withValuesCompat(alpha: 0.6),
+                          color: colorScheme.onSurface.withValuesCompat(
+                            alpha: 0.6,
+                          ),
                         ),
                   title: Text(
                     item.label(l10n),
@@ -245,8 +213,8 @@ class AdminSidebar extends ConsumerWidget {
                     ),
                   ),
                   selected: isSelected,
-                  selectedTileColor:
-                      colorScheme.primaryContainer.withValuesCompat(alpha: 0.6),
+                  selectedTileColor: colorScheme.primaryContainer
+                      .withValuesCompat(alpha: 0.6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -254,20 +222,17 @@ class AdminSidebar extends ConsumerWidget {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   onTap: () {
                     onClose?.call();
-                    if (!isSelected) context.go(item.route);
+                    if (!isSelected) {
+                      context.go(item.route);
+                    }
                   },
                 );
               }).toList(),
             ),
           ),
-
-          // â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           const Divider(height: 1),
           ListTile(
-            leading: Icon(
-              Icons.logout,
-              color: colorScheme.error,
-            ),
+            leading: Icon(Icons.logout, color: colorScheme.error),
             title: Text(
               l10n.adminLogout,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -309,28 +274,29 @@ class AdminSidebar extends ConsumerWidget {
     AppLocalizations l10n,
   ) async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.adminLogout),
-        content: Text(
-          l10n.adminLogoutConfirm,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.adminLogout),
+            content: Text(l10n.adminLogoutConfirm),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(l10n.adminLogout),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.adminLogout),
-          ),
-        ],
-      ),
-    );
+        ) ??
+        false;
 
-    if (confirmed == true) {
+    if (confirmed) {
       await ref.read(adminAuthProvider.notifier).logout();
-      if (context.mounted) context.go(Routes.adminLogin);
+      if (context.mounted) {
+        context.go(Routes.adminLogin);
+      }
     }
   }
 }

@@ -46,6 +46,68 @@ class _RecordingAdapter implements HttpClientAdapter {
   }
 }
 
+class _CancelableQueuedAdapter implements HttpClientAdapter {
+  _CancelableQueuedAdapter(this._responses);
+
+  final List<_QueuedResponse> _responses;
+  final Completer<void> firstFetchStarted = Completer<void>();
+  RequestOptions? lastOptions;
+
+  @override
+  void close({bool force = false}) {}
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    lastOptions = options;
+    if (!firstFetchStarted.isCompleted) {
+      firstFetchStarted.complete();
+    }
+
+    final next = _responses.removeAt(0);
+    final responseFuture = Future<ResponseBody>.delayed(
+      next.delay,
+      () => ResponseBody.fromString(
+        jsonEncode(next.payload),
+        next.statusCode,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      ),
+    );
+
+    if (cancelFuture == null) {
+      return responseFuture;
+    }
+
+    return Future.any([
+      responseFuture,
+      cancelFuture.then<ResponseBody>((_) {
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.cancel,
+          error: 'request_cancelled',
+        );
+      }),
+    ]);
+  }
+}
+
+class _QueuedResponse {
+  const _QueuedResponse(
+    this.statusCode,
+    this.payload, {
+    this.delay = Duration.zero,
+  });
+
+  final int statusCode;
+  final Map<String, dynamic> payload;
+  final Duration delay;
+}
+
 String _childSessionJwt() {
   final header = base64Url.encode(utf8.encode('{"alg":"none","typ":"JWT"}'));
   final payload = base64Url.encode(
@@ -141,5 +203,45 @@ void main() {
     await network.get('/anything');
 
     expect(adapter.lastOptions?.headers.containsKey('Authorization'), isFalse);
+  });
+
+  test('cancelAllRequests cancels in-flight requests without closing Dio',
+      () async {
+    final adapter = _CancelableQueuedAdapter([
+      const _QueuedResponse(
+        200,
+        {'ok': false},
+        delay: Duration(seconds: 5),
+      ),
+      const _QueuedResponse(200, {'ok': true}),
+    ]);
+    final dio = Dio()..httpClientAdapter = adapter;
+    final network = NetworkService(
+      dio: dio,
+      secureStorage: _TestSecureStorage('parent_test_token_placeholder'),
+      logger: Logger(),
+    );
+
+    final pendingRequest = network.get<Map<String, dynamic>>('/slow');
+    await adapter.firstFetchStarted.future;
+
+    network.cancelAllRequests();
+
+    await expectLater(
+      pendingRequest,
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.type,
+          'type',
+          DioExceptionType.cancel,
+        ),
+      ),
+    );
+
+    final followUpResponse = await network.get<Map<String, dynamic>>('/after');
+
+    expect(followUpResponse.statusCode, 200);
+    expect(followUpResponse.data?['ok'], isTrue);
+    expect(adapter.lastOptions?.path, '/after');
   });
 }

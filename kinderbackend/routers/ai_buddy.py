@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from deps import get_current_user, get_db
+from deps import AiBuddyPrincipal, get_ai_buddy_principal, get_current_user, get_db
 from models import User
 from schemas.ai_buddy import (
     AiBuddyConversationOut,
@@ -22,12 +22,13 @@ router = APIRouter(prefix="/ai-buddy", tags=["ai-buddy"])
 def start_ai_buddy_session(
     payload: AiBuddyStartSessionIn,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     return ai_buddy_service.start_session(
         db=db,
-        parent=user,
+        parent=principal.parent,
         child_id=payload.child_id,
+        child_session=principal.child,
         force_new=payload.force_new,
         title=payload.title,
     )
@@ -37,12 +38,13 @@ def start_ai_buddy_session(
 def get_current_ai_buddy_session(
     child_id: int = Query(..., ge=1),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     return ai_buddy_service.get_current_session(
         db=db,
-        parent=user,
+        parent=principal.parent,
         child_id=child_id,
+        child_session=principal.child,
     )
 
 
@@ -50,12 +52,13 @@ def get_current_ai_buddy_session(
 def get_ai_buddy_session(
     session_id: int,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     return ai_buddy_service.get_session(
         db=db,
-        parent=user,
+        parent=principal.parent,
         session_id=session_id,
+        child_session=principal.child,
     )
 
 
@@ -64,13 +67,14 @@ def send_ai_buddy_message(
     session_id: int,
     payload: AiBuddySendMessageIn,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    principal: AiBuddyPrincipal = Depends(get_ai_buddy_principal),
 ):
     return ai_buddy_service.send_message(
         db=db,
-        parent=user,
+        parent=principal.parent,
         session_id=session_id,
         child_id=payload.child_id,
+        child_session=principal.child,
         content=payload.content,
         client_message_id=payload.client_message_id,
         quick_action=payload.quick_action,

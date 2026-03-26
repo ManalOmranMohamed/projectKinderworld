@@ -67,7 +67,7 @@ class SubscriptionReturnPayload {
 
     final resolvedFlow = flow.isNotEmpty
         ? flow
-        : (sessionId != null && sessionId.isNotEmpty ? 'checkout' : 'portal');
+        : 'checkout';
     final resolvedResult = _normalizeResult(result);
     return SubscriptionReturnPayload(
       flow: resolvedFlow,

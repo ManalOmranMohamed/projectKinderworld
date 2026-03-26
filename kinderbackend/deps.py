@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable, Generator
+from dataclasses import dataclass
 from typing import Optional
 
 from fastapi import Depends
@@ -12,10 +13,17 @@ from auth import decode_token
 from core.errors import http_error, not_found, unauthorized
 from core.message_catalog import AuthMessages, FeatureMessages
 from database import SessionLocal
-from models import User
+from models import ChildProfile, User
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False, bearerFormat="JWT")
+
+
+@dataclass(frozen=True)
+class AiBuddyPrincipal:
+    parent: User
+    child: ChildProfile | None
+    token_type: str
 
 
 def _coerce_token_version(raw_token_version: object) -> int | None:
@@ -89,6 +97,53 @@ def get_current_user(
     if token_version != int(user.token_version or 0):
         raise unauthorized(AuthMessages.TOKEN_REVOKED)
     return user
+
+
+def get_ai_buddy_principal(
+    creds: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+) -> AiBuddyPrincipal:
+    if creds is None or not creds.credentials:
+        raise unauthorized(AuthMessages.AUTHENTICATION_REQUIRED)
+
+    token = creds.credentials
+    try:
+        payload = decode_token(token)
+        token_type = payload.get("token_type")
+    except JWTError:
+        raise unauthorized(AuthMessages.INVALID_TOKEN)
+
+    if token_type == ADMIN_TOKEN_TYPE:
+        raise unauthorized(AuthMessages.INVALID_TOKEN_TYPE)
+
+    if token_type == "child_session":
+        child_id = payload.get("child_id") or payload.get("sub")
+        if child_id is None:
+            raise unauthorized(AuthMessages.INVALID_TOKEN_PAYLOAD)
+
+        child = (
+            db.query(ChildProfile)
+            .filter(
+                ChildProfile.id == int(child_id),
+                ChildProfile.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if child is None:
+            raise not_found("Child not found")
+
+        parent = db.query(User).filter(User.id == int(child.parent_id)).first()
+        if parent is None:
+            raise not_found(AuthMessages.USER_NOT_FOUND)
+
+        return AiBuddyPrincipal(
+            parent=parent,
+            child=child,
+            token_type="child_session",
+        )
+
+    parent = get_current_user(creds=creds, db=db)
+    return AiBuddyPrincipal(parent=parent, child=None, token_type="access")
 
 
 def require_feature(feature_name: str) -> Callable[[User], User]:

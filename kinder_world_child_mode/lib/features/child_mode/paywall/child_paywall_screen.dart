@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
-import 'package:kinder_world/features/child_mode/paywall/payment_methods_screen.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
 class ChildPaywallScreen extends ConsumerStatefulWidget {
@@ -21,20 +20,14 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
     setState(() {
       _isProcessing = true;
     });
-    _openPaymentMethods();
-    if (mounted) {
-      setState(() {
-        _isProcessing = false;
-      });
-    }
-  }
-
-  void _openPaymentMethods() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const PaymentMethodsScreen(),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.wellAskYourParent)),
     );
+    setState(() {
+      _isProcessing = false;
+    });
   }
 
   @override
@@ -153,20 +146,13 @@ class _ChildPaywallScreenState extends ConsumerState<ChildPaywallScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: _openPaymentMethods,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colors.primary,
-                    side: BorderSide(color: colors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(l10n.paywallManagePaymentMethods),
+              Text(
+                l10n.wellAskYourParent,
+                style: textTheme.bodySmall?.copyWith(
+                  fontSize: 13,
+                  color: colors.onSurfaceVariant,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),

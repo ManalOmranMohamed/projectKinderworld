@@ -2,9 +2,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
+import 'package:kinder_world/core/models/progress_record.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/repositories/content_repository.dart';
 import 'package:kinder_world/app.dart';
 import 'package:logger/logger.dart';
+
+class ChildHomeFeed {
+  const ChildHomeFeed({
+    required this.recentRecords,
+    required this.resolvedActivities,
+    required this.continueLearningRecord,
+    required this.continueLearningActivity,
+    required this.recommendedActivities,
+  });
+
+  final List<ProgressRecord> recentRecords;
+  final Map<String, Activity> resolvedActivities;
+  final ProgressRecord? continueLearningRecord;
+  final Activity? continueLearningActivity;
+  final List<Activity> recommendedActivities;
+
+  bool get hasRecentActivity => continueLearningRecord != null;
+}
 
 /// Content state
 class ContentState {
@@ -354,15 +375,210 @@ class ContentController extends StateNotifier<ContentState> {
 
   /// Get continue learning activities (recently played)
   Future<List<Activity>> getContinueLearningActivities(
-      ChildProfile child) async {
+      ChildProfile child, {
+    required List<ProgressRecord> recentRecords,
+    int limit = 3,
+  }) async {
     try {
-      // Get child's recent activities (would need progress data)
-      // For now, return popular activities
-      return state.popularActivities.take(3).toList();
+      await _ensureActivitiesLoaded();
+      if (recentRecords.isEmpty) return const [];
+
+      final resolved =
+          await resolveActivitiesForProgressRecords(recentRecords.take(12));
+      final seen = <String>{};
+      final results = <Activity>[];
+
+      for (final record in recentRecords) {
+        final activity = resolved[record.id];
+        if (activity == null) continue;
+        if (!activity.isAppropriateForAge(child.age)) continue;
+        if (!seen.add(activity.id)) continue;
+        results.add(activity);
+        if (results.length >= limit) break;
+      }
+
+      return results;
     } catch (e, _) {
       _logger.e('Error getting continue learning activities: $e');
       return [];
     }
+  }
+
+  ProgressRecord? pickContinueLearningRecord(List<ProgressRecord> recentRecords) {
+    if (recentRecords.isEmpty) return null;
+
+    final ordered = [...recentRecords]
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    for (final status in const [
+      CompletionStatus.inProgress,
+      CompletionStatus.partial,
+      CompletionStatus.completed,
+    ]) {
+      for (final record in ordered) {
+        if (record.completionStatus == status) {
+          return record;
+        }
+      }
+    }
+
+    return ordered.first;
+  }
+
+  Future<Map<String, Activity>> resolveActivitiesForProgressRecords(
+    Iterable<ProgressRecord> records,
+  ) async {
+    await _ensureActivitiesLoaded();
+    final byId = {for (final activity in state.activities) activity.id: activity};
+    final resolved = <String, Activity>{};
+
+    for (final record in records) {
+      final activity = _resolveActivityForRecord(record, byId);
+      if (activity != null) {
+        resolved[record.id] = activity;
+      }
+    }
+
+    return resolved;
+  }
+
+  Future<List<Activity>> getBehaviorDrivenRecommendations({
+    required ChildProfile child,
+    required List<ProgressRecord> recentRecords,
+    int limit = 4,
+  }) async {
+    try {
+      await _ensureActivitiesLoaded();
+      final activities = await loadActivitiesForChild(child);
+      if (activities.isEmpty) return const [];
+
+      final resolvedRecent =
+          await resolveActivitiesForProgressRecords(recentRecords.take(12));
+      final recentActivities = resolvedRecent.values.toList(growable: false);
+      final recentActivityIds = {
+        for (final activity in recentActivities) activity.id,
+      };
+      final recentCategories = {
+        for (final activity in recentActivities) activity.category,
+      };
+      final recentTypes = {
+        for (final activity in recentActivities) activity.type,
+      };
+      final recentAspects = {
+        for (final activity in recentActivities) activity.aspect,
+      };
+      final recentTags = <String>{
+        for (final activity in recentActivities) ...activity.tags,
+      };
+      final favoriteIds = child.favorites.toSet();
+
+      final scored = activities
+          .where((activity) => !recentActivityIds.contains(activity.id))
+          .map((activity) {
+        var score = 0.0;
+
+        final interestMatches = activity.tags
+            .where((tag) => child.interests.contains(tag))
+            .length;
+        score += interestMatches * 10;
+
+        final recentTagMatches =
+            activity.tags.where((tag) => recentTags.contains(tag)).length;
+        score += recentTagMatches * 8;
+
+        if (recentCategories.contains(activity.category)) {
+          score += 6;
+        }
+        if (recentTypes.contains(activity.type)) {
+          score += 5;
+        }
+        if (recentAspects.contains(activity.aspect)) {
+          score += 4;
+        }
+        if (favoriteIds.contains(activity.id)) {
+          score += 4;
+        }
+
+        final levelDiff = (activity.difficultyLevel - child.level).abs();
+        if (levelDiff <= 1) {
+          score += 3;
+        } else if (levelDiff <= 2) {
+          score += 1;
+        }
+
+        score += activity.averageRating ?? 0;
+        score += (activity.completionRate ?? 0) * 2;
+
+        return MapEntry(activity, score);
+      }).toList();
+
+      scored.sort((a, b) => b.value.compareTo(a.value));
+      final recommendations = scored.take(limit).map((entry) => entry.key).toList();
+
+      if (recommendations.isNotEmpty) {
+        return recommendations;
+      }
+
+      final interestBased = await _contentRepository.getRecommendedActivities(child);
+      return interestBased
+          .where((activity) => !recentActivityIds.contains(activity.id))
+          .take(limit)
+          .toList();
+    } catch (e, _) {
+      _logger.e('Error getting behavior-driven recommendations: $e');
+      return [];
+    }
+  }
+
+  Future<void> _ensureActivitiesLoaded() async {
+    if (state.activities.isNotEmpty) return;
+    await loadAllActivities();
+  }
+
+  Activity? _resolveActivityForRecord(
+    ProgressRecord record,
+    Map<String, Activity> activitiesById,
+  ) {
+    final candidates = <String>{
+      record.activityId,
+      _stripKnownPrefixes(record.activityId),
+    };
+
+    for (final candidate in candidates) {
+      final activity = activitiesById[candidate];
+      if (activity != null) {
+        return activity;
+      }
+    }
+
+    final noteTitle = record.notes?.trim().toLowerCase();
+    if (noteTitle != null && noteTitle.isNotEmpty) {
+      for (final activity in activitiesById.values) {
+        if (activity.title.trim().toLowerCase() == noteTitle) {
+          return activity;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String _stripKnownPrefixes(String activityId) {
+    const prefixes = [
+      'lesson_',
+      'game_',
+      'story_',
+      'video_',
+      'music_',
+      'quiz_',
+      'activity_',
+    ];
+    for (final prefix in prefixes) {
+      if (activityId.startsWith(prefix) && activityId.length > prefix.length) {
+        return activityId.substring(prefix.length);
+      }
+    }
+    return activityId;
   }
 
   // ==================== CATEGORY MANAGEMENT ====================
@@ -470,4 +686,36 @@ final offlineActivitiesProvider =
     FutureProvider.autoDispose<List<Activity>>((ref) async {
   final controller = ref.watch(contentControllerProvider.notifier);
   return await controller.getOfflineActivities();
+});
+
+final currentChildHomeFeedProvider =
+    FutureProvider.autoDispose<ChildHomeFeed?>((ref) async {
+  final child = ref.watch(currentChildProvider);
+  if (child == null) {
+    return null;
+  }
+
+  final recentRecords = await ref.watch(currentChildRecentProgressProvider.future);
+  final controller = ref.watch(contentControllerProvider.notifier);
+
+  final recentWindow = recentRecords.take(12).toList(growable: false);
+  final resolvedActivities =
+      await controller.resolveActivitiesForProgressRecords(recentWindow);
+  final continueLearningRecord =
+      controller.pickContinueLearningRecord(recentRecords);
+  final continueLearningActivity = continueLearningRecord == null
+      ? null
+      : resolvedActivities[continueLearningRecord.id];
+  final recommendedActivities = await controller.getBehaviorDrivenRecommendations(
+    child: child,
+    recentRecords: recentRecords,
+  );
+
+  return ChildHomeFeed(
+    recentRecords: recentWindow,
+    resolvedActivities: resolvedActivities,
+    continueLearningRecord: continueLearningRecord,
+    continueLearningActivity: continueLearningActivity,
+    recommendedActivities: recommendedActivities,
+  );
 });

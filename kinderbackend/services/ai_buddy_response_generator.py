@@ -301,6 +301,44 @@ class _InternalFallbackAiBuddyBackend:
         if intent == "motivation":
             return f"{prefix}ظ…ظ† ط§ظ„ط·ط¨ظٹط¹ظٹ ط£ظ† طھط´ط¹ط± ط¨ط§ظ„طھط¹ط¨ ط£ظˆ ط§ظ„ط­ط²ظ† ط£ط­ظٹط§ظ†ط§. ط®ط° ظ†ظپط³ط§ ط¹ظ…ظٹظ‚ط§طŒ ظˆط­ط±ظƒ ظƒطھظپظٹظƒ ظ‚ظ„ظٹظ„ط§طŒ ط«ظ… ظ†ط¨ط¯ط£ ط®ط·ظˆط© طµط؛ظٹط±ط© ظ…ط¹ط§."
         return f"{prefix}ط£ظ†ط§ ظ‡ظ†ط§ ظ„ط£ط³ط§ط¹ط¯ظƒ. ظٹظ…ظƒظ†ظ†ظٹ ط£ظ† ط£ظ‚طھط±ط­ ط¯ط±ط³ط§ ط¨ط³ظٹط·ط§ ط£ظˆ ظ„ط¹ط¨ط© ظ…ظ…طھط¹ط© ط£ظˆ ظ‚طµط© ظ‚طµظٹط±ط© ط£ظˆ ظ…ط¹ظ„ظˆظ…ط© ط¬ط¯ظٹط¯ط©."
+    def _build_arabic_response(
+        self,
+        *,
+        child_name: str | None,
+        intent: str,
+        message: str,
+    ) -> str:
+        prefix = f"{child_name}، " if child_name else ""
+        if intent == "recommend_lesson":
+            return (
+                f"{prefix}لنجرّب درسًا قصيرًا وممتعًا. "
+                "عد خمسة أشياء حولك، ثم أخبرني أيها أكبر."
+            )
+        if intent == "suggest_game":
+            return (
+                f"{prefix}لعبة سريعة: ابحث عن شيء أحمر وشيء أزرق وشيء ناعم. "
+                "وعندما تنتهي أخبرني ماذا وجدت."
+            )
+        if intent == "tell_story":
+            return (
+                "قصة قصيرة: كان نجم صغير يخاف من الظلام، "
+                "لكنه ظل يلمع حتى اجتمعت حوله نجوم أخرى، "
+                "فصار الليل جميلًا ومطمئنًا."
+            )
+        if intent == "fun_fact":
+            return (
+                "معلومة لطيفة: للأخطبوط ثلاثة قلوب. "
+                "إذا أردت، أقول لك معلومة أخرى عن الحيوانات أو الفضاء."
+            )
+        if intent == "motivation":
+            return (
+                f"{prefix}من الطبيعي أن تشعر بالتعب أحيانًا. "
+                "خذ نفسًا عميقًا، ثم جرّب خطوة صغيرة، وأنا سأساعدك."
+            )
+        return (
+            f"{prefix}أنا هنا لمساعدتك. "
+            "يمكنني أن أقترح درسًا أو لعبة أو قصة قصيرة أو معلومة ممتعة."
+        )
 
 
 class _EnhancedAiBuddyBackend:
@@ -498,6 +536,34 @@ class AiBuddyResponseGenerator:
         )
         logger.info(
             "ai_buddy_generate intent=%s response_source=%s safety_status=%s provider=%s",
+            response.intent,
+            response.response_source,
+            response.safety_status,
+            response.provider_state.provider_key or response.provider_state.mode,
+        )
+        return response
+
+    def fallback_generate(
+        self,
+        *,
+        child_name: str | None,
+        child_age: int | None = None,
+        message: str,
+        quick_action: str | None,
+        recent_messages: Iterable[str],
+        reason: str | None = None,
+    ) -> AiBuddyGeneratedResponse:
+        response = self._fallback_backend.generate(
+            child_name=child_name,
+            child_age=child_age,
+            message=message,
+            quick_action=quick_action,
+            recent_messages=recent_messages,
+        )
+        if isinstance(self._fallback_backend, _InternalFallbackAiBuddyBackend):
+            response = self._fallback_backend.with_reason(response, reason=reason)
+        logger.info(
+            "ai_buddy_fallback_generate intent=%s response_source=%s safety_status=%s provider=%s",
             response.intent,
             response.response_source,
             response.safety_status,

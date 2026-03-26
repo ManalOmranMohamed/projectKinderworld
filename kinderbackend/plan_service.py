@@ -29,6 +29,7 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "smart_notifications": False,
         "offline_downloads": False,
         "multiple_children": False,
+        "family_dashboard": False,
         "priority_support": False,
     },
     PLAN_PREMIUM: {
@@ -40,6 +41,7 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "smart_notifications": True,
         "offline_downloads": True,
         "multiple_children": False,  # Limited to 3 children (enforced via PLAN_LIMITS)
+        "family_dashboard": False,
         "priority_support": False,
     },
     PLAN_FAMILY_PLUS: {
@@ -51,6 +53,7 @@ PLAN_FEATURES: Dict[str, Dict[str, bool]] = {
         "smart_notifications": True,
         "offline_downloads": True,
         "multiple_children": True,  # Unlimited children (9999)
+        "family_dashboard": True,
         "priority_support": True,
     },
 }
@@ -62,19 +65,22 @@ PLAN_CATALOG: Dict[str, Dict[str, object]] = {
         "id": PLAN_FREE,
         "name": "Free",
         "price": 0,
-        "period": "month",
+        "billing_type": "one_time",
+        "access_type": "free",
     },
     PLAN_PREMIUM: {
         "id": PLAN_PREMIUM,
         "name": "Premium",
-        "price": 10,
-        "period": "month",
+        "price": 39,
+        "billing_type": "one_time",
+        "access_type": "lifetime",
     },
     PLAN_FAMILY_PLUS: {
         "id": PLAN_FAMILY_PLUS,
         "name": "Family Plus",
-        "price": 20,
-        "period": "month",
+        "price": 69,
+        "billing_type": "one_time",
+        "access_type": "lifetime",
     },
 }
 

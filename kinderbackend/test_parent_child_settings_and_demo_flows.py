@@ -458,17 +458,12 @@ def test_subscription_demo_mode_and_placeholder_billing_endpoints(client: TestCl
     assert user.plan == PLAN_FREE
 
     manage = client.post("/subscription/manage", headers=headers)
-    assert manage.status_code == 200
-    assert manage.json()["url"].startswith("https://example.invalid/mock-billing/")
+    assert manage.status_code == 410
+    assert manage.json()["detail"] == "Billing portal is disabled for one-time purchases"
 
     portal = client.post("/billing/portal", headers=headers)
-    assert portal.status_code == 200
-    portal_payload = portal.json()
-    assert portal_payload["operation"] == "billing_portal"
-    assert portal_payload["current_plan_id"] == PLAN_FREE
-    assert portal_payload["status"] == "pending_activation"
-    assert portal_payload["provider"] == "internal"
-    assert portal_payload["url"].startswith("https://example.invalid/mock-billing/")
+    assert portal.status_code == 410
+    assert portal.json()["detail"] == "Billing portal is disabled for one-time purchases"
 
 
 def test_feature_gated_sparse_data_responses_use_real_account_state(client: TestClient, db):

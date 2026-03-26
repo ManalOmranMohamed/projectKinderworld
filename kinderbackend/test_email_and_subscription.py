@@ -122,7 +122,8 @@ def test_subscription_endpoints(client, db):
     assert status_response.status_code == 200
     status = status_response.json()
     assert status["current_plan_id"] == PLAN_FREE
-    assert status["is_active"] is True
+    assert status["is_active"] is False
+    assert status["has_paid_access"] is False
 
     select_free = client.post(
         "/subscription/select",

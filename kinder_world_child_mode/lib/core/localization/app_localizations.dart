@@ -245,6 +245,12 @@ abstract class AppLocalizations {
   String get choosePlanLabel;
   String get basicFeaturesOnly;
   String get bestForFamilies;
+  String get planPremiumSubtitle;
+  String get planFamilyPlusSubtitle;
+  String get oneTimePurchaseLabel;
+  String get lifetimeAccessLabel;
+  String get unlockPremiumLabel;
+  String get unlockFamilyPlusLabel;
   String get limitedActivities;
   String get oneChildProfile;
   String get upToThreeChildren;
@@ -674,6 +680,26 @@ abstract class AppLocalizations {
   String get reportUsingCachedSnapshotSubtitle;
   String get reportUsingLimitedSummaryTitle;
   String reportLastUpdated(String value);
+  String get reportInsightsTitle;
+  String get reportInsightsSubtitle;
+  String get reportNextStepsTitle;
+  String reportInsightNoRecentActivity(String childName);
+  String reportInsightMomentumStrong(int activeDays, int totalDays);
+  String reportInsightMomentumNeedsRoutine(int activeDays, int totalDays);
+  String reportInsightCompletionStrong(int completionPercent);
+  String reportInsightCompletionNeedsSupport(int completionPercent);
+  String reportInsightScoreStrong(int scorePercent);
+  String reportInsightScoreNeedsReview(int scorePercent);
+  String reportInsightContentPreference(String contentType);
+  String reportInsightMoodPositive(String mood);
+  String reportInsightMoodNeedsCheckIn(String mood);
+  String get reportRecommendationStartShortSession;
+  String get reportRecommendationSetSimpleRoutine;
+  String get reportRecommendationChooseShorterActivities;
+  String get reportRecommendationReviewRecentLessons;
+  String reportRecommendationUsePreferredContent(String contentType);
+  String get reportRecommendationCheckMoodBeforeStarting;
+  String get reportRecommendationKeepRoutineAndStretch;
 
   // Parental Controls (extended)
   String get contentRestrictionsAndScreenTime;
@@ -1093,6 +1119,7 @@ abstract class AppLocalizations {
   String get aiBuddyUnavailableHint;
   String get aiBuddySafeModeHint;
   String get aiBuddyNoActiveChildSession;
+  String get aiBuddyParentAccessRequired;
   String get aiInitialGreeting;
   String get aiWelcomeGreeting;
   String get aiMathResponse;

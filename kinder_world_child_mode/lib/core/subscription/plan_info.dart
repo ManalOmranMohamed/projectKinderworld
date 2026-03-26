@@ -10,6 +10,7 @@ class PlanInfo {
   final bool hasSmartControls;
   final bool hasExclusiveContent;
   final bool hasFamilyDashboard;
+  final bool hasPrioritySupport;
 
   const PlanInfo({
     required this.tier,
@@ -21,6 +22,7 @@ class PlanInfo {
     required this.hasSmartControls,
     required this.hasExclusiveContent,
     required this.hasFamilyDashboard,
+    required this.hasPrioritySupport,
   });
 
   factory PlanInfo.fromTier(PlanTier tier) {
@@ -36,6 +38,7 @@ class PlanInfo {
           hasSmartControls: false,
           hasExclusiveContent: false,
           hasFamilyDashboard: false,
+          hasPrioritySupport: false,
         );
       case PlanTier.premium:
         return const PlanInfo(
@@ -48,6 +51,7 @@ class PlanInfo {
           hasSmartControls: true,
           hasExclusiveContent: true,
           hasFamilyDashboard: false,
+          hasPrioritySupport: false,
         );
       case PlanTier.familyPlus:
         return const PlanInfo(
@@ -60,10 +64,13 @@ class PlanInfo {
           hasSmartControls: true,
           hasExclusiveContent: true,
           hasFamilyDashboard: true,
+          hasPrioritySupport: true,
         );
     }
   }
 
+  bool get isOneTimePurchase => tier != PlanTier.free;
+  bool get hasLifetimeAccess => tier != PlanTier.free;
   bool get isUnlimitedChildren => tier == PlanTier.familyPlus;
 
   bool canAccess(PlanTier requiredTier) {

@@ -42,13 +42,11 @@ List<RouteBase> buildAdminRoutes() {
     ),
     GoRoute(
       path: Routes.adminContent,
-      builder: (context, state) =>
-          const AdminDashboardScreen(activePath: Routes.adminContent),
+      redirect: (context, state) => Routes.adminDashboard,
     ),
     GoRoute(
       path: Routes.adminReports,
-      builder: (context, state) =>
-          const AdminDashboardScreen(activePath: Routes.adminReports),
+      redirect: (context, state) => Routes.adminDashboard,
     ),
     GoRoute(
       path: Routes.adminSupport,
@@ -57,13 +55,11 @@ List<RouteBase> buildAdminRoutes() {
     ),
     GoRoute(
       path: Routes.adminSubscriptions,
-      builder: (context, state) =>
-          const AdminDashboardScreen(activePath: Routes.adminSubscriptions),
+      redirect: (context, state) => Routes.adminDashboard,
     ),
     GoRoute(
       path: Routes.adminAdmins,
-      builder: (context, state) =>
-          const AdminDashboardScreen(activePath: Routes.adminAdmins),
+      redirect: (context, state) => Routes.adminDashboard,
     ),
     GoRoute(
       path: Routes.adminAudit,
@@ -72,8 +68,7 @@ List<RouteBase> buildAdminRoutes() {
     ),
     GoRoute(
       path: Routes.adminSettings,
-      builder: (context, state) =>
-          const AdminDashboardScreen(activePath: Routes.adminSettings),
+      redirect: (context, state) => Routes.adminDashboard,
     ),
     GoRoute(
       path: Routes.adminAccessDenied,

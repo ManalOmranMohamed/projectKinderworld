@@ -213,9 +213,6 @@ class TestSecureStorage extends SecureStorage {
   Future<String?> getParentEmail() async => parentEmail ?? userEmail;
 
   @override
-  Future<bool> deleteLegacyParentPin() async => true;
-
-  @override
   Future<bool> clearAuthOnly() async {
     authToken = null;
     refreshToken = null;

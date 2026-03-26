@@ -45,7 +45,7 @@ class InternalPaymentProvider:
             status="open",
             payment_status="pending",
             customer_id=customer_id or f"mock_customer_{user_id}",
-            subscription_id=f"mock_subscription_{user_id}_{normalized_plan}",
+            subscription_id=None,
             payment_intent_id=f"mock_pi_{user_id}_{normalized_plan}",
             raw={"mode": "internal"},
         )
@@ -59,7 +59,7 @@ class InternalPaymentProvider:
             status="open",
             payment_status="pending",
             customer_id="mock_customer",
-            subscription_id="mock_subscription",
+            subscription_id=None,
             payment_intent_id=f"mock_pi_{session_id}",
             raw={"mode": "internal"},
         )

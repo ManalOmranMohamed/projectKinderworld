@@ -62,9 +62,6 @@ def test_subscription_changes_create_notifications_and_are_listed(
     )
     assert select.status_code == 200
 
-    cancel = client.post("/subscription/cancel", headers=headers)
-    assert cancel.status_code == 200
-
     override = client.post(
         f"/admin/subscriptions/{parent.id}/override-plan",
         json={"plan": "family_plus"},
@@ -75,11 +72,12 @@ def test_subscription_changes_create_notifications_and_are_listed(
     listed = client.get("/notifications", headers=headers)
     assert listed.status_code == 200
     payload = listed.json()
-    assert payload["summary"]["unread_count"] == 3
+    assert payload["summary"]["unread_count"] == 2
     assert payload["notifications"][0]["type"] == "SUBSCRIPTION_UPDATED"
     assert payload["notifications"][0]["child_id"] is None
     remote_titles = [item["title"] for item in payload["notifications"]]
     remote_bodies = [item["body"] for item in payload["notifications"]]
     assert "Subscription change pending" in remote_titles
+    assert "Subscription updated" in remote_titles
     assert any("waiting for activation" in body for body in remote_bodies)
     assert all("via parent_select" not in body for body in remote_bodies)

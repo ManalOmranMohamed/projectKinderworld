@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -18,14 +18,11 @@ class SubscriptionLifecycleOut(BaseModel):
     selected_plan_id: Optional[str] = None
     status: str
     started_at: Optional[str] = None
-    expires_at: Optional[str] = None
-    cancel_at: Optional[str] = None
-    will_renew: bool
     last_payment_status: str
     provider: str
     provider_customer_id: Optional[str] = None
-    provider_subscription_id: Optional[str] = None
     is_active: bool
+    has_paid_access: bool
 
 
 class SubscriptionHistorySummaryOut(BaseModel):
@@ -95,7 +92,9 @@ class PlanOut(BaseModel):
     id: str
     name: str
     price: float
-    period: str
+    billing_type: str
+    access_type: str
+    limits: dict[str, Any]
     features: dict[str, Any]
 
 
@@ -104,10 +103,8 @@ class SubscriptionStatus(BaseModel):
     is_active: bool
     status: str
     started_at: Optional[str] = None
-    expires_at: Optional[str] = None
-    cancel_at: Optional[str] = None
-    will_renew: Optional[bool] = None
     last_payment_status: Optional[str] = None
+    has_paid_access: Optional[bool] = None
 
 
 class SubscriptionHistoryOut(BaseModel):
@@ -168,10 +165,8 @@ class SubscriptionSelectResponse(SubscriptionStatus):
                 "is_active": True,
                 "status": "active",
                 "started_at": "2026-03-24T12:00:00Z",
-                "expires_at": None,
-                "cancel_at": None,
-                "will_renew": True,
                 "last_payment_status": "paid",
+                "has_paid_access": True,
                 "payment_intent_url": None,
                 "session_id": "cs_test_12345",
                 "checkout_url": "https://checkout.example.invalid/session/cs_test_12345",
@@ -188,10 +183,8 @@ class SubscriptionManageResponse(BaseModel):
     current_plan_id: str
     selected_plan_id: Optional[str] = None
     status: str
-    will_renew: bool
     last_payment_status: str
     provider: str
-    provider_subscription_id: Optional[str] = None
     session_id: str
     url: str
     customer_id: Optional[str] = None
@@ -203,10 +196,8 @@ class SubscriptionManageResponse(BaseModel):
                 "current_plan_id": "PREMIUM",
                 "selected_plan_id": "PREMIUM",
                 "status": "active",
-                "will_renew": True,
                 "last_payment_status": "paid",
                 "provider": "stripe",
-                "provider_subscription_id": "sub_12345",
                 "session_id": "bps_12345",
                 "url": "https://billing.example.invalid/session/bps_12345",
                 "customer_id": "cus_12345",
@@ -223,9 +214,9 @@ class RefundRequest(BaseModel):
 @router.get(
     "/me",
     response_model=SubscriptionInfo,
-    summary="Get Full Subscription Details",
-    description="Return the current parent's plan, limits, lifecycle state, and recent billing history.",
-    response_description="Subscription details including lifecycle, plan limits, and recent history.",
+    summary="Get Full Purchase Access Details",
+    description="Return the current parent's plan access, limits, purchase state, and recent payment history.",
+    response_description="Purchase access details including lifecycle, plan limits, and recent history.",
 )
 def get_subscription(
     db: Session = Depends(get_db),
@@ -237,9 +228,9 @@ def get_subscription(
 @router.get(
     "/history",
     response_model=SubscriptionHistoryOut,
-    summary="Get Subscription History",
-    description="Return the current parent's subscription lifecycle events, billing transactions, and payment attempts.",
-    response_description="Subscription history grouped by events, billing transactions, and payment attempts.",
+    summary="Get Purchase History",
+    description="Return the current parent's purchase lifecycle events, billing transactions, and payment attempts.",
+    response_description="Purchase history grouped by events, billing transactions, and payment attempts.",
 )
 def get_subscription_history(
     db: Session = Depends(get_db),
@@ -251,9 +242,9 @@ def get_subscription_history(
 @router.post(
     "/upgrade",
     response_model=SubscriptionInfo,
-    summary="Upgrade Subscription",
-    description="Upgrade the authenticated parent to a different plan using the current subscription service flow.",
-    response_description="Updated subscription details after the upgrade request is applied.",
+    summary="Grant Plan Access",
+    description="Apply plan access directly without starting a checkout flow.",
+    response_description="Updated purchase access details after the override is applied.",
 )
 def upgrade_subscription(
     payload: SubscriptionChange,
@@ -266,22 +257,25 @@ def upgrade_subscription(
 @router.post(
     "/cancel",
     response_model=SubscriptionInfo,
-    summary="Cancel Subscription",
-    description="Cancel the current subscription while preserving lifecycle and billing history.",
-    response_description="Updated subscription details after cancellation.",
+    summary="Disable Deprecated Cancel Flow",
+    description="Recurring billing cancellation is disabled because plans are now sold as one-time purchases.",
+    response_description="Deprecated endpoint response.",
 )
 def cancel_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return subscription_service.cancel_subscription(db=db, user=user)
+    raise HTTPException(
+        status_code=410,
+        detail="Cancel is disabled for one-time purchases",
+    )
 
 
 @public_router.get(
     "/plans",
     response_model=List[PlanOut],
-    summary="List Subscription Plans",
-    description="Return the currently available public subscription plans and feature summaries.",
+    summary="List Purchase Plans",
+    description="Return the currently available public purchase plans and feature summaries.",
     response_description="Available plan catalog for the current backend configuration.",
 )
 def list_plans():
@@ -291,9 +285,9 @@ def list_plans():
 @router.get(
     "",
     response_model=SubscriptionStatus,
-    summary="Get Subscription Status",
-    description="Return the current parent's lightweight subscription status without the full history payload.",
-    response_description="Current subscription status for the authenticated parent.",
+    summary="Get Purchase Access Status",
+    description="Return the current parent's lightweight purchase-access status without the full history payload.",
+    response_description="Current purchase access status for the authenticated parent.",
 )
 def subscription_status(
     db: Session = Depends(get_db),
@@ -305,9 +299,9 @@ def subscription_status(
 @router.post(
     "/select",
     response_model=SubscriptionSelectResponse,
-    summary="Select Subscription Plan",
-    description="Choose a plan and start any provider-specific checkout or activation step required by the current billing provider.",
-    response_description="Subscription status plus any provider checkout details needed by the client.",
+    summary="Select Purchase Plan",
+    description="Choose a plan and start a one-time provider checkout session for the current billing provider.",
+    response_description="Purchase status plus any provider checkout details needed by the client.",
 )
 def select_subscription(
     payload: SubscriptionSelectRequest,
@@ -321,8 +315,8 @@ def select_subscription(
     "/checkout",
     response_model=SubscriptionSelectResponse,
     summary="Create Checkout Session",
-    description="Create or resume a provider-backed checkout session for the selected plan.",
-    response_description="Checkout session details and updated subscription status.",
+    description="Create or resume a provider-backed one-time checkout session for the selected plan.",
+    response_description="Checkout session details and updated purchase status.",
 )
 def create_checkout_session(
     payload: SubscriptionSelectRequest,
@@ -335,9 +329,9 @@ def create_checkout_session(
 @router.post(
     "/activate",
     response_model=SubscriptionSelectResponse,
-    summary="Activate Subscription",
-    description="Finalize subscription activation after a checkout step has completed or when the provider supports direct activation.",
-    response_description="Activated subscription status and any remaining provider metadata.",
+    summary="Activate Purchased Plan",
+    description="Finalize plan access after a checkout step has completed or when the provider supports direct activation.",
+    response_description="Activated purchase status and any remaining provider metadata.",
 )
 def activate_subscription(
     payload: SubscriptionSelectRequest,
@@ -350,26 +344,32 @@ def activate_subscription(
 @router.post(
     "/manage",
     response_model=SubscriptionManageResponse,
-    summary="Manage Subscription",
-    description="Create a manage-subscription session using the configured billing provider for the authenticated parent account.",
-    response_description="Billing portal or manage-session payload for the current subscription.",
+    summary="Disable Deprecated Billing Portal Flow",
+    description="Billing portal access is disabled because plans are now sold as one-time purchases.",
+    response_description="Deprecated endpoint response.",
 )
 def manage_subscription(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return subscription_service.manage_subscription(db=db, user=user)
+    raise HTTPException(
+        status_code=410,
+        detail="Billing portal is disabled for one-time purchases",
+    )
 
 
 @billing_router.post(
     "/portal",
     response_model=SubscriptionManageResponse,
-    summary="Open Billing Portal",
-    description="Create a billing portal session for the authenticated parent account using the current billing provider.",
-    response_description="Billing portal session details for the current customer.",
+    summary="Disable Deprecated Billing Portal Flow",
+    description="Billing portal access is disabled because plans are now sold as one-time purchases.",
+    response_description="Deprecated endpoint response.",
 )
 def billing_portal(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return subscription_service.billing_portal(db=db, user=user)
+    raise HTTPException(
+        status_code=410,
+        detail="Billing portal is disabled for one-time purchases",
+    )

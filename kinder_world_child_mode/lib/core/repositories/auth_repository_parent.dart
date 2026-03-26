@@ -146,7 +146,6 @@ mixin _AuthRepositoryParentMixin on _AuthRepositorySupportMixin {
 
     try {
       final data = await _authApi.parentPinStatus();
-      await _secureStorage.deleteLegacyParentPin();
 
       return ParentPinStatus(
         hasPin: data['has_pin'] == true,

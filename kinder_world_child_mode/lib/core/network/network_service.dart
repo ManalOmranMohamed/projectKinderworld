@@ -13,6 +13,7 @@ class NetworkService {
   final SecureStorage _secureStorage;
   final Logger _logger;
   final Random _random = Random();
+  final Set<CancelToken> _managedCancelTokens = <CancelToken>{};
 
   NetworkService({
     Dio? dio,
@@ -232,19 +233,16 @@ class NetworkService {
     CancelToken? cancelToken,
     ProgressCallback? onReceiveProgress,
   }) async {
-    try {
-      final response = await _dio.get<T>(
+    return _runCancelableRequest(
+      externalCancelToken: cancelToken,
+      request: (requestCancelToken) => _dio.get<T>(
         path,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: requestCancelToken,
         onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException catch (e) {
-      _handleDioError(e);
-      rethrow;
-    }
+      ),
+    );
   }
 
   // POST request
@@ -257,21 +255,18 @@ class NetworkService {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    try {
-      final response = await _dio.post<T>(
+    return _runCancelableRequest(
+      externalCancelToken: cancelToken,
+      request: (requestCancelToken) => _dio.post<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: requestCancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException catch (e) {
-      _handleDioError(e);
-      rethrow;
-    }
+      ),
+    );
   }
 
   // PUT request
@@ -284,21 +279,18 @@ class NetworkService {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    try {
-      final response = await _dio.put<T>(
+    return _runCancelableRequest(
+      externalCancelToken: cancelToken,
+      request: (requestCancelToken) => _dio.put<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: requestCancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException catch (e) {
-      _handleDioError(e);
-      rethrow;
-    }
+      ),
+    );
   }
 
   Future<Response<T>> patch<T>(
@@ -310,21 +302,18 @@ class NetworkService {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    try {
-      final response = await _dio.patch<T>(
+    return _runCancelableRequest(
+      externalCancelToken: cancelToken,
+      request: (requestCancelToken) => _dio.patch<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
+        cancelToken: requestCancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
-      );
-      return response;
-    } on DioException catch (e) {
-      _handleDioError(e);
-      rethrow;
-    }
+      ),
+    );
   }
 
   // DELETE request
@@ -335,19 +324,56 @@ class NetworkService {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    try {
-      final response = await _dio.delete<T>(
+    return _runCancelableRequest(
+      externalCancelToken: cancelToken,
+      request: (requestCancelToken) => _dio.delete<T>(
         path,
         data: data,
         queryParameters: queryParameters,
         options: options,
-        cancelToken: cancelToken,
-      );
-      return response;
+        cancelToken: requestCancelToken,
+      ),
+    );
+  }
+
+  Future<Response<T>> _runCancelableRequest<T>({
+    required Future<Response<T>> Function(CancelToken cancelToken) request,
+    CancelToken? externalCancelToken,
+  }) async {
+    final requestCancelToken = _createRequestCancelToken(
+      externalCancelToken: externalCancelToken,
+    );
+    try {
+      return await request(requestCancelToken);
     } on DioException catch (e) {
       _handleDioError(e);
       rethrow;
+    } finally {
+      _managedCancelTokens.remove(requestCancelToken);
     }
+  }
+
+  CancelToken _createRequestCancelToken({
+    CancelToken? externalCancelToken,
+  }) {
+    final requestCancelToken = CancelToken();
+    _managedCancelTokens.add(requestCancelToken);
+
+    if (externalCancelToken == null) {
+      return requestCancelToken;
+    }
+
+    if (externalCancelToken.isCancelled) {
+      requestCancelToken.cancel(externalCancelToken.cancelError);
+      return requestCancelToken;
+    }
+
+    externalCancelToken.whenCancel.then((_) {
+      if (!requestCancelToken.isCancelled) {
+        requestCancelToken.cancel(externalCancelToken.cancelError);
+      }
+    });
+    return requestCancelToken;
   }
 
   void _handleDioError(DioException e) {
@@ -367,7 +393,13 @@ class NetworkService {
 
   // Cancel all requests
   void cancelAllRequests() {
-    _dio.close();
+    final activeTokens = _managedCancelTokens.toList(growable: false);
+    _managedCancelTokens.clear();
+    for (final token in activeTokens) {
+      if (!token.isCancelled) {
+        token.cancel('cancel_all_requests');
+      }
+    }
   }
 }
 
@@ -384,6 +416,11 @@ class RetryInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.requestOptions.cancelToken?.isCancelled ?? false) {
+      handler.next(err);
+      return;
+    }
+
     if (_shouldRetry(err)) {
       final retryCount = err.requestOptions.extra['retryCount'] ?? 0;
 
@@ -399,6 +436,11 @@ class RetryInterceptor extends Interceptor {
         await Future.delayed(
           Duration(milliseconds: 250 * (1 << retryCount)),
         );
+
+        if (err.requestOptions.cancelToken?.isCancelled ?? false) {
+          handler.next(err);
+          return;
+        }
 
         // Clone request with incremented retry count
         final options = Options(
@@ -416,6 +458,7 @@ class RetryInterceptor extends Interceptor {
             data: err.requestOptions.data,
             queryParameters: err.requestOptions.queryParameters,
             options: options,
+            cancelToken: err.requestOptions.cancelToken,
           );
           logger.i(
             'event=http.retry.success request_id=$requestId method=${err.requestOptions.method} '

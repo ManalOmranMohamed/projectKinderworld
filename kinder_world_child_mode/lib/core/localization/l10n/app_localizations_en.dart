@@ -1204,7 +1204,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get progressReset => 'Progress Reset';
 
   @override
-  String get subscription => 'Subscription';
+  String get subscription => 'Access Plans';
 
   @override
   String get freeTrial => 'Free Trial';
@@ -1219,7 +1219,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get upgradeNow => 'Upgrade Now';
 
   @override
-  String get manageSubscription => 'Manage Subscription';
+  String get manageSubscription => 'View Purchase History';
 
   @override
   String get paymentMethod => 'Payment Method';
@@ -1231,10 +1231,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trialEnds => 'Trial Ends';
 
   @override
-  String get subscriptionActive => 'Subscription Active';
+  String get subscriptionActive => 'Premium Access Enabled';
 
   @override
-  String get subscriptionExpired => 'Subscription Expired';
+  String get subscriptionExpired => 'Premium Access Disabled';
 
   @override
   String get safety => 'Safety';
@@ -1398,7 +1398,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paywallTitle => 'Upgrade to Premium';
 
   @override
-  String get paywallPrice => '\$10 / month';
+  String get paywallPrice => '\$39 one-time';
 
   @override
   String get paywallSubscribe => 'Upgrade now';
@@ -1526,18 +1526,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileFallbackNotice =>
-      'Detailed session history is not available yet, so the report falls back to saved child profile totals.';
+      'Detailed activity is not available yet, so this summary uses saved child totals.';
 
   @override
   String get noRecordedActivityYet =>
       'No recorded sessions yet for this period.';
 
   @override
-  String get childProfilesCachedTitle => 'Showing saved child profiles';
+  String get childProfilesCachedTitle => 'Saved child profiles';
 
   @override
   String get childProfilesCachedRefreshHint =>
-      'Refresh to load the latest account changes.';
+      'Refresh to load the latest changes.';
 
   @override
   String get reportUsingSyncedDataTitle => 'Showing synced report data';
@@ -1547,31 +1547,105 @@ class AppLocalizationsEn extends AppLocalizations {
       'These insights were refreshed from your account data.';
 
   @override
-  String get reportUsingDeviceDataTitle =>
-      'Showing saved activity from this device';
+  String get reportUsingDeviceDataTitle => 'Saved activity on this device';
 
   @override
   String get reportUsingDeviceDataSubtitle =>
-      'This report is using activity stored locally on this device.';
+      'This report uses activity stored on this device.';
 
   @override
   String get reportPendingSyncSubtitle =>
       'Recent device activity is still waiting to sync.';
 
   @override
-  String get reportUsingCachedSnapshotTitle =>
-      'Showing your last saved report snapshot';
+  String get reportUsingCachedSnapshotTitle => 'Saved report data';
 
   @override
   String get reportUsingCachedSnapshotSubtitle =>
-      'This report may be out of date until the next refresh.';
+      'Refresh to load the latest report.';
 
   @override
-  String get reportUsingLimitedSummaryTitle =>
-      'Showing a limited local summary';
+  String get reportUsingLimitedSummaryTitle => 'Basic child summary';
 
   @override
   String reportLastUpdated(String value) => 'Last updated $value';
+
+  @override
+  String get reportInsightsTitle => 'What this report means';
+
+  @override
+  String get reportInsightsSubtitle => 'Short insights and next steps';
+
+  @override
+  String get reportNextStepsTitle => 'Try next';
+
+  @override
+  String reportInsightNoRecentActivity(String childName) =>
+      '$childName has not logged enough activity yet to show a learning pattern.';
+
+  @override
+  String reportInsightMomentumStrong(int activeDays, int totalDays) =>
+      'Learning happened on $activeDays of the last $totalDays days. The routine looks steady.';
+
+  @override
+  String reportInsightMomentumNeedsRoutine(int activeDays, int totalDays) =>
+      'Learning happened on $activeDays of the last $totalDays days. A simpler routine would help consistency.';
+
+  @override
+  String reportInsightCompletionStrong(int completionPercent) =>
+      '$completionPercent% of sessions were completed. Follow-through looks strong.';
+
+  @override
+  String reportInsightCompletionNeedsSupport(int completionPercent) =>
+      'Only $completionPercent% of sessions were completed. Shorter activities may be easier to finish.';
+
+  @override
+  String reportInsightScoreStrong(int scorePercent) =>
+      'Average score is $scorePercent%. Current difficulty looks like a good fit.';
+
+  @override
+  String reportInsightScoreNeedsReview(int scorePercent) =>
+      'Average score is $scorePercent%. A quick review before new content may help.';
+
+  @override
+  String reportInsightContentPreference(String contentType) =>
+      '$contentType is the strongest engagement pattern right now.';
+
+  @override
+  String reportInsightMoodPositive(String mood) =>
+      'Mood has mostly looked $mood during learning time.';
+
+  @override
+  String reportInsightMoodNeedsCheckIn(String mood) =>
+      'Mood has leaned $mood lately. Energy or frustration may be affecting focus.';
+
+  @override
+  String get reportRecommendationStartShortSession =>
+      'Start with one short session this week to create momentum.';
+
+  @override
+  String get reportRecommendationSetSimpleRoutine =>
+      'Pick 2 to 3 fixed learning days and keep the sessions predictable.';
+
+  @override
+  String get reportRecommendationChooseShorterActivities =>
+      'Choose shorter activities next so finishing feels easier.';
+
+  @override
+  String get reportRecommendationReviewRecentLessons =>
+      'Revisit one recent lesson before moving to something new.';
+
+  @override
+  String reportRecommendationUsePreferredContent(String contentType) =>
+      'Start with $contentType, then add one different activity to widen practice.';
+
+  @override
+  String get reportRecommendationCheckMoodBeforeStarting =>
+      'Check mood first and keep the next session light if energy feels low.';
+
+  @override
+  String get reportRecommendationKeepRoutineAndStretch =>
+      'Keep the same rhythm and add one slightly harder activity next.';
 
   @override
   String get contentRestrictionsAndScreenTime =>
@@ -2307,16 +2381,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get youLabel => 'You';
 
   @override
-  String get subscriptionTitle => 'Subscription';
+  String get subscriptionTitle => 'Access Plans';
 
   @override
-  String get subscriptionActiveLabel => 'Subscription Active';
+  String get subscriptionActiveLabel => 'Unlocked';
 
   @override
   String get activeLabel => 'Active';
 
   @override
-  String get yourPlanIncludes => 'Your Plan Includes:';
+  String get yourPlanIncludes => 'What You Unlock';
 
   @override
   String planChildProfiles(int count) => 'Up to $count child profiles';
@@ -2334,10 +2408,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prioritySupportLabel => 'Priority support';
 
   @override
-  String get billingInformation => 'Billing Information';
+  String get billingInformation => 'Purchase Information';
 
   @override
-  String get nextPayment => 'Next Payment';
+  String get nextPayment => 'Purchase Date';
 
   @override
   String get amountLabel => 'Amount';
@@ -2346,28 +2420,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get paymentMethodLabel => 'Payment Method';
 
   @override
-  String get manageBilling => 'Manage Billing';
+  String get manageBilling => 'Purchase History';
 
   @override
-  String get availablePlans => 'Available Plans';
+  String get availablePlans => 'Choose Your Access';
 
   @override
   String get recommendedLabel => 'RECOMMENDED';
 
   @override
-  String get currentPlanLabel => 'Current Plan';
+  String get currentPlanLabel => 'Unlocked';
 
   @override
   String get processingLabel => 'Processing...';
 
   @override
-  String get choosePlanLabel => 'Choose Plan';
+  String get choosePlanLabel => 'Unlock Access';
 
   @override
-  String get basicFeaturesOnly => 'Basic features only';
+  String get basicFeaturesOnly => 'Free Access';
 
   @override
-  String get bestForFamilies => 'Best for families';
+  String get bestForFamilies => 'Lifetime access for bigger families';
+
+  @override
+  String get planPremiumSubtitle =>
+      'Pay once for lifetime access with up to 3 children, advanced reports, AI insights, and offline downloads';
+
+  @override
+  String get planFamilyPlusSubtitle =>
+      'Pay once for lifetime access for larger families with dashboard tools and priority support';
+
+  @override
+  String get oneTimePurchaseLabel => 'One-time purchase';
+
+  @override
+  String get lifetimeAccessLabel => 'Lifetime access';
+
+  @override
+  String get unlockPremiumLabel => 'Unlock Premium';
+
+  @override
+  String get unlockFamilyPlusLabel => 'Unlock Family Plus';
 
   @override
   String get limitedActivities => 'Limited activities';
@@ -2411,25 +2505,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String subscriptionPaymentStatus(String status) => 'Payment status: $status';
 
   @override
-  String get subscriptionLifecycleTitle => 'Lifecycle';
+  String get subscriptionLifecycleTitle => 'Access Details';
 
   @override
-  String get subscriptionLifecycleCurrentPlan => 'Current plan';
+  String get subscriptionLifecycleCurrentPlan => 'Current access';
 
   @override
-  String get subscriptionLifecycleStatus => 'Status';
+  String get subscriptionLifecycleStatus => 'Access status';
 
   @override
-  String get subscriptionLifecycleStartedAt => 'Started at';
+  String get subscriptionLifecycleStartedAt => 'Purchased on';
 
   @override
-  String get subscriptionLifecycleExpiresAt => 'Expires at';
+  String get subscriptionLifecycleExpiresAt => 'Access until';
 
   @override
-  String get subscriptionLifecycleCancelAt => 'Cancel at';
+  String get subscriptionLifecycleCancelAt => 'Disabled on';
 
   @override
-  String get subscriptionLifecycleWillRenew => 'Will renew';
+  String get subscriptionLifecycleWillRenew => 'Access type';
 
   @override
   String get subscriptionLifecycleLastPaymentStatus => 'Last payment status';
@@ -2438,19 +2532,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionLifecycleProvider => 'Provider';
 
   @override
-  String get subscriptionHistorySummaryTitle => 'History Summary';
+  String get subscriptionHistorySummaryTitle => 'Purchase Overview';
 
   @override
-  String get subscriptionEventsTitle => 'Recent Events';
+  String get subscriptionEventsTitle => 'Access Events';
 
   @override
-  String get subscriptionBillingHistoryTitle => 'Billing History';
+  String get subscriptionBillingHistoryTitle => 'Purchase History';
 
   @override
-  String get subscriptionPaymentAttemptsTitle => 'Payment Attempts';
+  String get subscriptionPaymentAttemptsTitle => 'Purchase Attempts';
   @override
   String get subscriptionBackendSyncNotice =>
-      'Subscription state and history are synced from backend.';
+      'Purchase access and payment history are synced from backend.';
   @override
   String get subscriptionNoHistoryYet => 'No records yet.';
 
@@ -2459,18 +2553,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionProviderSyncSubtitle =>
-      'We are syncing your latest billing status.';
+      'We are syncing your latest purchase status.';
 
   @override
-  String get subscriptionPortalUnavailableTitle => 'Billing portal unavailable';
+  String get subscriptionPortalUnavailableTitle => 'Purchase tools unavailable';
 
   @override
   String get subscriptionPortalUnavailableSubtitle =>
-      'The provider portal is currently unavailable. Try again later.';
+      'Purchase management tools are currently unavailable. Try again later.';
 
   @override
   String get subscriptionProviderUnavailableTitle =>
-      'Payment provider unavailable';
+      'Checkout provider unavailable';
 
   @override
   String get subscriptionProviderUnavailableSubtitle =>
@@ -2481,14 +2575,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionActionRequiredSubtitle =>
-      'Additional verification is needed to complete the payment.';
+      'Additional verification is needed to complete this purchase.';
 
   @override
   String get subscriptionPaymentFailedTitle => 'Payment failed';
 
   @override
   String get subscriptionPaymentFailedSubtitle =>
-      'Please retry or update your payment method.';
+      'Payment did not complete. Premium access is still locked.';
 
   @override
   String get subscriptionPaymentRefundedTitle => 'Payment refunded';
@@ -2498,46 +2592,46 @@ class AppLocalizationsEn extends AppLocalizations {
       'The latest payment was refunded.';
 
   @override
-  String get subscriptionCanceledTitle => 'Subscription canceled';
+  String get subscriptionCanceledTitle => 'Access removed';
 
   @override
   String get subscriptionCanceledSubtitle =>
-      'Your plan is canceled and will not renew.';
+      'Premium access was removed from this account.';
 
   @override
   String get subscriptionPaymentPendingTitle => 'Payment pending';
 
   @override
   String get subscriptionPaymentPendingSubtitle =>
-      'We are waiting for the provider to confirm the payment.';
+      'We are waiting for payment confirmation before unlocking lifetime access.';
 
   @override
   String get subscriptionReturnSuccessTitle => 'Payment completed';
 
   @override
   String get subscriptionReturnSuccessSubtitle =>
-      'Your subscription will update shortly.';
+      'Lifetime access is ready for this account.';
 
   @override
   String get subscriptionReturnCanceledTitle => 'Checkout canceled';
 
   @override
   String get subscriptionReturnCanceledSubtitle =>
-      'No changes were applied to your subscription.';
+      'No charge was applied and your access did not change.';
 
   @override
-  String get subscriptionReturnPortalTitle => 'Returned from billing portal';
+  String get subscriptionReturnPortalTitle => 'Returned from payment provider';
 
   @override
   String get subscriptionReturnPortalSubtitle =>
-      'We are syncing your latest billing updates.';
+      'We are syncing your latest purchase updates.';
 
   @override
   String get subscriptionReturnPendingTitle => 'Payment pending';
 
   @override
   String get subscriptionReturnPendingSubtitle =>
-      'We will update your subscription when payment completes.';
+      'Lifetime access will unlock after payment is confirmed.';
 
   @override
   String get subscriptionInvalidCheckoutUrl => 'Invalid checkout URL';
@@ -2546,10 +2640,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionUnableToLaunchCheckout => 'Unable to launch checkout';
 
   @override
-  String get subscriptionInvalidPortalUrl => 'Invalid portal URL';
+  String get subscriptionInvalidPortalUrl => 'Invalid payment tools URL';
 
   @override
-  String get subscriptionUnableToOpenPortal => 'Unable to open billing portal';
+  String get subscriptionUnableToOpenPortal => 'Unable to open payment tools';
 
   @override
   String subscriptionStatusLabel(String status) {
@@ -2563,7 +2657,7 @@ class AppLocalizationsEn extends AppLocalizations {
       case 'past_due':
         return 'Past Due';
       case 'pending_activation':
-        return 'Pending Activation';
+        return 'Pending Purchase';
       case 'pending':
         return 'Pending';
       case 'action_required':
@@ -2577,7 +2671,7 @@ class AppLocalizationsEn extends AppLocalizations {
       case 'failure':
         return 'Failure';
       case 'activation_failed':
-        return 'Activation Failed';
+        return 'Unlock Failed';
       case 'checkout_failed':
         return 'Checkout Failed';
       case 'refund_failed':
@@ -2591,9 +2685,15 @@ class AppLocalizationsEn extends AppLocalizations {
       case 'checkout':
         return 'Checkout';
       case 'portal':
-        return 'Portal';
+        return 'Payment Provider';
       case 'billing_portal':
-        return 'Billing Portal';
+        return 'Payment Tools';
+      case 'purchase':
+        return 'Purchase';
+      case 'upgrade':
+        return 'Upgrade';
+      case 'access_revoked':
+        return 'Access Revoked';
       default:
         return status
             .replaceAll('_', ' ')
@@ -2623,26 +2723,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String buildLabel(String buildNumber) => 'Build $buildNumber';
 
   @override
-  String get subscriptionActivationFailed => 'Failed to activate subscription.';
+  String get subscriptionActivationFailed => 'Failed to unlock premium access.';
 
   @override
-  String planActivated(String planName) => '$planName activated.';
+  String planActivated(String planName) => '$planName unlocked.';
 
   @override
   String get nextPaymentSampleDate => 'Dec 31, 2024';
 
   @override
-  String get sampleAmountPerMonth => '\$9.99/month';
+  String get sampleAmountPerMonth => '\$39 one-time';
 
   @override
   String get samplePaymentMethod => '**** **** **** 1234';
 
   @override
-  String get billingTitle => 'Billing';
+  String get billingTitle => 'Purchase History';
 
   @override
   String get billingComingSoon =>
-      'Billing management is coming soon. You can update payment methods and invoices here once the backend is ready.';
+      'Purchase history and refunds will appear here when backend data is available.';
 
   // ── Parent Forgot Password Screen ──
   @override
@@ -3572,7 +3672,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get foreverLabel => 'forever';
 
   @override
-  String get perMonthLabel => '/ month';
+  String get perMonthLabel => 'One-time purchase';
 
   // ── Notifications Screen ──
   @override
@@ -5253,6 +5353,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiBuddyNoActiveChildSession => 'No active child session.';
+
+  @override
+  String get aiBuddyParentAccessRequired =>
+      'This screen currently needs parent sign-in to start AI Buddy.';
 
   @override
   String get gamificationMyBadges => 'My Badges';

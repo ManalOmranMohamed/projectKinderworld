@@ -29,6 +29,27 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="icons/kinderworld-logo.png"/>
 
+  <style>
+    /* Keep Flutter Web from fetching fallback fonts over the network. */
+    @font-face {
+      font-family: 'Roboto';
+      src: local('Segoe UI'), local('Arial');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Noto Sans Arabic';
+      src: local('Segoe UI'), local('Tahoma'), local('Arial');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Noto Color Emoji';
+      src: local('Segoe UI Emoji'), local('Segoe UI Symbol');
+      font-display: swap;
+    }
+  </style>
+
   <title>Kinder World</title>
   <link rel="manifest" href="manifest.json">
 </head>

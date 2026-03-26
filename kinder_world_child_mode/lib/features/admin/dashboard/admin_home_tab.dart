@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_analytics_overview.dart';
 import 'package:kinder_world/core/models/admin_audit_log.dart';
-import 'package:kinder_world/core/models/admin_subscription_models.dart';
 import 'package:kinder_world/core/models/admin_support_ticket.dart';
 import 'package:kinder_world/core/widgets/app_skeleton_widgets.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
@@ -99,20 +98,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         loader: () => repo.fetchSupportTickets(status: 'in_progress', page: 1),
         errors: sectionErrors,
       ),
-      _loadOptionalSection(
-        admin: admin,
-        permission: 'admin.subscription.view',
-        section: 'subscriptions',
-        loader: () => repo.fetchSubscriptions(page: 1),
-        errors: sectionErrors,
-      ),
-      _loadOptionalSection(
-        admin: admin,
-        permission: 'admin.content.view',
-        section: 'content_review',
-        loader: () => repo.fetchContents(status: 'review', page: 1),
-        errors: sectionErrors,
-      ),
     ]);
 
     final overview = results[0] as AdminAnalyticsOverview?;
@@ -121,9 +106,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         results[2] as AdminPagedResponse<AdminSupportTicket>?;
     final inProgressTicketResponse =
         results[3] as AdminPagedResponse<AdminSupportTicket>?;
-    final subscriptionResponse =
-        results[4] as AdminPagedResponse<AdminSubscriptionRecord>?;
-    final reviewContentResponse = results[5] as AdminPagedResponse<dynamic>?;
 
     return _AdminDashboardSnapshot(
       overview: overview,
@@ -132,8 +114,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
         openTickets: openTicketResponse?.items ?? const [],
         inProgressTickets: inProgressTicketResponse?.items ?? const [],
       ),
-      subscriptions: subscriptionResponse?.items ?? const [],
-      reviewContentCount: _reviewContentCount(reviewContentResponse),
       sectionErrors: sectionErrors,
     );
   }
@@ -172,12 +152,6 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     return pendingTickets;
   }
 
-  int _reviewContentCount(AdminPagedResponse<dynamic>? reviewContentResponse) {
-    return (reviewContentResponse?.pagination['total'] as int?) ??
-        reviewContentResponse?.items.length ??
-        0;
-  }
-
   void _applyDashboardSnapshot(_AdminDashboardSnapshot snapshot) {
     setState(() {
       _snapshot = snapshot;
@@ -201,13 +175,13 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final overview = _snapshot?.overview;
-    final totalUsers = overview?.kpis['total_users'] ?? 0;
-    final totalChildren = overview?.kpis['active_children'] ?? 0;
+    final totalUsers = (overview?.kpis['total_users'] as num?)?.toInt();
+    final totalChildren = (overview?.kpis['active_children'] as num?)?.toInt();
     final openTickets =
-        overview?.kpis['open_tickets'] ?? _snapshot?.pendingTickets.length ?? 0;
-    final subscriptionTotal = overview == null
-        ? _snapshot?.subscriptions.length ?? 0
-        : overview.paidSubscriptions + overview.freeSubscriptions;
+        (overview?.kpis['open_tickets'] as num?)?.toInt() ??
+            _snapshot?.pendingTickets.length;
+    final activitiesToday =
+        (overview?.kpis['activities_today'] as num?)?.toInt();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -346,9 +320,9 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                   ),
                   _StatCard(
                     width: cardWidth,
-                    icon: Icons.subscriptions_outlined,
-                    label: l10n.adminSidebarSubscriptions,
-                    value: _formatCompact(subscriptionTotal),
+                    icon: Icons.bolt_outlined,
+                    label: l10n.adminAnalyticsActivitiesToday,
+                    value: _formatCompact(activitiesToday),
                     isLoading: _loading,
                     color: colorScheme.tertiaryContainer,
                     iconColor: colorScheme.onTertiaryContainer,
@@ -401,69 +375,7 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
                         l10n: l10n,
                       ),
                     ),
-                    _SectionCard(
-                      width: cardWidth,
-                      title: l10n.adminAnalyticsSubscriptionsTitle,
-                      icon: Icons.subscriptions_outlined,
-                      actionLabel: l10n.adminSidebarSubscriptions,
-                      onAction: () => context.go(Routes.adminSubscriptions),
-                      child: _SubscriptionSummary(
-                        overview: overview,
-                        subscriptions: _snapshot?.subscriptions ?? const [],
-                        l10n: l10n,
-                      ),
-                    ),
-                    _SectionCard(
-                      width: cardWidth,
-                      title: l10n.adminSidebarContent,
-                      icon: Icons.edit_note_outlined,
-                      actionLabel: l10n.adminSidebarContent,
-                      onAction: () => context.go(Routes.adminContent),
-                      child: _ContentOpsSummary(
-                        reviewCount: _snapshot?.reviewContentCount ?? 0,
-                        activityCount: overview?.kpis['activities_today'] ?? 0,
-                        l10n: l10n,
-                      ),
-                    ),
                   ],
-                ),
-              ],
-              const SizedBox(height: 24),
-              if (admin?.permissions.isNotEmpty == true) ...[
-                Text(
-                  l10n.adminDashboardPermissionsTitle,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: admin!.permissions.map((perm) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            perm,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
                 ),
               ],
             ],
@@ -473,7 +385,10 @@ class _AdminHomeTabState extends ConsumerState<AdminHomeTab> {
     );
   }
 
-  String _formatCompact(int value) {
+  String _formatCompact(int? value) {
+    if (value == null) {
+      return '—';
+    }
     return NumberFormat.compact().format(value);
   }
 }
@@ -557,24 +472,18 @@ class _AdminDashboardSnapshot {
     required this.overview,
     required this.auditLogs,
     required this.pendingTickets,
-    required this.subscriptions,
-    required this.reviewContentCount,
     required this.sectionErrors,
   });
 
   final AdminAnalyticsOverview? overview;
   final List<AdminAuditLog> auditLogs;
   final List<AdminSupportTicket> pendingTickets;
-  final List<AdminSubscriptionRecord> subscriptions;
-  final int reviewContentCount;
   final List<String> sectionErrors;
 
   bool get hasVisibleData {
     return overview != null ||
         auditLogs.isNotEmpty ||
-        pendingTickets.isNotEmpty ||
-        subscriptions.isNotEmpty ||
-        reviewContentCount > 0;
+        pendingTickets.isNotEmpty;
   }
 }
 
@@ -812,147 +721,3 @@ class _SupportQueue extends StatelessWidget {
   }
 }
 
-class _SubscriptionSummary extends StatelessWidget {
-  const _SubscriptionSummary({
-    required this.overview,
-    required this.subscriptions,
-    required this.l10n,
-  });
-
-  final AdminAnalyticsOverview? overview;
-  final List<AdminSubscriptionRecord> subscriptions;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final subscriptionPlanCounts = overview?.subscriptionsByPlan ??
-        _buildPlanCountsFromSubscriptions(subscriptions);
-    final total =
-        subscriptionPlanCounts.values.fold<int>(0, (sum, value) => sum + value);
-
-    if (subscriptionPlanCounts.isEmpty) {
-      return Text(
-        l10n.adminAnalyticsNoData,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...subscriptionPlanCounts.entries.take(3).map((entry) {
-          final progress =
-              total == 0 ? 0.0 : (entry.value / total).clamp(0.0, 1.0);
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        entry.key,
-                        style: theme.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      entry.value.toString(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: colorScheme.primaryContainer
-                      .withValuesCompat(alpha: 0.35),
-                ),
-              ],
-            ),
-          );
-        }),
-        const SizedBox(height: 4),
-        Text(
-          '${l10n.adminAnalyticsPaidSubscriptions}: ${overview?.paidSubscriptions ?? _countPaid(subscriptions)}',
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '${l10n.adminAnalyticsFreeSubscriptions}: ${overview?.freeSubscriptions ?? _countFree(subscriptions)}',
-          style: theme.textTheme.bodySmall,
-        ),
-      ],
-    );
-  }
-
-  Map<String, int> _buildPlanCountsFromSubscriptions(
-      List<AdminSubscriptionRecord> rows) {
-    final counts = <String, int>{};
-    for (final row in rows) {
-      final key = row.plan.isEmpty ? 'unknown' : row.plan;
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-    return counts;
-  }
-
-  int _countPaid(List<AdminSubscriptionRecord> rows) {
-    return rows.where((row) => row.plan.toUpperCase() != 'FREE').length;
-  }
-
-  int _countFree(List<AdminSubscriptionRecord> rows) {
-    return rows.where((row) => row.plan.toUpperCase() == 'FREE').length;
-  }
-}
-
-class _ContentOpsSummary extends StatelessWidget {
-  const _ContentOpsSummary({
-    required this.reviewCount,
-    required this.activityCount,
-    required this.l10n,
-  });
-
-  final int reviewCount;
-  final int activityCount;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${l10n.adminCmsStatusReview}: $reviewCount',
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '${l10n.adminAnalyticsActivitiesToday}: $activityCount',
-          style: theme.textTheme.bodySmall,
-        ),
-        if (reviewCount == 0) ...[
-          const SizedBox(height: 8),
-          Text(
-            l10n.adminAnalyticsNoData,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurface.withValuesCompat(alpha: 0.6),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}

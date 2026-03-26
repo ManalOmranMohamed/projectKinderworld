@@ -19,6 +19,16 @@ logger = logging.getLogger(__name__)
 
 
 class AiBuddyService:
+    _recoverable_quick_actions = frozenset(
+        {
+            "recommend_lesson",
+            "suggest_game",
+            "tell_story",
+            "fun_fact",
+            "motivation",
+        }
+    )
+
     def __init__(
         self,
         *,
@@ -40,10 +50,15 @@ class AiBuddyService:
         db: Session,
         parent: User,
         child_id: int,
+        child_session: ChildProfile | None = None,
         force_new: bool = False,
         title: str | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
+        self._ensure_child_session_matches(
+            child_session=child_session,
+            child_id=child_id,
+        )
         child = self._persistence_service.get_child_for_parent(
             db=db,
             parent=parent,
@@ -148,8 +163,13 @@ class AiBuddyService:
         db: Session,
         parent: User,
         child_id: int,
+        child_session: ChildProfile | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
+        self._ensure_child_session_matches(
+            child_session=child_session,
+            child_id=child_id,
+        )
         self._persistence_service.get_child_for_parent(db=db, parent=parent, child_id=child_id)
         provider_state = self._response_generator.provider_state()
         session = self._persistence_service.get_current_session(
@@ -176,12 +196,17 @@ class AiBuddyService:
         db: Session,
         parent: User,
         session_id: int,
+        child_session: ChildProfile | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
         session = self._persistence_service.get_session_for_parent(
             db=db,
             parent=parent,
             session_id=session_id,
+        )
+        self._ensure_session_access(
+            child_session=child_session,
+            session=session,
         )
         provider_state = self._response_generator.provider_state()
         messages = self._persistence_service.list_messages(db=db, session=session)
@@ -198,11 +223,16 @@ class AiBuddyService:
         parent: User,
         session_id: int,
         child_id: int,
+        child_session: ChildProfile | None = None,
         content: str,
         client_message_id: str | None = None,
         quick_action: str | None = None,
     ) -> dict[str, Any]:
         self._require_enabled(db)
+        self._ensure_child_session_matches(
+            child_session=child_session,
+            child_id=child_id,
+        )
         child = self._persistence_service.get_child_for_parent(
             db=db,
             parent=parent,
@@ -212,6 +242,10 @@ class AiBuddyService:
             db=db,
             parent=parent,
             session_id=session_id,
+        )
+        self._ensure_session_access(
+            child_session=child_session,
+            session=session,
         )
         if session.child_id != child.id:
             raise HTTPException(
@@ -335,19 +369,42 @@ class AiBuddyService:
                         "action_taken": "generated_response",
                     }
                 else:
-                    assistant_content = (
-                        output_moderation.safe_response or moderation.safe_response or ""
+                    recovered = self._recover_safe_quick_action_response(
+                        child=child,
+                        content=content,
+                        quick_action=quick_action,
+                        recent_messages=recent_messages,
+                        output_moderation=output_moderation,
                     )
-                    assistant_response_source = "safety_policy"
-                    assistant_intent = "safety_response"
-                    assistant_safety_status = output_moderation.classification
-                    assistant_metadata = {
-                        **generated.metadata_json,
-                        "topic": output_moderation.topic,
-                        "moderation_reason": output_moderation.reason,
-                        "moderation_flags": list(output_moderation.matched_rules),
-                        "action_taken": "replace_generated_response",
-                    }
+                    if recovered is not None:
+                        assistant_content = recovered.content
+                        assistant_response_source = recovered.response_source
+                        assistant_status = recovered.status
+                        assistant_intent = recovered.intent
+                        assistant_safety_status = recovered.safety_status
+                        assistant_metadata = {
+                            **generated.metadata_json,
+                            **recovered.metadata_json,
+                            "topic": output_moderation.topic,
+                            "moderation_reason": output_moderation.reason,
+                            "moderation_flags": list(output_moderation.matched_rules),
+                            "action_taken": "recovered_with_safe_fallback",
+                            "recovery_response_source": recovered.response_source,
+                        }
+                    else:
+                        assistant_content = (
+                            output_moderation.safe_response or moderation.safe_response or ""
+                        )
+                        assistant_response_source = "safety_policy"
+                        assistant_intent = "safety_response"
+                        assistant_safety_status = output_moderation.classification
+                        assistant_metadata = {
+                            **generated.metadata_json,
+                            "topic": output_moderation.topic,
+                            "moderation_reason": output_moderation.reason,
+                            "moderation_flags": list(output_moderation.matched_rules),
+                            "action_taken": "replace_generated_response",
+                        }
             else:
                 assistant_response_source = "safety_policy"
                 assistant_intent = "safety_response"
@@ -515,6 +572,56 @@ class AiBuddyService:
         )
         db.commit()
         return payload
+
+    def _ensure_child_session_matches(
+        self,
+        *,
+        child_session: ChildProfile | None,
+        child_id: int,
+    ) -> None:
+        if child_session is None:
+            return
+        if int(child_session.id) != int(child_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Child session cannot access another child",
+            )
+
+    def _ensure_session_access(
+        self,
+        *,
+        child_session: ChildProfile | None,
+        session: AiBuddySession,
+    ) -> None:
+        if child_session is None:
+            return
+        if int(session.child_id) != int(child_session.id):
+            raise HTTPException(status_code=404, detail="AI Buddy session not found")
+
+    def _recover_safe_quick_action_response(
+        self,
+        *,
+        child: ChildProfile,
+        content: str,
+        quick_action: str | None,
+        recent_messages: list[str],
+        output_moderation,
+    ):
+        if quick_action not in self._recoverable_quick_actions:
+            return None
+        recovery_reason = (
+            "A generated response was replaced after output moderation. "
+            f"Using the safe fallback for quick action '{quick_action}'."
+        )
+        recovered = self._response_generator.fallback_generate(
+            child_name=child.name,
+            child_age=getattr(child, "age", None),
+            message=content,
+            quick_action=quick_action,
+            recent_messages=recent_messages,
+            reason=recovery_reason,
+        )
+        return recovered if recovered.safety_status == "allowed" else None
 
     def _record_ai_interaction(
         self,

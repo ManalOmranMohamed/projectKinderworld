@@ -169,6 +169,8 @@ class AppTheme {
         fillColor: isDark
             ? scheme.surfaceContainerHigh
             : scheme.surfaceContainerLowest,
+        errorMaxLines: 2,
+        helperMaxLines: 2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: scheme.outlineVariant),
@@ -565,6 +567,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest,
+        errorMaxLines: 2,
+        helperMaxLines: 2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: scheme.outline, width: 2),

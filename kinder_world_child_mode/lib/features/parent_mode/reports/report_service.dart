@@ -61,10 +61,12 @@ class ParentReportService {
   Future<ChildReportData> buildChildReport({
     required ChildProfile child,
     required ReportPeriod period,
+    bool includeAdvancedReports = true,
   }) async {
     final result = await loadChildReport(
       child: child,
       period: period,
+      includeAdvancedReports: includeAdvancedReports,
     );
     return result.report;
   }
@@ -73,6 +75,7 @@ class ParentReportService {
     required ChildProfile child,
     required ReportPeriod period,
     bool forceRefresh = false,
+    bool includeAdvancedReports = true,
   }) async {
     final childId = int.tryParse(child.id);
     final parentAccessToken = await _resolveParentAccessToken();
@@ -100,14 +103,16 @@ class ParentReportService {
       );
 
       Map<String, dynamic> advancedPayload = const {};
-      try {
-        advancedPayload = await _fetchAdvancedReports(
-          childId: childId,
-          days: period.days,
-          parentAccessToken: parentAccessToken,
-        );
-      } catch (e) {
-        logger.w('Advanced reports unavailable for child ${child.id}: $e');
+      if (includeAdvancedReports) {
+        try {
+          advancedPayload = await _fetchAdvancedReports(
+            childId: childId,
+            days: period.days,
+            parentAccessToken: parentAccessToken,
+          );
+        } catch (e) {
+          logger.w('Advanced reports unavailable for child ${child.id}: $e');
+        }
       }
 
       final report = ParentReportService.buildReportFromBackend(

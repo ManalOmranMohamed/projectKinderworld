@@ -119,6 +119,7 @@ class SecureStorage {
       _hasChildSessionCache = true;
       _parentPinVerifiedCache = values[_keyParentPinVerified] == 'true';
       _hasParentPinVerifiedCache = true;
+      await _purgeLegacySensitiveKeys();
     } catch (e) {
       _authTokenCache = null;
       _hasAuthTokenCache = true;
@@ -324,36 +325,6 @@ class SecureStorage {
   }
 
   // ==================== PARENT PIN ====================
-
-  Future<String?> getParentPin() async {
-    try {
-      return await _storage.read(key: _keyLegacyParentPin);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<bool> saveParentPin(String pin) async {
-    try {
-      await _storage.write(key: _keyLegacyParentPin, value: pin);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> deleteParentPin() async {
-    try {
-      await _storage.delete(key: _keyLegacyParentPin);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<bool> deleteLegacyParentPin() async {
-    return deleteParentPin();
-  }
 
   Future<bool> isParentPinVerified() async {
     if (_hasParentPinVerifiedCache) {
@@ -756,7 +727,7 @@ class SecureStorage {
       await _storage.delete(key: _keyUserEmail);
       await _storage.delete(key: _keyChildSession);
       await _storage.delete(key: _keyParentPinVerified);
-      await deleteLegacyParentPin();
+      await _purgeLegacySensitiveKeys();
       await _storage.delete(key: _keyIsPremium);
       await _storage.delete(key: _keyPlanType);
       await clearStoredParentSession();
@@ -805,5 +776,13 @@ class SecureStorage {
       return stored;
     }
     return getUserEmail();
+  }
+
+  Future<void> _purgeLegacySensitiveKeys() async {
+    try {
+      await _storage.delete(key: _keyLegacyParentPin);
+    } catch (_) {
+      // Best-effort cleanup for obsolete sensitive data.
+    }
   }
 }

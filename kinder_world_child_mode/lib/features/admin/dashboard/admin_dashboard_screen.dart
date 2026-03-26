@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
-import 'package:kinder_world/features/admin/admins/admin_admin_management_screen.dart';
 import 'package:kinder_world/features/admin/audit/admin_audit_logs_screen.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/children/admin_child_details_screen.dart';
 import 'package:kinder_world/features/admin/children/admin_children_screen.dart';
-import 'package:kinder_world/features/admin/content/admin_content_management_screen.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_home_tab.dart';
+import 'package:kinder_world/features/admin/dashboard/admin_presentation_scope.dart';
 import 'package:kinder_world/features/admin/dashboard/admin_sidebar.dart';
-import 'package:kinder_world/features/admin/reports/admin_analytics_screen.dart';
-import 'package:kinder_world/features/admin/settings/admin_system_settings_screen.dart';
-import 'package:kinder_world/features/admin/subscriptions/admin_subscriptions_screen.dart';
 import 'package:kinder_world/features/admin/support/admin_support_tickets_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_user_details_screen.dart';
 import 'package:kinder_world/features/admin/users/admin_users_screen.dart';
+import 'package:kinder_world/core/navigation/app_navigation_controller.dart';
 import 'package:kinder_world/router.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 
@@ -33,7 +29,13 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  String get _selectedRoute => widget.activePath ?? Routes.adminDashboard;
+  String get _selectedRoute {
+    final activePath = widget.activePath;
+    if (isAdminPresentationRoute(activePath)) {
+      return activePath!;
+    }
+    return Routes.adminDashboard;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +133,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           ),
                           if (!compact)
                             Text(
-                              'Manage your platform',
+                              l10n.adminDashboardSubtitle,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 12,
@@ -255,19 +257,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       }
     }
     if (path == Routes.adminChildren) return const AdminChildrenScreen();
-    if (path == Routes.adminContent) {
-      return const AdminContentManagementScreen();
-    }
-    if (path == Routes.adminReports) return const AdminAnalyticsScreen();
     if (path == Routes.adminSupport) return const AdminSupportTicketsScreen();
-    if (path == Routes.adminSubscriptions) {
-      return const AdminSubscriptionsScreen();
-    }
-    if (path == Routes.adminAdmins) return const AdminAdminManagementScreen();
     if (path == Routes.adminAudit) return const AdminAuditLogsScreen();
-    if (path == Routes.adminSettings) {
-      return const AdminSystemSettingsScreen();
-    }
     return const AdminHomeTab();
   }
 

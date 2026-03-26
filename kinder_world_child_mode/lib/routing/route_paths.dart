@@ -34,7 +34,6 @@ class Routes {
   static const parentControls = '/parent/controls';
   static const parentSettings = '/parent/settings';
   static const parentSubscription = '/parent/subscription';
-  static const parentBilling = '/parent/billing';
   static const parentNotifications = '/parent/notifications';
   static const parentSafetyDashboard = '/parent/safety-dashboard';
   static const parentDataSync = '/parent/data-sync';

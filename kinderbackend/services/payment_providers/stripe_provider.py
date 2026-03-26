@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
 
 from core.settings import settings
@@ -8,8 +7,6 @@ from services.payment_provider import (
     CheckoutSessionResult,
     PaymentMethodReference,
     PaymentProviderUnavailableError,
-    PortalSessionResult,
-    ProviderSubscriptionSnapshot,
     RefundResult,
 )
 
@@ -37,7 +34,7 @@ class StripePaymentProvider:
         )
         session = self._client_object().checkout.sessions.create(
             params={
-                "mode": "subscription",
+                "mode": "payment",
                 "customer": customer_id,
                 "success_url": settings.stripe_checkout_success_url,
                 "cancel_url": settings.stripe_checkout_cancel_url,
@@ -48,9 +45,6 @@ class StripePaymentProvider:
                     }
                 ],
                 "metadata": metadata,
-                "subscription_data": {
-                    "metadata": metadata,
-                },
             }
         )
         return self._serialize_checkout_session(session)
@@ -65,57 +59,19 @@ class StripePaymentProvider:
         customer_id: str,
         metadata: dict[str, str],
     ) -> PortalSessionResult:
-        session = self._client_object().billing_portal.sessions.create(
-            params={
-                "customer": customer_id,
-                "return_url": settings.stripe_portal_return_url,
-            }
-        )
-        return PortalSessionResult(
-            provider=self.provider_key,
-            session_id=session.id,
-            url=session.url,
-            customer_id=customer_id,
-            raw=session.to_dict_recursive(),
+        raise PaymentProviderUnavailableError(
+            "Billing portal is disabled for one-time purchases"
         )
 
     def retrieve_subscription(self, *, subscription_id: str) -> ProviderSubscriptionSnapshot:
-        subscription = self._client_object().subscriptions.retrieve(
-            subscription_id,
-            params={"expand": ["latest_invoice", "latest_invoice.payment_intent"]},
-        )
-        latest_invoice = getattr(subscription, "latest_invoice", None)
-        latest_invoice_id = None
-        latest_invoice_status = None
-        if latest_invoice is not None:
-            latest_invoice_id = getattr(latest_invoice, "id", None)
-            latest_invoice_status = getattr(latest_invoice, "status", None)
-        else:
-            latest_invoice_id = getattr(subscription, "latest_invoice", None)
-
-        def _from_unix(value):
-            if value is None:
-                return None
-            try:
-                return datetime.fromtimestamp(int(value), tz=timezone.utc)
-            except (TypeError, ValueError, OSError):
-                return None
-
-        return ProviderSubscriptionSnapshot(
-            provider=self.provider_key,
-            subscription_id=subscription.id,
-            status=getattr(subscription, "status", None) or "unknown",
-            current_period_end=_from_unix(getattr(subscription, "current_period_end", None)),
-            cancel_at=_from_unix(getattr(subscription, "cancel_at", None)),
-            cancel_at_period_end=bool(getattr(subscription, "cancel_at_period_end", False)),
-            latest_invoice_id=str(latest_invoice_id) if latest_invoice_id else None,
-            latest_invoice_status=str(latest_invoice_status) if latest_invoice_status else None,
-            raw=subscription.to_dict_recursive(),
+        raise PaymentProviderUnavailableError(
+            "Recurring subscription snapshots are disabled for one-time purchases"
         )
 
     def cancel_subscription(self, *, subscription_id: str) -> dict[str, Any]:
-        response = self._client_object().subscriptions.cancel(subscription_id)
-        return response.to_dict_recursive()
+        raise PaymentProviderUnavailableError(
+            "Cancel subscription is disabled for one-time purchases"
+        )
 
     def refund_payment(
         self,
@@ -216,7 +172,6 @@ class StripePaymentProvider:
 
     def _serialize_checkout_session(self, session) -> CheckoutSessionResult:
         payment_intent = getattr(session, "payment_intent", None)
-        subscription_id = getattr(session, "subscription", None)
         payment_status = getattr(session, "payment_status", None) or "unpaid"
         status = getattr(session, "status", None) or "open"
         customer_id = getattr(session, "customer", None)
@@ -236,7 +191,7 @@ class StripePaymentProvider:
             status=status,
             payment_status=payment_status,
             customer_id=customer_id,
-            subscription_id=subscription_id,
+            subscription_id=None,
             payment_intent_id=payment_intent,
             payment_method_id=payment_method_id,
             raw=session.to_dict_recursive(),

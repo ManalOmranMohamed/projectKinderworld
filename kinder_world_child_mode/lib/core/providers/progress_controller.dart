@@ -15,12 +15,14 @@ import 'package:logger/logger.dart';
 class ProgressState {
   final List<ProgressRecord> recentRecords;
   final Map<String, dynamic> stats;
+  final String? loadedChildId;
   final bool isLoading;
   final String? error;
 
   const ProgressState({
     this.recentRecords = const [],
     this.stats = const {},
+    this.loadedChildId,
     this.isLoading = false,
     this.error,
   });
@@ -28,12 +30,14 @@ class ProgressState {
   ProgressState copyWith({
     List<ProgressRecord>? recentRecords,
     Map<String, dynamic>? stats,
+    String? loadedChildId,
     bool? isLoading,
     String? error,
   }) {
     return ProgressState(
       recentRecords: recentRecords ?? this.recentRecords,
       stats: stats ?? this.stats,
+      loadedChildId: loadedChildId ?? this.loadedChildId,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
     );
@@ -151,6 +155,7 @@ class ProgressController extends StateNotifier<ProgressState> {
 
       state = state.copyWith(
         recentRecords: records.take(20).toList(),
+        loadedChildId: childId,
       );
 
       _logger
@@ -564,6 +569,39 @@ final progressRepositoryProvider = Provider<ProgressRepository>((ref) {
 // Helper providers
 final recentProgressProvider = Provider<List<ProgressRecord>>((ref) {
   return ref.watch(progressControllerProvider).recentRecords;
+});
+
+final currentChildRecentProgressProvider =
+    FutureProvider.autoDispose<List<ProgressRecord>>((ref) async {
+  final childId = ref.watch(currentChildIdProvider);
+  if (childId == null || childId.isEmpty) {
+    return const [];
+  }
+
+  final progressState = ref.watch(progressControllerProvider);
+  final controller = ref.watch(progressControllerProvider.notifier);
+
+  if (progressState.loadedChildId != childId) {
+    await controller.loadRecentRecords(childId);
+  }
+
+  return ref
+      .read(progressControllerProvider)
+      .recentRecords
+      .where((record) => record.childId == childId)
+      .toList(growable: false);
+});
+
+final currentChildTodayProgressProvider =
+    FutureProvider.autoDispose<List<ProgressRecord>>((ref) async {
+  final childId = ref.watch(currentChildIdProvider);
+  if (childId == null || childId.isEmpty) {
+    return const [];
+  }
+
+  ref.watch(progressControllerProvider);
+  final controller = ref.watch(progressControllerProvider.notifier);
+  return controller.loadTodayProgress(childId);
 });
 
 final progressStatsProvider = Provider<Map<String, dynamic>>((ref) {

@@ -20,6 +20,7 @@ import 'package:kinder_world/core/widgets/avatar_view.dart';
 import 'package:kinder_world/core/widgets/parent_design_system.dart';
 import 'package:kinder_world/core/widgets/plan_status_banner.dart';
 import 'package:kinder_world/core/widgets/premium_section_upsell.dart';
+import 'package:kinder_world/features/parent_mode/reports/report_interpreter.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_models.dart';
 import 'package:kinder_world/features/parent_mode/reports/report_service.dart';
 import 'package:kinder_world/router.dart';
@@ -38,6 +39,9 @@ class ReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  static const ParentReportInterpreter _reportInterpreter =
+      ParentReportInterpreter();
+
   ReportPeriod _period = ReportPeriod.week;
   ChildProfile? _selectedChild;
   String? _parentId;
@@ -88,24 +92,41 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  String _reportCacheKey(String childId, ReportPeriod period) {
-    return '$childId:${period.index}';
+  String _reportCacheKey(
+    String childId,
+    ReportPeriod period, {
+    required bool includeAdvancedReports,
+  }) {
+    return '$childId:${period.index}:${includeAdvancedReports ? 1 : 0}';
   }
 
   Future<ChildReportLoadResult> _loadReport(
     ChildProfile child,
     ReportPeriod period,
+    bool includeAdvancedReports,
   ) async {
     final report = await ref.read(parentReportServiceProvider).loadChildReport(
           child: child,
           period: period,
+          includeAdvancedReports: includeAdvancedReports,
         );
-    _reportCache[_reportCacheKey(child.id, period)] = report;
+    _reportCache[_reportCacheKey(
+      child.id,
+      period,
+      includeAdvancedReports: includeAdvancedReports,
+    )] = report;
     return report;
   }
 
-  Future<ChildReportLoadResult> _reportFutureFor(ChildProfile child) {
-    final key = _reportCacheKey(child.id, _period);
+  Future<ChildReportLoadResult> _reportFutureFor(
+    ChildProfile child, {
+    required bool includeAdvancedReports,
+  }) {
+    final key = _reportCacheKey(
+      child.id,
+      _period,
+      includeAdvancedReports: includeAdvancedReports,
+    );
     if (_reportKey == key && _reportFuture != null) {
       return _reportFuture!;
     }
@@ -116,7 +137,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       return _reportFuture!;
     }
     _reportKey = key;
-    _reportFuture = _loadReport(child, _period);
+    _reportFuture = _loadReport(
+      child,
+      _period,
+      includeAdvancedReports,
+    );
     return _reportFuture!;
   }
 
@@ -288,7 +313,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       _selectedChild = selectedChild;
 
                       return FutureBuilder<ChildReportLoadResult>(
-                        future: _reportFutureFor(selectedChild),
+                        future: _reportFutureFor(
+                          selectedChild,
+                          includeAdvancedReports: plan.hasAdvancedReports,
+                        ),
                         builder: (context, reportSnapshot) {
                           if (reportSnapshot.connectionState ==
                                   ConnectionState.waiting &&
@@ -308,6 +336,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                             );
                           }
                           final report = reportResult.report;
+                          final interpretation =
+                              _reportInterpreter.interpret(report);
 
                           return SingleChildScrollView(
                             padding: const EdgeInsets.all(20),
@@ -391,6 +421,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                 _buildSummaryGrid(context, report),
                                 const SizedBox(height: 16),
                                 _buildProgressCard(context, report),
+                                const SizedBox(height: 16),
+                                _buildInterpretationCard(
+                                  context,
+                                  report,
+                                  interpretation,
+                                ),
                                 const SizedBox(height: 16),
                                 _buildDailyTrendCard(context, report),
                                 const SizedBox(height: 16),
@@ -859,6 +895,88 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
+  Widget _buildInterpretationCard(
+    BuildContext context,
+    ChildReportData report,
+    ParentReportInterpretation interpretation,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final parent = context.parentTheme;
+    final insights = interpretation.insights;
+    final recommendations = interpretation.recommendations;
+    if (insights.isEmpty && recommendations.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return ParentCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ParentSectionHeader(
+            title: l10n.reportInsightsTitle,
+            subtitle: l10n.reportInsightsSubtitle,
+          ),
+          const SizedBox(height: 16),
+          ...insights.map((insight) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _ReportInterpretationTile(
+                icon: _insightIcon(insight.type),
+                accent: _insightColor(context, insight.tone),
+                text: _insightText(context, report, insight),
+              ),
+            );
+          }),
+          if (recommendations.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              l10n.reportNextStepsTitle,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors.onSurface,
+                  ),
+            ),
+            const SizedBox(height: 10),
+            ...recommendations.map((recommendation) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: parent.primary.withValuesCompat(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14,
+                        color: parent.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _recommendationText(context, recommendation),
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildDailyTrendCard(BuildContext context, ChildReportData report) {
     final l10n = AppLocalizations.of(context)!;
     final points = report.dailyPoints;
@@ -1095,58 +1213,88 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final parent = context.parentTheme;
     final moodEntries = report.moodCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+    final insightRows = <Widget>[];
+    final hasContentType =
+        report.topContentType != null && report.topContentType!.isNotEmpty;
+    final hasCurrentMood =
+        report.currentMood != null && report.currentMood!.isNotEmpty;
+    final moodSamples =
+        report.moodCounts.values.fold<int>(0, (sum, value) => sum + value);
+
+    if (hasContentType) {
+      insightRows.add(
+        _InsightRow(
+          label: l10n.mostUsedContentLabel,
+          value: _contentTypeLabel(l10n, report.topContentType),
+        ),
+      );
+    }
+    if (hasCurrentMood) {
+      if (insightRows.isNotEmpty) {
+        insightRows.add(const SizedBox(height: 10));
+      }
+      insightRows.add(
+        _InsightRow(
+          label: l10n.currentMoodLabel,
+          value: _moodLabel(l10n, report.currentMood!),
+        ),
+      );
+    }
+    if (moodEntries.isNotEmpty && moodSamples >= 2) {
+      if (insightRows.isNotEmpty) {
+        insightRows.add(const SizedBox(height: 10));
+      }
+      insightRows.add(
+        _InsightRow(
+          label: l10n.moodTrendLabel,
+          value: moodEntries.take(2).map((entry) {
+            return '${_moodLabel(l10n, entry.key)} (${entry.value})';
+          }).join(' \u2022 '),
+        ),
+      );
+    }
+
+    if (insightRows.isEmpty && report.achievements.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return ParentCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ParentSectionHeader(title: l10n.activityBreakdown),
-          const SizedBox(height: 16),
-          _InsightRow(
-            label: l10n.mostUsedContentLabel,
-            value: _contentTypeLabel(l10n, report.topContentType),
-          ),
-          const SizedBox(height: 10),
-          _InsightRow(
-            label: l10n.currentMoodLabel,
-            value: report.currentMood != null
-                ? _moodLabel(l10n, report.currentMood!)
-                : l10n.notAvailable,
-          ),
-          const SizedBox(height: 10),
-          _InsightRow(
-            label: l10n.moodTrendLabel,
-            value: moodEntries.isEmpty
-                ? l10n.notAvailable
-                : moodEntries.take(2).map((entry) {
-                    return '${_moodLabel(l10n, entry.key)} (${entry.value})';
-                  }).join(' \u2022 '),
-          ),
-          const SizedBox(height: 16),
-          ParentSectionHeader(title: l10n.recentAchievements),
-          const SizedBox(height: 12),
-          ...report.achievements.map((achievement) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    achievement.achieved
-                        ? Icons.verified_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: achievement.achieved
-                        ? parent.primary
-                        : Theme.of(context).colorScheme.outline,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '${_achievementTitle(l10n, achievement.titleKey)} \u2022 ${achievement.detail}',
+          if (insightRows.isNotEmpty) ...[
+            ParentSectionHeader(title: l10n.activityBreakdown),
+            const SizedBox(height: 16),
+            ...insightRows,
+          ],
+          if (report.achievements.isNotEmpty) ...[
+            if (insightRows.isNotEmpty) const SizedBox(height: 16),
+            ParentSectionHeader(title: l10n.recentAchievements),
+            const SizedBox(height: 12),
+            ...report.achievements.map((achievement) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      achievement.achieved
+                          ? Icons.verified_rounded
+                          : Icons.radio_button_unchecked_rounded,
+                      color: achievement.achieved
+                          ? parent.primary
+                          : Theme.of(context).colorScheme.outline,
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${_achievementTitle(l10n, achievement.titleKey)} \u2022 ${achievement.detail}',
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -1232,6 +1380,107 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         return l10n.month;
       case ReportPeriod.year:
         return l10n.year;
+    }
+  }
+
+  IconData _insightIcon(ParentReportInsightType type) {
+    switch (type) {
+      case ParentReportInsightType.noRecentActivity:
+        return Icons.insights_rounded;
+      case ParentReportInsightType.momentumStrong:
+      case ParentReportInsightType.momentumNeedsRoutine:
+        return Icons.timeline_rounded;
+      case ParentReportInsightType.completionStrong:
+      case ParentReportInsightType.completionNeedsSupport:
+        return Icons.task_alt_rounded;
+      case ParentReportInsightType.scoreStrong:
+      case ParentReportInsightType.scoreNeedsReview:
+        return Icons.school_rounded;
+      case ParentReportInsightType.contentPreference:
+        return Icons.auto_stories_rounded;
+      case ParentReportInsightType.moodPositive:
+      case ParentReportInsightType.moodNeedsCheckIn:
+        return Icons.mood_rounded;
+    }
+  }
+
+  Color _insightColor(BuildContext context, ParentReportTone tone) {
+    final colors = Theme.of(context).colorScheme;
+    switch (tone) {
+      case ParentReportTone.positive:
+        return context.infoColor;
+      case ParentReportTone.neutral:
+        return colors.primary;
+      case ParentReportTone.attention:
+        return colors.tertiary;
+    }
+  }
+
+  String _insightText(
+    BuildContext context,
+    ChildReportData report,
+    ParentReportInsight insight,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (insight.type) {
+      case ParentReportInsightType.noRecentActivity:
+        return l10n.reportInsightNoRecentActivity(report.child.name);
+      case ParentReportInsightType.momentumStrong:
+        return l10n.reportInsightMomentumStrong(
+          insight.primaryValue ?? 0,
+          insight.secondaryValue ?? report.period.days,
+        );
+      case ParentReportInsightType.momentumNeedsRoutine:
+        return l10n.reportInsightMomentumNeedsRoutine(
+          insight.primaryValue ?? 0,
+          insight.secondaryValue ?? report.period.days,
+        );
+      case ParentReportInsightType.completionStrong:
+        return l10n.reportInsightCompletionStrong(insight.primaryValue ?? 0);
+      case ParentReportInsightType.completionNeedsSupport:
+        return l10n
+            .reportInsightCompletionNeedsSupport(insight.primaryValue ?? 0);
+      case ParentReportInsightType.scoreStrong:
+        return l10n.reportInsightScoreStrong(insight.primaryValue ?? 0);
+      case ParentReportInsightType.scoreNeedsReview:
+        return l10n.reportInsightScoreNeedsReview(insight.primaryValue ?? 0);
+      case ParentReportInsightType.contentPreference:
+        return l10n.reportInsightContentPreference(
+          _contentTypeLabel(l10n, insight.contentType),
+        );
+      case ParentReportInsightType.moodPositive:
+        return l10n.reportInsightMoodPositive(
+          _moodLabel(l10n, insight.mood ?? report.currentMood ?? ''),
+        );
+      case ParentReportInsightType.moodNeedsCheckIn:
+        return l10n.reportInsightMoodNeedsCheckIn(
+          _moodLabel(l10n, insight.mood ?? report.currentMood ?? ''),
+        );
+    }
+  }
+
+  String _recommendationText(
+    BuildContext context,
+    ParentReportRecommendation recommendation,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (recommendation.type) {
+      case ParentReportRecommendationType.startShortSession:
+        return l10n.reportRecommendationStartShortSession;
+      case ParentReportRecommendationType.setSimpleRoutine:
+        return l10n.reportRecommendationSetSimpleRoutine;
+      case ParentReportRecommendationType.chooseShorterActivities:
+        return l10n.reportRecommendationChooseShorterActivities;
+      case ParentReportRecommendationType.reviewRecentLessons:
+        return l10n.reportRecommendationReviewRecentLessons;
+      case ParentReportRecommendationType.usePreferredContentAsWarmup:
+        return l10n.reportRecommendationUsePreferredContent(
+          _contentTypeLabel(l10n, recommendation.contentType),
+        );
+      case ParentReportRecommendationType.checkMoodBeforeStarting:
+        return l10n.reportRecommendationCheckMoodBeforeStarting;
+      case ParentReportRecommendationType.keepRoutineAndStretch:
+        return l10n.reportRecommendationKeepRoutineAndStretch;
     }
   }
 }
@@ -1397,6 +1646,48 @@ class _InsightRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ReportInterpretationTile extends StatelessWidget {
+  const _ReportInterpretationTile({
+    required this.icon,
+    required this.accent,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color accent;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValuesCompat(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValuesCompat(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: colors.onSurfaceVariant,
+                height: 1.35,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

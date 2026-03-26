@@ -16,17 +16,18 @@ void main() {
       expect(payload.sessionId, 'cs_test_123');
     });
 
-    test('normalizes canceled status', () {
+    test('normalizes canceled status for checkout returns', () {
       final payload = SubscriptionReturnPayload.fromQuery({
         'status': 'canceled',
       });
 
       expect(payload, isNotNull);
       expect(payload!.result, 'canceled');
-      expect(payload.flow, 'portal');
+      expect(payload.flow, 'checkout');
     });
 
-    test('marks checkout as successful only when payment success is explicit', () {
+    test('marks checkout as successful only when payment success is explicit',
+        () {
       final successfulPayload = SubscriptionReturnPayload.fromQuery({
         'flow': 'checkout',
         'result': 'pending',

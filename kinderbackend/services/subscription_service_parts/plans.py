@@ -18,20 +18,30 @@ class SubscriptionPlansMixin:
                     "id": details["id"],
                     "name": details["name"],
                     "price": details["price"],
-                    "period": details["period"],
+                    "billing_type": details["billing_type"],
+                    "access_type": details["access_type"],
+                    "limits": {
+                        "max_children": catalog[plan_id].get("max_children")
+                        or self._max_children_for_plan(plan_id)
+                    },
                     "features": get_plan_features(plan_id),
                 }
             )
         return plans
 
     @staticmethod
-    def _plan_duration(plan: str) -> timedelta:
-        catalog = get_plan_catalog()
-        details = catalog.get(plan, catalog[PLAN_FREE])
-        period = str(details.get("period", "month")).lower()
-        if period == "month":
-            return timedelta(days=30)
-        return timedelta(days=30)
+    def _plan_duration(plan: str) -> timedelta | None:
+        return None
+
+    @staticmethod
+    def _max_children_for_plan(plan: str) -> int | None:
+        if plan == PLAN_FREE:
+            return 1
+        if plan == "PREMIUM":
+            return 3
+        if plan == "FAMILY_PLUS":
+            return 9999
+        return None
 
     @staticmethod
     def _price_cents_for_plan(plan: str) -> int:

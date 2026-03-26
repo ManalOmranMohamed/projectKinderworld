@@ -19,8 +19,8 @@ void main() {
         'current_plan_id': 'PREMIUM',
         'status': 'active',
         'started_at': '2026-03-17T10:00:00Z',
-        'expires_at': '2026-04-16T10:00:00Z',
-        'will_renew': true,
+        'expires_at': null,
+        'will_renew': false,
         'last_payment_status': 'succeeded',
         'provider': 'internal',
         'is_active': true,
@@ -63,6 +63,7 @@ void main() {
     });
 
     expect(record.lifecycle.status, 'active');
+    expect(record.lifecycle.willRenew, isFalse);
     expect(record.historySummary.eventCount, 3);
     expect(record.recentEvents.single.eventType, 'activate');
     expect(record.billingHistory.single.transactionType, 'activation');

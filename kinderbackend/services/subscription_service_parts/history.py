@@ -87,13 +87,11 @@ class SubscriptionHistoryMixin:
         lifecycle = self._serialize_lifecycle(user=user, profile=profile)
         return {
             "current_plan_id": profile.current_plan_id,
-            "is_active": bool(user.is_active),
+            "is_active": bool(lifecycle["has_paid_access"]),
             "status": profile.status,
             "started_at": lifecycle["started_at"],
-            "expires_at": lifecycle["expires_at"],
-            "cancel_at": lifecycle["cancel_at"],
-            "will_renew": profile.will_renew,
             "last_payment_status": profile.last_payment_status,
+            "has_paid_access": bool(lifecycle["has_paid_access"]),
         }
 
     def _selection_payload_from_snapshot(self, snapshot: dict[str, object]) -> dict[str, object]:
@@ -105,10 +103,8 @@ class SubscriptionHistoryMixin:
             "is_active": lifecycle.get("account_is_active", lifecycle.get("is_active", False)),
             "status": lifecycle.get("status", SUBSCRIPTION_STATUS_FREE),
             "started_at": lifecycle.get("started_at"),
-            "expires_at": lifecycle.get("expires_at"),
-            "cancel_at": lifecycle.get("cancel_at"),
-            "will_renew": lifecycle.get("will_renew"),
             "last_payment_status": lifecycle.get("last_payment_status"),
+            "has_paid_access": lifecycle.get("has_paid_access", False),
         }
 
     def _serialize_lifecycle(
@@ -120,14 +116,10 @@ class SubscriptionHistoryMixin:
             "selected_plan_id": profile.selected_plan_id,
             "status": profile.status,
             "started_at": profile.started_at.isoformat() if profile.started_at else None,
-            "expires_at": profile.expires_at.isoformat() if profile.expires_at else None,
-            "cancel_at": profile.cancel_at.isoformat() if profile.cancel_at else None,
-            "will_renew": bool(profile.will_renew),
             "last_payment_status": profile.last_payment_status,
             "provider": profile.provider,
             "provider_customer_id": profile.provider_customer_id,
-            "provider_subscription_id": profile.provider_subscription_id,
-            "is_active": bool(user.is_active),
+            "is_active": has_paid_access,
             "has_paid_access": has_paid_access,
             "account_is_active": bool(user.is_active),
         }

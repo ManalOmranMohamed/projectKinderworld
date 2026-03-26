@@ -122,8 +122,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get passwordSpecialRequired =>
       'يجب أن تحتوي كلمة المرور على رمز خاص (!@#\$%^&*)';
   @override
-  String get passwordPolicyRequirement =>
-      'يجب أن تكون كلمة المرور 8 أحرف على الأقل وتحتوي على حرف كبير ورقم ورمز خاص';
+  String get passwordPolicyRequirement => '8 أحرف+ مع حرف كبير ورقم ورمز';
   @override
   String get confirmPasswordHint => 'تأكيد كلمة المرور';
   @override
@@ -283,13 +282,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get quickActions => 'إجراءات سريعة';
   @override
-  String get recommendLesson => 'اقترح\nدرساً';
+  String get recommendLesson => 'اقترح درساً';
   @override
-  String get suggestGame => 'اقترح\nلعبة';
+  String get suggestGame => 'اقترح لعبة';
   @override
-  String get tellStory => 'احكِ لي\nقصة';
+  String get tellStory => 'احكِ لي قصة';
   @override
-  String get funFact => 'معلومة\nممتعة';
+  String get funFact => 'معلومةممتعة';
   @override
   String get motivation => 'حفّزني';
   @override
@@ -608,38 +607,93 @@ class AppLocalizationsAr extends AppLocalizationsEn {
       'تعتمد هذه البيانات على الجلسات المسجلة فعليًا على هذا الجهاز.';
   @override
   String get profileFallbackNotice =>
-      'لا يوجد سجل جلسات كافٍ بعد، لذلك يعتمد التقرير حاليًا على إجماليات ملف الطفل المحفوظة.';
+      'لا تتوفر تفاصيل النشاط بعد، لذلك يعتمد هذا الملخص على إجماليات ملف الطفل المحفوظة.';
   @override
   String get noRecordedActivityYet =>
       'لا توجد جلسات مسجلة لهذا النطاق الزمني بعد.';
   @override
   @override
-  String get childProfilesCachedTitle => 'عرض ملفات الأطفال المحفوظة';
+  String get childProfilesCachedTitle => 'ملفات الأطفال المحفوظة';
   @override
-  String get childProfilesCachedRefreshHint =>
-      'حدّث لتحميل أحدث تغييرات الحساب.';
+  String get childProfilesCachedRefreshHint => 'حدّث لتحميل أحدث التغييرات.';
   @override
   String get reportUsingSyncedDataTitle => 'عرض بيانات التقرير المتزامنة';
   @override
   String get reportUsingSyncedDataSubtitle =>
       'تم تحديث هذه الرؤى من بيانات حسابك.';
   @override
-  String get reportUsingDeviceDataTitle => 'عرض النشاط المحفوظ على هذا الجهاز';
+  String get reportUsingDeviceDataTitle => 'نشاط محفوظ على هذا الجهاز';
   @override
   String get reportUsingDeviceDataSubtitle =>
-      'يستخدم هذا التقرير النشاط المحفوظ محليًا على هذا الجهاز.';
+      'يعتمد هذا التقرير على النشاط المحفوظ على هذا الجهاز.';
   @override
   String get reportPendingSyncSubtitle =>
       'لا يزال بعض نشاط الجهاز بانتظار المزامنة.';
   @override
-  String get reportUsingCachedSnapshotTitle => 'عرض آخر نسخة تقرير محفوظة';
+  String get reportUsingCachedSnapshotTitle => 'بيانات تقرير محفوظة';
   @override
-  String get reportUsingCachedSnapshotSubtitle =>
-      'قد تكون هذه البيانات قديمة حتى تتم المحاولة التالية للتحديث.';
+  String get reportUsingCachedSnapshotSubtitle => 'حدّث لتحميل أحدث تقرير.';
   @override
-  String get reportUsingLimitedSummaryTitle => 'عرض ملخص محلي محدود';
+  String get reportUsingLimitedSummaryTitle => 'ملخص أساسي للطفل';
   @override
   String reportLastUpdated(String value) => 'آخر تحديث $value';
+  @override
+  String get reportInsightsTitle => 'ماذا تعني هذه النتائج';
+  @override
+  String get reportInsightsSubtitle => 'رؤى قصيرة وخطوات عملية';
+  @override
+  String get reportNextStepsTitle => 'الخطوة التالية';
+  @override
+  String reportInsightNoRecentActivity(String childName) =>
+      'لا يوجد نشاط كافٍ مسجل لـ $childName حتى يظهر نمط تعلم واضح بعد.';
+  @override
+  String reportInsightMomentumStrong(int activeDays, int totalDays) =>
+      'كان هناك تعلم في $activeDays من آخر $totalDays أيام. الروتين يبدو ثابتًا.';
+  @override
+  String reportInsightMomentumNeedsRoutine(int activeDays, int totalDays) =>
+      'كان هناك تعلم في $activeDays من آخر $totalDays أيام فقط. روتين أبسط سيساعد على الاستمرارية.';
+  @override
+  String reportInsightCompletionStrong(int completionPercent) =>
+      'اكتمل $completionPercent% من الجلسات. المتابعة حتى النهاية جيدة.';
+  @override
+  String reportInsightCompletionNeedsSupport(int completionPercent) =>
+      'اكتمل $completionPercent% فقط من الجلسات. الأنشطة الأقصر قد تكون أسهل في الإنهاء.';
+  @override
+  String reportInsightScoreStrong(int scorePercent) =>
+      'متوسط النتائج $scorePercent%. مستوى الصعوبة الحالي مناسب غالبًا.';
+  @override
+  String reportInsightScoreNeedsReview(int scorePercent) =>
+      'متوسط النتائج $scorePercent%. مراجعة سريعة قبل المحتوى الجديد قد تساعد.';
+  @override
+  String reportInsightContentPreference(String contentType) =>
+      'يبدو أن $contentType هو النوع الأكثر جذبًا لطفلك حاليًا.';
+  @override
+  String reportInsightMoodPositive(String mood) =>
+      'الحالة المزاجية أثناء التعلم كانت غالبًا $mood.';
+  @override
+  String reportInsightMoodNeedsCheckIn(String mood) =>
+      'الحالة المزاجية تميل إلى $mood مؤخرًا، وقد يؤثر ذلك على التركيز.';
+  @override
+  String get reportRecommendationStartShortSession =>
+      'ابدأوا بجلسة قصيرة واحدة هذا الأسبوع لبناء الزخم.';
+  @override
+  String get reportRecommendationSetSimpleRoutine =>
+      'حدّدوا يومين إلى ثلاثة أيام ثابتة للتعلم واجعلوا الجلسات متوقعة.';
+  @override
+  String get reportRecommendationChooseShorterActivities =>
+      'اختاروا أنشطة أقصر في الجلسة القادمة حتى يصبح الإكمال أسهل.';
+  @override
+  String get reportRecommendationReviewRecentLessons =>
+      'أعيدوا درسًا حديثًا واحدًا قبل الانتقال إلى محتوى جديد.';
+  @override
+  String reportRecommendationUsePreferredContent(String contentType) =>
+      'ابدأوا بـ $contentType ثم أضيفوا نشاطًا مختلفًا واحدًا لتوسيع الممارسة.';
+  @override
+  String get reportRecommendationCheckMoodBeforeStarting =>
+      'تحققوا من المزاج أولاً واجعلوا الجلسة القادمة أخف إذا كانت الطاقة منخفضة.';
+  @override
+  String get reportRecommendationKeepRoutineAndStretch =>
+      'حافظوا على نفس الوتيرة وأضيفوا نشاطًا أصعب قليلًا في المرة القادمة.';
   @override
   String ageLabel(int age) => 'العمر $age';
 
@@ -828,13 +882,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
 
   // ── Subscription / Paywall ──
   @override
-  String get subscription => 'الاشتراك';
+  String get subscription => 'خطط الوصول';
   @override
   String get freeTrial => 'تجربة مجانية';
   @override
   String get familyPlan => 'الخطة العائلية';
   @override
-  String get manageSubscription => 'إدارة الاشتراك';
+  String get manageSubscription => 'عرض سجل الشراء';
   @override
   String get paymentMethod => 'طريقة الدفع';
   @override
@@ -842,13 +896,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get trialEnds => 'تنتهي التجربة';
   @override
-  String get subscriptionActive => 'الاشتراك نشط';
+  String get subscriptionActive => 'الوصول المميز مفعّل';
   @override
-  String get subscriptionExpired => 'انتهى الاشتراك';
+  String get subscriptionExpired => 'تم إيقاف الوصول المميز';
   @override
   String get upgradeNow => 'ترقية الآن';
   @override
-  String get premiumFeatures => 'الميزات المميزة';
+  String get premiumFeatures => 'المزايا المميزة';
   @override
   String get planAiInsightsPro => 'رؤى التعلم بالذكاء الاصطناعي';
   @override
@@ -884,7 +938,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get paywallTitle => 'الترقية إلى المميز';
   @override
-  String get paywallPrice => '10\$ / شهر';
+  String get paywallPrice => '39\$ دفعة واحدة';
   @override
   String get paywallSubscribe => 'ترقية الآن';
   @override
@@ -898,7 +952,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get removePaymentMethod => 'إزالة';
   @override
-  String get openPaymentPortal => 'فتح بوابة الدفع';
+  String get openPaymentPortal => 'مساعدة الدفع';
   @override
   String yearsOld(int age) => '$age سنوات';
   @override
@@ -2286,24 +2340,44 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get available247 => 'متاح 24/7';
   @override
-  String get availablePlans => 'الخطط المتاحة';
+  String get availablePlans => 'اختر مستوى الوصول';
   @override
   String get awesomeColoring => 'تلوين رائع!';
   @override
   String get backToChildLogin => 'العودة إلى دخول الطفل';
   @override
-  String get basicFeaturesOnly => 'ميزات أساسية فقط';
+  String get basicFeaturesOnly => 'الوصول المجاني';
   @override
   String get beginner => 'مبتدئ';
   @override
-  String get bestForFamilies => 'الأفضل للعائلات';
+  String get bestForFamilies => 'وصول دائم للعائلات الكبيرة';
+
+  @override
+  String get planPremiumSubtitle =>
+      'ادفع مرة واحدة لتحصل على وصول مدى الحياة لما يصل إلى 3 أطفال مع تقارير متقدمة ورؤى ذكية وتنزيلات دون اتصال';
+
+  @override
+  String get planFamilyPlusSubtitle =>
+      'ادفع مرة واحدة لتحصل على وصول مدى الحياة للعائلات الأكبر مع لوحة تحكم عائلية ودعم ذي أولوية';
+
+  @override
+  String get oneTimePurchaseLabel => 'شراء مرة واحدة';
+
+  @override
+  String get lifetimeAccessLabel => 'وصول مدى الحياة';
+
+  @override
+  String get unlockPremiumLabel => 'فعّل مميز';
+
+  @override
+  String get unlockFamilyPlusLabel => 'فعّل عائلي بلس';
   @override
   String get billingComingSoon =>
-      'إدارة الفواتير قريبًا. ستتمكن من تحديث طرق الدفع والفواتير هنا عندما يصبح الباك إند جاهزًا.';
+      'سيظهر هنا سجل الشراء وعمليات الاسترداد عندما تصبح بيانات الخلفية جاهزة.';
   @override
   String get billingInformation => 'معلومات الفوترة';
   @override
-  String get billingTitle => 'الفواتير';
+  String get billingTitle => 'سجل الشراء';
   @override
   String get categoryGames => 'ألعاب ممتعة';
   @override
@@ -2346,7 +2420,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get chooseActivity => 'اختر نشاطًا';
   @override
-  String get choosePlanLabel => 'اختر الخطة';
+  String get choosePlanLabel => 'فعّل الوصول';
   @override
   String get chooseProfileToContinue => 'اختر ملفك الشخصي للمتابعة.';
   @override
@@ -2392,7 +2466,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get currentPasswordLabel => 'كلمة المرور الحالية';
   @override
-  String get currentPlanLabel => 'الخطة الحالية';
+  String get currentPlanLabel => 'مفعّل';
   @override
   String get dataCollectionOptOutSubtitle => 'عدم جمع أي بيانات استخدام';
   @override
@@ -2591,7 +2665,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get logoutTitle => 'تسجيل الخروج؟';
   @override
-  String get manageBilling => 'إدارة الفواتير';
+  String get manageBilling => 'سجل الشراء';
   @override
   String get messageLabel => 'الرسالة *';
   @override
@@ -2689,7 +2763,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get paymentMethodLabel => 'طريقة الدفع';
   @override
-  String get perMonthLabel => '/ شهريًا';
+  String get perMonthLabel => 'شراء مرة واحدة';
   @override
   String get personalizedRecommendationsSubtitle =>
       'احصل على اقتراحات محتوى مخصصة';
@@ -2759,7 +2833,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get safeMode => 'الوضع الآمن';
   @override
-  String get sampleAmountPerMonth => '9.99\$ / شهر';
+  String get sampleAmountPerMonth => '39\$ دفعة واحدة';
   @override
   String get samplePaymentMethod => '**** **** **** 1234';
   @override
@@ -2816,11 +2890,11 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get subjectRequiredError => 'يرجى إدخال موضوع';
   @override
-  String get subscriptionActivationFailed => 'فشل تفعيل الاشتراك.';
+  String get subscriptionActivationFailed => 'فشل تفعيل الوصول المميز.';
   @override
-  String get subscriptionActiveLabel => 'الاشتراك نشط';
+  String get subscriptionActiveLabel => 'تم التفعيل';
   @override
-  String get subscriptionTitle => 'الاشتراك';
+  String get subscriptionTitle => 'خطط الوصول';
   @override
   String get tapCorrectAnswer => 'اضغط على الإجابة الصحيحة!';
   @override
@@ -2871,48 +2945,48 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String subscriptionPaymentStatus(String status) => 'حالة الدفع: $status';
   @override
-  String get subscriptionLifecycleTitle => 'دورة الاشتراك';
+  String get subscriptionLifecycleTitle => 'تفاصيل الوصول';
   @override
-  String get subscriptionLifecycleCurrentPlan => 'الخطة الحالية';
+  String get subscriptionLifecycleCurrentPlan => 'الوصول الحالي';
   @override
-  String get subscriptionLifecycleStatus => 'الحالة';
+  String get subscriptionLifecycleStatus => 'حالة الوصول';
   @override
-  String get subscriptionLifecycleStartedAt => 'بدأ في';
+  String get subscriptionLifecycleStartedAt => 'تاريخ الشراء';
   @override
-  String get subscriptionLifecycleExpiresAt => 'ينتهي في';
+  String get subscriptionLifecycleExpiresAt => 'الوصول حتى';
   @override
-  String get subscriptionLifecycleCancelAt => 'الإلغاء في';
+  String get subscriptionLifecycleCancelAt => 'تم الإيقاف في';
   @override
-  String get subscriptionLifecycleWillRenew => 'سيتم التجديد';
+  String get subscriptionLifecycleWillRenew => 'نوع الوصول';
   @override
   String get subscriptionLifecycleLastPaymentStatus => 'حالة آخر دفعة';
   @override
-  String get subscriptionLifecycleProvider => 'المزوّد';
+  String get subscriptionLifecycleProvider => 'مزود الدفع';
   @override
-  String get subscriptionHistorySummaryTitle => 'ملخص السجل';
+  String get subscriptionHistorySummaryTitle => 'نظرة عامة على الشراء';
   @override
-  String get subscriptionEventsTitle => 'أحدث الأحداث';
+  String get subscriptionEventsTitle => 'أحداث الوصول';
   @override
-  String get subscriptionBillingHistoryTitle => 'سجل الفواتير';
+  String get subscriptionBillingHistoryTitle => 'سجل الشراء';
   @override
-  String get subscriptionPaymentAttemptsTitle => 'محاولات الدفع';
+  String get subscriptionPaymentAttemptsTitle => 'محاولات الشراء';
   @override
   String get subscriptionBackendSyncNotice =>
-      'تتم مزامنة حالة الاشتراك والسجل من الخادم.';
+      'يتم تحديث حالة الوصول وسجل الشراء من الخادم.';
   @override
   String get subscriptionNoHistoryYet => 'لا توجد سجلات بعد.';
   @override
-  String get subscriptionProviderSyncTitle => 'تحديث الدفع';
+  String get subscriptionProviderSyncTitle => 'تحديث الشراء';
   @override
   String get subscriptionProviderSyncSubtitle =>
-      'نقوم بمزامنة أحدث حالة للفواتير.';
+      'نحدّث آخر حالة شراء من مزود الدفع.';
   @override
-  String get subscriptionPortalUnavailableTitle => 'بوابة الفوترة غير متاحة';
+  String get subscriptionPortalUnavailableTitle => 'أدوات الدفع غير متاحة';
   @override
   String get subscriptionPortalUnavailableSubtitle =>
-      'بوابة المزوّد غير متاحة حاليًا. حاول مرة أخرى لاحقًا.';
+      'أدوات مزود الدفع غير متاحة حاليًا. حاول مرة أخرى لاحقًا.';
   @override
-  String get subscriptionProviderUnavailableTitle => 'مزوّد الدفع غير متاح';
+  String get subscriptionProviderUnavailableTitle => 'مزود الدفع غير متاح';
   @override
   String get subscriptionProviderUnavailableSubtitle =>
       'تعذر الوصول إلى مزوّد الدفع. ستتحدث حالتك عند عودة الخدمة.';
@@ -2920,53 +2994,54 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get subscriptionActionRequiredTitle => 'مطلوب إجراء';
   @override
   String get subscriptionActionRequiredSubtitle =>
-      'هناك تحقق إضافي مطلوب لإكمال عملية الدفع.';
+      'هناك تحقق إضافي مطلوب لإكمال عملية الشراء.';
   @override
   String get subscriptionPaymentFailedTitle => 'فشل الدفع';
   @override
   String get subscriptionPaymentFailedSubtitle =>
-      'يرجى إعادة المحاولة أو تحديث وسيلة الدفع.';
+      'لم تكتمل عملية الدفع. ما زال الوصول المميز مقفلاً.';
   @override
   String get subscriptionPaymentRefundedTitle => 'تم رد المبلغ';
   @override
   String get subscriptionPaymentRefundedSubtitle => 'تم رد آخر دفعة.';
   @override
-  String get subscriptionCanceledTitle => 'تم إلغاء الاشتراك';
+  String get subscriptionCanceledTitle => 'تمت إزالة الوصول';
   @override
-  String get subscriptionCanceledSubtitle => 'تم إلغاء خطتك ولن يتم تجديدها.';
+  String get subscriptionCanceledSubtitle =>
+      'تمت إزالة الوصول المميز من هذا الحساب.';
   @override
-  String get subscriptionPaymentPendingTitle => 'الدفع قيد الانتظار';
+  String get subscriptionPaymentPendingTitle => 'الشراء قيد الانتظار';
   @override
   String get subscriptionPaymentPendingSubtitle =>
-      'ننتظر تأكيد الدفع من المزوّد.';
+      'ننتظر تأكيد الدفع قبل فتح الوصول مدى الحياة.';
   @override
-  String get subscriptionReturnSuccessTitle => 'اكتمل الدفع';
+  String get subscriptionReturnSuccessTitle => 'اكتمل الشراء';
   @override
   String get subscriptionReturnSuccessSubtitle =>
-      'سيتم تحديث اشتراكك بعد قليل.';
+      'أصبح الوصول مدى الحياة جاهزًا لهذا الحساب.';
   @override
-  String get subscriptionReturnCanceledTitle => 'تم إلغاء الدفع';
+  String get subscriptionReturnCanceledTitle => 'تم إلغاء الشراء';
   @override
   String get subscriptionReturnCanceledSubtitle =>
-      'لم يتم تطبيق أي تغييرات على اشتراكك.';
+      'لم يتم تحصيل أي مبلغ ولم يتغير وصولك الحالي.';
   @override
-  String get subscriptionReturnPortalTitle => 'تمت العودة من بوابة الفوترة';
+  String get subscriptionReturnPortalTitle => 'تمت العودة من أدوات الدفع';
   @override
   String get subscriptionReturnPortalSubtitle =>
-      'نقوم بمزامنة آخر تحديثات الفوترة.';
+      'نحدّث آخر حالة شراء من مزود الدفع.';
   @override
-  String get subscriptionReturnPendingTitle => 'الدفع قيد الانتظار';
+  String get subscriptionReturnPendingTitle => 'الشراء قيد الانتظار';
   @override
   String get subscriptionReturnPendingSubtitle =>
-      'سنحدّث اشتراكك عند اكتمال الدفع.';
+      'سيتم فتح الوصول مدى الحياة بعد تأكيد الدفع.';
   @override
   String get subscriptionInvalidCheckoutUrl => 'رابط الدفع غير صالح';
   @override
   String get subscriptionUnableToLaunchCheckout => 'تعذر فتح صفحة الدفع';
   @override
-  String get subscriptionInvalidPortalUrl => 'رابط بوابة الفوترة غير صالح';
+  String get subscriptionInvalidPortalUrl => 'رابط أدوات الدفع غير صالح';
   @override
-  String get subscriptionUnableToOpenPortal => 'تعذر فتح بوابة الفوترة';
+  String get subscriptionUnableToOpenPortal => 'تعذر فتح أدوات الدفع';
   @override
   String subscriptionStatusLabel(String status) {
     switch (status.toLowerCase()) {
@@ -2979,7 +3054,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
       case 'past_due':
         return 'متأخر';
       case 'pending_activation':
-        return 'بانتظار التفعيل';
+        return 'بانتظار الشراء';
       case 'pending':
         return 'قيد الانتظار';
       case 'action_required':
@@ -3007,9 +3082,15 @@ class AppLocalizationsAr extends AppLocalizationsEn {
       case 'checkout':
         return 'الدفع';
       case 'portal':
-        return 'البوابة';
+        return 'مزود الدفع';
       case 'billing_portal':
-        return 'بوابة الفوترة';
+        return 'أدوات الدفع';
+      case 'purchase':
+        return 'شراء';
+      case 'upgrade':
+        return 'ترقية';
+      case 'access_revoked':
+        return 'إزالة الوصول';
       default:
         return status
             .replaceAll('_', ' ')
@@ -3077,7 +3158,7 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get yourChildId => 'معرّف طفلك';
   @override
-  String get yourPlanIncludes => 'تشمل خطتك:';
+  String get yourPlanIncludes => 'ما الذي ستحصل عليه';
 
   // ── Accessibility ─────────────────────────────────────────────────────────
   @override
@@ -3274,6 +3355,10 @@ class AppLocalizationsAr extends AppLocalizationsEn {
 
   @override
   String get aiBuddyNoActiveChildSession => 'لا توجد جلسة طفل نشطة.';
+
+  @override
+  String get aiBuddyParentAccessRequired =>
+      'هذه الشاشة تحتاج حاليًا إلى تسجيل دخول ولي الأمر.';
 
   @override
   String get gamificationMyBadges => 'شاراتي';

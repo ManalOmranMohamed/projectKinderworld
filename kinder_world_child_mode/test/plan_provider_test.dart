@@ -74,8 +74,8 @@ void main() {
         'current_plan_id': 'PREMIUM',
         'status': 'active',
         'started_at': '2026-03-17T10:00:00Z',
-        'expires_at': '2026-04-16T10:00:00Z',
-        'will_renew': true,
+        'expires_at': null,
+        'will_renew': false,
         'last_payment_status': 'succeeded',
         'provider': 'internal',
         'is_active': true,
@@ -89,7 +89,7 @@ void main() {
       'recent_events': [
         {
           'id': 1,
-          'event_type': 'activate',
+          'event_type': 'purchase',
           'plan_id': 'PREMIUM',
           'status': 'active',
           'source': 'parent_select',
@@ -100,7 +100,7 @@ void main() {
         {
           'id': 1,
           'plan_id': 'PREMIUM',
-          'transaction_type': 'activation',
+          'transaction_type': 'purchase',
           'amount_cents': 1000,
           'currency': 'USD',
           'status': 'succeeded',
@@ -121,11 +121,14 @@ void main() {
     });
 
     expect(snapshot.lifecycle.status, 'active');
-    expect(snapshot.lifecycle.willRenew, isTrue);
+    expect(snapshot.lifecycle.willRenew, isFalse);
+    expect(snapshot.lifecycle.hasPaidAccess, isTrue);
     expect(snapshot.historySummary.eventCount, 2);
-    expect(snapshot.recentEvents.single.eventType, 'activate');
-    expect(snapshot.billingHistory.single.transactionType, 'activation');
+    expect(snapshot.recentEvents.single.eventType, 'purchase');
+    expect(snapshot.billingHistory.single.transactionType, 'purchase');
     expect(snapshot.paymentAttempts.single.attemptType, 'checkout');
+    expect(snapshot.planInfo.isOneTimePurchase, isTrue);
+    expect(snapshot.planInfo.hasLifetimeAccess, isTrue);
   });
 
   test('SubscriptionHistorySnapshot parses full history payload', () {
@@ -136,7 +139,7 @@ void main() {
       'events': [
         {
           'id': 9,
-          'event_type': 'renew',
+          'event_type': 'purchase',
           'plan_id': 'FAMILY_PLUS',
           'status': 'active',
           'source': 'parent_activate',
@@ -147,18 +150,27 @@ void main() {
         {
           'id': 4,
           'plan_id': 'FAMILY_PLUS',
-          'transaction_type': 'renewal',
+          'transaction_type': 'purchase',
           'amount_cents': 2000,
           'currency': 'USD',
           'status': 'succeeded',
           'effective_at': '2026-03-17T10:00:00Z',
+        },
+        {
+          'id': 5,
+          'plan_id': 'FAMILY_PLUS',
+          'transaction_type': 'refund',
+          'amount_cents': -2000,
+          'currency': 'USD',
+          'status': 'refunded',
+          'effective_at': '2026-03-18T10:00:00Z',
         },
       ],
       'payment_attempts': [
         {
           'id': 6,
           'plan_id': 'FAMILY_PLUS',
-          'attempt_type': 'renewal',
+          'attempt_type': 'checkout',
           'status': 'succeeded',
           'amount_cents': 2000,
           'currency': 'USD',
@@ -169,8 +181,11 @@ void main() {
 
     expect(history.userId, 7);
     expect(history.currentPlanId, 'FAMILY_PLUS');
-    expect(history.events.single.eventType, 'renew');
-    expect(history.billingTransactions.single.amountCents, 2000);
-    expect(history.paymentAttempts.single.attemptType, 'renewal');
+    expect(history.events.single.eventType, 'purchase');
+    expect(history.billingTransactions.first.amountCents, 2000);
+    expect(history.billingTransactions.first.transactionType, 'purchase');
+    expect(history.billingTransactions.last.transactionType, 'refund');
+    expect(history.billingTransactions.last.amountCents, -2000);
+    expect(history.paymentAttempts.single.attemptType, 'checkout');
   });
 }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
+import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/models/child_profile.dart';
 import 'package:kinder_world/core/models/progress_record.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/providers/theme_provider.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
@@ -239,30 +241,13 @@ class ChildHomeContent extends ConsumerStatefulWidget {
 class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   int _selectedAxisIndex = 0;
 
-  /// Cached Future so [_buildDailyGoal]'s FutureBuilder does not create a new
-  /// network call on every rebuild.
-  Future<List<ProgressRecord>>? _dailyGoalFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final childProfile = ref.read(currentChildProvider);
-      if (childProfile != null) {
-        setState(() {
-          _dailyGoalFuture = ref
-              .read(progressControllerProvider.notifier)
-              .loadTodayProgress(childProfile.id);
-        });
-      }
-    });
-  }
-
   // ── loading / error states ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final sessionState = ref.watch(childSessionControllerProvider);
+    final homeFeedAsync = ref.watch(currentChildHomeFeedProvider);
+    final todayProgressAsync = ref.watch(currentChildTodayProgressProvider);
     final childProfile = sessionState.childProfile;
 
     if (sessionState.isLoading) {
@@ -374,23 +359,16 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                 const MoodPickerSection(),
                 const SizedBox(height: 16),
 
-                // 4. Mood Recommendations (shown only after mood is picked)
-                const MoodRecommendationsSection(),
-
-                // 5. Continue Learning
-                _buildContinueLearning(),
+                // 4. Continue Learning
+                _buildContinueLearning(homeFeedAsync),
                 const SizedBox(height: 24),
 
-                // 6. Daily Goal
-                _buildDailyGoal(childProfile),
+                // 5. Daily Goal
+                _buildDailyGoal(todayProgressAsync),
                 const SizedBox(height: 24),
 
-                // 7. My Activities History
-                _buildMyActivitiesHistory(),
-                const SizedBox(height: 24),
-
-                // 8. Activity of the Day
-                _buildActivityOfTheDay(),
+                // 6. My Activities History
+                _buildMyActivitiesHistory(homeFeedAsync),
                 const SizedBox(height: 48),
               ],
             ),
@@ -564,22 +542,55 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   // ── CONTINUE LEARNING ──────────────────────────────────────────────────────
 
-  Widget _buildContinueLearning() {
+  Widget _buildContinueLearning(AsyncValue<ChildHomeFeed?> homeFeedAsync) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final feed = homeFeedAsync.valueOrNull;
+    final continueRecord = feed?.continueLearningRecord;
+    final continueActivity = feed?.continueLearningActivity;
+    final fallbackRecommendation = continueRecord == null &&
+            feed != null &&
+            feed.recommendedActivities.isNotEmpty
+        ? feed.recommendedActivities.first
+        : null;
+    final displayActivity = continueActivity ?? fallbackRecommendation;
+    final hasRecentActivity = continueRecord != null;
+    if (displayActivity == null) {
+      return const SizedBox.shrink();
+    }
+
+    final sectionTitle =
+        hasRecentActivity ? l10n.continueLearning : l10n.recommendedForYou;
+    final title = hasRecentActivity
+        ? _displayActivityTitle(
+            activity: continueActivity,
+            record: continueRecord,
+          )
+        : displayActivity.title;
+    final subtitle = hasRecentActivity
+        ? _recordSubtitle(continueRecord, l10n)
+        : '${l10n.minutesShort(displayActivity.duration)} | ${l10n.activityXp(displayActivity.xpReward)}';
+    final icon = _iconForActivity(
+      activity: displayActivity,
+      record: continueRecord,
+    );
+    final route = _destinationForActivity(
+      activity: displayActivity,
+      record: continueRecord,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ChildSectionHeader(title: l10n.continueLearning),
+        ChildSectionHeader(title: sectionTitle),
         const SizedBox(height: 12),
         KinderCard(
-          onTap: () => context.go('/child/learn'),
-          gradientColors: [
-            colors.primary,
-            colors.secondary,
-          ],
+          onTap: () => context.go(route),
+          gradientColors: _gradientForActivity(
+            activity: displayActivity,
+            record: continueRecord,
+          ),
           padding: const EdgeInsets.all(18),
           child: Row(
             children: [
@@ -591,7 +602,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
-                  Icons.auto_stories_rounded,
+                  icon,
                   size: 30,
                   color: colors.onPrimary,
                 ),
@@ -602,7 +613,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.exploreLessons,
+                      title,
                       style: textTheme.titleMedium?.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -611,7 +622,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      l10n.newTopicsAwait,
+                      subtitle,
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 13,
                         color: colors.onPrimary.withValuesCompat(alpha: 0.8),
@@ -628,7 +639,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  l10n.goLabel,
+                  hasRecentActivity ? l10n.goLabel : l10n.start,
                   style: textTheme.labelLarge?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -645,270 +656,389 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 
   // ── DAILY GOAL ─────────────────────────────────────────────────────────────
 
-  Widget _buildDailyGoal(ChildProfile child) {
+  Widget _buildDailyGoal(AsyncValue<List<ProgressRecord>> todayProgressAsync) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final textTheme = theme.textTheme;
     final childTheme = context.childTheme;
-    return FutureBuilder<List<ProgressRecord>>(
-      // Use the cached future — never recreated on rebuild.
-      future: _dailyGoalFuture,
-      builder: (context, snapshot) {
-        final l10n = AppLocalizations.of(context)!;
-        final done = snapshot.hasData ? snapshot.data!.length : 0;
-        const target = 3;
-        final progress = (done / target).clamp(0.0, 1.0);
-        final isComplete = done >= target;
+    final l10n = AppLocalizations.of(context)!;
+    final done = todayProgressAsync.valueOrNull?.length ?? 0;
+    const target = 3;
+    final progress = (done / target).clamp(0.0, 1.0);
+    final isComplete = done >= target;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ChildSectionHeader(
-              title: isComplete ? '${l10n.dailyGoal} ✅' : l10n.dailyGoal,
-            ),
-            const SizedBox(height: 12),
-            KinderCard(
-              gradientColors: isComplete
-                  ? [
-                      childTheme.success,
-                      colors.primary,
-                    ]
-                  : null,
-              padding: const EdgeInsets.all(18),
-              child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ChildSectionHeader(
+          title: isComplete ? '${l10n.dailyGoal} ✅' : l10n.dailyGoal,
+        ),
+        const SizedBox(height: 12),
+        KinderCard(
+          gradientColors: isComplete
+              ? [
+                  childTheme.success,
+                  colors.primary,
+                ]
+              : null,
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isComplete
-                            ? l10n.goalComplete
-                            : l10n.completeActivitiesToday(target),
-                        style: TextStyle(
-                          fontSize: AppConstants.fontSize,
-                          fontWeight: FontWeight.w700,
-                          color:
-                              isComplete ? colors.onPrimary : colors.onSurface,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isComplete
-                              ? colors.onPrimary.withValuesCompat(alpha: 0.25)
-                              : childTheme.success
-                                  .withValuesCompat(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '$done/$target',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: isComplete
-                                ? colors.onPrimary
-                                : childTheme.success,
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    isComplete
+                        ? l10n.goalComplete
+                        : l10n.completeActivitiesToday(target),
+                    style: TextStyle(
+                      fontSize: AppConstants.fontSize,
+                      fontWeight: FontWeight.w700,
+                      color: isComplete ? colors.onPrimary : colors.onSurface,
+                    ),
                   ),
-                  const SizedBox(height: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: isComplete
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isComplete
                           ? colors.onPrimary.withValuesCompat(alpha: 0.25)
-                          : colors.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        isComplete ? colors.onPrimary : childTheme.success,
+                          : childTheme.success.withValuesCompat(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$done/$target',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color:
+                            isComplete ? colors.onPrimary : childTheme.success,
                       ),
-                      minHeight: 10,
                     ),
                   ),
-                  if (isComplete) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.xpBonusEarned,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: childTheme.xp,
-                      ),
-                    ),
-                  ],
                 ],
               ),
-            ),
-          ],
-        );
-      },
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: isComplete
+                      ? colors.onPrimary.withValuesCompat(alpha: 0.25)
+                      : colors.surfaceContainerHighest,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isComplete ? colors.onPrimary : childTheme.success,
+                  ),
+                  minHeight: 10,
+                ),
+              ),
+              if (isComplete) ...[
+                const SizedBox(height: 10),
+                Text(
+                  l10n.xpBonusEarned,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: childTheme.xp,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   // ── ACTIVITIES HISTORY ─────────────────────────────────────────────────────
 
-  Widget _buildMyActivitiesHistory() {
+  Widget _buildMyActivitiesHistory(AsyncValue<ChildHomeFeed?> homeFeedAsync) {
     final l10n = AppLocalizations.of(context)!;
-    final axes = [
-      _AxisHistory(
-        index: 0,
-        label: l10n.kindnessTab,
-        emoji: '💖',
-        color: context.childTheme.kindness,
-        icon: Icons.favorite_rounded,
-        items: [
-          _HistoryItem(
-            title: l10n.historySharingStars,
-            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 8),
-            xp: 30,
-          ),
-          _HistoryItem(
-            title: l10n.historyKindWords,
-            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 6),
-            xp: 20,
-          ),
-          _HistoryItem(
-            title: l10n.historyHelpingHands,
-            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 10),
-            xp: 40,
-          ),
-        ],
-      ),
-      _AxisHistory(
-        index: 1,
-        label: l10n.learningTab,
-        emoji: '📚',
-        color: context.childTheme.learning,
-        icon: Icons.school_rounded,
-        items: [
-          _HistoryItem(
-            title: l10n.historyNumbersAdventure,
-            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 12),
-            xp: 45,
-          ),
-          _HistoryItem(
-            title: l10n.historyColorQuest,
-            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 7),
-            xp: 25,
-          ),
-          _HistoryItem(
-            title: l10n.historyStoryTime,
-            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 9),
-            xp: 35,
-          ),
-        ],
-      ),
-      _AxisHistory(
-        index: 2,
-        label: l10n.skillsTab,
-        emoji: '🧩',
-        color: context.childTheme.skill,
-        icon: Icons.extension_rounded,
-        items: [
-          _HistoryItem(
-            title: l10n.historyPuzzleBuilder,
-            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 5),
-            xp: 18,
-          ),
-          _HistoryItem(
-            title: l10n.historyShapeMatch,
-            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 8),
-            xp: 28,
-          ),
-          _HistoryItem(
-            title: l10n.historyMemoryGame,
-            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 11),
-            xp: 38,
-          ),
-        ],
-      ),
-      _AxisHistory(
-        index: 3,
-        label: l10n.funTab,
-        emoji: '🎵',
-        color: context.childTheme.fun,
-        icon: Icons.music_note_rounded,
-        items: [
-          _HistoryItem(
-            title: l10n.historyDanceParty,
-            subtitle: _historySubtitle(l10n, dayOffset: 0, minutes: 6),
-            xp: 22,
-          ),
-          _HistoryItem(
-            title: l10n.historySingAlong,
-            subtitle: _historySubtitle(l10n, dayOffset: 1, minutes: 5),
-            xp: 18,
-          ),
-          _HistoryItem(
-            title: l10n.historyMagicShow,
-            subtitle: _historySubtitle(l10n, dayOffset: 2, minutes: 9),
-            xp: 32,
-          ),
-        ],
-      ),
-    ];
+    final feed = homeFeedAsync.valueOrNull;
+    final axes =
+        feed == null ? const <_AxisHistory>[] : _buildHistoryAxes(feed);
+    final hasHistory = axes.isNotEmpty;
+    if (!hasHistory) {
+      return const SizedBox.shrink();
+    }
 
-    final selectedAxis = axes[_selectedAxisIndex];
+    final selectedAxisIndex =
+        hasHistory ? _selectedAxisIndex.clamp(0, axes.length - 1) : 0;
+    final selectedAxis = hasHistory ? axes[selectedAxisIndex] : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ChildSectionHeader(title: l10n.myActivities),
         const SizedBox(height: 12),
-
-        // Category chips
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: axes.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) {
-              final axis = axes[i];
-              return ChildCategoryChip(
-                label: axis.label,
-                emoji: axis.emoji,
-                color: axis.color,
-                isSelected: i == _selectedAxisIndex,
-                onTap: () => setState(() => _selectedAxisIndex = i),
-              );
-            },
+        ...[
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: axes.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final axis = axes[i];
+                return ChildCategoryChip(
+                  label: axis.label,
+                  emoji: axis.emoji,
+                  color: axis.color,
+                  isSelected: i == selectedAxisIndex,
+                  onTap: () => setState(() => _selectedAxisIndex = i),
+                );
+              },
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-
-        // History cards
-        Column(
-          children: List.generate(selectedAxis.items.length, (i) {
-            final item = selectedAxis.items[i];
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: i == selectedAxis.items.length - 1 ? 0 : 10,
-              ),
-              child: _buildHistoryCard(item, selectedAxis),
-            );
-          }),
-        ),
+          const SizedBox(height: 14),
+          Column(
+            children: List.generate(selectedAxis!.items.length, (i) {
+              final item = selectedAxis.items[i];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: i == selectedAxis.items.length - 1 ? 0 : 10,
+                ),
+                child: _buildHistoryCard(item, selectedAxis),
+              );
+            }),
+          ),
+        ],
       ],
     );
   }
 
-  String _historySubtitle(
-    AppLocalizations l10n, {
-    required int dayOffset,
-    required int minutes,
-  }) {
+  String _recordSubtitle(ProgressRecord record, AppLocalizations l10n) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final recordDay =
+        DateTime(record.date.year, record.date.month, record.date.day);
+    final dayOffset = today.difference(recordDay).inDays;
     final dayLabel = switch (dayOffset) {
       0 => l10n.todayLabel,
       1 => l10n.yesterdayLabel,
       _ => l10n.daysAgoCount(dayOffset),
     };
-    return '$dayLabel | ${l10n.minutesShort(minutes)}';
+    return '$dayLabel | ${l10n.minutesShort(record.duration)} | ${l10n.activityXp(record.xpEarned)}';
+  }
+
+  List<_AxisHistory> _buildHistoryAxes(ChildHomeFeed feed) {
+    final grouped = <String, List<_HistoryItem>>{};
+    final order = <String>[];
+
+    for (final record in feed.recentRecords) {
+      final activity = feed.resolvedActivities[record.id];
+      final axis = _axisForRecord(activity: activity, record: record);
+      if (!grouped.containsKey(axis.key)) {
+        grouped[axis.key] = <_HistoryItem>[];
+        order.add(axis.key);
+      }
+      grouped[axis.key]!.add(
+        _HistoryItem(
+          title: _displayActivityTitle(activity: activity, record: record),
+          subtitle: _recordSubtitle(
+            record,
+            AppLocalizations.of(context)!,
+          ),
+          xp: record.xpEarned,
+        ),
+      );
+    }
+
+    return [
+      for (var i = 0; i < order.length; i++)
+        _axisForKey(
+          key: order[i],
+          index: i,
+          items: grouped[order[i]] ?? const [],
+        ),
+    ];
+  }
+
+  _AxisHistory _axisForRecord({
+    Activity? activity,
+    ProgressRecord? record,
+  }) {
+    final type = activity?.type ?? _inferredActivityType(record?.activityId);
+    final aspect = activity?.aspect;
+
+    if (aspect == ActivityAspects.behavioral) {
+      return _axisForKey(
+        key: 'behavioral',
+        index: 0,
+        items: const [],
+      );
+    }
+    if (aspect == ActivityAspects.skillful ||
+        type == ActivityTypes.challenge ||
+        type == ActivityTypes.craft ||
+        type == ActivityTypes.simulation) {
+      return _axisForKey(
+        key: 'skillful',
+        index: 0,
+        items: const [],
+      );
+    }
+    if (type == ActivityTypes.game || type == ActivityTypes.song) {
+      return _axisForKey(
+        key: 'fun',
+        index: 0,
+        items: const [],
+      );
+    }
+    return _axisForKey(
+      key: 'learning',
+      index: 0,
+      items: const [],
+    );
+  }
+
+  _AxisHistory _axisForKey({
+    required String key,
+    required int index,
+    required List<_HistoryItem> items,
+  }) {
+    final theme = context.childTheme;
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'behavioral':
+        return _AxisHistory(
+          key: key,
+          index: index,
+          label: l10n.kindnessTab,
+          emoji: '\u{1F496}',
+          color: theme.kindness,
+          icon: Icons.favorite_rounded,
+          items: items,
+        );
+      case 'skillful':
+        return _AxisHistory(
+          key: key,
+          index: index,
+          label: l10n.skillsTab,
+          emoji: '\u{1F9E9}',
+          color: theme.skill,
+          icon: Icons.extension_rounded,
+          items: items,
+        );
+      case 'fun':
+        return _AxisHistory(
+          key: key,
+          index: index,
+          label: l10n.funTab,
+          emoji: '\u{1F3B5}',
+          color: theme.fun,
+          icon: Icons.music_note_rounded,
+          items: items,
+        );
+      case 'learning':
+      default:
+        return _AxisHistory(
+          key: key,
+          index: index,
+          label: l10n.learningTab,
+          emoji: '\u{1F4DA}',
+          color: theme.learning,
+          icon: Icons.school_rounded,
+          items: items,
+        );
+    }
+  }
+
+  String _displayActivityTitle({
+    Activity? activity,
+    ProgressRecord? record,
+  }) {
+    if (activity != null) return activity.title;
+    final note = record?.notes?.trim();
+    if (note != null && note.isNotEmpty) return note;
+    final raw = record?.activityId ?? '';
+    return raw
+        .replaceAll(RegExp(r'^(lesson_|game_|story_|video_|music_|quiz_)'), '')
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map(
+          (part) => part[0].toUpperCase() + part.substring(1),
+        )
+        .join(' ');
+  }
+
+  String _destinationForActivity({
+    Activity? activity,
+    ProgressRecord? record,
+  }) {
+    final type = activity?.type ?? _inferredActivityType(record?.activityId);
+    switch (type) {
+      case ActivityTypes.game:
+      case ActivityTypes.song:
+      case ActivityTypes.challenge:
+      case ActivityTypes.simulation:
+        return '/child/play';
+      default:
+        return '/child/learn';
+    }
+  }
+
+  IconData _iconForActivity({
+    Activity? activity,
+    ProgressRecord? record,
+  }) {
+    final type = activity?.type ?? _inferredActivityType(record?.activityId);
+    switch (type) {
+      case ActivityTypes.game:
+        return Icons.sports_esports_rounded;
+      case ActivityTypes.song:
+        return Icons.music_note_rounded;
+      case ActivityTypes.video:
+        return Icons.play_circle_rounded;
+      case ActivityTypes.story:
+      case ActivityTypes.interactiveStory:
+        return Icons.auto_stories_rounded;
+      case ActivityTypes.quiz:
+        return Icons.quiz_rounded;
+      default:
+        return Icons.school_rounded;
+    }
+  }
+
+  List<Color> _gradientForActivity({
+    Activity? activity,
+    ProgressRecord? record,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final childTheme = context.childTheme;
+    final type = activity?.type ?? _inferredActivityType(record?.activityId);
+    switch (type) {
+      case ActivityTypes.game:
+      case ActivityTypes.song:
+        return [
+          childTheme.fun,
+          Color.lerp(childTheme.fun, colors.secondary, 0.35)!,
+        ];
+      case ActivityTypes.challenge:
+      case ActivityTypes.simulation:
+        return [
+          childTheme.skill,
+          Color.lerp(childTheme.skill, colors.secondary, 0.35)!,
+        ];
+      default:
+        return [
+          colors.primary,
+          colors.secondary,
+        ];
+    }
+  }
+
+  String _inferredActivityType(String? activityId) {
+    if (activityId == null || activityId.isEmpty) return ActivityTypes.lesson;
+    if (activityId.startsWith('game_')) return ActivityTypes.game;
+    if (activityId.startsWith('story_')) return ActivityTypes.story;
+    if (activityId.startsWith('video_')) return ActivityTypes.video;
+    if (activityId.startsWith('music_')) return ActivityTypes.song;
+    if (activityId.startsWith('quiz_')) return ActivityTypes.quiz;
+    if (activityId == 'activity_of_the_day') return ActivityTypes.challenge;
+    return ActivityTypes.lesson;
   }
 
   Widget _buildHistoryCard(_HistoryItem item, _AxisHistory axis) {
@@ -971,115 +1101,6 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
   }
 
   // ── ACTIVITY OF THE DAY ────────────────────────────────────────────────────
-
-  Widget _buildActivityOfTheDay() {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final childTheme = context.childTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ChildSectionHeader(title: l10n.activityOfTheDay),
-        const SizedBox(height: 12),
-        KinderCard(
-          onTap: () => context.go('/child/home/activity-of-day'),
-          gradientColors: [
-            Color.lerp(colors.secondary, childTheme.streakLight, 0.35)!,
-            childTheme.streak,
-          ],
-          gradientBegin: Alignment.topLeft,
-          gradientEnd: Alignment.bottomRight,
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              // Large emoji illustration
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: colors.onPrimary.withValuesCompat(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.lightbulb_rounded,
-                    size: 36,
-                    color: colors.onPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.exploreNewActivities,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: colors.onPrimary,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.discoverSomethingAmazing,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                        color: colors.onPrimary.withValuesCompat(alpha: 0.85),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.xpBonusLabel,
-                      style: textTheme.labelLarge?.copyWith(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: childTheme.xp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Start button
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow.withValuesCompat(alpha: 0.1),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  l10n.start,
-                  style: textTheme.labelLarge?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: childTheme.streak,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1087,6 +1108,7 @@ class _ChildHomeContentState extends ConsumerState<ChildHomeContent> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AxisHistory {
+  final String key;
   final int index;
   final String label;
   final String emoji;
@@ -1095,6 +1117,7 @@ class _AxisHistory {
   final List<_HistoryItem> items;
 
   const _AxisHistory({
+    required this.key,
     required this.index,
     required this.label,
     required this.emoji,
