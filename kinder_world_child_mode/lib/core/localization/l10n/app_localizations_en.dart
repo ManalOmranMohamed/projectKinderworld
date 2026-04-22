@@ -4534,6 +4534,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminCmsThumbnailLabel => 'Thumbnail URL';
 
   @override
+  String get adminCmsVideoSectionTitle => 'Video details';
+
+  @override
+  String get adminCmsVideoUrlLabel => 'Video URL';
+
+  @override
+  String get adminCmsVideoPreviewUrlLabel => 'Preview/playback URL';
+
+  @override
+  String get adminCmsVideoProviderLabel => 'Video provider';
+
+  @override
+  String get adminCmsVideoHostTierLabel => 'Hosting tier';
+
+  @override
   String get adminCmsAgeGroupLabel => 'Age group';
 
   @override
@@ -4738,6 +4753,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminCmsValidationQuestionOptionTextRequired =>
       'Each answer option needs text';
+
+  @override
+  String get playVideoSectionTitle => 'Video';
+
+  @override
+  String get playWatchVideoAction => 'Watch video';
+
+  @override
+  String get playVideoLaunchFailed => 'Unable to open the video link.';
 
   @override
   String get adminCmsCategoryLabel => 'Category';

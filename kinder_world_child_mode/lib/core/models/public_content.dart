@@ -104,6 +104,22 @@ class PublicContentItem {
   final PublicContentCategory? category;
   final List<PublicQuiz> quizzes;
 
+  String? get videoUrl => _metadataString('video_url');
+  String? get videoPreviewUrl => _metadataString('video_preview_url');
+  String? get preferredVideoUrl => videoPreviewUrl ?? videoUrl;
+  String? get videoProvider => _metadataString('video_provider');
+  String? get videoHostTier => _metadataString('video_host_tier');
+  bool get hasVideo => (preferredVideoUrl ?? '').trim().isNotEmpty;
+
+  String? _metadataString(String key) {
+    final value = metadata[key];
+    if (value == null) {
+      return null;
+    }
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
   factory PublicContentItem.fromJson(Map<String, dynamic> json) {
     final rawMetadata = json['metadata_json'];
     final rawQuizzes = json['quizzes'];

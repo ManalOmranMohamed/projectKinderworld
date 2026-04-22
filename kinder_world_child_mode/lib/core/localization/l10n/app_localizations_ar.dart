@@ -2014,6 +2014,21 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get adminCmsSubtitle => 'إدارة الفئات والمحتوى التعليمي والاختبارات.';
   @override
   String get adminCmsThumbnailLabel => 'رابط الصورة المصغرة';
+
+  @override
+  String get adminCmsVideoSectionTitle => 'تفاصيل الفيديو';
+
+  @override
+  String get adminCmsVideoUrlLabel => 'رابط الفيديو';
+
+  @override
+  String get adminCmsVideoPreviewUrlLabel => 'رابط المعاينة أو التشغيل';
+
+  @override
+  String get adminCmsVideoProviderLabel => 'مزود الفيديو';
+
+  @override
+  String get adminCmsVideoHostTierLabel => 'فئة الاستضافة';
   @override
   String get adminCmsTitle => 'إدارة المحتوى';
   @override
@@ -3722,4 +3737,13 @@ class AppLocalizationsAr extends AppLocalizationsEn {
 
   @override
   String get playTypeActivity => 'نشاط';
+
+  @override
+  String get playVideoSectionTitle => 'الفيديو';
+
+  @override
+  String get playWatchVideoAction => 'شاهد الفيديو';
+
+  @override
+  String get playVideoLaunchFailed => 'تعذر فتح رابط الفيديو.';
 }

@@ -1687,6 +1687,11 @@ abstract class AppLocalizations {
   String get adminCmsBodyEnLabel;
   String get adminCmsBodyArLabel;
   String get adminCmsThumbnailLabel;
+  String get adminCmsVideoSectionTitle;
+  String get adminCmsVideoUrlLabel;
+  String get adminCmsVideoPreviewUrlLabel;
+  String get adminCmsVideoProviderLabel;
+  String get adminCmsVideoHostTierLabel;
   String get adminCmsAgeGroupLabel;
   String get adminCmsMetadataLabel;
   String get adminCmsPreviewTitle;
@@ -1763,6 +1768,10 @@ abstract class AppLocalizations {
   String get adminCmsValidationQuestionOptionsRequired;
   String get adminCmsValidationQuestionCorrectAnswerRequired;
   String get adminCmsValidationQuestionOptionTextRequired;
+
+  String get playVideoSectionTitle;
+  String get playWatchVideoAction;
+  String get playVideoLaunchFailed;
 
   // Pagination
   String adminPaginationSummary(int page, int totalPages, int total);

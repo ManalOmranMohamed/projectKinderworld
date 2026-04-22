@@ -148,6 +148,20 @@ class AdminCmsContent {
   final String? updatedAt;
   final String? publishedAt;
 
+  String? get videoUrl => _metadataString('video_url');
+  String? get videoPreviewUrl => _metadataString('video_preview_url');
+  String? get videoProvider => _metadataString('video_provider');
+  String? get videoHostTier => _metadataString('video_host_tier');
+
+  String? _metadataString(String key) {
+    final value = metadataJson[key];
+    if (value == null) {
+      return null;
+    }
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
+  }
+
   factory AdminCmsContent.fromJson(Map<String, dynamic> json) {
     final rawQuizzes = (json['quizzes'] as List<dynamic>? ?? const [])
         .map((item) =>

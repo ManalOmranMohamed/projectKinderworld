@@ -1,10 +1,19 @@
 // ignore_for_file: prefer_const_constructors
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
+import 'package:kinder_world/core/providers/child_session_controller.dart';
+import 'package:kinder_world/core/providers/progress_controller.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
 import 'package:kinder_world/core/widgets/child_header.dart';
@@ -12,9 +21,13 @@ import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 import 'package:kinder_world/routing/route_paths.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'widgets/learn_screen_sections.dart';
 part 'learn_support_screens.dart';
+part 'arcade_fun_games.dart';
+part 'puzzle_world_game.dart';
+part 'memory_match_game.dart';
 
 class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});

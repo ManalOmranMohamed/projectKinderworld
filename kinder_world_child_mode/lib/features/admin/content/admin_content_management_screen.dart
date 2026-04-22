@@ -310,7 +310,11 @@ class _AdminContentManagementScreenState
       ..remove('duration_minutes')
       ..remove('difficulty')
       ..remove('tags')
-      ..remove('featured');
+      ..remove('featured')
+      ..remove('video_url')
+      ..remove('video_preview_url')
+      ..remove('video_provider')
+      ..remove('video_host_tier');
     final titleEn = TextEditingController(text: content?.titleEn ?? '');
     final titleAr = TextEditingController(text: content?.titleAr ?? '');
     final descEn = TextEditingController(text: content?.descriptionEn ?? '');
@@ -318,6 +322,13 @@ class _AdminContentManagementScreenState
     final bodyEn = TextEditingController(text: content?.bodyEn ?? '');
     final bodyAr = TextEditingController(text: content?.bodyAr ?? '');
     final thumb = TextEditingController(text: content?.thumbnailUrl ?? '');
+    final videoUrl = TextEditingController(text: content?.videoUrl ?? '');
+    final videoPreviewUrl =
+        TextEditingController(text: content?.videoPreviewUrl ?? '');
+    final videoProvider =
+        TextEditingController(text: content?.videoProvider ?? '');
+    final videoHostTier =
+        TextEditingController(text: content?.videoHostTier ?? '');
     final age = TextEditingController(text: content?.ageGroup ?? '');
     final duration = TextEditingController(
       text: metadataMap['duration_minutes']?.toString() ?? '',
@@ -450,6 +461,48 @@ class _AdminContentManagementScreenState
                           decoration: InputDecoration(
                               labelText: l10n.adminCmsThumbnailLabel)),
                       const SizedBox(height: 12),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.adminCmsVideoSectionTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: videoUrl,
+                        decoration: InputDecoration(
+                          labelText: l10n.adminCmsVideoUrlLabel,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: videoPreviewUrl,
+                        decoration: InputDecoration(
+                          labelText: l10n.adminCmsVideoPreviewUrlLabel,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(children: [
+                        Expanded(
+                          child: TextField(
+                            controller: videoProvider,
+                            decoration: InputDecoration(
+                              labelText: l10n.adminCmsVideoProviderLabel,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: videoHostTier,
+                            decoration: InputDecoration(
+                              labelText: l10n.adminCmsVideoHostTierLabel,
+                            ),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 12),
                       TextField(
                           controller: age,
                           decoration: InputDecoration(
@@ -555,8 +608,14 @@ class _AdminContentManagementScreenState
       return;
     }
     final thumbValue = thumb.text.trim();
-    if (thumbValue.isNotEmpty) {
-      final uri = Uri.tryParse(thumbValue);
+    final videoUrlValue = videoUrl.text.trim();
+    final videoPreviewUrlValue = videoPreviewUrl.text.trim();
+    final urlValues = [thumbValue, videoUrlValue, videoPreviewUrlValue];
+    for (final value in urlValues) {
+      if (value.isEmpty) {
+        continue;
+      }
+      final uri = Uri.tryParse(value);
       if (uri == null ||
           !uri.hasAuthority ||
           !['http', 'https'].contains(uri.scheme)) {
@@ -613,6 +672,13 @@ class _AdminContentManagementScreenState
         if (difficulty.text.trim().isNotEmpty)
           'difficulty': difficulty.text.trim(),
         if (tagsList.isNotEmpty) 'tags': tagsList,
+        if (videoUrlValue.isNotEmpty) 'video_url': videoUrlValue,
+        if (videoPreviewUrlValue.isNotEmpty)
+          'video_preview_url': videoPreviewUrlValue,
+        if (videoProvider.text.trim().isNotEmpty)
+          'video_provider': videoProvider.text.trim(),
+        if (videoHostTier.text.trim().isNotEmpty)
+          'video_host_tier': videoHostTier.text.trim(),
         'featured': featured,
       },
     };

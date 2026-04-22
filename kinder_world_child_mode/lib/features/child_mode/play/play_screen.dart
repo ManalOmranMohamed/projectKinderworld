@@ -7,6 +7,7 @@ import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
   const PlayScreen({super.key});
@@ -522,6 +523,55 @@ class _PlayContentDetailScreenState
                       ),
                 ),
               ),
+              if (item.hasVideo) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: colors.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.playVideoSectionTitle,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                      ),
+                      if ((item.videoProvider ?? item.videoHostTier ?? '')
+                          .isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if ((item.videoProvider ?? '').isNotEmpty)
+                              _VideoMetaChip(
+                                label: item.videoProvider!,
+                                icon: Icons.cloud_outlined,
+                              ),
+                            if ((item.videoHostTier ?? '').isNotEmpty)
+                              _VideoMetaChip(
+                                label: item.videoHostTier!,
+                                icon: Icons.speed_rounded,
+                              ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: () => _openVideo(item),
+                        icon: const Icon(Icons.play_circle_fill_rounded),
+                        label: Text(l10n.playWatchVideoAction),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (item.quizzes.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 ChildSectionHeader(title: l10n.playPublishedQuizzes),
@@ -566,6 +616,36 @@ class _PlayContentDetailScreenState
       ),
     );
   }
+
+  Future<void> _openVideo(PublicContentItem item) async {
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final rawUrl = item.preferredVideoUrl;
+    if (rawUrl == null || rawUrl.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
+      );
+      return;
+    }
+
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
+      );
+      return;
+    }
+
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
+      );
+    }
+  }
 }
 
 class _PlayDetailHero extends StatelessWidget {
@@ -608,6 +688,43 @@ class _PlayDetailHero extends StatelessWidget {
                 icon: _contentIcon(item.contentType),
                 color: accent,
               ),
+      ),
+    );
+  }
+}
+
+class _VideoMetaChip extends StatelessWidget {
+  const _VideoMetaChip({
+    required this.label,
+    required this.icon,
+  });
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colors.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+        ],
       ),
     );
   }

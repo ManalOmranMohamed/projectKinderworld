@@ -49,6 +49,7 @@ dependencies:
   uuid: ^4.2.2
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.1
+  audioplayers: ^6.1.0
   
   # JSON Serialization
   json_annotation: ^4.8.0
@@ -74,6 +75,10 @@ flutter:
   
   assets:
     - assets/images/
+    - assets/images/puzzle_shuffle/
+    - assets/images/picture_puzzle/
+    - assets/images/memory_match/
+    - assets/images/memory_match/cards/
     - assets/images/coloring/
     - assets/images/avatars/
     - assets/icons/
@@ -105,3 +110,8 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/icons/kinderworld-logo.png"
+
+
+
+
+
