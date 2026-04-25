@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/models/admin_cms_models.dart';
 import 'package:kinder_world/core/models/admin_parent_user.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_control_center_panel.dart';
 import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
@@ -33,6 +35,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
   bool _loading = true;
   String? _error;
   List<AdminParentUser> _users = const [];
+  List<AdminCmsAxisSummary> _axes = const [];
   Map<String, dynamic> _pagination = const {};
 
   List<DropdownMenuItem<String>> _planItems(AppLocalizations l10n) => [
@@ -68,15 +71,21 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
       _error = null;
     });
     try {
-      final response =
-          await ref.read(adminManagementRepositoryProvider).fetchUsers(
-                search: _searchController.text,
-                status: _status,
-                page: _page,
-              );
+      final repo = ref.read(adminManagementRepositoryProvider);
+      final results = await Future.wait<dynamic>([
+        repo.fetchUsers(
+          search: _searchController.text,
+          status: _status,
+          page: _page,
+        ),
+        repo.fetchCmsCatalog(),
+      ]);
+      final response = results[0] as AdminPagedResponse<AdminParentUser>;
+      final catalog = results[1] as AdminCmsCatalogResponse;
       if (!mounted) return;
       setState(() {
         _users = response.items;
+        _axes = catalog.axes;
         _pagination = response.pagination;
         _loading = false;
       });
@@ -190,6 +199,32 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final contextActions = [
+      AdminControlCenterAction(
+        icon: Icons.auto_stories_outlined,
+        label: l10n.adminSidebarContent,
+        route: Routes.adminContent,
+        accent: colorScheme.tertiaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.child_care_outlined,
+        label: l10n.adminSidebarChildren,
+        route: Routes.adminChildren,
+        accent: colorScheme.secondaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.insights_outlined,
+        label: l10n.adminSidebarReports,
+        route: Routes.adminReports,
+        accent: colorScheme.primaryContainer,
+      ),
+      AdminControlCenterAction(
+        icon: Icons.support_agent_outlined,
+        label: l10n.adminSidebarSupport,
+        route: Routes.adminSupport,
+        accent: colorScheme.errorContainer,
+      ),
+    ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -214,6 +249,17 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
               const SizedBox(height: 20),
 
               // â”€â”€ Filters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              AdminControlCenterPanel(
+                title: l10n.adminDashboard,
+                actions: contextActions,
+                axes: _axes,
+                categoriesLabel: l10n.adminCmsCategoriesTab,
+                contentsLabel: l10n.adminCmsContentsTab,
+                quizzesLabel: l10n.adminCmsQuizzesTab,
+                onAxisTap: (_) => context.go(Routes.adminContent),
+              ),
+              if (contextActions.isNotEmpty || _axes.isNotEmpty)
+                const SizedBox(height: 20),
               AdminFilterBar(
                 children: [
                   SizedBox(

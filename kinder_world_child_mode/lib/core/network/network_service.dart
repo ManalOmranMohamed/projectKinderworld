@@ -81,6 +81,7 @@ class NetworkService {
               'url': options.uri.toString(),
               'method': options.method,
               'path': options.path,
+              'request_body': _serializeForLog(options.data),
               'retry': options.extra['retryCount'] ?? 0,
             },
           );
@@ -118,6 +119,8 @@ class NetworkService {
               'status_code': error.response?.statusCode,
               'error_type': error.type.name,
               'message': error.message ?? 'unknown_error',
+              'request_body': _serializeForLog(error.requestOptions.data),
+              'response_body': _serializeForLog(error.response?.data),
               'retry': error.requestOptions.extra['retryCount'] ?? 0,
               'duration_ms': _requestDurationMs(error.requestOptions),
             },
@@ -211,6 +214,21 @@ class NetworkService {
       parts.add('${entry.key}=$safeValue');
     }
     return parts.join(' ');
+  }
+
+  String? _serializeForLog(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    final text = value.toString().replaceAll('\n', ' ').trim();
+    if (text.isEmpty) {
+      return null;
+    }
+    const maxLength = 500;
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return '${text.substring(0, maxLength)}...';
   }
 
   bool _shouldAttachAuthToken(String? token) {
@@ -396,6 +414,8 @@ class NetworkService {
         'status_code': e.response?.statusCode,
         'error_type': e.type.name,
         'message': e.message ?? 'unknown_error',
+        'request_body': _serializeForLog(e.requestOptions.data),
+        'response_body': _serializeForLog(e.response?.data),
       },
     );
   }

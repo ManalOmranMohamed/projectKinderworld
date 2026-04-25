@@ -7,6 +7,7 @@ import 'package:kinder_world/features/admin/management/admin_management_reposito
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
 import 'package:kinder_world/features/admin/shared/admin_filter_bar.dart';
 import 'package:kinder_world/features/admin/shared/admin_form_dialog.dart';
+import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.dart';
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
@@ -191,8 +192,12 @@ class _AdminChildrenScreenState extends ConsumerState<AdminChildrenScreen> {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final canWrite =
-        ref.watch(adminAuthProvider.notifier).hasPermission('children:write');
+    final admin = ref.watch(currentAdminProvider);
+    final canWrite = admin?.hasPermission('admin.children.edit') ?? false;
+
+    if (!(admin?.hasPermission('admin.children.view') ?? false)) {
+      return const AdminPermissionPlaceholder();
+    }
 
     final outlineBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),

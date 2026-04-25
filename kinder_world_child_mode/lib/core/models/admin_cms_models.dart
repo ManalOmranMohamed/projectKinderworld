@@ -1,6 +1,36 @@
+class AdminCmsAxisSummary {
+  const AdminCmsAxisSummary({
+    required this.key,
+    required this.titleEn,
+    required this.titleAr,
+    this.categoryCount = 0,
+    this.contentCount = 0,
+    this.quizCount = 0,
+  });
+
+  final String key;
+  final String titleEn;
+  final String titleAr;
+  final int categoryCount;
+  final int contentCount;
+  final int quizCount;
+
+  factory AdminCmsAxisSummary.fromJson(Map<String, dynamic> json) {
+    return AdminCmsAxisSummary(
+      key: json['key'] as String? ?? '',
+      titleEn: json['title_en'] as String? ?? '',
+      titleAr: json['title_ar'] as String? ?? '',
+      categoryCount: json['category_count'] as int? ?? 0,
+      contentCount: json['content_count'] as int? ?? 0,
+      quizCount: json['quiz_count'] as int? ?? 0,
+    );
+  }
+}
+
 class AdminCmsCategory {
   const AdminCmsCategory({
     required this.id,
+    required this.axisKey,
     required this.slug,
     required this.titleEn,
     required this.titleAr,
@@ -13,6 +43,7 @@ class AdminCmsCategory {
   });
 
   final int id;
+  final String axisKey;
   final String slug;
   final String titleEn;
   final String titleAr;
@@ -26,6 +57,7 @@ class AdminCmsCategory {
   factory AdminCmsCategory.fromJson(Map<String, dynamic> json) {
     return AdminCmsCategory(
       id: json['id'] as int,
+      axisKey: json['axis_key'] as String? ?? '',
       slug: json['slug'] as String? ?? '',
       titleEn: json['title_en'] as String? ?? '',
       titleAr: json['title_ar'] as String? ?? '',
@@ -44,6 +76,7 @@ class AdminCmsQuiz {
     required this.id,
     this.contentId,
     this.categoryId,
+    this.axisKey,
     required this.status,
     required this.titleEn,
     required this.titleAr,
@@ -62,6 +95,7 @@ class AdminCmsQuiz {
   final int id;
   final int? contentId;
   final int? categoryId;
+  final String? axisKey;
   final String status;
   final String titleEn;
   final String titleAr;
@@ -84,6 +118,7 @@ class AdminCmsQuiz {
       id: json['id'] as int,
       contentId: json['content_id'] as int?,
       categoryId: json['category_id'] as int?,
+      axisKey: json['axis_key'] as String?,
       status: json['status'] as String? ?? 'draft',
       titleEn: json['title_en'] as String? ?? '',
       titleAr: json['title_ar'] as String? ?? '',
@@ -109,6 +144,7 @@ class AdminCmsContent {
   const AdminCmsContent({
     required this.id,
     this.categoryId,
+    this.axisKey,
     required this.contentType,
     required this.status,
     required this.titleEn,
@@ -130,6 +166,7 @@ class AdminCmsContent {
 
   final int id;
   final int? categoryId;
+  final String? axisKey;
   final String contentType;
   final String status;
   final String titleEn;
@@ -170,6 +207,7 @@ class AdminCmsContent {
     return AdminCmsContent(
       id: json['id'] as int,
       categoryId: json['category_id'] as int?,
+      axisKey: json['axis_key'] as String?,
       contentType: json['content_type'] as String? ?? 'lesson',
       status: json['status'] as String? ?? 'draft',
       titleEn: json['title_en'] as String? ?? '',

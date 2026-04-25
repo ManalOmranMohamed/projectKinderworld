@@ -34,6 +34,7 @@ class _AdminContentManagementScreenState
   bool _loading = true;
   String? _error;
 
+  List<AdminCmsAxisSummary> _axes = const [];
   List<AdminCmsCategory> _categories = const [];
   List<AdminCmsContent> _contents = const [];
   List<AdminCmsQuiz> _quizzes = const [];
@@ -42,6 +43,8 @@ class _AdminContentManagementScreenState
 
   String _contentSearch = '';
   String _contentStatus = '';
+  String _contentType = '';
+  String _selectedAxisKey = '';
   int? _contentCategoryId;
   int _contentPage = 1;
 
@@ -72,6 +75,11 @@ class _AdminContentManagementScreenState
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    _tabs.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
     _loadAll();
   }
 
@@ -88,21 +96,29 @@ class _AdminContentManagementScreenState
     });
     try {
       final repo = ref.read(adminManagementRepositoryProvider);
-      final categories = await repo.fetchCategories();
+      final catalog = await repo.fetchCmsCatalog();
+      final effectiveAxisKey = _selectedAxisKey.isNotEmpty
+          ? _selectedAxisKey
+          : (catalog.axes.isNotEmpty ? catalog.axes.first.key : '');
       final contents = await repo.fetchContents(
         search: _contentSearch,
         status: _contentStatus,
         categoryId: _contentCategoryId,
+        axisKey: effectiveAxisKey,
+        contentType: _contentType,
         page: _contentPage,
       );
       final quizzes = await repo.fetchQuizzes(
         status: _quizStatus,
         categoryId: _quizCategoryId,
+        axisKey: effectiveAxisKey,
         page: _quizPage,
       );
       if (!mounted) return;
       setState(() {
-        _categories = categories;
+        _axes = catalog.axes;
+        _selectedAxisKey = effectiveAxisKey;
+        _categories = catalog.categories;
         _contents = contents.items;
         _quizzes = quizzes.items;
         _contentPagination = contents.pagination;
@@ -116,6 +132,24 @@ class _AdminContentManagementScreenState
         _loading = false;
       });
     }
+  }
+
+  AdminCmsAxisSummary? get _selectedAxisSummary {
+    for (final axis in _axes) {
+      if (axis.key == _selectedAxisKey) {
+        return axis;
+      }
+    }
+    return _axes.isNotEmpty ? _axes.first : null;
+  }
+
+  List<AdminCmsCategory> get _categoriesForSelectedAxis {
+    if (_selectedAxisKey.isEmpty) {
+      return _categories;
+    }
+    return _categories
+        .where((category) => category.axisKey == _selectedAxisKey)
+        .toList();
   }
 
   String _extractErrorMessage(AppLocalizations l10n, Object error) {
@@ -175,6 +209,45 @@ class _AdminContentManagementScreenState
     }
   }
 
+  void _selectAxis(AdminCmsAxisSummary axis) {
+    if (_selectedAxisKey == axis.key) {
+      return;
+    }
+    setState(() {
+      _selectedAxisKey = axis.key;
+      _contentCategoryId = null;
+      _quizCategoryId = null;
+      _contentSearch = '';
+      _contentStatus = '';
+      _contentType = '';
+      _quizStatus = '';
+      _contentPage = 1;
+      _quizPage = 1;
+    });
+    _loadAll();
+  }
+
+  void _openTab(int tabIndex) {
+    if (_tabs.index != tabIndex) {
+      _tabs.animateTo(tabIndex);
+    }
+  }
+
+  Future<void> _createContentForType(String type) async {
+    _openTab(1);
+    await _saveContent(initialType: type);
+  }
+
+  void _filterByContentType(String type) {
+    _openTab(1);
+    setState(() {
+      _contentType = type;
+      _contentCategoryId = null;
+      _contentPage = 1;
+    });
+    _loadAll();
+  }
+
   Future<void> _saveCategory({AdminCmsCategory? category}) async {
     final l10n = AppLocalizations.of(context)!;
     final slug = TextEditingController(text: category?.slug ?? '');
@@ -182,63 +255,89 @@ class _AdminContentManagementScreenState
     final titleAr = TextEditingController(text: category?.titleAr ?? '');
     final descEn = TextEditingController(text: category?.descriptionEn ?? '');
     final descAr = TextEditingController(text: category?.descriptionAr ?? '');
+    String selectedAxisKey =
+        category?.axisKey ?? _selectedAxisSummary?.key ?? _selectedAxisKey;
     final confirmed = await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            insetPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
-              vertical: 24,
-            ),
-            title: Text(category == null
-                ? (l10n.adminCmsCategoryCreateTitle)
-                : (l10n.adminCmsCategoryEditTitle)),
-            content: SizedBox(
-              width: adminResponsiveDialogWidth(
-                context,
-                preferredWidth: 520,
+          builder: (context) => StatefulBuilder(
+            builder: (context, setStateDialog) => AlertDialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.sizeOf(context).width < 600 ? 16 : 40,
+                vertical: 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                      controller: slug,
+              title: Text(category == null
+                  ? (l10n.adminCmsCategoryCreateTitle)
+                  : (l10n.adminCmsCategoryEditTitle)),
+              content: SizedBox(
+                width: adminResponsiveDialogWidth(
+                  context,
+                  preferredWidth: 520,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormFieldCompat<String>(
+                      initialValue:
+                          selectedAxisKey.isEmpty ? null : selectedAxisKey,
                       decoration: InputDecoration(
-                          labelText: l10n.adminCmsCategorySlug)),
-                  const SizedBox(height: 12),
-                  TextField(
-                      controller: titleEn,
-                      decoration: InputDecoration(
-                          labelText: l10n.adminCmsTitleEnLabel)),
-                  const SizedBox(height: 12),
-                  TextField(
-                      controller: titleAr,
-                      decoration: InputDecoration(
-                          labelText: l10n.adminCmsTitleArLabel)),
-                  const SizedBox(height: 12),
-                  TextField(
-                      controller: descEn,
-                      decoration: InputDecoration(
-                          labelText: l10n.adminCmsDescriptionEnLabel)),
-                  const SizedBox(height: 12),
-                  TextField(
-                      controller: descAr,
-                      decoration: InputDecoration(
-                          labelText: l10n.adminCmsDescriptionArLabel)),
-                ],
+                          labelText: l10n.adminCmsCategoryLabel),
+                      items: _axes
+                          .map(
+                            (axis) => DropdownMenuItem<String>(
+                              value: axis.key,
+                              child: Text(axis.titleEn),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) => setStateDialog(
+                        () => selectedAxisKey = value ?? selectedAxisKey,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: slug,
+                        decoration: InputDecoration(
+                            labelText: l10n.adminCmsCategorySlug)),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: titleEn,
+                        decoration: InputDecoration(
+                            labelText: l10n.adminCmsTitleEnLabel)),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: titleAr,
+                        decoration: InputDecoration(
+                            labelText: l10n.adminCmsTitleArLabel)),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: descEn,
+                        decoration: InputDecoration(
+                            labelText: l10n.adminCmsDescriptionEnLabel)),
+                    const SizedBox(height: 12),
+                    TextField(
+                        controller: descAr,
+                        decoration: InputDecoration(
+                            labelText: l10n.adminCmsDescriptionArLabel)),
+                  ],
+                ),
               ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l10n.cancel)),
+                FilledButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(l10n.save)),
+              ],
             ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text(l10n.cancel)),
-              FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: Text(l10n.save)),
-            ],
           ),
         ) ??
         false;
     if (!confirmed) return;
+    if (selectedAxisKey.trim().isEmpty) {
+      _showFeedback(l10n.errorTitle, isError: true);
+      return;
+    }
     if (titleEn.text.trim().isEmpty) {
       _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
       return;
@@ -258,6 +357,7 @@ class _AdminContentManagementScreenState
     try {
       if (category == null) {
         await repo.createCategory(
+          axisKey: selectedAxisKey,
           slug: slug.text.trim(),
           titleEn: titleEn.text.trim(),
           titleAr: titleAr.text.trim(),
@@ -267,6 +367,7 @@ class _AdminContentManagementScreenState
       } else {
         await repo.updateCategory(
           category.id,
+          axisKey: selectedAxisKey,
           slug: slug.text.trim(),
           titleEn: titleEn.text.trim(),
           titleAr: titleAr.text.trim(),
@@ -302,7 +403,10 @@ class _AdminContentManagementScreenState
     }
   }
 
-  Future<void> _saveContent({AdminCmsContent? content}) async {
+  Future<void> _saveContent({
+    AdminCmsContent? content,
+    String? initialType,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
     final metadataMap =
         Map<String, dynamic>.from(content?.metadataJson ?? const {});
@@ -345,7 +449,7 @@ class _AdminContentManagementScreenState
       text: const JsonEncoder.withIndent('  ').convert(advancedMetadata),
     );
     int? selectedCategoryId = content?.categoryId;
-    String selectedType = content?.contentType ?? 'lesson';
+    String selectedType = content?.contentType ?? initialType ?? 'lesson';
     String selectedStatus = content?.status ?? 'draft';
     bool featured = metadataMap['featured'] == true;
     final confirmed = await showDialog<bool>(
@@ -376,7 +480,7 @@ class _AdminContentManagementScreenState
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(l10n.adminCmsNoCategory)),
-                          ..._categories.map((category) =>
+                          ..._categoriesForSelectedAxis.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
                                   child: Text(category.titleEn))),
@@ -942,7 +1046,7 @@ class _AdminContentManagementScreenState
                           DropdownMenuItem<int?>(
                               value: null,
                               child: Text(l10n.adminCmsNoCategory)),
-                          ..._categories.map((category) =>
+                          ..._categoriesForSelectedAxis.map((category) =>
                               DropdownMenuItem<int?>(
                                   value: category.id,
                                   child: Text(category.titleEn))),
@@ -1252,6 +1356,10 @@ class _AdminContentManagementScreenState
                 ],
               ),
               const SizedBox(height: 20),
+              if (_axes.isNotEmpty) ...[
+                _buildAxisWorkspace(context, l10n, admin),
+                const SizedBox(height: 20),
+              ],
               TabBar(
                 controller: _tabs,
                 isScrollable: true,
@@ -1290,8 +1398,21 @@ class _AdminContentManagementScreenState
     final canCreate = admin?.hasPermission('admin.content.create') ?? false;
     final canEdit = admin?.hasPermission('admin.content.edit') ?? false;
     final canDelete = admin?.hasPermission('admin.content.delete') ?? false;
+    final axis = _selectedAxisSummary;
+    final categories = _categoriesForSelectedAxis;
     return Column(
       children: [
+        if (axis != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                '${axis.titleEn} • ${axis.categoryCount}',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+          ),
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -1309,10 +1430,10 @@ class _AdminContentManagementScreenState
         const SizedBox(height: 16),
         Expanded(
           child: ListView.separated(
-            itemCount: _categories.length,
+            itemCount: categories.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final category = _categories[index];
+              final category = categories[index];
               return Card(
                 child: ListTile(
                   title: Text(category.titleEn),
@@ -1368,6 +1489,25 @@ class _AdminContentManagementScreenState
           SizedBox(
             width: dropdownWidth,
             child: DropdownButtonFormFieldCompat<String>(
+              initialValue: _contentType,
+              decoration: InputDecoration(labelText: l10n.adminCmsTypeLabel),
+              items: [
+                DropdownMenuItem(
+                    value: '', child: Text(l10n.adminCmsStatusAll)),
+                ..._contentTypeItems(l10n),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _contentType = value ?? '';
+                  _contentPage = 1;
+                });
+                _loadAll();
+              },
+            ),
+          ),
+          SizedBox(
+            width: dropdownWidth,
+            child: DropdownButtonFormFieldCompat<String>(
               initialValue: _contentStatus,
               decoration: InputDecoration(labelText: l10n.adminCmsStatusLabel),
               items: [
@@ -1394,8 +1534,9 @@ class _AdminContentManagementScreenState
               items: [
                 DropdownMenuItem<int?>(
                     value: null, child: Text(l10n.adminCmsAllCategories)),
-                ..._categories.map((item) => DropdownMenuItem<int?>(
-                    value: item.id, child: Text(item.titleEn))),
+                ..._categoriesForSelectedAxis.map((item) =>
+                    DropdownMenuItem<int?>(
+                        value: item.id, child: Text(item.titleEn))),
               ],
               onChanged: (value) {
                 setState(() {
@@ -1540,8 +1681,9 @@ class _AdminContentManagementScreenState
               items: [
                 DropdownMenuItem<int?>(
                     value: null, child: Text(l10n.adminCmsAllCategories)),
-                ..._categories.map((item) => DropdownMenuItem<int?>(
-                    value: item.id, child: Text(item.titleEn))),
+                ..._categoriesForSelectedAxis.map((item) =>
+                    DropdownMenuItem<int?>(
+                        value: item.id, child: Text(item.titleEn))),
               ],
               onChanged: (value) {
                 setState(() {
@@ -1610,6 +1752,169 @@ class _AdminContentManagementScreenState
       ]);
     });
   }
+
+  Widget _buildAxisWorkspace(
+    BuildContext context,
+    AppLocalizations l10n,
+    dynamic admin,
+  ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final axis = _selectedAxisSummary;
+    final canCreate = admin?.hasPermission('admin.content.create') ?? false;
+    final quickTypeItems = <({String type, IconData icon})>[
+      (type: 'lesson', icon: Icons.menu_book_outlined),
+      (type: 'story', icon: Icons.auto_stories_outlined),
+      (type: 'video', icon: Icons.play_circle_outline_rounded),
+      (type: 'activity', icon: Icons.extension_outlined),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _axes
+              .map(
+                (axisItem) => _AxisSummaryCard(
+                  axis: axisItem,
+                  selected: axisItem.key == _selectedAxisKey,
+                  onTap: () => _selectAxis(axisItem),
+                ),
+              )
+              .toList(),
+        ),
+        if (axis != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          axis.titleEn,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (axis.titleAr.trim().isNotEmpty)
+                          Text(
+                            axis.titleAr,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                      ],
+                    ),
+                    FilledButton.icon(
+                      onPressed: canCreate ? () => _saveCategory() : null,
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                      label: Text(l10n.adminCmsAddCategory),
+                    ),
+                    FilledButton.icon(
+                      onPressed: canCreate ? () => _saveContent() : null,
+                      icon: const Icon(Icons.note_add_outlined),
+                      label: Text(l10n.adminCmsAddContent),
+                    ),
+                    FilledButton.icon(
+                      onPressed: canCreate ? () => _saveQuiz() : null,
+                      icon: const Icon(Icons.quiz_outlined),
+                      label: Text(l10n.adminCmsAddQuiz),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _AxisMetricCard(
+                      icon: Icons.folder_copy_outlined,
+                      label: l10n.adminCmsCategoriesTab,
+                      value: axis.categoryCount,
+                    ),
+                    _AxisMetricCard(
+                      icon: Icons.library_books_outlined,
+                      label: l10n.adminCmsContentsTab,
+                      value: axis.contentCount,
+                    ),
+                    _AxisMetricCard(
+                      icon: Icons.quiz_outlined,
+                      label: l10n.adminCmsQuizzesTab,
+                      value: axis.quizCount,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: quickTypeItems
+                      .map(
+                        (entry) => OutlinedButton.icon(
+                          onPressed: canCreate
+                              ? () => _createContentForType(entry.type)
+                              : null,
+                          icon: Icon(entry.icon, size: 18),
+                          label: Text(_contentTypeLabel(entry.type, l10n)),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _AxisQuickFilterChip(
+                      label: l10n.adminCmsContentsTab,
+                      selected: _tabs.index == 1 && _contentType.isEmpty,
+                      onTap: () {
+                        _openTab(1);
+                        setState(() {
+                          _contentType = '';
+                          _contentPage = 1;
+                        });
+                        _loadAll();
+                      },
+                    ),
+                    ...quickTypeItems.map(
+                      (entry) => _AxisQuickFilterChip(
+                        label: _contentTypeLabel(entry.type, l10n),
+                        selected:
+                            _tabs.index == 1 && _contentType == entry.type,
+                        onTap: () => _filterByContentType(entry.type),
+                      ),
+                    ),
+                    _AxisQuickFilterChip(
+                      label: l10n.adminCmsQuizzesTab,
+                      selected: _tabs.index == 2,
+                      onTap: () => _openTab(2),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _StatusOption {
@@ -1643,6 +1948,165 @@ class _CmsStatusChip extends StatelessWidget {
       child: Text(label,
           style: TextStyle(
               color: foreground, fontSize: 12, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _AxisSummaryCard extends StatelessWidget {
+  const _AxisSummaryCard({
+    required this.axis,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AdminCmsAxisSummary axis;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Ink(
+        width: 220,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color:
+              selected ? scheme.primaryContainer : scheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              axis.titleEn,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (axis.titleAr.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                axis.titleAr,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              '${axis.categoryCount} / ${axis.contentCount} / ${axis.quizCount}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AxisMetricCard extends StatelessWidget {
+  const _AxisMetricCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: scheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value.toString(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AxisQuickFilterChip extends StatelessWidget {
+  const _AxisQuickFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? scheme.primaryContainer : scheme.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? scheme.primary : scheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

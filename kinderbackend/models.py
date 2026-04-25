@@ -766,6 +766,13 @@ class ContentCategory(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    axis_key = Column(
+        String,
+        nullable=False,
+        default="educational",
+        server_default=text("'educational'"),
+        index=True,
+    )
     slug = Column(String, unique=True, nullable=False, index=True)
     title_en = Column(String, nullable=False)
     title_ar = Column(String, nullable=False)

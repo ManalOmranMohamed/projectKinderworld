@@ -24,6 +24,16 @@ class AdminPagedResponse<T> {
   final Map<String, dynamic> pagination;
 }
 
+class AdminCmsCatalogResponse {
+  const AdminCmsCatalogResponse({
+    required this.categories,
+    required this.axes,
+  });
+
+  final List<AdminCmsCategory> categories;
+  final List<AdminCmsAxisSummary> axes;
+}
+
 class AdminManagementRepository {
   AdminManagementRepository({
     required NetworkService network,
@@ -328,19 +338,33 @@ class AdminManagementRepository {
         Map<String, dynamic>.from(response.data as Map));
   }
 
-  Future<List<AdminCmsCategory>> fetchCategories() async {
+  Future<AdminCmsCatalogResponse> fetchCmsCatalog({String axisKey = ''}) async {
     final response = await _network.get(
       '/admin/categories',
+      queryParameters: {
+        if (axisKey.isNotEmpty) 'axis_key': axisKey,
+      },
       options: await _adminOptions(),
     );
     final body = Map<String, dynamic>.from(response.data as Map);
-    return (body['items'] as List<dynamic>? ?? const [])
+    final categories = (body['items'] as List<dynamic>? ?? const [])
         .map((item) =>
             AdminCmsCategory.fromJson(Map<String, dynamic>.from(item as Map)))
         .toList();
+    final axes = (body['axes'] as List<dynamic>? ?? const [])
+        .map((item) => AdminCmsAxisSummary.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList();
+    return AdminCmsCatalogResponse(categories: categories, axes: axes);
+  }
+
+  Future<List<AdminCmsCategory>> fetchCategories({String axisKey = ''}) async {
+    final response = await fetchCmsCatalog(axisKey: axisKey);
+    return response.categories;
   }
 
   Future<AdminCmsCategory> createCategory({
+    required String axisKey,
     required String slug,
     required String titleEn,
     required String titleAr,
@@ -350,6 +374,7 @@ class AdminManagementRepository {
     final response = await _network.post(
       '/admin/categories',
       data: {
+        'axis_key': axisKey,
         'slug': slug,
         'title_en': titleEn,
         'title_ar': titleAr,
@@ -365,6 +390,7 @@ class AdminManagementRepository {
 
   Future<AdminCmsCategory> updateCategory(
     int categoryId, {
+    required String axisKey,
     required String slug,
     required String titleEn,
     required String titleAr,
@@ -374,6 +400,7 @@ class AdminManagementRepository {
     final response = await _network.patch(
       '/admin/categories/$categoryId',
       data: {
+        'axis_key': axisKey,
         'slug': slug,
         'title_en': titleEn,
         'title_ar': titleAr,
@@ -398,6 +425,7 @@ class AdminManagementRepository {
     String search = '',
     String status = '',
     int? categoryId,
+    String axisKey = '',
     String contentType = '',
     int page = 1,
   }) async {
@@ -405,6 +433,7 @@ class AdminManagementRepository {
     if (search.isNotEmpty) query['search'] = search;
     if (status.isNotEmpty) query['status'] = status;
     if (categoryId != null) query['category_id'] = categoryId;
+    if (axisKey.isNotEmpty) query['axis_key'] = axisKey;
     if (contentType.isNotEmpty) query['content_type'] = contentType;
 
     final response = await _network.get(
@@ -487,12 +516,14 @@ class AdminManagementRepository {
   Future<AdminPagedResponse<AdminCmsQuiz>> fetchQuizzes({
     String status = '',
     int? categoryId,
+    String axisKey = '',
     int? contentId,
     int page = 1,
   }) async {
     final query = <String, dynamic>{'page': page};
     if (status.isNotEmpty) query['status'] = status;
     if (categoryId != null) query['category_id'] = categoryId;
+    if (axisKey.isNotEmpty) query['axis_key'] = axisKey;
     if (contentId != null) query['content_id'] = contentId;
 
     final response = await _network.get(

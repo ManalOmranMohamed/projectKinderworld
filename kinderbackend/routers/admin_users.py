@@ -79,7 +79,7 @@ def list_admin_users(
     )
 
     return {
-        "items": [serialize_user_detail(user) for user in items],
+        "items": [serialize_user_detail(user, db) for user in items],
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
         "filters": {"search": search, "status": normalized_status},
     }
@@ -92,7 +92,7 @@ def get_admin_user(
     admin=Depends(require_permission("admin.users.view")),
 ):
     user = _get_user_or_404(user_id, db)
-    return {"item": serialize_user_detail(user)}
+    return {"item": serialize_user_detail(user, db)}
 
 
 @router.patch("/{user_id}")
@@ -113,7 +113,7 @@ def update_admin_user(
         )
         action = "user.override_plan"
     user = _get_user_or_404(user_id, db)
-    before = serialize_user_detail(user)
+    before = serialize_user_detail(user, db)
 
     if payload.email is not None:
         normalized_email = payload.email.strip().lower()
@@ -147,11 +147,11 @@ def update_admin_user(
         entity_type="user",
         entity_id=user.id,
         before_json=before,
-        after_json=serialize_user_detail(user),
+        after_json=serialize_user_detail(user, db),
     )
     db.commit()
     db.refresh(user)
-    return {"success": True, "item": serialize_user_detail(user)}
+    return {"success": True, "item": serialize_user_detail(user, db)}
 
 
 @router.post("/{user_id}/disable")
@@ -163,7 +163,7 @@ def disable_admin_user(
 ):
     require_sensitive_action_confirmation(request, action="user.disable")
     user = _get_user_or_404(user_id, db)
-    before = serialize_user_detail(user)
+    before = serialize_user_detail(user, db)
     user.is_active = False
     user.token_version = (user.token_version or 0) + 1
     user.updated_at = db_utc_now()
@@ -176,11 +176,11 @@ def disable_admin_user(
         entity_type="user",
         entity_id=user.id,
         before_json=before,
-        after_json=serialize_user_detail(user),
+        after_json=serialize_user_detail(user, db),
     )
     db.commit()
     db.refresh(user)
-    return {"success": True, "item": serialize_user_detail(user)}
+    return {"success": True, "item": serialize_user_detail(user, db)}
 
 
 @router.post("/{user_id}/enable")
@@ -192,7 +192,7 @@ def enable_admin_user(
 ):
     require_sensitive_action_confirmation(request, action="user.enable")
     user = _get_user_or_404(user_id, db)
-    before = serialize_user_detail(user)
+    before = serialize_user_detail(user, db)
     user.is_active = True
     user.updated_at = db_utc_now()
     db.add(user)
@@ -204,11 +204,11 @@ def enable_admin_user(
         entity_type="user",
         entity_id=user.id,
         before_json=before,
-        after_json=serialize_user_detail(user),
+        after_json=serialize_user_detail(user, db),
     )
     db.commit()
     db.refresh(user)
-    return {"success": True, "item": serialize_user_detail(user)}
+    return {"success": True, "item": serialize_user_detail(user, db)}
 
 
 @router.post("/{user_id}/reset-password")

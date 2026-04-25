@@ -207,3 +207,46 @@ def test_admin_refresh_rejects_parent_refresh_token(client, create_parent):
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid refresh token type"
+
+
+def test_admin_bootstrap_creates_first_super_admin(client):
+    status_response = client.get("/admin/auth/bootstrap/status")
+    assert status_response.status_code == 200
+    assert status_response.json() == {"can_bootstrap": True}
+
+    response = client.post(
+        "/admin/auth/bootstrap",
+        json={
+            "email": "first.admin@example.com",
+            "password": "AdminPass123!",
+            "name": "First Admin",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["access_token"]
+    assert body["refresh_token"]
+    assert body["admin"]["email"] == "first.admin@example.com"
+    assert "super_admin" in body["admin"]["roles"]
+
+    after_status = client.get("/admin/auth/bootstrap/status")
+    assert after_status.status_code == 200
+    assert after_status.json() == {"can_bootstrap": False}
+
+
+def test_admin_bootstrap_rejects_when_admin_exists(client, seed_builtin_rbac, create_admin):
+    seed_builtin_rbac()
+    create_admin(email="existing.admin@example.com", role_names=["super_admin"])
+
+    response = client.post(
+        "/admin/auth/bootstrap",
+        json={
+            "email": "second.admin@example.com",
+            "password": "AdminPass123!",
+            "name": "Second Admin",
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "The first admin account has already been created"

@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session, joinedload
 
 from admin_deps import require_permission
 from admin_utils import (
+    CONTENT_AXIS_METADATA,
     build_pagination_payload,
+    normalize_content_axis_key,
+    serialize_content_axis_summary,
     serialize_content_category,
     serialize_content_item,
     serialize_quiz,
@@ -31,6 +34,7 @@ AGE_GROUP_PATTERN = re.compile(r"^\s*(\d{1,2}\s*-\s*\d{1,2}|\d{1,2}\+)\s*$")
 
 
 class CategoryCreateRequest(BaseModel):
+    axis_key: str
     slug: Optional[str] = None
     title_en: str
     title_ar: str
@@ -39,6 +43,7 @@ class CategoryCreateRequest(BaseModel):
 
 
 class CategoryUpdateRequest(BaseModel):
+    axis_key: Optional[str] = None
     slug: Optional[str] = None
     title_en: Optional[str] = None
     title_ar: Optional[str] = None
@@ -137,6 +142,18 @@ def _normalize_content_type(value: Optional[str]) -> Optional[str]:
     if normalized not in CONTENT_TYPES:
         raise _error("Content type must be lesson, story, video, activity, or page")
     return normalized
+
+
+def _normalize_axis_key_or_error(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    if not trimmed:
+        return None
+    try:
+        return normalize_content_axis_key(trimmed)
+    except ValueError as exc:
+        raise _error(str(exc))
 
 
 def _validate_thumbnail_url(value: Optional[str]) -> Optional[str]:
@@ -265,6 +282,17 @@ def _categories_query(db: Session):
     )
 
 
+def _category_axis_groups(categories: list[ContentCategory]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[ContentCategory]] = {key: [] for key in CONTENT_AXIS_METADATA}
+    for category in categories:
+        axis_key = normalize_content_axis_key(getattr(category, "axis_key", None))
+        grouped.setdefault(axis_key, []).append(category)
+    return [
+        serialize_content_axis_summary(axis_key, categories=grouped.get(axis_key, []))
+        for axis_key in CONTENT_AXIS_METADATA
+    ]
+
+
 def _contents_query(db: Session):
     return db.query(ContentItem).options(
         joinedload(ContentItem.category).joinedload(ContentCategory.contents),
@@ -341,16 +369,27 @@ def _ensure_content_slug_available(
 
 @router.get("/admin/categories")
 def list_categories(
+    axis_key: str = Query(""),
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.view")),
 ):
-    items = (
+    query = _categories_query(db).filter(ContentCategory.deleted_at.is_(None))
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.filter(ContentCategory.axis_key == normalized_axis_key)
+    items = query.order_by(ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en)).all()
+    all_categories = (
         _categories_query(db)
         .filter(ContentCategory.deleted_at.is_(None))
-        .order_by(func.lower(ContentCategory.title_en))
+        .order_by(ContentCategory.axis_key.asc(), func.lower(ContentCategory.title_en))
         .all()
     )
-    return {"items": [serialize_content_category(item) for item in items]}
+    return {
+        "items": [serialize_content_category(item) for item in items],
+        "axes": _category_axis_groups(all_categories),
+        "filters": {"axis_key": normalized_axis_key},
+    }
 
 
 @router.post("/admin/categories")
@@ -360,6 +399,9 @@ def create_category(
     db: Session = Depends(get_db),
     admin=Depends(require_permission("admin.content.create")),
 ):
+    axis_key = _normalize_axis_key_or_error(payload.axis_key)
+    if axis_key is None:
+        raise _error("Axis key is required")
     title_en = _require_text(payload.title_en, "English title")
     title_ar = _require_text(payload.title_ar, "Arabic title")
     slug = _slugify(payload.slug or title_en)
@@ -371,6 +413,7 @@ def create_category(
         raise _error("Category slug already exists")
 
     category = ContentCategory(
+        axis_key=axis_key,
         slug=slug,
         title_en=title_en,
         title_ar=title_ar,
@@ -408,6 +451,8 @@ def update_category(
     category = _get_category_or_404(category_id, db)
     before = serialize_content_category(category)
 
+    if payload.axis_key is not None:
+        category.axis_key = _normalize_axis_key_or_error(payload.axis_key) or category.axis_key
     if payload.slug is not None:
         slug = _slugify(payload.slug)
         if not slug:
@@ -496,6 +541,7 @@ def list_contents(
     status_filter: str = Query("", alias="status"),
     slug: str = Query(""),
     category_id: Optional[int] = Query(None),
+    axis_key: str = Query(""),
     content_type: str = Query(""),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -519,6 +565,13 @@ def list_contents(
         query = query.filter(ContentItem.status == _normalize_status(status_filter))
     if category_id is not None:
         query = query.filter(ContentItem.category_id == category_id)
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.join(ContentItem.category).filter(
+            ContentCategory.axis_key == normalized_axis_key,
+            ContentCategory.deleted_at.is_(None),
+        )
     if content_type.strip():
         query = query.filter(ContentItem.content_type == _normalize_content_type(content_type))
 
@@ -537,6 +590,7 @@ def list_contents(
             "slug": slug.strip().lower(),
             "status": status_filter.strip().lower(),
             "category_id": category_id,
+            "axis_key": normalized_axis_key,
             "content_type": content_type.strip().lower(),
         },
     }
@@ -822,6 +876,7 @@ def delete_content(
 def list_quizzes(
     status_filter: str = Query("", alias="status"),
     category_id: Optional[int] = Query(None),
+    axis_key: str = Query(""),
     content_id: Optional[int] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -833,6 +888,13 @@ def list_quizzes(
         query = query.filter(Quiz.status == _normalize_status(status_filter))
     if category_id is not None:
         query = query.filter(Quiz.category_id == category_id)
+    normalized_axis_key = None
+    if axis_key.strip():
+        normalized_axis_key = _normalize_axis_key_or_error(axis_key)
+        query = query.join(Quiz.category).filter(
+            ContentCategory.axis_key == normalized_axis_key,
+            ContentCategory.deleted_at.is_(None),
+        )
     if content_id is not None:
         query = query.filter(Quiz.content_id == content_id)
 
@@ -846,6 +908,12 @@ def list_quizzes(
     return {
         "items": [serialize_quiz(item) for item in items],
         "pagination": build_pagination_payload(page=page, page_size=page_size, total=total),
+        "filters": {
+            "status": status_filter.strip().lower(),
+            "category_id": category_id,
+            "axis_key": normalized_axis_key,
+            "content_id": content_id,
+        },
     }
 
 
