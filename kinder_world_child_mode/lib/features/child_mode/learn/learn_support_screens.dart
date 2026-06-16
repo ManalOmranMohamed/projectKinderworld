@@ -1,14 +1,15 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
 part of 'learn_screen.dart';
 
-class EntertainingScreen extends StatelessWidget {
+class EntertainingScreen extends ConsumerWidget {
   const EntertainingScreen({super.key});
 
   List<Map<String, dynamic>> get _items => entertainingItems;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
@@ -51,24 +52,28 @@ class EntertainingScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: ActivityAspects.entertaining,
+                fallbackBuilder: (context) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.9,
+                  ),
+                  itemCount: _items.length,
+                  itemBuilder: (context, index) {
+                    final item = _items[index];
+                    return _buildFunCard(
+                      context,
+                      item['title'],
+                      item['image'],
+                      item['color'],
+                      l10n,
+                    );
+                  },
                 ),
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return _buildFunCard(
-                    context,
-                    item['title'],
-                    item['image'],
-                    item['color'],
-                    l10n,
-                  );
-                },
               ),
             ),
           ],
@@ -163,6 +168,575 @@ String _normalizeCmsPlacementToken(String value) {
       .toLowerCase()
       .replaceAll(RegExp(r'[\s_\-–—&/]+'), '')
       .replaceAll(RegExp(r'[^a-z0-9\u0600-\u06FF]+'), '');
+}
+
+String _localizedCmsCategoryTitle(
+  BuildContext context,
+  PublicContentCategory category,
+) {
+  final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+  final preferred =
+      locale.startsWith('ar') ? category.titleAr : category.titleEn;
+  final fallback =
+      locale.startsWith('ar') ? category.titleEn : category.titleAr;
+  return preferred.trim().isNotEmpty ? preferred : fallback;
+}
+
+String _localizedCmsCategoryDescription(
+  BuildContext context,
+  PublicContentCategory category,
+) {
+  final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+  final preferred =
+      locale.startsWith('ar') ? category.descriptionAr : category.descriptionEn;
+  final fallback =
+      locale.startsWith('ar') ? category.descriptionEn : category.descriptionAr;
+  return (preferred ?? fallback ?? '').trim();
+}
+
+String _localizedCmsItemTitle(BuildContext context, PublicContentItem item) {
+  final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+  final preferred = locale.startsWith('ar') ? item.titleAr : item.titleEn;
+  final fallback = locale.startsWith('ar') ? item.titleEn : item.titleAr;
+  return preferred.trim().isNotEmpty ? preferred : fallback;
+}
+
+String _localizedCmsItemDescription(
+    BuildContext context, PublicContentItem item) {
+  final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+  final preferred =
+      locale.startsWith('ar') ? item.descriptionAr : item.descriptionEn;
+  final fallback =
+      locale.startsWith('ar') ? item.descriptionEn : item.descriptionAr;
+  return (preferred ?? fallback ?? '').trim();
+}
+
+Color _axisColor(String axisKey) {
+  return switch (axisKey) {
+    ActivityAspects.behavioral => AppColors.behavioral,
+    ActivityAspects.skillful => AppColors.skillful,
+    ActivityAspects.educational => AppColors.educational,
+    ActivityAspects.entertaining => AppColors.entertaining,
+    _ => AppColors.primary,
+  };
+}
+
+IconData _axisIcon(String axisKey) {
+  return switch (axisKey) {
+    ActivityAspects.behavioral => Icons.favorite_rounded,
+    ActivityAspects.skillful => Icons.brush_rounded,
+    ActivityAspects.educational => Icons.school_rounded,
+    ActivityAspects.entertaining => Icons.celebration_rounded,
+    _ => Icons.auto_stories_rounded,
+  };
+}
+
+class _CmsAxisCategoryGrid extends StatelessWidget {
+  const _CmsAxisCategoryGrid({
+    required this.categoriesState,
+    required this.axisKey,
+    required this.fallbackBuilder,
+  });
+
+  final AsyncValue<List<PublicContentCategory>> categoriesState;
+  final String axisKey;
+  final WidgetBuilder fallbackBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories =
+        (categoriesState.valueOrNull ?? const <PublicContentCategory>[])
+            .where((category) => category.axisKey == axisKey)
+            .toList(growable: false);
+
+    if (categoriesState.isLoading && categories.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (categories.isEmpty) {
+      return fallbackBuilder(context);
+    }
+
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.9,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        return _CmsCategoryCard(
+          category: categories[index],
+          axisKey: axisKey,
+        );
+      },
+    );
+  }
+}
+
+class _CmsAxisCategoryList extends StatelessWidget {
+  const _CmsAxisCategoryList({
+    required this.categoriesState,
+    required this.axisKey,
+    required this.fallbackBuilder,
+  });
+
+  final AsyncValue<List<PublicContentCategory>> categoriesState;
+  final String axisKey;
+  final WidgetBuilder fallbackBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories =
+        (categoriesState.valueOrNull ?? const <PublicContentCategory>[])
+            .where((category) => category.axisKey == axisKey)
+            .toList(growable: false);
+
+    if (categoriesState.isLoading && categories.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (categories.isEmpty) {
+      return fallbackBuilder(context);
+    }
+
+    return ListView.separated(
+      itemCount: categories.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder: (context, index) {
+        return _CmsCategoryListTile(
+          category: categories[index],
+          axisKey: axisKey,
+        );
+      },
+    );
+  }
+}
+
+class _CmsCategoryCard extends StatelessWidget {
+  const _CmsCategoryCard({
+    required this.category,
+    required this.axisKey,
+  });
+
+  final PublicContentCategory category;
+  final String axisKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(axisKey);
+    final count = category.contentCount + category.quizCount;
+    return InkWell(
+      onTap: () => _openCmsCategory(context, category, axisKey),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValuesCompat(alpha: 0.14),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 34,
+              backgroundColor: color.withValuesCompat(alpha: 0.14),
+              child: Icon(_axisIcon(axisKey), color: color, size: 34),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              _localizedCmsCategoryTitle(context, category),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                '$count',
+                style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CmsCategoryListTile extends StatelessWidget {
+  const _CmsCategoryListTile({
+    required this.category,
+    required this.axisKey,
+  });
+
+  final PublicContentCategory category;
+  final String axisKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(axisKey);
+    final description = _localizedCmsCategoryDescription(context, category);
+    return InkWell(
+      onTap: () => _openCmsCategory(context, category, axisKey),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValuesCompat(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 78,
+              height: 78,
+              decoration: BoxDecoration(
+                color: color.withValuesCompat(alpha: 0.14),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(_axisIcon(axisKey), color: color, size: 34),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _localizedCmsCategoryTitle(context, category),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: color, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _openCmsCategory(
+  BuildContext context,
+  PublicContentCategory category,
+  String axisKey,
+) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => CmsCategoryContentScreen(
+        categorySlug: category.slug,
+        axisKey: axisKey,
+        title: _localizedCmsCategoryTitle(context, category),
+      ),
+    ),
+  );
+}
+
+class CmsCategoryContentScreen extends ConsumerStatefulWidget {
+  const CmsCategoryContentScreen({
+    super.key,
+    required this.categorySlug,
+    required this.axisKey,
+    required this.title,
+  });
+
+  final String categorySlug;
+  final String axisKey;
+  final String title;
+
+  @override
+  ConsumerState<CmsCategoryContentScreen> createState() =>
+      _CmsCategoryContentScreenState();
+}
+
+class _CmsCategoryContentScreenState
+    extends ConsumerState<CmsCategoryContentScreen> {
+  late Future<List<PublicContentItem>> _itemsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _itemsFuture = ref.read(publicContentRepositoryProvider).fetchItems(
+          categorySlug: widget.categorySlug,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(widget.axisKey);
+    return Scaffold(
+      backgroundColor: color.withValuesCompat(alpha: 0.08),
+      appBar: AppBar(
+        title: Text(
+          widget.title,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const ChildHeader(
+              compact: true,
+              padding: EdgeInsets.only(bottom: 16),
+            ),
+            Expanded(
+              child: FutureBuilder<List<PublicContentItem>>(
+                future: _itemsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final items = snapshot.data ?? const <PublicContentItem>[];
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Text(
+                        AppLocalizations.of(context)!.noPagesFound,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    itemBuilder: (context, index) {
+                      return _CmsContentItemCard(
+                        item: items[index],
+                        axisKey: widget.axisKey,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CmsContentItemCard extends StatelessWidget {
+  const _CmsContentItemCard({
+    required this.item,
+    required this.axisKey,
+  });
+
+  final PublicContentItem item;
+  final String axisKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(axisKey);
+    final title = _localizedCmsItemTitle(context, item);
+    final description = _localizedCmsItemDescription(context, item);
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage =
+        thumbnailUrl != null && thumbnailUrl.trim().isNotEmpty;
+
+    return InkWell(
+      onTap: () {
+        if (item.hasVideo) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => SkillVideoScreen(
+                videoTitle: title,
+                videoUrl: item.preferredVideoUrl,
+                thumbnailUrl: item.effectiveThumbnailUrl,
+                description: description.isNotEmpty ? description : null,
+              ),
+            ),
+          );
+          return;
+        }
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => _GenericCmsTextContentScreen(
+              item: item,
+              axisKey: axisKey,
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValuesCompat(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SizedBox(
+                width: 92,
+                height: 92,
+                child: hasRemoteImage
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _CmsContentFallbackIcon(axisKey: axisKey),
+                      )
+                    : _CmsContentFallbackIcon(axisKey: axisKey),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Icon(
+                    item.hasVideo
+                        ? Icons.play_circle_fill_rounded
+                        : Icons.article_rounded,
+                    color: color,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CmsContentFallbackIcon extends StatelessWidget {
+  const _CmsContentFallbackIcon({required this.axisKey});
+
+  final String axisKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(axisKey);
+    return Container(
+      color: color.withValuesCompat(alpha: 0.12),
+      child: Icon(_axisIcon(axisKey), color: color, size: 38),
+    );
+  }
+}
+
+class _GenericCmsTextContentScreen extends StatelessWidget {
+  const _GenericCmsTextContentScreen({
+    required this.item,
+    required this.axisKey,
+  });
+
+  final PublicContentItem item;
+  final String axisKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _axisColor(axisKey);
+    final title = _localizedCmsItemTitle(context, item);
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final body = (locale.startsWith('ar') ? item.bodyAr : item.bodyEn) ??
+        (locale.startsWith('ar') ? item.bodyEn : item.bodyAr) ??
+        _localizedCmsItemDescription(context, item);
+    return Scaffold(
+      backgroundColor: color.withValuesCompat(alpha: 0.08),
+      appBar: AppBar(
+        title: Text(
+          title,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const ChildHeader(
+            compact: true,
+            padding: EdgeInsets.only(bottom: 16),
+          ),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              body.trim().isEmpty ? title : body,
+              style: const TextStyle(fontSize: 17, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// NEW: Entertainment Detail Screen (Shows content for Games, Cartoons, etc.)
@@ -697,7 +1271,6 @@ class _EntertainmentDetailScreenState
         : 'This content is coming soon.';
   }
 
-  // ignore: unused_element
   String _gameBannerText(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return isArabic
@@ -705,7 +1278,6 @@ class _EntertainmentDetailScreenState
         : 'This section now includes Puzzle World and the new premium Memory Match game.';
   }
 
-  // ignore: unused_element
   String _comingSoonText(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return isArabic
@@ -3542,14 +4114,15 @@ class _MemoryCardData {
 }
 
 /// 2. UPDATED Behavioral Screen (Changed to Grid Layout)
-class BehavioralScreen extends StatelessWidget {
+class BehavioralScreen extends ConsumerWidget {
   const BehavioralScreen({super.key});
 
   List<Map<String, dynamic>> get _values => behavioralValues;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       appBar: AppBar(
@@ -3577,19 +4150,23 @@ class BehavioralScreen extends StatelessWidget {
             const SizedBox(height: 24),
             // CHANGED TO GRID (2 Columns)
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: ActivityAspects.behavioral,
+                fallbackBuilder: (context) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.9,
+                  ),
+                  itemCount: _values.length,
+                  itemBuilder: (context, index) {
+                    final value = _values[index];
+                    return _buildValueCard(
+                        context, value['title'], value['image']);
+                  },
                 ),
-                itemCount: _values.length,
-                itemBuilder: (context, index) {
-                  final value = _values[index];
-                  return _buildValueCard(
-                      context, value['title'], value['image']);
-                },
               ),
             ),
           ],
@@ -4230,14 +4807,15 @@ class _BehavioralContentDetailScreenState
 }
 
 /// 3. UPDATED Skillful Screen (Vertical List with New Categories)
-class SkillfulScreen extends StatelessWidget {
+class SkillfulScreen extends ConsumerWidget {
   const SkillfulScreen({super.key});
 
   List<Map<String, dynamic>> get _skills => skillCatalog;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0),
       appBar: AppBar(
@@ -4264,13 +4842,17 @@ class SkillfulScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: ListView.separated(
-                itemCount: _skills.length,
-                separatorBuilder: (ctx, index) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final skill = _skills[index];
-                  return _buildSkillCard(context, skill);
-                },
+              child: _CmsAxisCategoryList(
+                categoriesState: categoriesState,
+                axisKey: ActivityAspects.skillful,
+                fallbackBuilder: (context) => ListView.separated(
+                  itemCount: _skills.length,
+                  separatorBuilder: (ctx, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final skill = _skills[index];
+                    return _buildSkillCard(context, skill);
+                  },
+                ),
               ),
             ),
           ],
@@ -5148,13 +5730,14 @@ Future<void> _launchSkillCmsVideo(BuildContext context, String rawUrl) async {
 }
 
 /// 4. Educational Screen
-class EducationalScreen extends StatelessWidget {
+class EducationalScreen extends ConsumerWidget {
   const EducationalScreen({super.key});
 
   List<Map<String, dynamic>> get _subjects => educationalSubjects;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       appBar: AppBar(
@@ -5200,18 +5783,22 @@ class EducationalScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  childAspectRatio: 1.0,
+              child: _CmsAxisCategoryGrid(
+                categoriesState: categoriesState,
+                axisKey: ActivityAspects.educational,
+                fallbackBuilder: (context) => GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: _subjects.length,
+                  itemBuilder: (context, index) {
+                    final subject = _subjects[index];
+                    return _buildSubjectCard(context, subject);
+                  },
                 ),
-                itemCount: _subjects.length,
-                itemBuilder: (context, index) {
-                  final subject = _subjects[index];
-                  return _buildSubjectCard(context, subject);
-                },
               ),
             ),
           ],

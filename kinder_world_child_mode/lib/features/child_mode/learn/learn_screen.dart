@@ -76,7 +76,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
   @override
   Widget build(BuildContext context) {
     final contentState = ref.watch(contentControllerProvider);
-    final searchEntries = _buildSearchEntries(contentState.activities);
+    final publicCategoriesState = ref.watch(publicContentCategoriesProvider);
+    final publicCategories =
+        publicCategoriesState.valueOrNull ?? const <PublicContentCategory>[];
+    final searchEntries =
+        _buildSearchEntries(contentState.activities, publicCategories);
     final results =
         _filterSearchResults(contentState.activities, searchEntries);
 
@@ -101,7 +105,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                       _handleSubmittedQuery(context, value, searchEntries),
                 ),
                 const SizedBox(height: 16),
-                if (contentState.isLoading && contentState.activities.isEmpty)
+                if ((contentState.isLoading &&
+                        contentState.activities.isEmpty) ||
+                    publicCategoriesState.isLoading)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
@@ -129,6 +135,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
                   child: _LearnResultsGrid(
                     results: results,
                     activities: contentState.activities,
+                    publicCategories: publicCategories,
                     localizedTitleBuilder: (title) =>
                         _localizedSearchTitle(context, title),
                     onOpenSearchResult: (result) =>
@@ -204,13 +211,41 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       context.push('${Routes.childLearn}/lesson/$lessonId');
       return;
     }
+    final categorySlug = result['categorySlug']?.toString();
+    final axisKey = result['axisKey']?.toString();
+    if (categorySlug != null &&
+        categorySlug.isNotEmpty &&
+        axisKey != null &&
+        axisKey.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CmsCategoryContentScreen(
+            categorySlug: categorySlug,
+            axisKey: axisKey,
+            title: result['title']?.toString() ?? categorySlug,
+          ),
+        ),
+      );
+      return;
+    }
     _openCategory(context, result['route'] as String);
   }
 
-  List<Map<String, dynamic>> _buildSearchEntries(List<Activity> activities) {
+  List<Map<String, dynamic>> _buildSearchEntries(
+    List<Activity> activities,
+    List<PublicContentCategory> publicCategories,
+  ) {
     final entries = _searchItems
         .map((item) => Map<String, dynamic>.from(item))
         .toList(growable: true);
+    for (final category in publicCategories) {
+      entries.add({
+        'title': _categoryDisplayTitle(category),
+        'route': category.axisKey,
+        'axisKey': category.axisKey,
+        'categorySlug': category.slug,
+      });
+    }
     for (final activity in activities) {
       entries.add({
         'title': activity.title,
@@ -219,6 +254,15 @@ class _LearnScreenState extends ConsumerState<LearnScreen>
       });
     }
     return entries;
+  }
+
+  String _categoryDisplayTitle(PublicContentCategory category) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred =
+        locale.startsWith('ar') ? category.titleAr : category.titleEn;
+    final fallback =
+        locale.startsWith('ar') ? category.titleEn : category.titleAr;
+    return preferred.trim().isNotEmpty ? preferred : fallback;
   }
 
   String _localizedSearchTitle(BuildContext context, String title) {
