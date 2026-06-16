@@ -1,15 +1,14 @@
 // ignore_for_file: prefer_const_constructors, unused_element, unused_element_parameter
 part of 'learn_screen.dart';
 
-class EntertainingScreen extends ConsumerWidget {
+class EntertainingScreen extends StatelessWidget {
   const EntertainingScreen({super.key});
 
   List<Map<String, dynamic>> get _items => entertainingItems;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFF3E5F5),
       appBar: AppBar(
@@ -52,28 +51,24 @@ class EntertainingScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: ActivityAspects.entertaining,
-                fallbackBuilder: (context) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.9,
-                  ),
-                  itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return _buildFunCard(
-                      context,
-                      item['title'],
-                      item['image'],
-                      item['color'],
-                      l10n,
-                    );
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
                 ),
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return _buildFunCard(
+                    context,
+                    item['title'],
+                    item['image'],
+                    item['color'],
+                    l10n,
+                  );
+                },
               ),
             ),
           ],
@@ -763,16 +758,14 @@ class _EntertainmentDetailScreenState
     final repository = ref.read(publicContentRepositoryProvider);
     final categorySlug = await _cmsCategorySlug(repository);
     if (categorySlug != null) {
-      final directItems = await repository.fetchItems(
-        contentType: 'video',
-        categorySlug: categorySlug,
-      );
+      final directItems =
+          await repository.fetchItems(categorySlug: categorySlug);
       if (directItems.isNotEmpty) {
         return directItems;
       }
     }
 
-    final items = await repository.fetchItems(contentType: 'video');
+    final items = await repository.fetchItems();
     return items.where(_matchesCmsPlacement).toList();
   }
 
@@ -4114,15 +4107,14 @@ class _MemoryCardData {
 }
 
 /// 2. UPDATED Behavioral Screen (Changed to Grid Layout)
-class BehavioralScreen extends ConsumerWidget {
+class BehavioralScreen extends StatelessWidget {
   const BehavioralScreen({super.key});
 
   List<Map<String, dynamic>> get _values => behavioralValues;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       appBar: AppBar(
@@ -4150,23 +4142,19 @@ class BehavioralScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             // CHANGED TO GRID (2 Columns)
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: ActivityAspects.behavioral,
-                fallbackBuilder: (context) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.9,
-                  ),
-                  itemCount: _values.length,
-                  itemBuilder: (context, index) {
-                    final value = _values[index];
-                    return _buildValueCard(
-                        context, value['title'], value['image']);
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.9,
                 ),
+                itemCount: _values.length,
+                itemBuilder: (context, index) {
+                  final value = _values[index];
+                  return _buildValueCard(
+                      context, value['title'], value['image']);
+                },
               ),
             ),
           ],
@@ -4807,15 +4795,14 @@ class _BehavioralContentDetailScreenState
 }
 
 /// 3. UPDATED Skillful Screen (Vertical List with New Categories)
-class SkillfulScreen extends ConsumerWidget {
+class SkillfulScreen extends StatelessWidget {
   const SkillfulScreen({super.key});
 
   List<Map<String, dynamic>> get _skills => skillCatalog;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
     return Scaffold(
       backgroundColor: Color(0xFFFFF3E0),
       appBar: AppBar(
@@ -4842,17 +4829,13 @@ class SkillfulScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: _CmsAxisCategoryList(
-                categoriesState: categoriesState,
-                axisKey: ActivityAspects.skillful,
-                fallbackBuilder: (context) => ListView.separated(
-                  itemCount: _skills.length,
-                  separatorBuilder: (ctx, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final skill = _skills[index];
-                    return _buildSkillCard(context, skill);
-                  },
-                ),
+              child: ListView.separated(
+                itemCount: _skills.length,
+                separatorBuilder: (ctx, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final skill = _skills[index];
+                  return _buildSkillCard(context, skill);
+                },
               ),
             ),
           ],
@@ -5008,14 +4991,13 @@ class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
     final categorySlug = _cmsCategorySlug();
     if (categorySlug != null) {
       final directItems = await repository.fetchItems(
-        contentType: 'video',
         categorySlug: categorySlug,
       );
       if (directItems.isNotEmpty) {
         return directItems;
       }
     }
-    final items = await repository.fetchItems(contentType: 'video');
+    final items = await repository.fetchItems();
     return items.where(_matchesSkill).toList();
   }
 
@@ -5730,14 +5712,13 @@ Future<void> _launchSkillCmsVideo(BuildContext context, String rawUrl) async {
 }
 
 /// 4. Educational Screen
-class EducationalScreen extends ConsumerWidget {
+class EducationalScreen extends StatelessWidget {
   const EducationalScreen({super.key});
 
   List<Map<String, dynamic>> get _subjects => educationalSubjects;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final categoriesState = ref.watch(publicContentCategoriesProvider);
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFE3F2FD),
       appBar: AppBar(
@@ -5783,22 +5764,18 @@ class EducationalScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             Expanded(
-              child: _CmsAxisCategoryGrid(
-                categoriesState: categoriesState,
-                axisKey: ActivityAspects.educational,
-                fallbackBuilder: (context) => GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: _subjects.length,
-                  itemBuilder: (context, index) {
-                    final subject = _subjects[index];
-                    return _buildSubjectCard(context, subject);
-                  },
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  childAspectRatio: 1.0,
                 ),
+                itemCount: _subjects.length,
+                itemBuilder: (context, index) {
+                  final subject = _subjects[index];
+                  return _buildSubjectCard(context, subject);
+                },
               ),
             ),
           ],
@@ -5895,7 +5872,6 @@ class _EducationalSubjectScreenState
     final categorySlug = await _educationalCategorySlug(repository);
     if (categorySlug != null) {
       final directItems = await repository.fetchItems(
-        contentType: 'video',
         categorySlug: categorySlug,
       );
       if (directItems.isNotEmpty) {
@@ -5903,7 +5879,7 @@ class _EducationalSubjectScreenState
       }
     }
 
-    final items = await repository.fetchItems(contentType: 'video');
+    final items = await repository.fetchItems();
     return items.where(_matchesEducationalSubject).toList();
   }
 
