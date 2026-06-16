@@ -1567,6 +1567,14 @@ abstract class AppLocalizations {
   String get adminPlanPremium;
   String get adminPlanFamilyPlus;
   String get adminUsersEditTitle;
+  String get adminUsersCreateTitle;
+  String get adminUsersCreateAction;
+  String get adminUsersPasswordField;
+  String get adminUsersDeleteTitle;
+  String get adminUsersDeleteAction;
+  String get adminUsersDeleteConfirm;
+  String get adminUsersDeletedMessage;
+  String get adminUsersCreatedMessage;
   String get adminUsersPlanField;
   String get adminUsersUpdatedMessage;
   String get adminUsersEnableTitle;
@@ -1585,6 +1593,10 @@ abstract class AppLocalizations {
   String get adminUsersEmailColumn;
   String get adminUsersActionsColumn;
   String get adminUsersViewAction;
+  String get adminUsersResetPasswordTitle;
+  String get adminUsersResetPasswordAction;
+  String get adminUsersResetPasswordHint;
+  String adminUsersResetPasswordSuccess(String password);
 
   // Children Management
   String get adminChildrenTitle;
@@ -1607,6 +1619,10 @@ abstract class AppLocalizations {
   String get adminChildrenDeactivateConfirm;
   String get adminChildrenDeactivateAction;
   String get adminChildrenDeactivatedMessage;
+  String get adminChildrenDeleteTitle;
+  String get adminChildrenDeleteConfirm;
+  String get adminChildrenDeleteAction;
+  String get adminChildrenDeletedMessage;
   String adminChildrenDetailTitle(String name);
   String get adminChildrenOverviewCard;
   String get adminChildrenProgressCard;
@@ -1666,8 +1682,10 @@ abstract class AppLocalizations {
   String get adminCmsTypeVideo;
   String get adminCmsTypeActivity;
   String get adminCmsStatusDraft;
+  String get adminCmsStatusReady;
   String get adminCmsStatusReview;
   String get adminCmsStatusPublished;
+  String get adminCmsStatusArchived;
   String get adminCmsCategoryCreateTitle;
   String get adminCmsCategoryEditTitle;
   String get adminCmsCategorySlug;
@@ -1688,6 +1706,12 @@ abstract class AppLocalizations {
   String get adminCmsBodyArLabel;
   String get adminCmsThumbnailLabel;
   String get adminCmsVideoSectionTitle;
+  String get adminCmsUploadVideoAction;
+  String get adminCmsReplaceVideoAction;
+  String get adminCmsVideoUploadingLabel;
+  String get adminCmsVideoUploadFailed;
+  String get adminCmsVideoUploadSuccess;
+  String get adminCmsValidationVideoRequired;
   String get adminCmsVideoUrlLabel;
   String get adminCmsVideoPreviewUrlLabel;
   String get adminCmsVideoProviderLabel;
@@ -1730,6 +1754,9 @@ abstract class AppLocalizations {
   String get adminCmsMetadataDifficultyLabel;
   String get adminCmsMetadataFeaturedLabel;
   String get adminCmsMetadataTagsLabel;
+  String get adminCmsBehavioralPlacementTitle;
+  String get adminCmsBehavioralValueLabel;
+  String get adminCmsBehavioralMethodLabel;
   String get adminCmsPreviewEnglishSection;
   String get adminCmsPreviewArabicSection;
   String get adminCmsPreviewMetadataSection;
@@ -1763,6 +1790,7 @@ abstract class AppLocalizations {
   String get adminCmsValidationInvalidJsonObject;
   String get adminCmsValidationInvalidJsonList;
   String get adminCmsValidationInvalidJsonSyntax;
+  String get adminCmsValidationBehavioralPlacementRequired;
   String get adminCmsValidationQuestionRequired;
   String get adminCmsValidationQuestionPromptRequired;
   String get adminCmsValidationQuestionOptionsRequired;

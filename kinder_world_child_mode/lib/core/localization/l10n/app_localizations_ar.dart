@@ -1891,6 +1891,15 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminChildrenDeactivatedMessage => 'تم تعطيل الطفل بنجاح';
   @override
+  String get adminChildrenDeleteTitle => 'حذف الطفل';
+  @override
+  String get adminChildrenDeleteConfirm =>
+      'سيتم حذف ملف الطفل نهائيًا مع بياناته المرتبطة.';
+  @override
+  String get adminChildrenDeleteAction => 'حذف';
+  @override
+  String get adminChildrenDeletedMessage => 'تم حذف الطفل بنجاح';
+  @override
   String get adminChildrenEditTitle => 'تعديل الطفل';
   @override
   String get adminChildrenMilestonesSection => 'الإنجازات المرحلية';
@@ -1981,6 +1990,15 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminCmsMetadataLabel => 'بيانات وصفية JSON';
   @override
+  String get adminCmsBehavioralPlacementTitle => 'مكان المحتوى السلوكي';
+  @override
+  String get adminCmsBehavioralValueLabel => 'القيمة السلوكية';
+  @override
+  String get adminCmsBehavioralMethodLabel => 'الطريقة السلوكية';
+  @override
+  String get adminCmsValidationBehavioralPlacementRequired =>
+      'اختر القيمة والطريقة قبل حفظ محتوى المحور السلوكي';
+  @override
   String get adminCmsNoCategory => 'لا توجد فئة';
   @override
   String get adminCmsNoLinkedContent => 'لا يوجد محتوى مرتبط';
@@ -2005,11 +2023,15 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminCmsStatusDraft => 'مسودة';
   @override
+  String get adminCmsStatusReady => 'جاهز';
+  @override
   String get adminCmsStatusLabel => 'الحالة';
   @override
   String get adminCmsStatusPublished => 'منشور';
   @override
   String get adminCmsStatusReview => 'قيد المراجعة';
+  @override
+  String get adminCmsStatusArchived => 'مؤرشف';
   @override
   String get adminCmsSubtitle => 'إدارة الفئات والمحتوى التعليمي والاختبارات.';
   @override
@@ -2017,6 +2039,25 @@ class AppLocalizationsAr extends AppLocalizationsEn {
 
   @override
   String get adminCmsVideoSectionTitle => 'تفاصيل الفيديو';
+
+  @override
+  String get adminCmsUploadVideoAction => 'رفع فيديو';
+
+  @override
+  String get adminCmsReplaceVideoAction => 'استبدال الفيديو';
+
+  @override
+  String get adminCmsVideoUploadingLabel => 'جارٍ رفع الفيديو...';
+
+  @override
+  String get adminCmsVideoUploadFailed => 'تعذر رفع الفيديو المحدد.';
+
+  @override
+  String get adminCmsVideoUploadSuccess => 'تم رفع الفيديو بنجاح.';
+
+  @override
+  String get adminCmsValidationVideoRequired =>
+      'المحتوى المنشور من نوع فيديو يجب أن يحتوي على فيديو.';
 
   @override
   String get adminCmsVideoUrlLabel => 'رابط الفيديو';
@@ -2283,6 +2324,23 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   @override
   String get adminUsersEditTitle => 'تعديل المستخدم';
   @override
+  String get adminUsersCreateTitle => 'إضافة مستخدم';
+  @override
+  String get adminUsersCreateAction => 'إضافة مستخدم';
+  @override
+  String get adminUsersPasswordField => 'كلمة المرور';
+  @override
+  String get adminUsersDeleteTitle => 'حذف المستخدم';
+  @override
+  String get adminUsersDeleteAction => 'حذف';
+  @override
+  String get adminUsersDeleteConfirm =>
+      'سيتم حذف المستخدم نهائياً مع إزالة السجلات المرتبطة التي تستخدم الحذف التتابعي.';
+  @override
+  String get adminUsersDeletedMessage => 'تم حذف المستخدم بنجاح';
+  @override
+  String get adminUsersCreatedMessage => 'تم إنشاء المستخدم بنجاح';
+  @override
   String get adminUsersEmailColumn => 'البريد الإلكتروني';
   @override
   String get adminUsersEmailField => 'البريد الإلكتروني';
@@ -2332,6 +2390,16 @@ class AppLocalizationsAr extends AppLocalizationsEn {
   String get adminUsersTitle => 'إدارة المستخدمين';
   @override
   String get adminUsersUpdatedMessage => 'تم تحديث المستخدم بنجاح';
+  @override
+  String get adminUsersResetPasswordTitle => 'إعادة تعيين كلمة المرور';
+  @override
+  String get adminUsersResetPasswordAction => 'إعادة التعيين';
+  @override
+  String get adminUsersResetPasswordHint =>
+      'اتركي الحقل فارغًا لاستخدام كلمة المرور المؤقتة الافتراضية تلقائيًا.';
+  @override
+  String adminUsersResetPasswordSuccess(String password) =>
+      'كلمة المرور المؤقتة: $password';
   @override
   String get adminUsersViewAction => 'عرض';
   @override

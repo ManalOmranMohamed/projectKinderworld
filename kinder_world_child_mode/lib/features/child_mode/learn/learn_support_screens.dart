@@ -157,103 +157,146 @@ class EntertainingScreen extends StatelessWidget {
   }
 }
 
+String _normalizeCmsPlacementToken(String value) {
+  return value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[\s_\-–—&/]+'), '')
+      .replaceAll(RegExp(r'[^a-z0-9\u0600-\u06FF]+'), '');
+}
+
 /// NEW: Entertainment Detail Screen (Shows content for Games, Cartoons, etc.)
-class EntertainmentDetailScreen extends StatelessWidget {
+class EntertainmentDetailScreen extends ConsumerStatefulWidget {
   final String categoryTitle;
   const EntertainmentDetailScreen({super.key, required this.categoryTitle});
 
+  @override
+  ConsumerState<EntertainmentDetailScreen> createState() =>
+      _EntertainmentDetailScreenState();
+}
+
+class _EntertainmentDetailScreenState
+    extends ConsumerState<EntertainmentDetailScreen> {
+  late Future<List<PublicContentItem>> _cmsContentFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _cmsContentFuture = _loadCmsContent();
+  }
+
+  Future<List<PublicContentItem>> _loadCmsContent() async {
+    final repository = ref.read(publicContentRepositoryProvider);
+    final categorySlug = await _cmsCategorySlug(repository);
+    if (categorySlug != null) {
+      final directItems = await repository.fetchItems(
+        contentType: 'video',
+        categorySlug: categorySlug,
+      );
+      if (directItems.isNotEmpty) {
+        return directItems;
+      }
+    }
+
+    final items = await repository.fetchItems(contentType: 'video');
+    return items.where(_matchesCmsPlacement).toList();
+  }
+
+  Future<String?> _cmsCategorySlug(PublicContentRepository repository) async {
+    final categories = await repository.fetchCategories();
+    final selectedTerms = _entertainmentSearchTerms()
+        .map(_normalizeCmsPlacementToken)
+        .where((term) => term.isNotEmpty)
+        .toSet();
+    for (final category in categories) {
+      if (category.axisKey != 'entertaining') {
+        continue;
+      }
+      final categoryTerms = [
+        category.slug,
+        category.titleEn,
+        category.titleAr,
+      ].map(_normalizeCmsPlacementToken);
+      if (categoryTerms.any(selectedTerms.contains)) {
+        return category.slug;
+      }
+    }
+    return null;
+  }
+
+  bool _matchesCmsPlacement(PublicContentItem item) {
+    final isEntertaining = item.axisKey == 'entertaining' ||
+        item.category?.axisKey == 'entertaining' ||
+        item.metadata['axis_key'] == 'entertaining';
+    if (!isEntertaining) {
+      return false;
+    }
+
+    final terms = _entertainmentSearchTerms()
+        .map(_normalizeCmsPlacementToken)
+        .where((term) => term.isNotEmpty)
+        .toList();
+    final haystack = [
+      item.slug,
+      item.titleEn,
+      item.titleAr,
+      item.descriptionEn ?? '',
+      item.descriptionAr ?? '',
+      item.category?.slug ?? '',
+      item.category?.titleEn ?? '',
+      item.category?.titleAr ?? '',
+    ].map(_normalizeCmsPlacementToken).join(' ');
+    return terms.any(haystack.contains);
+  }
+
+  List<String> _entertainmentSearchTerms() {
+    final raw = widget.categoryTitle.trim().toLowerCase();
+    return switch (raw) {
+      'puppet show' => [
+          'puppet',
+          'puppet show',
+          'puppet shows',
+          'puppets',
+          'دمى',
+          'عرائس',
+        ],
+      'interactive stories' => [
+          'interactive stories',
+          'interactive story',
+          'stories',
+          'story',
+          'قصص',
+          'حكايات',
+        ],
+      'songs & music' => [
+          'songs',
+          'music',
+          'song',
+          'اغاني',
+          'أناشيد',
+          'موسيقى',
+        ],
+      'funny clips' => ['funny clips', 'clips', 'funny', 'ضحك', 'مضحك'],
+      'brain teasers' => [
+          'brain teasers',
+          'brain teaser',
+          'teasers',
+          'puzzle',
+          'الغاز',
+          'ألغاز',
+        ],
+      'games' => ['games', 'game', 'ألعاب', 'العاب'],
+      'cartoons' => ['cartoons', 'cartoon', 'كرتون', 'رسوم'],
+      _ => [raw],
+    };
+  }
+
   List<Map<String, String>> _getItems() {
-    switch (categoryTitle) {
-      case 'Puppet Show':
-        return [
-          {
-            'title': 'Friendly Puppets',
-            'image': 'assets/images/ent_puppet_show.png'
-          },
-          {
-            'title': 'Animal Parade',
-            'image': 'assets/images/ent_puppet_show.png'
-          },
-          {
-            'title': 'Rainbow Stage',
-            'image': 'assets/images/ent_puppet_show.png'
-          },
-          {
-            'title': 'Bedtime Puppet Tale',
-            'image': 'assets/images/ent_puppet_show.png'
-          },
-        ];
-      case 'Interactive Stories':
-        return [
-          {
-            'title': 'Brave Little Star',
-            'image': 'assets/images/ent_stories.png'
-          },
-          {
-            'title': 'Forest Adventure',
-            'image': 'assets/images/ent_stories.png'
-          },
-          {'title': 'Sharing Day', 'image': 'assets/images/edu_animals.png'},
-          {'title': 'The Lost Balloon', 'image': 'assets/images/ent_clips.png'},
-        ];
-      case 'Funny Clips':
-        return [
-          {'title': 'Silly Faces', 'image': 'assets/images/ent_clips.png'},
-          {'title': 'Dancing Penguin', 'image': 'assets/images/ent_clips.png'},
-          {'title': 'Giggle Train', 'image': 'assets/images/ent_clips.png'},
-          {
-            'title': 'Jumpy Jelly Beans',
-            'image': 'assets/images/ent_clips.png'
-          },
-        ];
-      case 'Brain Teasers':
-        return [
-          {
-            'title': 'Match the Shadow',
-            'image': 'assets/images/ent_teasers.png'
-          },
-          {
-            'title': 'Find the Difference',
-            'image': 'assets/images/ent_teasers.png'
-          },
-          {
-            'title': 'Shape Detective',
-            'image': 'assets/images/ent_teasers.png'
-          },
-          {
-            'title': 'Color Clue Quest',
-            'image': 'assets/images/ent_teasers.png'
-          },
-        ];
+    switch (widget.categoryTitle) {
       case 'Games':
-        return [
+        return const [
           {'title': 'Puzzle Game', 'image': 'assets/images/ent_games.png'},
           {'title': 'Memory Match', 'image': 'assets/images/ent_games.png'},
-          {
-            'title': 'Catch the Falling Stars',
-            'image': 'assets/images/ent_games.png'
-          },
-          {'title': 'Whack the Animal', 'image': 'assets/images/ent_games.png'},
-          {'title': 'Pop the Balloons', 'image': 'assets/images/ent_games.png'},
-          {'title': 'Turtle Run', 'image': 'assets/images/ent_games.png'},
-          {'title': 'Funny Paint', 'image': 'assets/images/skill_coloring.png'},
-        ];
-      case 'Cartoons':
-        return [
-          {
-            'title': 'Adventure Time',
-            'image': 'assets/images/ent_cartoons.png'
-          },
-          {'title': 'Funny Animals', 'image': 'assets/images/edu_animals.png'},
-          {'title': 'Space Heroes', 'image': 'assets/images/edu_science.png'},
-          {'title': 'Magic World', 'image': 'assets/images/ent_stories.png'},
-        ];
-      case 'Songs & Music':
-        return [
-          {'title': 'ABC Song', 'image': 'assets/images/ent_music.png'},
-          {'title': 'Baby Shark', 'image': 'assets/images/skill_singing.png'},
-          {'title': 'Twinkle Star', 'image': 'assets/images/skill_music.png'},
-          {'title': 'Dance Party', 'image': 'assets/images/ent_music.png'},
         ];
       default:
         return const [];
@@ -264,7 +307,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final items = _getItems();
-    final isGamesCategory = categoryTitle == 'Games';
+    final isGamesCategory = widget.categoryTitle == 'Games';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3E5F5),
@@ -337,21 +380,43 @@ class EntertainmentDetailScreen extends StatelessWidget {
               ),
             ],
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return _buildContentCard(
-                    context,
-                    rawTitle: item['title']!,
-                    title: _localizedContentTitle(item['title']!, l10n),
-                    imagePath: item['image']!,
+              child: FutureBuilder<List<PublicContentItem>>(
+                future: _cmsContentFuture,
+                builder: (context, snapshot) {
+                  final cmsItems = snapshot.data ?? const <PublicContentItem>[];
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      items.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (items.isEmpty && cmsItems.isEmpty) {
+                    return Center(
+                      child: Text(
+                        l10n.noLessonsFound,
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    );
+                  }
+                  return GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.9,
+                    ),
+                    itemCount: cmsItems.length + items.length,
+                    itemBuilder: (context, index) {
+                      if (index < cmsItems.length) {
+                        return _buildCmsContentCard(context, cmsItems[index]);
+                      }
+                      final item = items[index - cmsItems.length];
+                      return _buildContentCard(
+                        context,
+                        rawTitle: item['title']!,
+                        title: _localizedContentTitle(item['title']!, l10n),
+                        imagePath: item['image']!,
+                      );
+                    },
                   );
                 },
               ),
@@ -360,6 +425,114 @@ class EntertainmentDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCmsContentCard(BuildContext context, PublicContentItem item) {
+    final title = _localizedCmsTitle(item);
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => SkillVideoScreen(
+            videoTitle: title,
+            videoUrl: item.preferredVideoUrl,
+            thumbnailUrl: item.effectiveThumbnailUrl,
+            description: item.descriptionEn ?? item.descriptionAr,
+          ),
+        ),
+      ),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValuesCompat(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hasRemoteImage)
+                Image.network(
+                  thumbnailUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildEntertainmentFallback(),
+                )
+              else
+                _buildEntertainmentFallback(),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValuesCompat(alpha: 0.68),
+                    ],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const Center(
+                child: Icon(
+                  Icons.play_circle_fill,
+                  color: Colors.white,
+                  size: 46,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEntertainmentFallback() {
+    return Container(
+      color: AppColors.entertaining.withValuesCompat(alpha: 0.18),
+      child: const Center(
+        child: Icon(
+          Icons.play_circle_outline,
+          color: AppColors.entertaining,
+          size: 58,
+        ),
+      ),
+    );
+  }
+
+  String _localizedCmsTitle(PublicContentItem item) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred = locale.startsWith('ar') ? item.titleAr : item.titleEn;
+    final fallback = locale.startsWith('ar') ? item.titleEn : item.titleAr;
+    return preferred.trim().isNotEmpty ? preferred : fallback;
   }
 
   Widget _buildContentCard(
@@ -459,7 +632,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
   }
 
   String _localizedCategoryTitle(AppLocalizations l10n) {
-    return switch (categoryTitle) {
+    return switch (widget.categoryTitle) {
       'Games' => l10n.entertainmentGames,
       'Cartoons' => l10n.entertainmentCartoons,
       'Songs & Music' => l10n.songsAndMusic,
@@ -467,7 +640,7 @@ class EntertainmentDetailScreen extends StatelessWidget {
       'Interactive Stories' => l10n.interactiveStories,
       'Funny Clips' => l10n.funnyClips,
       'Brain Teasers' => l10n.entertainmentBrainTeasers,
-      _ => categoryTitle,
+      _ => widget.categoryTitle,
     };
   }
 
@@ -3543,7 +3716,10 @@ class ValueDetailsScreen extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => MethodContentScreen(methodTitle: title),
+            builder: (context) => MethodContentScreen(
+              valueTitle: valueTitle,
+              methodTitle: title,
+            ),
           ),
         );
       },
@@ -3598,18 +3774,117 @@ class ValueDetailsScreen extends StatelessWidget {
 }
 
 // Level 3: Method Content Screen
-class MethodContentScreen extends ConsumerWidget {
+class MethodContentScreen extends ConsumerStatefulWidget {
+  final String valueTitle;
   final String methodTitle;
 
-  const MethodContentScreen({super.key, required this.methodTitle});
+  const MethodContentScreen({
+    super.key,
+    required this.valueTitle,
+    required this.methodTitle,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MethodContentScreen> createState() =>
+      _MethodContentScreenState();
+}
+
+class _MethodContentScreenState extends ConsumerState<MethodContentScreen> {
+  late Future<List<PublicContentItem>> _contentFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentFuture = _loadBehavioralContent();
+  }
+
+  Future<List<PublicContentItem>> _loadBehavioralContent() async {
+    final repository = ref.read(publicContentRepositoryProvider);
+    final categorySlug = await _behavioralValueCategorySlug(repository);
+    if (categorySlug != null) {
+      final directItems =
+          await repository.fetchItems(categorySlug: categorySlug);
+      final filteredDirectItems = directItems.where(_matchesPlacement).toList();
+      if (filteredDirectItems.isNotEmpty) {
+        return filteredDirectItems;
+      }
+    }
+    final items = await repository.fetchItems();
+    return items.where(_matchesPlacement).toList();
+  }
+
+  Future<String?> _behavioralValueCategorySlug(
+    PublicContentRepository repository,
+  ) async {
+    final categories = await repository.fetchCategories();
+    final selectedValue = _normalizeBehavioralToken(widget.valueTitle);
+    for (final category in categories) {
+      if (category.axisKey != 'behavioral') {
+        continue;
+      }
+      final terms = [
+        category.slug,
+        category.titleEn,
+        category.titleAr,
+      ].map(_normalizeBehavioralToken);
+      if (terms.contains(selectedValue)) {
+        return category.slug;
+      }
+    }
+    return null;
+  }
+
+  bool _matchesPlacement(PublicContentItem item) {
+    final isBehavioral = item.axisKey == 'behavioral' ||
+        item.category?.axisKey == 'behavioral' ||
+        item.metadata['axis_key'] == 'behavioral';
+    if (!isBehavioral) {
+      return false;
+    }
+
+    final selectedValue = _normalizeBehavioralToken(widget.valueTitle);
+    final selectedMethod = _normalizeBehavioralToken(widget.methodTitle);
+    final itemValue = _normalizeBehavioralToken(
+      item.metadata['behavioral_value']?.toString() ?? '',
+    );
+    final itemMethod = _normalizeBehavioralToken(
+      item.metadata['behavioral_method']?.toString() ?? '',
+    );
+
+    final categoryTerms = [
+      item.category?.slug ?? '',
+      item.category?.titleEn ?? '',
+      item.category?.titleAr ?? '',
+    ].map(_normalizeBehavioralToken);
+    final matchesValue =
+        itemValue == selectedValue || categoryTerms.contains(selectedValue);
+    final matchesMethod = itemMethod == selectedMethod;
+    return matchesValue && matchesMethod;
+  }
+
+  String _normalizeBehavioralToken(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  }
+
+  String _localizedContentTitle(PublicContentItem item) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred = locale.startsWith('ar') ? item.titleAr : item.titleEn;
+    final fallback = locale.startsWith('ar') ? item.titleEn : item.titleAr;
+    return preferred.trim().isNotEmpty ? preferred : fallback;
+  }
+
+  String _localizedContentDescription(PublicContentItem item) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred =
+        locale.startsWith('ar') ? item.descriptionAr : item.descriptionEn;
+    final fallback =
+        locale.startsWith('ar') ? item.descriptionEn : item.descriptionAr;
+    return (preferred ?? fallback ?? '').trim();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final activities = [
-      l10n.videoKindnessChallenge,
-      l10n.activityRespectSharing
-    ];
     return Scaffold(
       backgroundColor: Color(0xFFE8F5E9),
       body: SafeArea(
@@ -3671,7 +3946,7 @@ class MethodContentScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 30),
                 Text(
-                  methodTitle,
+                  widget.methodTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -3679,16 +3954,40 @@ class MethodContentScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Align(
-                  alignment: Alignment.center,
-                  child: Column(
-                    children: activities.map((activity) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: _buildActivityCard(context, activity),
+                FutureBuilder<List<PublicContentItem>>(
+                  future: _contentFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
                       );
-                    }).toList(),
-                  ),
+                    }
+                    final items = snapshot.data ?? const <PublicContentItem>[];
+                    if (items.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 48),
+                          child: Text(
+                            l10n.noActivitiesFound,
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: items
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: _buildContentCard(context, item),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -3698,12 +3997,24 @@ class MethodContentScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityCard(BuildContext context, String title) {
+  Widget _buildContentCard(BuildContext context, PublicContentItem item) {
+    final title = _localizedContentTitle(item);
+    final description = _localizedContentDescription(item);
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => _BehavioralContentDetailScreen(item: item),
+          ),
+        );
+      },
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        height: 140,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -3715,37 +4026,204 @@ class MethodContentScreen extends ConsumerWidget {
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0),
+            ClipRRect(
+              borderRadius: const BorderRadiusDirectional.horizontal(
+                start: Radius.circular(20),
+              ),
               child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.extension,
-                    color: AppColors.behavioral,
-                    size: 32,
-                  ),
-                ),
+                width: 112,
+                height: 128,
+                color: AppColors.behavioral.withValuesCompat(alpha: 0.1),
+                child: hasRemoteImage
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.extension,
+                          color: AppColors.behavioral,
+                          size: 36,
+                        ),
+                      )
+                    : Icon(
+                        item.hasVideo
+                            ? Icons.play_circle_fill_rounded
+                            : Icons.extension,
+                        color: AppColors.behavioral,
+                        size: 42,
+                      ),
               ),
             ),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        description,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Icon(
+                      item.hasVideo
+                          ? Icons.play_circle_fill_rounded
+                          : Icons.arrow_forward_rounded,
+                      color: AppColors.behavioral,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BehavioralContentDetailScreen extends ConsumerStatefulWidget {
+  const _BehavioralContentDetailScreen({required this.item});
+
+  final PublicContentItem item;
+
+  @override
+  ConsumerState<_BehavioralContentDetailScreen> createState() =>
+      _BehavioralContentDetailScreenState();
+}
+
+class _BehavioralContentDetailScreenState
+    extends ConsumerState<_BehavioralContentDetailScreen> {
+  late Future<PublicContentItem?> _itemFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _itemFuture =
+        ref.read(publicContentRepositoryProvider).fetchItem(widget.item.slug);
+  }
+
+  String _localized(String en, String ar) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    if (locale.startsWith('ar')) {
+      return ar.trim().isNotEmpty ? ar : en;
+    }
+    return en.trim().isNotEmpty ? en : ar;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: Color(0xFFE8F5E9),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          _localized(widget.item.titleEn, widget.item.titleAr),
+          style: TextStyle(
+            color: AppColors.behavioral,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: FutureBuilder<PublicContentItem?>(
+        future: _itemFuture,
+        builder: (context, snapshot) {
+          final item = snapshot.data ?? widget.item;
+          final description = _localized(
+            item.descriptionEn ?? '',
+            item.descriptionAr ?? '',
+          );
+          final body = _localized(item.bodyEn ?? '', item.bodyAr ?? '');
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const ChildHeader(compact: true),
+              const SizedBox(height: 16),
+              if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Image.network(
+                    item.effectiveThumbnailUrl!,
+                    height: 210,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              if ((item.effectiveThumbnailUrl ?? '').isNotEmpty)
+                const SizedBox(height: 20),
+              Text(
+                _localized(item.titleEn, item.titleAr),
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValuesCompat(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  body.isEmpty ? l10n.playNoBodyContentYet : body,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.6,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (item.hasVideo) ...[
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: CloudinaryVideoPlayerView(
+                    videoUrl: item.preferredVideoUrl!,
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -3922,57 +4400,123 @@ class SkillfulScreen extends StatelessWidget {
 }
 
 // Skill Detail Screen (With Search & Filters)
-class SkillDetailScreen extends StatefulWidget {
+class SkillDetailScreen extends ConsumerStatefulWidget {
   final String skillTitle;
   const SkillDetailScreen({super.key, required this.skillTitle});
 
   @override
-  State<SkillDetailScreen> createState() => _SkillDetailScreenState();
+  ConsumerState<SkillDetailScreen> createState() => _SkillDetailScreenState();
 }
 
-class _SkillDetailScreenState extends State<SkillDetailScreen> {
+class _SkillDetailScreenState extends ConsumerState<SkillDetailScreen> {
   String _searchQuery = "";
   String _selectedLevel = "all";
+  late Future<List<PublicContentItem>> _contentFuture;
 
   final List<String> _levels = ["all", "beginner", "intermediate", "advanced"];
 
-  List<Map<String, dynamic>> _getAllVideos() {
-    final l10n = AppLocalizations.of(context)!;
-    final skillTitle = _localizedSkillTitle(widget.skillTitle, l10n);
-    return [
-      {
-        'title': l10n.skillVideoBasics(skillTitle),
-        'level': 'beginner',
-        'image': ''
-      },
-      {
-        'title': l10n.skillVideoFun(skillTitle),
-        'level': 'beginner',
-        'image': ''
-      },
-      {
-        'title': l10n.skillVideoAdvanced(skillTitle),
-        'level': 'advanced',
-        'image': ''
-      },
-      {
-        'title': l10n.skillVideoMastering(skillTitle),
-        'level': 'intermediate',
-        'image': ''
-      },
-    ];
+  @override
+  void initState() {
+    super.initState();
+    _contentFuture = _loadCmsVideos();
   }
 
-  List<Map<String, dynamic>> get _filteredVideos {
-    return _getAllVideos().where((video) {
-      final matchesQuery = video['title']
-          .toString()
-          .toLowerCase()
-          .contains(_searchQuery.toLowerCase());
+  Future<List<PublicContentItem>> _loadCmsVideos() async {
+    final repository = ref.read(publicContentRepositoryProvider);
+    final categorySlug = _cmsCategorySlug();
+    if (categorySlug != null) {
+      final directItems = await repository.fetchItems(
+        contentType: 'video',
+        categorySlug: categorySlug,
+      );
+      if (directItems.isNotEmpty) {
+        return directItems;
+      }
+    }
+    final items = await repository.fetchItems(contentType: 'video');
+    return items.where(_matchesSkill).toList();
+  }
+
+  String? _cmsCategorySlug() {
+    final raw = widget.skillTitle.trim().toLowerCase();
+    return switch (raw) {
+      'handcrafts' => 'crafts',
+      'drawing' => 'drawing',
+      'coloring' => 'coloring',
+      'music' => 'music',
+      'singing' => 'singing',
+      'sports' => 'sports',
+      'cooking' => 'cooking',
+      _ => null,
+    };
+  }
+
+  bool _matchesSkill(PublicContentItem item) {
+    final terms = _skillSearchTerms();
+    final haystack = [
+      item.slug,
+      item.titleEn,
+      item.titleAr,
+      item.descriptionEn ?? '',
+      item.descriptionAr ?? '',
+      item.category?.slug ?? '',
+      item.category?.titleEn ?? '',
+      item.category?.titleAr ?? '',
+    ].join(' ').toLowerCase();
+    return terms.any(haystack.contains);
+  }
+
+  List<String> _skillSearchTerms() {
+    final raw = widget.skillTitle.trim().toLowerCase();
+    return switch (raw) {
+      'handcrafts' => [
+          'handcraft',
+          'handcrafts',
+          'craft',
+          'crafts',
+          'أعمال',
+          'يدوية'
+        ],
+      'drawing' => ['drawing', 'draw', 'رسم'],
+      'coloring' => ['coloring', 'colouring', 'color', 'تلوين'],
+      'music' => ['music', 'موسيقى'],
+      'singing' => ['singing', 'song', 'غناء', 'أناشيد'],
+      'sports' => ['sports', 'sport', 'رياضة'],
+      'cooking' => ['cooking', 'cook', 'طبخ'],
+      _ => [raw],
+    };
+  }
+
+  List<PublicContentItem> _filteredCmsVideos(List<PublicContentItem> items) {
+    return items.where((item) {
+      final title = _localizedCmsTitle(item).toLowerCase();
+      final matchesQuery = title.contains(_searchQuery.toLowerCase());
       final matchesLevel =
-          _selectedLevel == "all" || video['level'] == _selectedLevel;
+          _selectedLevel == "all" || _cmsLevel(item) == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
+  }
+
+  String _localizedCmsTitle(PublicContentItem item) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred = locale.startsWith('ar') ? item.titleAr : item.titleEn;
+    return preferred.trim().isNotEmpty ? preferred : item.titleEn;
+  }
+
+  String _cmsLevel(PublicContentItem item) {
+    final metadataLevel =
+        (item.metadata['difficulty'] ?? item.metadata['level'] ?? '')
+            .toString()
+            .trim()
+            .toLowerCase();
+    if (metadataLevel.contains('advanced') || metadataLevel.contains('متقدم')) {
+      return 'advanced';
+    }
+    if (metadataLevel.contains('intermediate') ||
+        metadataLevel.contains('متوسط')) {
+      return 'intermediate';
+    }
+    return 'beginner';
   }
 
   @override
@@ -4086,20 +4630,26 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: _filteredVideos.isEmpty
-                  ? Center(
+              child: FutureBuilder<List<PublicContentItem>>(
+                future: _contentFuture,
+                builder: (context, snapshot) {
+                  final cmsItems =
+                      _filteredCmsVideos(snapshot.data ?? const []);
+                  if (cmsItems.isEmpty) {
+                    return Center(
                       child: Text(
-                      l10n.noActivitiesFound,
-                      style: TextStyle(color: Colors.grey[500]),
-                    ))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _filteredVideos.length,
-                      itemBuilder: (context, index) {
-                        final video = _filteredVideos[index];
-                        return _buildVideoCard(video);
-                      },
-                    ),
+                        l10n.noActivitiesFound,
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    );
+                  }
+
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: cmsItems.map(_buildCmsVideoCard).toList(),
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -4107,13 +4657,24 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
     );
   }
 
-  Widget _buildVideoCard(Map<String, dynamic> video) {
+  Widget _buildCmsVideoCard(PublicContentItem item) {
     final l10n = AppLocalizations.of(context)!;
+    final title = _localizedCmsTitle(item);
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
     return InkWell(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => SkillVideoScreen(videoTitle: video['title']),
+            builder: (context) => SkillVideoScreen(
+              videoTitle: title,
+              videoUrl: item.preferredVideoUrl,
+              thumbnailUrl: item.effectiveThumbnailUrl,
+              description: item.descriptionEn ?? item.descriptionAr,
+            ),
           ),
         );
       },
@@ -4143,12 +4704,19 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   bottomLeft: Radius.circular(20),
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  Icons.play_circle_fill,
-                  color: AppColors.skillful,
-                  size: 50,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
                 ),
+                child: hasRemoteImage
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildCmsVideoFallbackIcon(),
+                      )
+                    : _buildCmsVideoFallbackIcon(),
               ),
             ),
             const SizedBox(width: 16),
@@ -4160,7 +4728,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      video['title'],
+                      title,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -4204,6 +4772,16 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
     );
   }
 
+  Widget _buildCmsVideoFallbackIcon() {
+    return Center(
+      child: Icon(
+        Icons.play_circle_fill,
+        color: AppColors.skillful,
+        size: 50,
+      ),
+    );
+  }
+
   String _localizedSkillTitle(String raw, AppLocalizations l10n) {
     return switch (raw) {
       'Cooking' => l10n.skillCooking,
@@ -4231,7 +4809,16 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
 // Skill Video Player Screen
 class SkillVideoScreen extends StatelessWidget {
   final String videoTitle;
-  const SkillVideoScreen({super.key, required this.videoTitle});
+  final String? videoUrl;
+  final String? thumbnailUrl;
+  final String? description;
+  const SkillVideoScreen({
+    super.key,
+    required this.videoTitle,
+    this.videoUrl,
+    this.thumbnailUrl,
+    this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -4279,52 +4866,69 @@ class SkillVideoScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
                     children: [
-                      Container(
-                        height: 250,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(25),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.skillful
-                                  .withValuesCompat(alpha: 0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
+                      if ((videoUrl ?? '').trim().isNotEmpty)
+                        Column(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(25),
-                              child: Container(
-                                color: Colors.grey[200],
-                                child: Icon(Icons.play_circle_outline,
-                                    size: 60, color: Colors.grey[400]),
+                            CloudinaryVideoPlayerView(videoUrl: videoUrl!),
+                            const SizedBox(height: 16),
+                            if ((description ?? '').trim().isNotEmpty)
+                              Text(
+                                description!,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.5,
+                                  color: Colors.grey[700],
+                                ),
                               ),
-                            ),
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: AppColors.skillful,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.skillful
-                                        .withValuesCompat(alpha: 0.4),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(Icons.play_arrow,
-                                  color: Colors.white, size: 40),
-                            ),
                           ],
+                        )
+                      else
+                        Container(
+                          height: 250,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(25),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.skillful
+                                    .withValuesCompat(alpha: 0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(25),
+                                child: Container(
+                                  color: Colors.grey[200],
+                                  child: Icon(Icons.play_circle_outline,
+                                      size: 60, color: Colors.grey[400]),
+                                ),
+                              ),
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: AppColors.skillful,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.skillful
+                                          .withValuesCompat(alpha: 0.4),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(Icons.play_arrow,
+                                    color: Colors.white, size: 40),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
                       const SizedBox(height: 30),
                       Container(
                         padding: const EdgeInsets.all(20),
@@ -4406,6 +5010,139 @@ class SkillVideoScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SkillCmsVideoHeroCard extends StatelessWidget {
+  const _SkillCmsVideoHeroCard({
+    required this.title,
+    required this.videoUrl,
+    this.thumbnailUrl,
+    required this.onWatch,
+  });
+
+  final String title;
+  final String videoUrl;
+  final String? thumbnailUrl;
+  final VoidCallback onWatch;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hasThumbnail = (thumbnailUrl ?? '').trim().isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.skillful.withValuesCompat(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  height: 220,
+                  width: double.infinity,
+                  child: hasThumbnail
+                      ? Image.network(
+                          thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _SkillCmsVideoFallbackThumbnail(),
+                        )
+                      : _SkillCmsVideoFallbackThumbnail(),
+                ),
+                Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    color: AppColors.skillful.withValuesCompat(alpha: 0.92),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.skillful.withValuesCompat(alpha: 0.35),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: onWatch,
+                    icon: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 42,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: onWatch,
+            icon: const Icon(Icons.play_circle_outline_rounded),
+            label: Text(l10n.playWatchVideoAction),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkillCmsVideoFallbackThumbnail extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.grey[200],
+      child: const Center(
+        child: Icon(
+          Icons.play_circle_outline,
+          size: 64,
+          color: AppColors.skillful,
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _launchSkillCmsVideo(BuildContext context, String rawUrl) async {
+  final l10n = AppLocalizations.of(context)!;
+  final messenger = ScaffoldMessenger.of(context);
+  final uri = Uri.tryParse(rawUrl);
+  if (uri == null) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.playVideoLaunchFailed)),
+    );
+    return;
+  }
+
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!opened && context.mounted) {
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.playVideoLaunchFailed)),
     );
   }
 }
@@ -4543,20 +5280,109 @@ class EducationalScreen extends StatelessWidget {
 }
 
 /// Educational Subject Detail Screen
-class EducationalSubjectScreen extends StatefulWidget {
+class EducationalSubjectScreen extends ConsumerStatefulWidget {
   final String subjectTitle;
   const EducationalSubjectScreen({super.key, required this.subjectTitle});
 
   @override
-  State<EducationalSubjectScreen> createState() =>
+  ConsumerState<EducationalSubjectScreen> createState() =>
       _EducationalSubjectScreenState();
 }
 
-class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
+class _EducationalSubjectScreenState
+    extends ConsumerState<EducationalSubjectScreen> {
   String _searchQuery = "";
   String _selectedLevel = "all";
+  late Future<List<PublicContentItem>> _cmsLessonsFuture;
 
   final List<String> _levels = ["all", "beginner", "intermediate", "advanced"];
+
+  @override
+  void initState() {
+    super.initState();
+    _cmsLessonsFuture = _loadCmsLessons();
+  }
+
+  Future<List<PublicContentItem>> _loadCmsLessons() async {
+    final repository = ref.read(publicContentRepositoryProvider);
+    final categorySlug = await _educationalCategorySlug(repository);
+    if (categorySlug != null) {
+      final directItems = await repository.fetchItems(
+        contentType: 'video',
+        categorySlug: categorySlug,
+      );
+      if (directItems.isNotEmpty) {
+        return directItems;
+      }
+    }
+
+    final items = await repository.fetchItems(contentType: 'video');
+    return items.where(_matchesEducationalSubject).toList();
+  }
+
+  Future<String?> _educationalCategorySlug(
+    PublicContentRepository repository,
+  ) async {
+    final selectedTerms = _educationalSearchTerms()
+        .map(_normalizeCmsPlacementToken)
+        .where((term) => term.isNotEmpty)
+        .toSet();
+    final categories = await repository.fetchCategories();
+    for (final category in categories) {
+      if (category.axisKey != 'educational') {
+        continue;
+      }
+      final categoryTerms = [
+        category.slug,
+        category.titleEn,
+        category.titleAr,
+      ].map(_normalizeCmsPlacementToken);
+      if (categoryTerms.any(selectedTerms.contains)) {
+        return category.slug;
+      }
+    }
+    return null;
+  }
+
+  bool _matchesEducationalSubject(PublicContentItem item) {
+    final isEducational = item.axisKey == 'educational' ||
+        item.category?.axisKey == 'educational' ||
+        item.metadata['axis_key'] == 'educational';
+    if (!isEducational) {
+      return false;
+    }
+
+    final terms = _educationalSearchTerms()
+        .map(_normalizeCmsPlacementToken)
+        .where((term) => term.isNotEmpty)
+        .toList();
+    final haystack = [
+      item.slug,
+      item.titleEn,
+      item.titleAr,
+      item.descriptionEn ?? '',
+      item.descriptionAr ?? '',
+      item.category?.slug ?? '',
+      item.category?.titleEn ?? '',
+      item.category?.titleAr ?? '',
+    ].map(_normalizeCmsPlacementToken).join(' ');
+    return terms.any(haystack.contains);
+  }
+
+  List<String> _educationalSearchTerms() {
+    final raw = widget.subjectTitle.trim().toLowerCase();
+    return switch (raw) {
+      'english' => ['english', 'en', 'انجليزي', 'إنجليزي'],
+      'arabic' => ['arabic', 'ar', 'عربي', 'لغة عربية'],
+      'geography' => ['geography', 'geo', 'جغرافيا'],
+      'history' => ['history', 'تاريخ'],
+      'science' => ['science', 'علوم'],
+      'math' => ['math', 'mathematics', 'رياضيات', 'حساب'],
+      'animals' => ['animals', 'animal', 'حيوانات'],
+      'plants' => ['plants', 'plant', 'نباتات'],
+      _ => [raw],
+    };
+  }
 
   List<Map<String, dynamic>> get _allLessons {
     final l10n = AppLocalizations.of(context)!;
@@ -4573,6 +5399,39 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
           _selectedLevel == "all" || lesson['level'] == _selectedLevel;
       return matchesQuery && matchesLevel;
     }).toList();
+  }
+
+  List<PublicContentItem> _filteredCmsLessons(List<PublicContentItem> items) {
+    return items.where((item) {
+      final title = _localizedCmsTitle(item).toLowerCase();
+      final matchesQuery = title.contains(_searchQuery.toLowerCase());
+      final matchesLevel =
+          _selectedLevel == "all" || _cmsLevel(item) == _selectedLevel;
+      return matchesQuery && matchesLevel;
+    }).toList();
+  }
+
+  String _localizedCmsTitle(PublicContentItem item) {
+    final locale = Localizations.localeOf(context).languageCode.toLowerCase();
+    final preferred = locale.startsWith('ar') ? item.titleAr : item.titleEn;
+    final fallback = locale.startsWith('ar') ? item.titleEn : item.titleAr;
+    return preferred.trim().isNotEmpty ? preferred : fallback;
+  }
+
+  String _cmsLevel(PublicContentItem item) {
+    final metadataLevel =
+        (item.metadata['difficulty'] ?? item.metadata['level'] ?? '')
+            .toString()
+            .trim()
+            .toLowerCase();
+    if (metadataLevel.contains('advanced') || metadataLevel.contains('متقدم')) {
+      return 'advanced';
+    }
+    if (metadataLevel.contains('intermediate') ||
+        metadataLevel.contains('متوسط')) {
+      return 'intermediate';
+    }
+    return 'beginner';
   }
 
   @override
@@ -4687,20 +5546,32 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: _filteredLessons.isEmpty
-                  ? Center(
+              child: FutureBuilder<List<PublicContentItem>>(
+                future: _cmsLessonsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      _filteredLessons.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final cmsLessons =
+                      _filteredCmsLessons(snapshot.data ?? const []);
+                  if (_filteredLessons.isEmpty && cmsLessons.isEmpty) {
+                    return Center(
                       child: Text(
-                      l10n.noLessonsFound,
-                      style: TextStyle(color: Colors.grey[500]),
-                    ))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _filteredLessons.length,
-                      itemBuilder: (context, index) {
-                        final lesson = _filteredLessons[index];
-                        return _buildLessonCard(lesson);
-                      },
-                    ),
+                        l10n.noLessonsFound,
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    );
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: [
+                      ...cmsLessons.map(_buildCmsLessonCard),
+                      ..._filteredLessons.map(_buildLessonCard),
+                    ],
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -4798,6 +5669,131 @@ class _EducationalSubjectScreenState extends State<EducationalSubjectScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCmsLessonCard(PublicContentItem item) {
+    final title = _localizedCmsTitle(item);
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => SkillVideoScreen(
+              videoTitle: title,
+              videoUrl: item.preferredVideoUrl,
+              thumbnailUrl: item.effectiveThumbnailUrl,
+              description: item.descriptionEn ?? item.descriptionAr,
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValuesCompat(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.indigo[50],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  bottomLeft: Radius.circular(20),
+                ),
+                child: hasRemoteImage
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            _buildCmsLessonFallbackIcon(),
+                      )
+                    : _buildCmsLessonFallbackIcon(),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color:
+                            AppColors.educational.withValuesCompat(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _levelLabel(
+                            _cmsLevel(item), AppLocalizations.of(context)!),
+                        style: const TextStyle(
+                          color: AppColors.educational,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Icon(
+                Icons.play_circle_outline,
+                color: AppColors.educational,
+                size: 32,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCmsLessonFallbackIcon() {
+    return Center(
+      child: Icon(
+        Icons.play_circle_fill,
+        color: AppColors.educational,
+        size: 50,
       ),
     );
   }

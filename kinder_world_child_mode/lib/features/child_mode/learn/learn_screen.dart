@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_const_constructors
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
@@ -11,17 +10,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kinder_world/core/constants/app_constants.dart';
 import 'package:kinder_world/core/models/activity.dart';
+import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/providers/content_controller.dart';
 import 'package:kinder_world/core/providers/child_session_controller.dart';
 import 'package:kinder_world/core/providers/progress_controller.dart';
+import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/app_colors.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
-import 'package:kinder_world/core/widgets/child_header.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
+import 'package:kinder_world/core/widgets/child_header.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 import 'package:kinder_world/features/child_mode/learn/coloring_gallery_screen.dart';
 import 'package:kinder_world/routing/route_paths.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'widgets/learn_screen_sections.dart';
 part 'learn_support_screens.dart';

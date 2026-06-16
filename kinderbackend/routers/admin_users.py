@@ -19,6 +19,7 @@ from core.admin_security import require_sensitive_action_confirmation
 from core.time_utils import db_utc_now
 from deps import get_db
 from models import User
+from plan_service import PLAN_FREE, validate_plan_value
 from services.subscription_service import subscription_service
 
 router = APIRouter(prefix="/admin/users", tags=["Admin Users"])
@@ -28,6 +29,13 @@ class UserUpdateRequest(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     plan: Optional[str] = None
+
+
+class UserCreateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    plan: str = PLAN_FREE
 
 
 class UserResetPasswordRequest(BaseModel):
@@ -48,6 +56,57 @@ def _get_user_or_404(user_id: int, db: Session) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.post("")
+def create_admin_user(
+    payload: UserCreateRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.users.create")),
+):
+    normalized_email = payload.email.strip().lower()
+    duplicate = db.query(User).filter(func.lower(User.email) == normalized_email).first()
+    if duplicate:
+        raise HTTPException(status_code=400, detail="Email already in use")
+
+    try:
+        normalized_plan = validate_plan_value(payload.plan)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+
+    user = User(
+        email=normalized_email,
+        password_hash=hash_password(payload.password),
+        name=payload.name.strip(),
+        role="parent",
+        is_active=True,
+        plan=PLAN_FREE,
+    )
+    db.add(user)
+    db.flush()
+
+    if normalized_plan != PLAN_FREE:
+        subscription_service.admin_override_subscription(
+            db=db,
+            user=user,
+            plan=normalized_plan,
+            source="admin_user_create",
+        )
+
+    after = serialize_user_detail(user, db)
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="user.create",
+        entity_type="user",
+        entity_id=user.id,
+        after_json=after,
+    )
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "item": serialize_user_detail(user, db)}
 
 
 @router.get("")
@@ -242,6 +301,33 @@ def reset_admin_user_password(
         "success": True,
         "temporary_password": temp_password,
     }
+
+
+@router.delete("/{user_id}")
+def delete_admin_user(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin=Depends(require_permission("admin.users.delete")),
+):
+    require_sensitive_action_confirmation(request, action="user.delete")
+    user = _get_user_or_404(user_id, db)
+    before = serialize_user_detail(user, db)
+    entity_id = user.id
+    db.delete(user)
+    db.flush()
+    write_audit_log(
+        db=db,
+        request=request,
+        admin=admin,
+        action="user.delete",
+        entity_type="user",
+        entity_id=entity_id,
+        before_json=before,
+        after_json={"id": entity_id, "deleted": True},
+    )
+    db.commit()
+    return {"success": True, "deleted_user_id": entity_id}
 
 
 @router.get("/{user_id}/activity")

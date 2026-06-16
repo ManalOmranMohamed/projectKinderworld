@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kinder_world/core/localization/app_localizations.dart';
 import 'package:kinder_world/core/models/admin_cms_models.dart';
+import 'package:kinder_world/core/utils/video_url_utils.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/admin/auth/admin_auth_provider.dart';
 import 'package:kinder_world/features/admin/management/admin_management_repository.dart';
 import 'package:kinder_world/features/admin/shared/admin_confirm_dialog.dart';
@@ -14,6 +16,7 @@ import 'package:kinder_world/features/admin/shared/admin_permission_placeholder.
 import 'package:kinder_world/features/admin/shared/admin_state_widgets.dart';
 import 'package:kinder_world/features/admin/shared/admin_table_widgets.dart';
 import 'package:kinder_world/core/widgets/material_compat.dart';
+import 'package:kinder_world/features/child_mode/learn/data/learn_catalog.dart';
 
 /// IMPORTANT:
 /// All UI text must use AppLocalizations.
@@ -152,6 +155,19 @@ class _AdminContentManagementScreenState
         .toList();
   }
 
+  String _axisTitle(BuildContext context, String? axisKey) {
+    if ((axisKey ?? '').isEmpty) {
+      return '';
+    }
+    final localeCode = Localizations.localeOf(context).languageCode;
+    for (final axis in _axes) {
+      if (axis.key == axisKey) {
+        return localeCode == 'ar' ? axis.titleAr : axis.titleEn;
+      }
+    }
+    return axisKey ?? '';
+  }
+
   String _extractErrorMessage(AppLocalizations l10n, Object error) {
     if (error is DioException) {
       final data = error.response?.data;
@@ -181,14 +197,26 @@ class _AdminContentManagementScreenState
       );
   }
 
-  List<_StatusOption> _statusOptions(AppLocalizations l10n) => [
+  List<_StatusOption> _contentStatusOptions(AppLocalizations l10n) => [
+        _StatusOption('draft', l10n.adminCmsStatusDraft),
+        _StatusOption('ready', l10n.adminCmsStatusReady),
+        _StatusOption('published', l10n.adminCmsStatusPublished),
+        _StatusOption('archived', l10n.adminCmsStatusArchived),
+      ];
+
+  List<_StatusOption> _quizStatusOptions(AppLocalizations l10n) => [
         _StatusOption('draft', l10n.adminCmsStatusDraft),
         _StatusOption('review', l10n.adminCmsStatusReview),
         _StatusOption('published', l10n.adminCmsStatusPublished),
       ];
 
   String _statusLabel(String status, AppLocalizations l10n) {
-    for (final option in _statusOptions(l10n)) {
+    final allOptions = [
+      ..._contentStatusOptions(l10n),
+      _StatusOption('archived', l10n.adminCmsStatusArchived),
+      ..._quizStatusOptions(l10n),
+    ];
+    for (final option in allOptions) {
       if (option.value == status) return option.label;
     }
     return status;
@@ -248,15 +276,20 @@ class _AdminContentManagementScreenState
     _loadAll();
   }
 
-  Future<void> _saveCategory({AdminCmsCategory? category}) async {
+  Future<AdminCmsCategory?> _saveCategory({
+    AdminCmsCategory? category,
+    String? initialAxisKey,
+  }) async {
     final l10n = AppLocalizations.of(context)!;
     final slug = TextEditingController(text: category?.slug ?? '');
     final titleEn = TextEditingController(text: category?.titleEn ?? '');
     final titleAr = TextEditingController(text: category?.titleAr ?? '');
     final descEn = TextEditingController(text: category?.descriptionEn ?? '');
     final descAr = TextEditingController(text: category?.descriptionAr ?? '');
-    String selectedAxisKey =
-        category?.axisKey ?? _selectedAxisSummary?.key ?? _selectedAxisKey;
+    String selectedAxisKey = category?.axisKey ??
+        initialAxisKey ??
+        _selectedAxisSummary?.key ??
+        _selectedAxisKey;
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
@@ -333,18 +366,18 @@ class _AdminContentManagementScreenState
           ),
         ) ??
         false;
-    if (!confirmed) return;
+    if (!confirmed) return null;
     if (selectedAxisKey.trim().isEmpty) {
       _showFeedback(l10n.errorTitle, isError: true);
-      return;
+      return null;
     }
     if (titleEn.text.trim().isEmpty) {
       _showFeedback(l10n.adminCmsValidationTitleEnRequired, isError: true);
-      return;
+      return null;
     }
     if (titleAr.text.trim().isEmpty) {
       _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
-      return;
+      return null;
     }
     if (slug.text.trim().isEmpty) {
       slug.text = titleEn.text
@@ -355,8 +388,9 @@ class _AdminContentManagementScreenState
     }
     final repo = ref.read(adminManagementRepositoryProvider);
     try {
+      late final AdminCmsCategory savedCategory;
       if (category == null) {
-        await repo.createCategory(
+        savedCategory = await repo.createCategory(
           axisKey: selectedAxisKey,
           slug: slug.text.trim(),
           titleEn: titleEn.text.trim(),
@@ -365,7 +399,7 @@ class _AdminContentManagementScreenState
           descriptionAr: descAr.text.trim(),
         );
       } else {
-        await repo.updateCategory(
+        savedCategory = await repo.updateCategory(
           category.id,
           axisKey: selectedAxisKey,
           slug: slug.text.trim(),
@@ -377,8 +411,10 @@ class _AdminContentManagementScreenState
       }
       _showFeedback(l10n.adminCmsCategorySaved);
       await _loadAll();
+      return savedCategory;
     } catch (error) {
       _showFeedback(_extractErrorMessage(l10n, error), isError: true);
+      return null;
     }
   }
 
@@ -418,7 +454,15 @@ class _AdminContentManagementScreenState
       ..remove('video_url')
       ..remove('video_preview_url')
       ..remove('video_provider')
-      ..remove('video_host_tier');
+      ..remove('video_public_id')
+      ..remove('duration_seconds')
+      ..remove('video_host_tier')
+      ..remove('resource_type')
+      ..remove('folder')
+      ..remove('format')
+      ..remove('bytes')
+      ..remove('behavioral_value')
+      ..remove('behavioral_method');
     final titleEn = TextEditingController(text: content?.titleEn ?? '');
     final titleAr = TextEditingController(text: content?.titleAr ?? '');
     final descEn = TextEditingController(text: content?.descriptionEn ?? '');
@@ -426,11 +470,12 @@ class _AdminContentManagementScreenState
     final bodyEn = TextEditingController(text: content?.bodyEn ?? '');
     final bodyAr = TextEditingController(text: content?.bodyAr ?? '');
     final thumb = TextEditingController(text: content?.thumbnailUrl ?? '');
-    final videoUrl = TextEditingController(text: content?.videoUrl ?? '');
+    final videoUrl =
+        TextEditingController(text: content?.effectiveVideoUrl ?? '');
     final videoPreviewUrl =
         TextEditingController(text: content?.videoPreviewUrl ?? '');
     final videoProvider =
-        TextEditingController(text: content?.videoProvider ?? '');
+        TextEditingController(text: content?.effectiveVideoProvider ?? '');
     final videoHostTier =
         TextEditingController(text: content?.videoHostTier ?? '');
     final age = TextEditingController(text: content?.ageGroup ?? '');
@@ -448,10 +493,110 @@ class _AdminContentManagementScreenState
     final metadata = TextEditingController(
       text: const JsonEncoder.withIndent('  ').convert(advancedMetadata),
     );
+    String selectedAxisKey =
+        content?.axisKey ?? content?.category?.axisKey ?? _selectedAxisKey;
     int? selectedCategoryId = content?.categoryId;
     String selectedType = content?.contentType ?? initialType ?? 'lesson';
-    String selectedStatus = content?.status ?? 'draft';
+    String selectedStatus =
+        content?.status ?? (selectedType == 'video' ? 'published' : 'draft');
+    String selectedBehavioralValue =
+        metadataMap['behavioral_value']?.toString() ?? '';
+    String selectedBehavioralMethod =
+        metadataMap['behavioral_method']?.toString() ?? '';
     bool featured = metadataMap['featured'] == true;
+    if (selectedType == 'video' && videoProvider.text.trim().isEmpty) {
+      videoProvider.text = 'youtube';
+    }
+    final isArabic =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+    List<AdminCmsCategory> categoriesForAxis() {
+      if (selectedAxisKey.isEmpty) {
+        return _categories;
+      }
+      return _categories
+          .where((category) => category.axisKey == selectedAxisKey)
+          .toList();
+    }
+
+    AdminCmsCategory? selectedCategoryForAxis() {
+      if (selectedCategoryId == null) {
+        return null;
+      }
+      for (final category in categoriesForAxis()) {
+        if (category.id == selectedCategoryId) {
+          return category;
+        }
+      }
+      return null;
+    }
+
+    String categoryTitle(AdminCmsCategory category) =>
+        isArabic ? category.titleAr : category.titleEn;
+
+    List<String> behavioralValueTitles() => behavioralValues
+        .map((item) => item['title']?.toString() ?? '')
+        .where((title) => title.isNotEmpty)
+        .toList();
+
+    List<String> behavioralMethodTitles() => behavioralMethods
+        .map((item) => item['title']?.toString() ?? '')
+        .where((title) => title.isNotEmpty)
+        .toList();
+
+    String normalizeBehavioralTitle(String value) =>
+        value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+
+    AdminCmsCategory? categoryForBehavioralValue(String value) {
+      final normalizedValue = normalizeBehavioralTitle(value);
+      if (normalizedValue.isEmpty) {
+        return null;
+      }
+      for (final category in categoriesForAxis()) {
+        if (category.axisKey != 'behavioral') {
+          continue;
+        }
+        final terms = [
+          category.slug,
+          category.titleEn,
+          category.titleAr,
+        ].map(normalizeBehavioralTitle);
+        if (terms.contains(normalizedValue)) {
+          return category;
+        }
+      }
+      return null;
+    }
+
+    if (selectedAxisKey == 'behavioral' &&
+        selectedBehavioralValue.isEmpty &&
+        selectedCategoryId != null) {
+      final category = selectedCategoryForAxis();
+      if (category != null) {
+        final normalizedCategory = normalizeBehavioralTitle(category.titleEn);
+        for (final value in behavioralValueTitles()) {
+          if (normalizeBehavioralTitle(value) == normalizedCategory) {
+            selectedBehavioralValue = value;
+            break;
+          }
+        }
+      }
+    }
+    if (!behavioralValueTitles().contains(selectedBehavioralValue)) {
+      selectedBehavioralValue = '';
+    }
+    if (!behavioralMethodTitles().contains(selectedBehavioralMethod)) {
+      selectedBehavioralMethod = '';
+    }
+
+    String videoPlacementLabel() {
+      final axisTitle = _axisTitle(context, selectedAxisKey);
+      final category = selectedCategoryForAxis();
+      if (category != null) {
+        return '$axisTitle / ${categoryTitle(category)}';
+      }
+      return '$axisTitle / ${l10n.adminCmsNoCategory}';
+    }
+
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => StatefulBuilder(
@@ -472,21 +617,99 @@ class _AdminContentManagementScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      DropdownButtonFormFieldCompat<int?>(
-                        initialValue: selectedCategoryId,
-                        decoration: InputDecoration(
-                            labelText: l10n.adminCmsCategoryLabel),
-                        items: [
-                          DropdownMenuItem<int?>(
-                              value: null,
-                              child: Text(l10n.adminCmsNoCategory)),
-                          ..._categoriesForSelectedAxis.map((category) =>
-                              DropdownMenuItem<int?>(
-                                  value: category.id,
-                                  child: Text(category.titleEn))),
+                      if (_axes.isNotEmpty) ...[
+                        DropdownButtonFormFieldCompat<String>(
+                          initialValue:
+                              selectedAxisKey.isEmpty ? null : selectedAxisKey,
+                          decoration: InputDecoration(
+                            hintText: _axisTitle(context, selectedAxisKey),
+                            prefixIcon: const Icon(Icons.account_tree_outlined),
+                          ),
+                          items: _axes
+                              .map(
+                                (axis) => DropdownMenuItem<String>(
+                                  value: axis.key,
+                                  child: Text(_axisTitle(context, axis.key)),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) => setStateDialog(() {
+                            selectedAxisKey = value ?? '';
+                            if (selectedAxisKey != 'behavioral') {
+                              selectedBehavioralValue = '';
+                              selectedBehavioralMethod = '';
+                            }
+                            final availableCategoryIds = categoriesForAxis()
+                                .map((category) => category.id)
+                                .toSet();
+                            if (!availableCategoryIds.contains(
+                              selectedCategoryId,
+                            )) {
+                              selectedCategoryId = null;
+                            }
+                          }),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormFieldCompat<int?>(
+                              initialValue: selectedCategoryId,
+                              decoration: InputDecoration(
+                                  labelText: l10n.adminCmsCategoryLabel),
+                              items: [
+                                DropdownMenuItem<int?>(
+                                    value: null,
+                                    child: Text(l10n.adminCmsNoCategory)),
+                                ...categoriesForAxis().map((category) =>
+                                    DropdownMenuItem<int?>(
+                                        value: category.id,
+                                        child: Text(categoryTitle(category)))),
+                              ],
+                              onChanged: (value) => setStateDialog(() {
+                                selectedCategoryId = value;
+                                if (selectedAxisKey == 'behavioral' &&
+                                    value != null) {
+                                  final category = selectedCategoryForAxis();
+                                  if (category != null) {
+                                    for (final behavioralValue
+                                        in behavioralValueTitles()) {
+                                      if (normalizeBehavioralTitle(
+                                            behavioralValue,
+                                          ) ==
+                                          normalizeBehavioralTitle(
+                                            category.titleEn,
+                                          )) {
+                                        selectedBehavioralValue =
+                                            behavioralValue;
+                                        break;
+                                      }
+                                    }
+                                  }
+                                }
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton.filledTonal(
+                            tooltip: l10n.adminCmsCategoryCreateTitle,
+                            onPressed: () async {
+                              final createdCategory = await _saveCategory(
+                                initialAxisKey: selectedAxisKey,
+                              );
+                              if (!mounted || createdCategory == null) {
+                                return;
+                              }
+                              setStateDialog(() {
+                                selectedAxisKey = createdCategory.axisKey;
+                                selectedCategoryId = createdCategory.id;
+                              });
+                            },
+                            icon: const Icon(Icons.add),
+                          ),
                         ],
-                        onChanged: (value) =>
-                            setStateDialog(() => selectedCategoryId = value),
                       ),
                       const SizedBox(height: 12),
                       Row(children: [
@@ -512,8 +735,13 @@ class _AdminContentManagementScreenState
                             decoration: InputDecoration(
                                 labelText: l10n.adminCmsTypeLabel),
                             items: _contentTypeItems(l10n),
-                            onChanged: (value) => setStateDialog(
-                                () => selectedType = value ?? 'lesson'),
+                            onChanged: (value) => setStateDialog(() {
+                              selectedType = value ?? 'lesson';
+                              if (selectedType == 'video' &&
+                                  videoProvider.text.trim().isEmpty) {
+                                videoProvider.text = 'youtube';
+                              }
+                            }),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -522,7 +750,7 @@ class _AdminContentManagementScreenState
                             initialValue: selectedStatus,
                             decoration: InputDecoration(
                                 labelText: l10n.adminCmsStatusLabel),
-                            items: _statusOptions(l10n)
+                            items: _contentStatusOptions(l10n)
                                 .map((item) => DropdownMenuItem(
                                     value: item.value, child: Text(item.label)))
                                 .toList(),
@@ -532,6 +760,69 @@ class _AdminContentManagementScreenState
                         ),
                       ]),
                       const SizedBox(height: 12),
+                      if (selectedAxisKey == 'behavioral') ...[
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            l10n.adminCmsBehavioralPlacementTitle,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(children: [
+                          Expanded(
+                            child: DropdownButtonFormFieldCompat<String>(
+                              initialValue: selectedBehavioralValue.isEmpty
+                                  ? null
+                                  : selectedBehavioralValue,
+                              decoration: InputDecoration(
+                                labelText: l10n.adminCmsBehavioralValueLabel,
+                              ),
+                              items: behavioralValueTitles()
+                                  .map(
+                                    (value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) => setStateDialog(() {
+                                selectedBehavioralValue = value ?? '';
+                                final matchingCategory =
+                                    categoryForBehavioralValue(
+                                  selectedBehavioralValue,
+                                );
+                                if (matchingCategory != null) {
+                                  selectedCategoryId = matchingCategory.id;
+                                }
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormFieldCompat<String>(
+                              initialValue: selectedBehavioralMethod.isEmpty
+                                  ? null
+                                  : selectedBehavioralMethod,
+                              decoration: InputDecoration(
+                                labelText: l10n.adminCmsBehavioralMethodLabel,
+                              ),
+                              items: behavioralMethodTitles()
+                                  .map(
+                                    (method) => DropdownMenuItem<String>(
+                                      value: method,
+                                      child: Text(method),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) => setStateDialog(
+                                () => selectedBehavioralMethod = value ?? '',
+                              ),
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(height: 12),
+                      ],
                       TextField(
                           controller: descEn,
                           minLines: 2,
@@ -573,11 +864,49 @@ class _AdminContentManagementScreenState
                         ),
                       ),
                       const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.folder_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                videoPlacementLabel(),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: videoUrl,
                         decoration: InputDecoration(
                           labelText: l10n.adminCmsVideoUrlLabel,
                         ),
+                        onChanged: (value) => setStateDialog(() {
+                          final youtubeThumbnail = youtubeThumbnailUrl(value);
+                          if (youtubeThumbnail != null &&
+                              thumb.text.trim().isEmpty) {
+                            thumb.text = youtubeThumbnail;
+                          }
+                          if (value.trim().isNotEmpty &&
+                              extractYouTubeVideoId(value) != null) {
+                            videoProvider.text = 'youtube';
+                          }
+                        }),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -587,25 +916,33 @@ class _AdminContentManagementScreenState
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(children: [
-                        Expanded(
-                          child: TextField(
-                            controller: videoProvider,
-                            decoration: InputDecoration(
-                              labelText: l10n.adminCmsVideoProviderLabel,
+                      if (selectedType != 'video')
+                        Row(children: [
+                          Expanded(
+                            child: TextField(
+                              controller: videoProvider,
+                              decoration: InputDecoration(
+                                labelText: l10n.adminCmsVideoProviderLabel,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: videoHostTier,
-                            decoration: InputDecoration(
-                              labelText: l10n.adminCmsVideoHostTierLabel,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: videoHostTier,
+                              decoration: InputDecoration(
+                                labelText: l10n.adminCmsVideoHostTierLabel,
+                              ),
                             ),
                           ),
+                        ])
+                      else
+                        TextField(
+                          controller: videoHostTier,
+                          decoration: InputDecoration(
+                            labelText: l10n.adminCmsVideoHostTierLabel,
+                          ),
                         ),
-                      ]),
                       const SizedBox(height: 12),
                       TextField(
                           controller: age,
@@ -703,17 +1040,49 @@ class _AdminContentManagementScreenState
       _showFeedback(l10n.adminCmsValidationTitleArRequired, isError: true);
       return;
     }
-    if (selectedStatus == 'published' && bodyEn.text.trim().isEmpty) {
+    if (selectedStatus == 'published' &&
+        selectedType != 'video' &&
+        bodyEn.text.trim().isEmpty) {
       _showFeedback(l10n.adminCmsValidationBodyEnRequired, isError: true);
       return;
     }
-    if (selectedStatus == 'published' && bodyAr.text.trim().isEmpty) {
+    if (selectedStatus == 'published' &&
+        selectedType != 'video' &&
+        bodyAr.text.trim().isEmpty) {
       _showFeedback(l10n.adminCmsValidationBodyArRequired, isError: true);
+      return;
+    }
+    if (selectedType == 'video' && selectedCategoryId == null) {
+      _showFeedback(
+        '${l10n.adminCmsCategoryLabel}: ${l10n.fieldRequired}',
+        isError: true,
+      );
+      return;
+    }
+    if (selectedAxisKey == 'behavioral' &&
+        (selectedBehavioralValue.trim().isEmpty ||
+            selectedBehavioralMethod.trim().isEmpty)) {
+      _showFeedback(
+        l10n.adminCmsValidationBehavioralPlacementRequired,
+        isError: true,
+      );
       return;
     }
     final thumbValue = thumb.text.trim();
     final videoUrlValue = videoUrl.text.trim();
     final videoPreviewUrlValue = videoPreviewUrl.text.trim();
+    final youtubeId = extractYouTubeVideoId(videoUrlValue);
+    final normalizedVideoProvider = videoUrlValue.isEmpty
+        ? videoProvider.text.trim()
+        : (youtubeId != null ? 'youtube' : videoProvider.text.trim());
+    final derivedThumbnailUrl =
+        thumbValue.isNotEmpty ? thumbValue : youtubeThumbnailUrl(videoUrlValue);
+    if (selectedType == 'video' &&
+        selectedStatus == 'published' &&
+        videoUrlValue.isEmpty) {
+      _showFeedback(l10n.adminCmsValidationVideoRequired, isError: true);
+      return;
+    }
     final urlValues = [thumbValue, videoUrlValue, videoPreviewUrlValue];
     for (final value in urlValues) {
       if (value.isEmpty) {
@@ -756,6 +1125,7 @@ class _AdminContentManagementScreenState
         .map((item) => item.trim())
         .where((item) => item.isNotEmpty)
         .toList();
+    final videoProviderValue = normalizedVideoProvider;
     final payload = {
       'category_id': selectedCategoryId,
       'content_type': selectedType,
@@ -766,7 +1136,11 @@ class _AdminContentManagementScreenState
       'description_ar': descAr.text.trim(),
       'body_en': bodyEn.text.trim(),
       'body_ar': bodyAr.text.trim(),
-      'thumbnail_url': thumbValue,
+      'thumbnail_url': derivedThumbnailUrl,
+      'video_url': videoUrlValue.isEmpty ? null : videoUrlValue,
+      'video_provider': videoProviderValue.isEmpty ? null : videoProviderValue,
+      'video_public_id': null,
+      'video_duration_seconds': null,
       'age_group': ageValue,
       'metadata_json': {
         ...advancedJson,
@@ -776,11 +1150,13 @@ class _AdminContentManagementScreenState
         if (difficulty.text.trim().isNotEmpty)
           'difficulty': difficulty.text.trim(),
         if (tagsList.isNotEmpty) 'tags': tagsList,
-        if (videoUrlValue.isNotEmpty) 'video_url': videoUrlValue,
+        if (selectedAxisKey == 'behavioral') ...{
+          'behavioral_value': selectedBehavioralValue.trim(),
+          'behavioral_method': selectedBehavioralMethod.trim(),
+        },
         if (videoPreviewUrlValue.isNotEmpty)
           'video_preview_url': videoPreviewUrlValue,
-        if (videoProvider.text.trim().isNotEmpty)
-          'video_provider': videoProvider.text.trim(),
+        if (videoProviderValue.isNotEmpty) 'video_provider': videoProviderValue,
         if (videoHostTier.text.trim().isNotEmpty)
           'video_host_tier': videoHostTier.text.trim(),
         'featured': featured,
@@ -885,6 +1261,17 @@ class _AdminContentManagementScreenState
                   Text(
                     '${l10n.adminCmsLinkedQuizzes}: ${detail.quizCount}',
                   ),
+                  if ((detail.effectiveVideoUrl ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.adminCmsVideoSectionTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    _AdminVideoPreviewCard(
+                      videoUrl: detail.effectiveVideoUrl!,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   if (detail.metadataJson.isEmpty)
                     Text(l10n.adminCmsPreviewEmpty)
@@ -1074,7 +1461,7 @@ class _AdminContentManagementScreenState
                         initialValue: selectedStatus,
                         decoration: InputDecoration(
                             labelText: l10n.adminCmsStatusLabel),
-                        items: _statusOptions(l10n)
+                        items: _quizStatusOptions(l10n)
                             .map((item) => DropdownMenuItem(
                                 value: item.value, child: Text(item.label)))
                             .toList(),
@@ -1513,7 +1900,7 @@ class _AdminContentManagementScreenState
               items: [
                 DropdownMenuItem(
                     value: '', child: Text(l10n.adminCmsStatusAll)),
-                ..._statusOptions(l10n).map((item) => DropdownMenuItem(
+                ..._contentStatusOptions(l10n).map((item) => DropdownMenuItem(
                     value: item.value, child: Text(item.label))),
               ],
               onChanged: (value) {
@@ -1583,6 +1970,8 @@ class _AdminContentManagementScreenState
                             overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 10),
                         Wrap(spacing: 12, runSpacing: 8, children: [
+                          if ((content.axisKey ?? '').isNotEmpty)
+                            Text(_axisTitle(context, content.axisKey)),
                           Text(
                               '${l10n.adminCmsCategoryLabel}: ${content.category?.titleEn ?? l10n.notAvailable}'),
                           Text(
@@ -1660,7 +2049,7 @@ class _AdminContentManagementScreenState
               items: [
                 DropdownMenuItem(
                     value: '', child: Text(l10n.adminCmsStatusAll)),
-                ..._statusOptions(l10n).map((item) => DropdownMenuItem(
+                ..._quizStatusOptions(l10n).map((item) => DropdownMenuItem(
                     value: item.value, child: Text(item.label))),
               ],
               onChanged: (value) {
@@ -1923,6 +2312,21 @@ class _StatusOption {
   final String label;
 }
 
+class _AdminVideoPreviewCard extends StatelessWidget {
+  const _AdminVideoPreviewCard({
+    required this.videoUrl,
+  });
+
+  final String videoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return CloudinaryVideoPlayerView(
+      videoUrl: videoUrl,
+    );
+  }
+}
+
 class _CmsStatusChip extends StatelessWidget {
   const _CmsStatusChip({required this.label, required this.status});
   final String label;
@@ -1931,16 +2335,20 @@ class _CmsStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final background = status == 'published'
-        ? scheme.primaryContainer
-        : status == 'review'
-            ? scheme.tertiaryContainer
-            : scheme.secondaryContainer;
-    final foreground = status == 'published'
-        ? scheme.primary
-        : status == 'review'
-            ? scheme.tertiary
-            : scheme.secondary;
+    final background = switch (status) {
+      'published' => scheme.primaryContainer,
+      'ready' => scheme.tertiaryContainer,
+      'review' => scheme.tertiaryContainer,
+      'archived' => scheme.surfaceContainerHighest,
+      _ => scheme.secondaryContainer,
+    };
+    final foreground = switch (status) {
+      'published' => scheme.primary,
+      'ready' => scheme.tertiary,
+      'review' => scheme.tertiary,
+      'archived' => scheme.onSurfaceVariant,
+      _ => scheme.secondary,
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

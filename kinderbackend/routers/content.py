@@ -117,6 +117,10 @@ def _serialize_public_content_item(
         "body_en": content.body_en,
         "body_ar": content.body_ar,
         "thumbnail_url": content.thumbnail_url,
+        "video_url": getattr(content, "video_url", None),
+        "video_provider": getattr(content, "video_provider", None),
+        "video_public_id": getattr(content, "video_public_id", None),
+        "video_duration_seconds": getattr(content, "video_duration_seconds", None),
         "age_group": content.age_group,
         "metadata_json": content.metadata_json or {},
         "category": (

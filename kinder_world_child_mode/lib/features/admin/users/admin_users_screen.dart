@@ -160,6 +160,77 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     await _loadUsers();
   }
 
+  Future<void> _showCreateDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    String plan = 'FREE';
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AdminFormDialog(
+          title: l10n.adminUsersCreateTitle,
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: l10n.adminUsersNameField,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: l10n.adminUsersEmailField,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passwordController,
+                    decoration: InputDecoration(
+                      labelText: l10n.adminUsersPasswordField,
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormFieldCompat<String>(
+                    initialValue: plan,
+                    items: _planItems(l10n),
+                    onChanged: (value) => setState(() => plan = value ?? plan),
+                    decoration: InputDecoration(
+                      labelText: l10n.adminUsersPlanField,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          onSubmit: () => Navigator.pop(context, true),
+        );
+      },
+    );
+
+    if (saved != true) return;
+
+    await ref.read(adminManagementRepositoryProvider).createUser(
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+          plan: plan,
+        );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.adminUsersCreatedMessage)),
+    );
+    await _loadUsers();
+  }
+
   Future<void> _toggleEnabled(AdminParentUser user, bool enabled) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showAdminConfirmDialog(
@@ -189,6 +260,25 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     await _loadUsers();
   }
 
+  Future<void> _deleteUser(AdminParentUser user) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showAdminConfirmDialog(
+      context: context,
+      title: l10n.adminUsersDeleteTitle,
+      message: l10n.adminUsersDeleteConfirm,
+      confirmLabel: l10n.adminUsersDeleteAction,
+      destructive: true,
+    );
+    if (!confirmed) return;
+
+    await ref.read(adminManagementRepositoryProvider).deleteUser(user.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.adminUsersDeletedMessage)),
+    );
+    await _loadUsers();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -199,6 +289,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final canEdit = admin?.hasPermission('admin.users.edit') ?? false;
+    final canCreate = admin?.hasPermission('admin.users.create') ?? false;
+    final canDelete = admin?.hasPermission('admin.users.delete') ?? false;
     final contextActions = [
       AdminControlCenterAction(
         icon: Icons.auto_stories_outlined,
@@ -239,6 +332,13 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 title: l10n.adminUsersTitle,
                 subtitle: l10n.adminUsersSubtitle,
                 actions: [
+                  if (canCreate)
+                    FilledButton.icon(
+                      onPressed: _showCreateDialog,
+                      icon:
+                          const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                      label: Text(l10n.adminUsersCreateAction),
+                    ),
                   FilledButton.icon(
                     onPressed: _loadUsers,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -427,7 +527,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                           horizontal: 8)),
                                 ),
                                 TextButton.icon(
-                                  onPressed: () => _showEditDialog(user),
+                                  onPressed: canEdit
+                                      ? () => _showEditDialog(user)
+                                      : null,
                                   icon:
                                       const Icon(Icons.edit_outlined, size: 16),
                                   label: Text(l10n.edit),
@@ -461,6 +563,25 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8)),
                                 ),
+                                if (canDelete)
+                                  TextButton.icon(
+                                    onPressed: () => _deleteUser(user),
+                                    icon: Icon(
+                                      Icons.delete_outline,
+                                      size: 16,
+                                      color: colorScheme.error,
+                                    ),
+                                    label: Text(
+                                      l10n.adminUsersDeleteAction,
+                                      style: TextStyle(
+                                        color: colorScheme.error,
+                                      ),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                    ),
+                                  ),
                               ],
                             ),
                           ],
@@ -543,7 +664,9 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                               IconButton(
                                 tooltip: l10n.edit,
                                 icon: const Icon(Icons.edit_outlined, size: 18),
-                                onPressed: () => _showEditDialog(user),
+                                onPressed: canEdit
+                                    ? () => _showEditDialog(user)
+                                    : null,
                                 visualDensity: VisualDensity.compact,
                               ),
                               IconButton(
@@ -563,6 +686,17 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                                     _toggleEnabled(user, !user.isActive),
                                 visualDensity: VisualDensity.compact,
                               ),
+                              if (canDelete)
+                                IconButton(
+                                  tooltip: l10n.adminUsersDeleteAction,
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                    color: colorScheme.error,
+                                  ),
+                                  onPressed: () => _deleteUser(user),
+                                  visualDensity: VisualDensity.compact,
+                                ),
                             ],
                           ),
                         ),

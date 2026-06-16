@@ -339,6 +339,10 @@ def serialize_content_item(
         "body_en": getattr(content, "body_en", None),
         "body_ar": getattr(content, "body_ar", None),
         "thumbnail_url": getattr(content, "thumbnail_url", None),
+        "video_url": getattr(content, "video_url", None),
+        "video_provider": getattr(content, "video_provider", None),
+        "video_public_id": getattr(content, "video_public_id", None),
+        "video_duration_seconds": getattr(content, "video_duration_seconds", None),
         "age_group": getattr(content, "age_group", None),
         "metadata_json": getattr(content, "metadata_json", None) or {},
         "category": (

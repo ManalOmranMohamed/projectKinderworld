@@ -5,9 +5,9 @@ import 'package:kinder_world/core/models/public_content.dart';
 import 'package:kinder_world/core/repositories/public_content_repository.dart';
 import 'package:kinder_world/core/theme/theme_extensions.dart';
 import 'package:kinder_world/core/widgets/child_design_system.dart';
+import 'package:kinder_world/core/widgets/cloudinary_video_player_view.dart';
 import 'package:kinder_world/features/child_mode/profile/child_profile_screen.dart';
 import 'package:kinder_world/core/utils/color_compat.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PlayScreen extends ConsumerStatefulWidget {
   const PlayScreen({super.key});
@@ -300,7 +300,7 @@ class _FeaturedContentCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   _Thumbnail(
-                    url: item.thumbnailUrl,
+                    url: item.effectiveThumbnailUrl,
                     icon: _contentIcon(item.contentType),
                     color: accent,
                   ),
@@ -379,7 +379,7 @@ class _PlayableContentCard extends StatelessWidget {
       child: Row(
         children: [
           _Thumbnail(
-            url: item.thumbnailUrl,
+            url: item.effectiveThumbnailUrl,
             icon: _contentIcon(item.contentType),
             color: tagColor,
           ),
@@ -542,16 +542,18 @@ class _PlayContentDetailScreenState
                                   fontWeight: FontWeight.w700,
                                 ),
                       ),
-                      if ((item.videoProvider ?? item.videoHostTier ?? '')
+                      if ((item.effectiveVideoProvider ??
+                              item.videoHostTier ??
+                              '')
                           .isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            if ((item.videoProvider ?? '').isNotEmpty)
+                            if ((item.effectiveVideoProvider ?? '').isNotEmpty)
                               _VideoMetaChip(
-                                label: item.videoProvider!,
+                                label: item.effectiveVideoProvider!,
                                 icon: Icons.cloud_outlined,
                               ),
                             if ((item.videoHostTier ?? '').isNotEmpty)
@@ -563,10 +565,8 @@ class _PlayContentDetailScreenState
                         ),
                       ],
                       const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: () => _openVideo(item),
-                        icon: const Icon(Icons.play_circle_fill_rounded),
-                        label: Text(l10n.playWatchVideoAction),
+                      CloudinaryVideoPlayerView(
+                        videoUrl: item.preferredVideoUrl!,
                       ),
                     ],
                   ),
@@ -616,36 +616,6 @@ class _PlayContentDetailScreenState
       ),
     );
   }
-
-  Future<void> _openVideo(PublicContentItem item) async {
-    final l10n = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
-    final rawUrl = item.preferredVideoUrl;
-    if (rawUrl == null || rawUrl.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
-      );
-      return;
-    }
-
-    final uri = Uri.tryParse(rawUrl);
-    if (uri == null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
-      );
-      return;
-    }
-
-    final launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched && mounted) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.playVideoLaunchFailed)),
-      );
-    }
-  }
 }
 
 class _PlayDetailHero extends StatelessWidget {
@@ -657,10 +627,11 @@ class _PlayDetailHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent =
         _categoryColor(item.category?.slug ?? item.contentType, context);
-    final hasRemoteImage = item.thumbnailUrl != null &&
-        item.thumbnailUrl!.trim().isNotEmpty &&
-        (item.thumbnailUrl!.startsWith('http://') ||
-            item.thumbnailUrl!.startsWith('https://'));
+    final thumbnailUrl = item.effectiveThumbnailUrl;
+    final hasRemoteImage = thumbnailUrl != null &&
+        thumbnailUrl.trim().isNotEmpty &&
+        (thumbnailUrl.startsWith('http://') ||
+            thumbnailUrl.startsWith('https://'));
 
     return Container(
       height: 220,
@@ -677,7 +648,7 @@ class _PlayDetailHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         child: hasRemoteImage
             ? Image.network(
-                item.thumbnailUrl!,
+                thumbnailUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _PlayDetailHeroFallback(
                   icon: _contentIcon(item.contentType),

@@ -27,6 +27,37 @@ class AdminCmsAxisSummary {
   }
 }
 
+class AdminUploadedVideoAsset {
+  const AdminUploadedVideoAsset({
+    required this.videoUrl,
+    this.thumbnailUrl,
+    this.videoProvider,
+    this.videoPublicId,
+    this.videoDurationSeconds,
+    this.metadataJson = const {},
+  });
+
+  final String videoUrl;
+  final String? thumbnailUrl;
+  final String? videoProvider;
+  final String? videoPublicId;
+  final int? videoDurationSeconds;
+  final Map<String, dynamic> metadataJson;
+
+  factory AdminUploadedVideoAsset.fromJson(Map<String, dynamic> json) {
+    return AdminUploadedVideoAsset(
+      videoUrl: json['video_url'] as String? ?? '',
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      videoProvider: json['video_provider'] as String?,
+      videoPublicId: json['video_public_id'] as String?,
+      videoDurationSeconds: json['video_duration_seconds'] as int?,
+      metadataJson: json['metadata_json'] is Map
+          ? Map<String, dynamic>.from(json['metadata_json'] as Map)
+          : const {},
+    );
+  }
+}
+
 class AdminCmsCategory {
   const AdminCmsCategory({
     required this.id,
@@ -154,6 +185,10 @@ class AdminCmsContent {
     this.bodyEn,
     this.bodyAr,
     this.thumbnailUrl,
+    this.videoUrl,
+    this.videoProvider,
+    this.videoPublicId,
+    this.videoDurationSeconds,
     this.ageGroup,
     this.metadataJson = const {},
     this.category,
@@ -176,6 +211,10 @@ class AdminCmsContent {
   final String? bodyEn;
   final String? bodyAr;
   final String? thumbnailUrl;
+  final String? videoUrl;
+  final String? videoProvider;
+  final String? videoPublicId;
+  final int? videoDurationSeconds;
   final String? ageGroup;
   final Map<String, dynamic> metadataJson;
   final AdminCmsCategory? category;
@@ -185,10 +224,11 @@ class AdminCmsContent {
   final String? updatedAt;
   final String? publishedAt;
 
-  String? get videoUrl => _metadataString('video_url');
   String? get videoPreviewUrl => _metadataString('video_preview_url');
-  String? get videoProvider => _metadataString('video_provider');
   String? get videoHostTier => _metadataString('video_host_tier');
+  String? get effectiveVideoUrl => videoUrl ?? _metadataString('video_url');
+  String? get effectiveVideoProvider =>
+      videoProvider ?? _metadataString('video_provider');
 
   String? _metadataString(String key) {
     final value = metadataJson[key];
@@ -217,6 +257,10 @@ class AdminCmsContent {
       bodyEn: json['body_en'] as String?,
       bodyAr: json['body_ar'] as String?,
       thumbnailUrl: json['thumbnail_url'] as String?,
+      videoUrl: json['video_url'] as String?,
+      videoProvider: json['video_provider'] as String?,
+      videoPublicId: json['video_public_id'] as String?,
+      videoDurationSeconds: json['video_duration_seconds'] as int?,
       ageGroup: json['age_group'] as String?,
       metadataJson: json['metadata_json'] is Map
           ? Map<String, dynamic>.from(json['metadata_json'] as Map)
